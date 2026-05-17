@@ -20,6 +20,15 @@ const SRC = join(ROOT, "src");
 const args = new Set(process.argv.slice(2));
 const onlySyntax = args.has("--syntax");
 const onlyTypes = args.has("--types");
+const onlyLint = args.has("--lint");
+const onlyFormat = args.has("--format");
+const anyFilter = onlySyntax || onlyTypes || onlyLint || onlyFormat;
+const run = {
+  syntax: !anyFilter || onlySyntax,
+  types: !anyFilter || onlyTypes,
+  lint: !anyFilter || onlyLint,
+  format: !anyFilter || onlyFormat,
+};
 
 const RED = "\x1b[31m";
 const YELLOW = "\x1b[33m";
