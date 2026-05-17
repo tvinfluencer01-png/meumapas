@@ -2,6 +2,10 @@
 @source "../src";
 @import "tw-animate-css";
 
+/* Identidade Visual — tokens, utilitários e keyframes da marca.
+   Edite SOMENTE em src/styles/brand.css. */
+@import "./styles/brand.css";
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -37,6 +41,7 @@
   --color-nebula: var(--nebula);
   --color-night: var(--night);
 
+  /* Aliases para Tailwind — definições em src/styles/brand.css */
   --font-serif: "Cormorant Garamond", ui-serif, Georgia, serif;
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
 
