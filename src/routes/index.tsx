@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { motion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 import { Starfield } from "@/components/Starfield";
 import heroAstrolabe from "@/assets/hero-astrolabe.jpg";
 import oracleOrb from "@/assets/oracle-orb.jpg";
