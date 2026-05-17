@@ -1,7 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { listFavorites, toggleFavorite, updateFavoriteNote, generateFavoriteNote } from "@/lib/favorites.functions";
-import { Star, Trash2, Pencil, Check, X, Sparkles, Loader2 } from "lucide-react";
+import { Star, Trash2, Pencil, Check, X, Sparkles, Loader2, Download, FileText, FileSpreadsheet } from "lucide-react";
+import { exportFavoritesCSV, exportFavoritesPDF } from "@/lib/favorites-export";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
