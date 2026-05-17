@@ -152,8 +152,9 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
     const labelW = sans.widthOfTextAtSize(label, 9);
     cover.drawText(label, {
       x: (PAGE_W - labelW) / 2, y: PAGE_H - 100,
-    size: 9, font: sans, color: GOLD,
-  });
+      size: 9, font: sans, color: GOLD,
+    });
+  }
 
   // title
   const titleSize = 38;
