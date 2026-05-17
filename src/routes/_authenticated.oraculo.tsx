@@ -58,13 +58,13 @@ function OraculoPage() {
   async function handleSubmit(e?: React.FormEvent) {
     e?.preventDefault();
     const text = input.trim();
-    if (!text || isLoading || !token) return;
+    if (!text || isLoading) return;
     setInput("");
     await sendMessage({ text });
   }
 
   function askSuggestion(s: string) {
-    if (isLoading || !token) return;
+    if (isLoading) return;
     setInput("");
     sendMessage({ text: s });
   }
@@ -145,12 +145,12 @@ function OraculoPage() {
               rows={2}
               placeholder="Pergunte ao Oráculo..."
               className="w-full bg-secondary/40 border border-border focus:border-gold/50 rounded-xl px-4 py-3 pr-14 text-sm text-stardust placeholder:text-muted-foreground resize-none outline-none transition"
-              disabled={!token}
+              disabled={!user}
             />
             <button
               type={isLoading ? "button" : "submit"}
               onClick={isLoading ? () => stop() : undefined}
-              disabled={!token || (!isLoading && !input.trim())}
+              disabled={(!isLoading && !input.trim())}
               className="absolute right-2 bottom-2 size-10 rounded-lg bg-gradient-to-br from-gold to-gold/70 text-night grid place-items-center hover:gold-glow transition disabled:opacity-40 disabled:cursor-not-allowed"
               aria-label={isLoading ? "Parar" : "Enviar"}
             >
