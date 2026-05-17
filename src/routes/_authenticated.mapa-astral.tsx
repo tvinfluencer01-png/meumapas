@@ -131,12 +131,36 @@ function MapaAstral() {
             Cálculo via Swiss Ephemeris (pure-JS) — preciso e gratuito.
           </p>
         </div>
-        <Button onClick={handleGenerate} disabled={loading || !birth}
-          className="bg-gold text-primary-foreground hover:bg-gold-glow">
+        <Button
+          onClick={handleGenerate}
+          disabled={loading || !birth || backendDown || health.isLoading}
+          className="bg-gold text-primary-foreground hover:bg-gold-glow"
+        >
           {loading ? <Loader2 className="size-4 animate-spin mr-2" /> : <Wand2 className="size-4 mr-2" />}
-          {current ? "Recalcular" : "Gerar mapa"}
+          {backendDown ? "Indisponível" : current ? "Recalcular" : "Gerar mapa"}
         </Button>
       </header>
+
+      {backendDown && (
+        <div className="glass-card rounded-2xl border border-destructive/40 bg-destructive/5 p-5 flex items-start gap-3">
+          <AlertTriangle className="size-5 text-destructive shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-sm text-destructive font-medium">Serviço astrológico indisponível</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Não conseguimos confirmar a saúde do backend de cálculo. A geração está bloqueada até o serviço responder.
+            </p>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => health.refetch()}
+            disabled={health.isFetching}
+            className="border-gold/40 text-gold hover:bg-gold/10"
+          >
+            {health.isFetching ? <Loader2 className="size-3 animate-spin" /> : "Revalidar"}
+          </Button>
+        </div>
+      )}
 
       {genError && (
         <div className="glass-card rounded-2xl border border-destructive/40 bg-destructive/5 p-6 text-center">
