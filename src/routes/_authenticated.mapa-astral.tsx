@@ -26,6 +26,7 @@ function MapaAstral() {
   const compute = useServerFn(computeNatalChart);
   const [loading, setLoading] = useState(false);
   const [chart, setChart] = useState<any>(null);
+  const [genError, setGenError] = useState<string | null>(null);
 
   const { data: birth } = useQuery({
     queryKey: ["birth", user?.id],
@@ -53,6 +54,7 @@ function MapaAstral() {
       return;
     }
     setLoading(true);
+    setGenError(null);
     try {
       const offset = -new Date().getTimezoneOffset() / 60;
       const result = await compute({
@@ -67,10 +69,19 @@ function MapaAstral() {
           timezoneOffset: offset,
         },
       });
+      // Defensive: garante que o resultado seja um chart utilizável antes de renderizar
+      if (!result || typeof result !== "object" || !Array.isArray((result as any).planets)) {
+        throw new Error("Resposta inválida do servidor.");
+      }
       setChart(result);
       toast.success("Mapa astral revelado.");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Erro ao calcular");
+      const raw = e instanceof Error ? e.message : String(e ?? "");
+      const friendly = /server function info not found|HTTPError|status code 5\d\d|failed to fetch|networkerror/i.test(raw)
+        ? "Não foi possível gerar o mapa agora. O serviço astrológico está temporariamente indisponível — tente novamente em instantes."
+        : (raw || "Erro ao calcular o mapa.");
+      setGenError(friendly);
+      toast.error(friendly);
     } finally {
       setLoading(false);
     }
@@ -100,7 +111,18 @@ function MapaAstral() {
         </Button>
       </header>
 
-      {!current && (
+      {genError && (
+        <div className="glass-card rounded-2xl border border-destructive/40 bg-destructive/5 p-6 text-center">
+          <p className="text-sm text-destructive">{genError}</p>
+          <Button onClick={handleGenerate} disabled={loading} variant="outline"
+            className="mt-4 border-gold/40 text-gold hover:bg-gold/10">
+            {loading ? <Loader2 className="size-4 animate-spin mr-2" /> : null}
+            Tentar novamente
+          </Button>
+        </div>
+      )}
+
+      {!current && !genError && (
         <div className="glass-card rounded-2xl p-12 text-center">
           <Sparkles className="size-10 text-gold mx-auto mb-3" />
           <p className="text-muted-foreground">Clique em <span className="text-gold">Gerar mapa</span> para revelar sua arquitetura celeste.</p>
