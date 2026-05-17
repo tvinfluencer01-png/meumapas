@@ -10,7 +10,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { computeNatalChart, pingAstro } from "@/lib/astrology.functions";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { PLANET_MEANING, SIGN_MEANING, ASPECT_MEANING } from "@/lib/astro-meanings";
+import { PLANET_MEANING, SIGN_MEANING, ASPECT_MEANING, SIGN_GUIDANCE } from "@/lib/astro-meanings";
 
 export const Route = createFileRoute("/_authenticated/mapa-astral")({
   component: MapaAstral,
@@ -403,40 +403,64 @@ function ChartSummary({ chart }: { chart: any }) {
   const ascSign = chart.ascendant?.sign;
 
   const trio = [
-    sun && { label: "Sol", sign: sun.sign, hint: SIGN_MEANING[sun.sign]?.short },
-    moon && { label: "Lua", sign: moon.sign, hint: SIGN_MEANING[moon.sign]?.short },
-    ascSign && { label: "Ascendente", sign: ascSign, hint: SIGN_MEANING[ascSign]?.short },
-  ].filter(Boolean) as { label: string; sign: string; hint?: string }[];
+    sun && { label: "Sol", role: "Sua essência e propósito", sign: sun.sign },
+    moon && { label: "Lua", role: "Suas emoções e necessidades", sign: moon.sign },
+    ascSign && { label: "Ascendente", role: "Como o mundo te vê", sign: ascSign },
+  ].filter(Boolean) as { label: string; role: string; sign: string }[];
 
   return (
     <div className="glass-card gold-glow rounded-2xl p-6 relative overflow-hidden">
       <div className="absolute inset-0 nebula-bg opacity-50 pointer-events-none" />
-      <div className="relative">
-        <div className="flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-gold">
-          <Sparkles className="size-3.5" /> Resumo do seu céu
+      <div className="relative space-y-5">
+        <div>
+          <div className="flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-gold">
+            <Sparkles className="size-3.5" /> Resumo do seu céu — direção prática
+          </div>
+          <p className="mt-3 text-stardust font-serif text-lg leading-relaxed">
+            {sun && <>Você brilha como <span className="text-gold">{sun.sign}</span></>}
+            {moon && <>, sente o mundo como <span className="text-gold">{moon.sign}</span></>}
+            {ascSign && <> e se apresenta com a aura de <span className="text-gold">{ascSign}</span></>}.
+          </p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Abaixo, o que esperar de cada uma dessas forças e o que fazer agora para usá-las a seu favor.
+          </p>
         </div>
-        <p className="mt-3 text-stardust font-serif text-lg leading-relaxed">
-          {sun && (
-            <>Você brilha como <span className="text-gold">{sun.sign}</span></>
-          )}
-          {moon && (
-            <>, sente o mundo como <span className="text-gold">{moon.sign}</span></>
-          )}
-          {ascSign && (
-            <> e se apresenta com a aura de <span className="text-gold">{ascSign}</span></>
-          )}
-          .
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
-          {trio.map((t) => (
-            <div key={t.label} className="rounded-xl bg-secondary/30 border border-gold/15 p-3">
-              <div className="text-xs uppercase tracking-widest text-muted-foreground">{t.label}</div>
-              <div className="font-serif text-lg text-stardust mt-0.5">
-                {SIGN_MEANING[t.sign]?.glyph} {t.sign}
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {trio.map((t) => {
+            const g = SIGN_GUIDANCE[t.sign];
+            return (
+              <div key={t.label} className="rounded-xl bg-secondary/30 border border-gold/15 p-4 space-y-3">
+                <div>
+                  <div className="text-xs uppercase tracking-widest text-muted-foreground">{t.label}</div>
+                  <div className="font-serif text-lg text-stardust mt-0.5">
+                    {SIGN_MEANING[t.sign]?.glyph} {t.sign}
+                  </div>
+                  <div className="text-[11px] text-muted-foreground mt-0.5">{t.role}</div>
+                </div>
+                {g && (
+                  <ul className="space-y-2 text-xs">
+                    <li>
+                      <span className="text-gold uppercase tracking-wider text-[10px]">O que esperar</span>
+                      <p className="text-stardust mt-0.5">{g.expect}</p>
+                    </li>
+                    <li>
+                      <span className="text-gold uppercase tracking-wider text-[10px]">Faça agora</span>
+                      <p className="text-stardust mt-0.5">{g.doNow}</p>
+                    </li>
+                    <li>
+                      <span className="text-gold uppercase tracking-wider text-[10px]">Evite</span>
+                      <p className="text-stardust mt-0.5">{g.avoid}</p>
+                    </li>
+                    <li>
+                      <span className="text-gold uppercase tracking-wider text-[10px]">Sua força</span>
+                      <p className="text-stardust mt-0.5">{g.strength}</p>
+                    </li>
+                  </ul>
+                )}
               </div>
-              {t.hint && <p className="text-xs text-muted-foreground mt-1">{t.hint}</p>}
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
