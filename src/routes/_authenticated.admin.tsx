@@ -59,6 +59,7 @@ function AdminPage() {
       </header>
 
       <UsersAdmin />
+      <RoleAuditLog />
       <TwilioForm />
     </div>
   );
