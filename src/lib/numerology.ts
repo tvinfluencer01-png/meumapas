@@ -32,16 +32,20 @@ const sumLetters = (name: string, filter: (ch: string) => boolean) => {
   return total;
 };
 
-export function computeNumerology(fullName: string, birthDate: string) {
-  // birthDate: YYYY-MM-DD
-  const [y, m, d] = birthDate.split("-").map(Number);
+export function computeNumerology(fullName: string | null | undefined, birthDate: string | null | undefined) {
+  // Defensive: birth_data columns may be null/empty.
+  const safeName = typeof fullName === "string" ? fullName : "";
+  const safeDate = typeof birthDate === "string" && /^\d{4}-\d{2}-\d{2}/.test(birthDate)
+    ? birthDate
+    : "2000-01-01";
+  const [y, m, d] = safeDate.split("-").map(Number);
 
   const lifePath = reduce(reduce(y) + reduce(m) + reduce(d));
   const birthday = reduce(d);
 
-  const expression = reduce(sumLetters(fullName, () => true));
-  const soulUrge = reduce(sumLetters(fullName, (c) => VOWELS.has(c)));
-  const personality = reduce(sumLetters(fullName, (c) => !VOWELS.has(c)));
+  const expression = reduce(sumLetters(safeName, () => true));
+  const soulUrge = reduce(sumLetters(safeName, (c) => VOWELS.has(c)));
+  const personality = reduce(sumLetters(safeName, (c) => !VOWELS.has(c)));
   const destiny = expression; // alias popular
 
   return {
