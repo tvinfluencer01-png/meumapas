@@ -9,10 +9,15 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "check": "node scripts/check.mjs",
     "check:syntax": "node scripts/check.mjs --syntax",
-    "check:types": "node scripts/check.mjs --types"
+    "check:types": "node scripts/check.mjs --types",
+    "check:lint": "node scripts/check.mjs --lint",
+    "check:format": "node scripts/check.mjs --format",
+    "predev": "node scripts/check.mjs --syntax --lint || true"
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^2.0.47",
