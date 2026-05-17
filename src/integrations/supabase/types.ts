@@ -1,0 +1,449 @@
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
+
+export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.5"
+  }
+  public: {
+    Tables: {
+      ai_conversations: {
+        Row: {
+          context: Json | null
+          created_at: string
+          id: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          context?: Json | null
+          created_at?: string
+          id?: string
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          context?: Json | null
+          created_at?: string
+          id?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ai_messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "ai_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      app_logs: {
+        Row: {
+          created_at: string
+          event: string
+          id: string
+          payload: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event: string
+          id?: string
+          payload?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event?: string
+          id?: string
+          payload?: Json | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      astro_charts: {
+        Row: {
+          ascendant: number | null
+          aspects: Json
+          birth_data_id: string | null
+          created_at: string
+          engine: string
+          houses: Json
+          id: string
+          midheaven: number | null
+          planets: Json
+          summary: string | null
+          user_id: string
+        }
+        Insert: {
+          ascendant?: number | null
+          aspects?: Json
+          birth_data_id?: string | null
+          created_at?: string
+          engine?: string
+          houses?: Json
+          id?: string
+          midheaven?: number | null
+          planets?: Json
+          summary?: string | null
+          user_id: string
+        }
+        Update: {
+          ascendant?: number | null
+          aspects?: Json
+          birth_data_id?: string | null
+          created_at?: string
+          engine?: string
+          houses?: Json
+          id?: string
+          midheaven?: number | null
+          planets?: Json
+          summary?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "astro_charts_birth_data_id_fkey"
+            columns: ["birth_data_id"]
+            isOneToOne: false
+            referencedRelation: "birth_data"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      birth_data: {
+        Row: {
+          birth_date: string
+          birth_time: string | null
+          city: string
+          country: string | null
+          created_at: string
+          full_name: string
+          id: string
+          is_primary: boolean
+          latitude: number | null
+          longitude: number | null
+          time_unknown: boolean
+          timezone: string | null
+          user_id: string
+        }
+        Insert: {
+          birth_date: string
+          birth_time?: string | null
+          city: string
+          country?: string | null
+          created_at?: string
+          full_name: string
+          id?: string
+          is_primary?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          time_unknown?: boolean
+          timezone?: string | null
+          user_id: string
+        }
+        Update: {
+          birth_date?: string
+          birth_time?: string | null
+          city?: string
+          country?: string | null
+          created_at?: string
+          full_name?: string
+          id?: string
+          is_primary?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          time_unknown?: boolean
+          timezone?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      numerology_reports: {
+        Row: {
+          birth_date: string
+          birthday: number | null
+          created_at: string
+          destiny: number | null
+          details: Json | null
+          expression: number | null
+          full_name: string
+          id: string
+          life_path: number | null
+          personality: number | null
+          soul_urge: number | null
+          user_id: string
+        }
+        Insert: {
+          birth_date: string
+          birthday?: number | null
+          created_at?: string
+          destiny?: number | null
+          details?: Json | null
+          expression?: number | null
+          full_name: string
+          id?: string
+          life_path?: number | null
+          personality?: number | null
+          soul_urge?: number | null
+          user_id: string
+        }
+        Update: {
+          birth_date?: string
+          birthday?: number | null
+          created_at?: string
+          destiny?: number | null
+          details?: Json | null
+          expression?: number | null
+          full_name?: string
+          id?: string
+          life_path?: number | null
+          personality?: number | null
+          soul_urge?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          full_name: string | null
+          id: string
+          onboarding_completed: boolean
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id: string
+          onboarding_completed?: boolean
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          onboarding_completed?: boolean
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_settings: {
+        Row: {
+          ai_provider: string
+          astrology_api_key: string | null
+          astrology_api_user_id: string | null
+          custom_ai_key: string | null
+          custom_ai_model: string | null
+          language: string
+          preferred_engine: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_provider?: string
+          astrology_api_key?: string | null
+          astrology_api_user_id?: string | null
+          custom_ai_key?: string | null
+          custom_ai_model?: string | null
+          language?: string
+          preferred_engine?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_provider?: string
+          astrology_api_key?: string | null
+          astrology_api_user_id?: string | null
+          custom_ai_key?: string | null
+          custom_ai_model?: string | null
+          language?: string
+          preferred_engine?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      [_ in never]: never
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+}
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {},
+  },
+} as const

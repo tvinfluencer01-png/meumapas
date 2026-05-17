@@ -66,9 +66,9 @@ function Nav() {
           <a href="#ia" className="transition-colors hover:text-gold">IA Espiritual</a>
           <a href="#planos" className="transition-colors hover:text-gold">Planos</a>
         </div>
-        <button className="border border-gold/30 bg-gold/10 px-6 py-2 text-xs uppercase tracking-[0.25em] text-gold transition-all hover:bg-gold hover:text-primary-foreground">
+        <Link to="/auth" className="border border-gold/30 bg-gold/10 px-6 py-2 text-xs uppercase tracking-[0.25em] text-gold transition-all hover:bg-gold hover:text-primary-foreground">
           Entrar
-        </button>
+        </Link>
       </div>
     </nav>
   );
@@ -92,12 +92,12 @@ function Hero() {
         </p>
 
         <div className="mb-16 flex flex-col items-center justify-center gap-4 sm:flex-row">
-          <button className="gold-glow rounded-full bg-gold px-10 py-4 text-sm font-semibold uppercase tracking-[0.2em] text-primary-foreground transition-all hover:bg-gold-glow">
+          <Link to="/auth" className="gold-glow rounded-full bg-gold px-10 py-4 text-sm font-semibold uppercase tracking-[0.2em] text-primary-foreground transition-all hover:bg-gold-glow">
             Descobrir meu mapa
-          </button>
-          <button className="rounded-full border border-border px-10 py-4 text-sm uppercase tracking-[0.2em] text-foreground transition-colors hover:border-gold/40 hover:text-gold">
+          </Link>
+          <a href="#ia" className="rounded-full border border-border px-10 py-4 text-sm uppercase tracking-[0.2em] text-foreground transition-colors hover:border-gold/40 hover:text-gold">
             Conhecer a IA
-          </button>
+          </a>
         </div>
 
         <div className="relative overflow-hidden rounded-2xl border border-border bg-card/40">
