@@ -21,22 +21,23 @@ const SUGESTOES = [
 
 function OraculoPage() {
   const { user } = useAuth();
-  const [token, setToken] = useState<string | null>(null);
   const [input, setInput] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setToken(data.session?.access_token ?? null));
-  }, [user]);
 
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
         api: "/api/chat",
-        headers: () => (token ? { Authorization: `Bearer ${token}` } : ({} as Record<string, string>)),
+        fetch: async (input, init) => {
+          const { data } = await supabase.auth.getSession();
+          const token = data.session?.access_token;
+          const headers = new Headers(init?.headers);
+          if (token) headers.set("Authorization", `Bearer ${token}`);
+          return fetch(input, { ...init, headers });
+        },
       }),
-    [token],
+    [],
   );
 
   const { messages, sendMessage, status, stop, error } = useChat({
