@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -237,7 +237,7 @@ function MapaAstral() {
           <ChartSummary chart={current} />
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-            <ChartWheel chart={current} />
+            <ChartWheel chart={current} userId={user?.id} />
             <div className="space-y-4">
               <div className="glass-card rounded-2xl p-6">
                 <h3 className="font-serif text-xl text-gold">Síntese</h3>
@@ -409,7 +409,7 @@ function spreadAngles(items: { angle: number }[], minGap = 7) {
   return out;
 }
 
-function ChartWheel({ chart }: { chart: any }) {
+function ChartWheel({ chart, userId }: { chart: any; userId?: string }) {
   const [hover, setHover] = useState<HoverInfo | null>(null);
   const size = 560;
   const cx = size / 2, cy = size / 2;
@@ -423,7 +423,24 @@ function ChartWheel({ chart }: { chart: any }) {
 
   // Pan & zoom via viewBox manipulation
   const svgRef = useRef<SVGSVGElement | null>(null);
-  const [view, setView] = useState({ x: 0, y: 0, w: size, h: size });
+  // Persistência por usuário: zoom + posição são restaurados ao voltar à página.
+  const storageKey = userId ? `cosmic-ai:chart-view:${userId}` : "cosmic-ai:chart-view:anon";
+  const readStoredView = () => {
+    if (typeof window === "undefined") return { x: 0, y: 0, w: size, h: size };
+    try {
+      const raw = window.localStorage.getItem(storageKey);
+      if (!raw) return { x: 0, y: 0, w: size, h: size };
+      const parsed = JSON.parse(raw);
+      if (
+        parsed && typeof parsed === "object" &&
+        ["x", "y", "w", "h"].every((k) => typeof parsed[k] === "number" && Number.isFinite(parsed[k]))
+      ) {
+        return parsed as { x: number; y: number; w: number; h: number };
+      }
+    } catch {}
+    return { x: 0, y: 0, w: size, h: size };
+  };
+  const [view, setView] = useState(readStoredView);
   const drag = useRef<{ x: number; y: number; vx: number; vy: number } | null>(null);
   // Locked zoom range: 1x (sem zoom out, evita áreas vazias) até 5x.
   const MIN_ZOOM = 1;
@@ -482,6 +499,27 @@ function ChartWheel({ chart }: { chart: any }) {
   const isZoomed = view.w !== size || view.x !== 0 || view.y !== 0;
   const atMaxZoom = view.w <= MIN_W + 0.001;
   const atMinZoom = view.w >= MAX_W - 0.001;
+
+  // Re-restaura quando troca o usuário (login/logout entre contas no mesmo browser).
+  useEffect(() => {
+    setView(readStoredView());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storageKey]);
+
+  // Persiste zoom + posição com debounce; remove a entrada quando volta ao padrão.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const t = window.setTimeout(() => {
+      try {
+        if (!isZoomed) {
+          window.localStorage.removeItem(storageKey);
+        } else {
+          window.localStorage.setItem(storageKey, JSON.stringify(view));
+        }
+      } catch {}
+    }, 250);
+    return () => window.clearTimeout(t);
+  }, [view, isZoomed, storageKey]);
 
   return (
     <div className="glass-card rounded-2xl p-4 relative">
