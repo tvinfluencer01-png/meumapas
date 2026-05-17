@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { generateText, Output } from "ai";
+import { generateText } from "ai";
 import {
   createLovableAiGatewayProvider,
   createOpenAIProvider,
