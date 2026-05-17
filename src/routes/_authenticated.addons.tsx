@@ -1,0 +1,364 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import {
+  Coins,
+  Sparkles,
+  Check,
+  ShoppingCart,
+  RefreshCw,
+  AlertTriangle,
+  CalendarClock,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+import {
+  getAddonsOverview,
+  createMercadoPagoCheckout,
+} from "@/lib/addons.functions";
+import {
+  CREDIT_PACKAGES,
+  SUBSCRIPTION_ADDONS,
+  formatBRL,
+  type CreditPackage,
+  type SubscriptionAddon,
+} from "@/lib/addons.catalog";
+
+export const Route = createFileRoute("/_authenticated/addons")({
+  head: () => ({
+    meta: [
+      { title: "Add-ons e Créditos — Cosmic AI" },
+      {
+        name: "description",
+        content:
+          "Compre créditos avulsos ou assine planos mensais para desbloquear recursos premium do Cosmic AI.",
+      },
+    ],
+  }),
+  component: AddonsPage,
+});
+
+function AddonsPage() {
+  const overviewFn = useServerFn(getAddonsOverview);
+  const checkoutFn = useServerFn(createMercadoPagoCheckout);
+
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ["addons-overview"],
+    queryFn: () => overviewFn(),
+  });
+
+  const [pendingId, setPendingId] = useState<string | null>(null);
+
+  // React to MP back_urls (?status=success|pending|failure)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get("status");
+    if (!status) return;
+    if (status === "success") {
+      toast.success("Pagamento aprovado! Seu saldo será atualizado em instantes.");
+    } else if (status === "pending") {
+      toast.info("Pagamento pendente. Avisaremos quando for confirmado.");
+    } else if (status === "failure") {
+      toast.error("Pagamento não concluído. Tente novamente.");
+    }
+    window.history.replaceState({}, "", window.location.pathname);
+    refetch();
+  }, [refetch]);
+
+  const checkoutMut = useMutation({
+    mutationFn: (vars: { kind: "credits" | "subscription"; product_id: string }) =>
+      checkoutFn({ data: vars }),
+    onMutate: (vars) => setPendingId(vars.product_id),
+    onSuccess: (res) => {
+      window.location.href = res.checkout_url;
+    },
+    onError: (e: Error) => {
+      toast.error(e.message);
+      setPendingId(null);
+    },
+  });
+
+  const activeSubIds = new Set(
+    (data?.subscriptions ?? [])
+      .filter((s) => s.status === "active")
+      .map((s) => s.addon_id),
+  );
+
+  function handleBuy(kind: "credits" | "subscription", product_id: string) {
+    if (!data?.payments_enabled) {
+      toast.error("Pagamentos ainda não estão disponíveis. Tente novamente em breve.");
+      return;
+    }
+    checkoutMut.mutate({ kind, product_id });
+  }
+
+  return (
+    <div className="space-y-8">
+      {/* Header + balance */}
+      <header className="space-y-4">
+        <div className="flex items-center gap-3">
+          <Sparkles className="size-6 text-gold" />
+          <div>
+            <h1 className="text-2xl font-serif shimmer-text">Add-ons & Créditos</h1>
+            <p className="text-sm text-muted-foreground">
+              Amplie sua experiência com créditos avulsos ou assinaturas mensais.
+            </p>
+          </div>
+        </div>
+
+        <BalanceCard
+          loading={isLoading}
+          balance={data?.balance ?? 0}
+          updatedAt={data?.balance_updated_at ?? null}
+        />
+
+        {!isLoading && data && !data.payments_enabled && (
+          <div className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-200">
+            <AlertTriangle className="size-4 shrink-0" />
+            <span>
+              Os pagamentos estão temporariamente indisponíveis. A equipe está finalizando a integração.
+            </span>
+          </div>
+        )}
+      </header>
+
+      {/* Credit packages */}
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-serif flex items-center gap-2">
+              <Coins className="size-5 text-gold" /> Pacotes de créditos
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Compra única. Créditos não expiram.
+            </p>
+          </div>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {CREDIT_PACKAGES.map((pkg) => (
+            <CreditCard
+              key={pkg.id}
+              pkg={pkg}
+              loading={checkoutMut.isPending && pendingId === pkg.id}
+              disabled={checkoutMut.isPending}
+              onBuy={() => handleBuy("credits", pkg.id)}
+            />
+          ))}
+        </div>
+      </section>
+
+      {/* Subscriptions */}
+      <section className="space-y-4">
+        <div>
+          <h2 className="text-xl font-serif flex items-center gap-2">
+            <RefreshCw className="size-5 text-gold" /> Assinaturas mensais
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Cobrança recorrente todo mês. Cancele quando quiser.
+          </p>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {SUBSCRIPTION_ADDONS.map((sub) => (
+            <SubscriptionCard
+              key={sub.id}
+              sub={sub}
+              active={activeSubIds.has(sub.id)}
+              loading={checkoutMut.isPending && pendingId === sub.id}
+              disabled={checkoutMut.isPending}
+              onBuy={() => handleBuy("subscription", sub.id)}
+            />
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function BalanceCard({
+  loading,
+  balance,
+  updatedAt,
+}: {
+  loading: boolean;
+  balance: number;
+  updatedAt: string | null;
+}) {
+  return (
+    <Card className="border-gold/30 bg-gradient-to-br from-card to-card/40">
+      <CardContent className="flex flex-wrap items-center justify-between gap-4 py-5">
+        <div className="flex items-center gap-4">
+          <div className="rounded-full bg-gold/10 p-3">
+            <Coins className="size-6 text-gold" />
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-wider text-muted-foreground">
+              Saldo atual
+            </p>
+            <p className="text-3xl font-serif shimmer-text">
+              {loading ? "…" : balance.toLocaleString("pt-BR")}{" "}
+              <span className="text-base text-muted-foreground">créditos</span>
+            </p>
+            {updatedAt && (
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Atualizado em {new Date(updatedAt).toLocaleString("pt-BR")}
+              </p>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function CreditCard({
+  pkg,
+  loading,
+  disabled,
+  onBuy,
+}: {
+  pkg: CreditPackage;
+  loading: boolean;
+  disabled: boolean;
+  onBuy: () => void;
+}) {
+  const perCredit = pkg.price_cents / pkg.credits / 100;
+  return (
+    <Card
+      className={
+        pkg.highlight
+          ? "relative border-gold/40 shadow-lg shadow-gold/10"
+          : "relative"
+      }
+    >
+      {pkg.highlight && (
+        <Badge className="absolute -top-2 right-4 bg-gold text-background hover:bg-gold">
+          Mais vendido
+        </Badge>
+      )}
+      <CardHeader>
+        <CardTitle className="font-serif">{pkg.name}</CardTitle>
+        <CardDescription>{pkg.description}</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div>
+          <p className="text-3xl font-serif">{formatBRL(pkg.price_cents)}</p>
+          <p className="text-xs text-muted-foreground">pagamento único</p>
+        </div>
+        <div className="rounded-lg border bg-muted/30 p-3 text-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground">Créditos</span>
+            <span className="font-medium">{pkg.credits}</span>
+          </div>
+          <div className="flex items-center justify-between mt-1">
+            <span className="text-muted-foreground">Por crédito</span>
+            <span className="font-medium">
+              {perCredit.toLocaleString("pt-BR", {
+                style: "currency",
+                currency: "BRL",
+                minimumFractionDigits: 2,
+              })}
+            </span>
+          </div>
+        </div>
+      </CardContent>
+      <CardFooter>
+        <Button
+          onClick={onBuy}
+          disabled={disabled}
+          className="w-full gap-2"
+          variant={pkg.highlight ? "default" : "outline"}
+        >
+          <ShoppingCart className="size-4" />
+          {loading ? "Redirecionando…" : "Comprar"}
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+}
+
+function SubscriptionCard({
+  sub,
+  active,
+  loading,
+  disabled,
+  onBuy,
+}: {
+  sub: SubscriptionAddon;
+  active: boolean;
+  loading: boolean;
+  disabled: boolean;
+  onBuy: () => void;
+}) {
+  return (
+    <Card
+      className={
+        sub.highlight
+          ? "relative border-gold/40 shadow-lg shadow-gold/10"
+          : "relative"
+      }
+    >
+      {sub.highlight && !active && (
+        <Badge className="absolute -top-2 right-4 bg-gold text-background hover:bg-gold">
+          Recomendado
+        </Badge>
+      )}
+      {active && (
+        <Badge className="absolute -top-2 right-4 bg-emerald-600 hover:bg-emerald-600">
+          Ativo
+        </Badge>
+      )}
+      <CardHeader>
+        <CardTitle className="font-serif">{sub.name}</CardTitle>
+        <CardDescription>{sub.description}</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div>
+          <p className="text-3xl font-serif">
+            {formatBRL(sub.price_cents)}
+            <span className="text-base text-muted-foreground font-sans">/mês</span>
+          </p>
+          <p className="text-xs text-muted-foreground flex items-center gap-1">
+            <CalendarClock className="size-3" /> Cobrança recorrente mensal
+          </p>
+        </div>
+        <ul className="space-y-1.5 text-sm">
+          {sub.features.map((f) => (
+            <li key={f} className="flex items-start gap-2">
+              <Check className="size-4 text-emerald-500 shrink-0 mt-0.5" />
+              <span>{f}</span>
+            </li>
+          ))}
+        </ul>
+      </CardContent>
+      <CardFooter>
+        <Button
+          onClick={onBuy}
+          disabled={disabled || active}
+          className="w-full gap-2"
+          variant={sub.highlight && !active ? "default" : "outline"}
+        >
+          {active ? (
+            <>
+              <Check className="size-4" /> Assinatura ativa
+            </>
+          ) : (
+            <>
+              <ShoppingCart className="size-4" />
+              {loading ? "Redirecionando…" : "Assinar"}
+            </>
+          )}
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+}
