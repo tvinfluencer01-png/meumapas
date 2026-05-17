@@ -13,6 +13,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiChatRouteImport } from './routes/api.chat'
+import { Route as AuthenticatedRelatoriosRouteImport } from './routes/_authenticated.relatorios'
 import { Route as AuthenticatedOraculoRouteImport } from './routes/_authenticated.oraculo'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated.onboarding'
 import { Route as AuthenticatedNumerologiaRouteImport } from './routes/_authenticated.numerologia'
@@ -38,6 +39,11 @@ const ApiChatRoute = ApiChatRouteImport.update({
   id: '/api/chat',
   path: '/api/chat',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRelatoriosRoute = AuthenticatedRelatoriosRouteImport.update({
+  id: '/relatorios',
+  path: '/relatorios',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedOraculoRoute = AuthenticatedOraculoRouteImport.update({
   id: '/oraculo',
@@ -81,6 +87,7 @@ export interface FileRoutesByFullPath {
   '/numerologia': typeof AuthenticatedNumerologiaRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/oraculo': typeof AuthenticatedOraculoRoute
+  '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/api/chat': typeof ApiChatRoute
 }
 export interface FileRoutesByTo {
@@ -92,6 +99,7 @@ export interface FileRoutesByTo {
   '/numerologia': typeof AuthenticatedNumerologiaRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/oraculo': typeof AuthenticatedOraculoRoute
+  '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/api/chat': typeof ApiChatRoute
 }
 export interface FileRoutesById {
@@ -105,6 +113,7 @@ export interface FileRoutesById {
   '/_authenticated/numerologia': typeof AuthenticatedNumerologiaRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/oraculo': typeof AuthenticatedOraculoRoute
+  '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
   '/api/chat': typeof ApiChatRoute
 }
 export interface FileRouteTypes {
@@ -118,6 +127,7 @@ export interface FileRouteTypes {
     | '/numerologia'
     | '/onboarding'
     | '/oraculo'
+    | '/relatorios'
     | '/api/chat'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -129,6 +139,7 @@ export interface FileRouteTypes {
     | '/numerologia'
     | '/onboarding'
     | '/oraculo'
+    | '/relatorios'
     | '/api/chat'
   id:
     | '__root__'
@@ -141,6 +152,7 @@ export interface FileRouteTypes {
     | '/_authenticated/numerologia'
     | '/_authenticated/onboarding'
     | '/_authenticated/oraculo'
+    | '/_authenticated/relatorios'
     | '/api/chat'
   fileRoutesById: FileRoutesById
 }
@@ -180,6 +192,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/chat'
       preLoaderRoute: typeof ApiChatRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/relatorios': {
+      id: '/_authenticated/relatorios'
+      path: '/relatorios'
+      fullPath: '/relatorios'
+      preLoaderRoute: typeof AuthenticatedRelatoriosRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/oraculo': {
       id: '/_authenticated/oraculo'
@@ -233,6 +252,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedNumerologiaRoute: typeof AuthenticatedNumerologiaRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedOraculoRoute: typeof AuthenticatedOraculoRoute
+  AuthenticatedRelatoriosRoute: typeof AuthenticatedRelatoriosRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -242,6 +262,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedNumerologiaRoute: AuthenticatedNumerologiaRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedOraculoRoute: AuthenticatedOraculoRoute,
+  AuthenticatedRelatoriosRoute: AuthenticatedRelatoriosRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
@@ -257,3 +278,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
