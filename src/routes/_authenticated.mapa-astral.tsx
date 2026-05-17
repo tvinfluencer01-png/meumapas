@@ -166,6 +166,16 @@ function MapaAstral() {
         </Button>
       </header>
 
+      {retryInfo && (
+        <div className="glass-card rounded-2xl border border-gold/30 bg-gold/5 p-4 flex items-center gap-3">
+          <Loader2 className="size-4 text-gold animate-spin" />
+          <p className="text-sm text-stardust">
+            Tentando novamente em {Math.ceil(retryInfo.waitMs / 1000)}s
+            <span className="text-muted-foreground"> · tentativa {retryInfo.attempt} de {retryInfo.max - 1}</span>
+          </p>
+        </div>
+      )}
+
       {backendDown && (
         <div className="glass-card rounded-2xl border border-destructive/40 bg-destructive/5 p-5 flex items-start gap-3">
           <AlertTriangle className="size-5 text-destructive shrink-0 mt-0.5" />
