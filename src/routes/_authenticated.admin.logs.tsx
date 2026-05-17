@@ -211,10 +211,9 @@ function ServerFnLogsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {logs.map((l: any) => {
+                  {logs.flatMap((l: any) => {
                     const isOpen = expanded === l.id;
-                    return (
-                      <Fragment key={l.id}>
+                    return [
                         <tr
                           key={l.id}
                           className="border-b border-border/40 hover:bg-secondary/20 cursor-pointer"
