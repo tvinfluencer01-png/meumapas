@@ -21,22 +21,23 @@ const SUGESTOES = [
 
 function OraculoPage() {
   const { user } = useAuth();
-  const [token, setToken] = useState<string | null>(null);
   const [input, setInput] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setToken(data.session?.access_token ?? null));
-  }, [user]);
 
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
         api: "/api/chat",
-        headers: () => (token ? { Authorization: `Bearer ${token}` } : ({} as Record<string, string>)),
+        fetch: async (input, init) => {
+          const { data } = await supabase.auth.getSession();
+          const token = data.session?.access_token;
+          const headers = new Headers(init?.headers);
+          if (token) headers.set("Authorization", `Bearer ${token}`);
+          return fetch(input, { ...init, headers });
+        },
       }),
-    [token],
+    [],
   );
 
   const { messages, sendMessage, status, stop, error } = useChat({
@@ -57,13 +58,13 @@ function OraculoPage() {
   async function handleSubmit(e?: React.FormEvent) {
     e?.preventDefault();
     const text = input.trim();
-    if (!text || isLoading || !token) return;
+    if (!text || isLoading) return;
     setInput("");
     await sendMessage({ text });
   }
 
   function askSuggestion(s: string) {
-    if (isLoading || !token) return;
+    if (isLoading) return;
     setInput("");
     sendMessage({ text: s });
   }
@@ -144,12 +145,12 @@ function OraculoPage() {
               rows={2}
               placeholder="Pergunte ao Oráculo..."
               className="w-full bg-secondary/40 border border-border focus:border-gold/50 rounded-xl px-4 py-3 pr-14 text-sm text-stardust placeholder:text-muted-foreground resize-none outline-none transition"
-              disabled={!token}
+              disabled={!user}
             />
             <button
               type={isLoading ? "button" : "submit"}
               onClick={isLoading ? () => stop() : undefined}
-              disabled={!token || (!isLoading && !input.trim())}
+              disabled={(!isLoading && !input.trim())}
               className="absolute right-2 bottom-2 size-10 rounded-lg bg-gradient-to-br from-gold to-gold/70 text-night grid place-items-center hover:gold-glow transition disabled:opacity-40 disabled:cursor-not-allowed"
               aria-label={isLoading ? "Parar" : "Enviar"}
             >
