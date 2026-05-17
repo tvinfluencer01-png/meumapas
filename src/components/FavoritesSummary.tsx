@@ -132,10 +132,12 @@ type Fav = { id: string; date: string; note: string | null; created_at: string }
 
 function FavRow({
   fav, isToday, editing, draft, onStartEdit, onCancel, onDraftChange, onSave, onRemove,
+  onGenerate, generating,
 }: {
   fav: Fav; isToday: boolean; editing: boolean; draft: string;
   onStartEdit: () => void; onCancel: () => void;
   onDraftChange: (v: string) => void; onSave: () => void; onRemove: () => void;
+  onGenerate: () => void; generating: boolean;
 }) {
   const d = new Date(fav.date + "T12:00:00Z");
   return (
