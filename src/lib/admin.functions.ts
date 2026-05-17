@@ -248,6 +248,32 @@ async function validateTwilioCredentials(accountSid: string, authToken: string) 
   }
 }
 
+export const testTwilioCredentials = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({
+      account_sid: z.string().trim().min(1, "Account SID é obrigatório"),
+      auth_token: z.string().trim().optional().default(""),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    let tokenToCheck = data.auth_token?.trim() || "";
+    if (!tokenToCheck) {
+      const { data: existing } = await supabaseAdmin
+        .from("twilio_settings")
+        .select("auth_token")
+        .eq("id", true)
+        .maybeSingle();
+      tokenToCheck = existing?.auth_token ?? "";
+    }
+    if (!tokenToCheck) {
+      throw new Error("Informe o Auth Token para validar as credenciais.");
+    }
+    await validateTwilioCredentials(data.account_sid, tokenToCheck);
+    return { ok: true };
+  });
+
 export const saveTwilioSettings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => SaveSchema.parse(d))

@@ -14,6 +14,7 @@ import {
   getTwilioSettings,
   saveTwilioSettings,
   sendTwilioTest,
+  testTwilioCredentials,
   listAdminUsers,
   setUserAdmin,
   listRoleAuditLog,
@@ -198,6 +199,7 @@ function TwilioForm() {
   const loadFn = useServerFn(getTwilioSettings);
   const saveFn = useServerFn(saveTwilioSettings);
   const testFn = useServerFn(sendTwilioTest);
+  const testCredsFn = useServerFn(testTwilioCredentials);
 
   const { data, isLoading } = useQuery({
     queryKey: ["twilio-settings"],
@@ -240,6 +242,15 @@ function TwilioForm() {
   const testMut = useMutation({
     mutationFn: () => testFn({ data: { to: testTo, channel: testChannel } }),
     onSuccess: (r) => toast.success(`Mensagem enviada. SID: ${r.sid}`),
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const testCredsMut = useMutation({
+    mutationFn: () =>
+      testCredsFn({
+        data: { account_sid: form.account_sid, auth_token: form.auth_token },
+      }),
+    onSuccess: () => toast.success("Credenciais válidas. A Twilio aceitou o Account SID e o Auth Token."),
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -333,6 +344,15 @@ function TwilioForm() {
           <Button onClick={() => saveMut.mutate()} disabled={saveMut.isPending}>
             <Save className="size-4 mr-2" />
             {saveMut.isPending ? "Salvando…" : "Salvar configurações"}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => testCredsMut.mutate()}
+            disabled={testCredsMut.isPending || !form.account_sid}
+          >
+            <ShieldCheck className="size-4 mr-2" />
+            {testCredsMut.isPending ? "Validando…" : "Testar credenciais"}
           </Button>
           {data?.updated_at && (
             <span className="text-xs text-muted-foreground">
