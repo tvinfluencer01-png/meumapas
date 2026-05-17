@@ -1,6 +1,17 @@
 import { PDFDocument, StandardFonts, rgb, PageSizes } from "pdf-lib";
 
 export type ReportSection = { title: string; body: string };
+export type ReportSwot = {
+  strengths: string[];
+  weaknesses: string[];
+  opportunities: string[];
+  threats: string[];
+};
+export type ReportRecommendations = {
+  improve: string[];
+  avoid: string[];
+  follow: string[];
+};
 export type ReportData = {
   kind: "personality" | "love" | "career" | "spiritual";
   title: string;
@@ -12,6 +23,9 @@ export type ReportData = {
   intro: string;
   sections: ReportSection[];
   closing: string;
+  swot: ReportSwot;
+  recommendations: ReportRecommendations;
+  summary: string;
 };
 
 const GOLD = rgb(0.831, 0.686, 0.216); // #d4af37
@@ -153,7 +167,7 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
 
   // -------- CONTENT PAGES --------
   type Cursor = { page: import("pdf-lib").PDFPage; y: number; pageNumber: number };
-  let cursor: Cursor = newPage(pdf, 1);
+  let currentChapter = "Abertura";
 
   function newPage(doc: PDFDocument, num: number): Cursor {
     const page = doc.addPage(PageSizes.A4);
@@ -182,10 +196,32 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
     return { page, y: PAGE_H - MARGIN, pageNumber: num };
   }
 
+  function drawChapterTitleAt(c: Cursor) {
+    const titleSize = 14;
+    c.page.drawText(safe(currentChapter), {
+      x: MARGIN, y: c.y - titleSize, size: titleSize, font: serifBold, color: NIGHT,
+    });
+    c.y -= titleSize + 6;
+    c.page.drawLine({
+      start: { x: MARGIN, y: c.y },
+      end: { x: MARGIN + 36, y: c.y },
+      color: GOLD, thickness: 0.8,
+    });
+    c.y -= 16;
+  }
+
+  let cursor: Cursor = newPage(pdf, 1);
+  drawChapterTitleAt(cursor);
+
   function ensureSpace(needed: number) {
     if (cursor.y - needed < MARGIN) {
       cursor = newPage(pdf, cursor.pageNumber + 1);
+      drawChapterTitleAt(cursor);
     }
+  }
+
+  function setChapter(title: string) {
+    currentChapter = title;
   }
 
   function drawHeading(text: string, size = 20) {
@@ -221,19 +257,81 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
     cursor.y -= 4;
   }
 
+  function drawBulletList(items: string[]) {
+    const size = 11;
+    const lineHeight = size * 1.5;
+    for (const item of items) {
+      const lines = wrap(safe("- " + item), serif, size, CONTENT_W - 12);
+      for (let i = 0; i < lines.length; i++) {
+        ensureSpace(lineHeight);
+        cursor.page.drawText(lines[i], {
+          x: MARGIN + (i === 0 ? 0 : 12),
+          y: cursor.y - size,
+          size, font: serif, color: INK,
+        });
+        cursor.y -= lineHeight;
+      }
+      cursor.y -= 2;
+    }
+    cursor.y -= 4;
+  }
+
+  function drawSubHeading(text: string, color = NIGHT) {
+    const size = 13;
+    ensureSpace(size + 14);
+    cursor.page.drawText(safe(text), {
+      x: MARGIN, y: cursor.y - size, size, font: serifBold, color,
+    });
+    cursor.y -= size + 10;
+  }
+
   // Intro chapter
+  setChapter("Abertura");
   drawHeading("Abertura", 26);
   drawParagraph(data.intro, { italic: true, size: 12, color: rgb(0.25, 0.22, 0.18) });
 
   // Sections
   for (const section of data.sections) {
+    setChapter(section.title);
     drawHeading(section.title, 18);
     drawParagraph(section.body);
   }
 
   // Closing
+  setChapter("Selo final");
   drawHeading("Selo final", 18);
   drawParagraph(data.closing, { italic: true, color: rgb(0.3, 0.25, 0.2) });
+
+  // SWOT
+  setChapter("Analise SWOT");
+  drawHeading("Analise SWOT", 20);
+  drawParagraph(
+    "Sintese das forcas, fraquezas, oportunidades e ameacas reveladas pelo seu mapa.",
+    { italic: true, size: 11, color: MUTED },
+  );
+  drawSubHeading("Forcas (Strengths)", rgb(0.15, 0.4, 0.2));
+  drawBulletList(data.swot.strengths);
+  drawSubHeading("Fraquezas (Weaknesses)", rgb(0.55, 0.25, 0.15));
+  drawBulletList(data.swot.weaknesses);
+  drawSubHeading("Oportunidades (Opportunities)", rgb(0.2, 0.35, 0.55));
+  drawBulletList(data.swot.opportunities);
+  drawSubHeading("Ameacas (Threats)", rgb(0.5, 0.15, 0.25));
+  drawBulletList(data.swot.threats);
+
+  // Recomendacoes
+  setChapter("Recomendacoes finais");
+  drawHeading("Recomendacoes finais", 20);
+  drawSubHeading("O que MELHORAR", rgb(0.15, 0.4, 0.2));
+  drawBulletList(data.recommendations.improve);
+  drawSubHeading("O que EVITAR", rgb(0.55, 0.15, 0.2));
+  drawBulletList(data.recommendations.avoid);
+  drawSubHeading("O que SEGUIR", rgb(0.65, 0.5, 0.1));
+  drawBulletList(data.recommendations.follow);
+
+  // Resumo
+  setChapter("Resumo");
+  drawHeading("Resumo", 20);
+  drawParagraph(data.summary);
 
   // Signature line
   ensureSpace(60);
@@ -250,3 +348,4 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
 
   return await pdf.save();
 }
+

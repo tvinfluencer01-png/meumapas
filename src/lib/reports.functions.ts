@@ -57,6 +57,18 @@ const AiOutput = z.object({
     .min(4)
     .max(8),
   closing: z.string().min(120),
+  swot: z.object({
+    strengths: z.array(z.string().min(3)).min(3).max(6),
+    weaknesses: z.array(z.string().min(3)).min(3).max(6),
+    opportunities: z.array(z.string().min(3)).min(3).max(6),
+    threats: z.array(z.string().min(3)).min(3).max(6),
+  }),
+  recommendations: z.object({
+    improve: z.array(z.string().min(3)).min(3).max(6),
+    avoid: z.array(z.string().min(3)).min(3).max(6),
+    follow: z.array(z.string().min(3)).min(3).max(6),
+  }),
+  summary: z.string().min(200),
 });
 
 export const generateReport = createServerFn({ method: "POST" })
@@ -175,9 +187,21 @@ Responda APENAS com um JSON valido (sem markdown, sem cercas de codigo) no forma
 {
   "intro": "texto longo, 4 a 6 paragrafos separados por \\n\\n",
   "sections": [{"title": "Titulo curto", "body": "3 a 5 paragrafos longos separados por \\n\\n"}],
-  "closing": "2 a 3 paragrafos finais"
+  "closing": "2 a 3 paragrafos finais",
+  "swot": {
+    "strengths": ["forca 1 personalizada", "..."],
+    "weaknesses": ["fraqueza 1 personalizada", "..."],
+    "opportunities": ["oportunidade 1 personalizada", "..."],
+    "threats": ["ameaca/risco 1 personalizado", "..."]
+  },
+  "recommendations": {
+    "improve": ["o que ${firstName} deve MELHORAR (frase curta e acionavel)", "..."],
+    "avoid": ["o que ${firstName} deve EVITAR (frase curta e acionavel)", "..."],
+    "follow": ["o que ${firstName} deve SEGUIR / cultivar (frase curta e acionavel)", "..."]
+  },
+  "summary": "Resumo final em 2 paragrafos densos, integrando o que foi dito"
 }
-A lista "sections" deve ter entre 5 e 6 itens.`;
+A lista "sections" deve ter entre 5 e 6 itens. Cada item de SWOT e recommendations deve ter de 3 a 5 itens, especificos ao mapa e numerologia do consulente.`;
 
     const { text } = await generateText({ model, system, prompt });
 
@@ -212,6 +236,9 @@ A lista "sections" deve ter entre 5 e 6 itens.`;
       intro: ai.intro,
       sections: ai.sections,
       closing: ai.closing,
+      swot: ai.swot,
+      recommendations: ai.recommendations,
+      summary: ai.summary,
     };
 
     const pdfBytes = await buildReportPdf(reportData);
