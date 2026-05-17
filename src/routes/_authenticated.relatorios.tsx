@@ -202,7 +202,7 @@ function RelatoriosPage() {
                   </div>
                 </div>
                 <button
-                  onClick={() => openReport(r.id)}
+                  onClick={() => openReport(r.id, r.title)}
                   className="size-9 rounded-lg border border-gold/30 text-gold grid place-items-center hover:bg-gold/10 transition"
                   aria-label="Baixar"
                 >
