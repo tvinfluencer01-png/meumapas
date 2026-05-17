@@ -14,7 +14,301 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      ai_conversations: {
+        Row: {
+          context: Json | null
+          created_at: string
+          id: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          context?: Json | null
+          created_at?: string
+          id?: string
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          context?: Json | null
+          created_at?: string
+          id?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ai_messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "ai_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      app_logs: {
+        Row: {
+          created_at: string
+          event: string
+          id: string
+          payload: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event: string
+          id?: string
+          payload?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event?: string
+          id?: string
+          payload?: Json | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      astro_charts: {
+        Row: {
+          ascendant: number | null
+          aspects: Json
+          birth_data_id: string | null
+          created_at: string
+          engine: string
+          houses: Json
+          id: string
+          midheaven: number | null
+          planets: Json
+          summary: string | null
+          user_id: string
+        }
+        Insert: {
+          ascendant?: number | null
+          aspects?: Json
+          birth_data_id?: string | null
+          created_at?: string
+          engine?: string
+          houses?: Json
+          id?: string
+          midheaven?: number | null
+          planets?: Json
+          summary?: string | null
+          user_id: string
+        }
+        Update: {
+          ascendant?: number | null
+          aspects?: Json
+          birth_data_id?: string | null
+          created_at?: string
+          engine?: string
+          houses?: Json
+          id?: string
+          midheaven?: number | null
+          planets?: Json
+          summary?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "astro_charts_birth_data_id_fkey"
+            columns: ["birth_data_id"]
+            isOneToOne: false
+            referencedRelation: "birth_data"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      birth_data: {
+        Row: {
+          birth_date: string
+          birth_time: string | null
+          city: string
+          country: string | null
+          created_at: string
+          full_name: string
+          id: string
+          is_primary: boolean
+          latitude: number | null
+          longitude: number | null
+          time_unknown: boolean
+          timezone: string | null
+          user_id: string
+        }
+        Insert: {
+          birth_date: string
+          birth_time?: string | null
+          city: string
+          country?: string | null
+          created_at?: string
+          full_name: string
+          id?: string
+          is_primary?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          time_unknown?: boolean
+          timezone?: string | null
+          user_id: string
+        }
+        Update: {
+          birth_date?: string
+          birth_time?: string | null
+          city?: string
+          country?: string | null
+          created_at?: string
+          full_name?: string
+          id?: string
+          is_primary?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          time_unknown?: boolean
+          timezone?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      numerology_reports: {
+        Row: {
+          birth_date: string
+          birthday: number | null
+          created_at: string
+          destiny: number | null
+          details: Json | null
+          expression: number | null
+          full_name: string
+          id: string
+          life_path: number | null
+          personality: number | null
+          soul_urge: number | null
+          user_id: string
+        }
+        Insert: {
+          birth_date: string
+          birthday?: number | null
+          created_at?: string
+          destiny?: number | null
+          details?: Json | null
+          expression?: number | null
+          full_name: string
+          id?: string
+          life_path?: number | null
+          personality?: number | null
+          soul_urge?: number | null
+          user_id: string
+        }
+        Update: {
+          birth_date?: string
+          birthday?: number | null
+          created_at?: string
+          destiny?: number | null
+          details?: Json | null
+          expression?: number | null
+          full_name?: string
+          id?: string
+          life_path?: number | null
+          personality?: number | null
+          soul_urge?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          full_name: string | null
+          id: string
+          onboarding_completed: boolean
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id: string
+          onboarding_completed?: boolean
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          onboarding_completed?: boolean
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_settings: {
+        Row: {
+          ai_provider: string
+          astrology_api_key: string | null
+          astrology_api_user_id: string | null
+          custom_ai_key: string | null
+          custom_ai_model: string | null
+          language: string
+          preferred_engine: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_provider?: string
+          astrology_api_key?: string | null
+          astrology_api_user_id?: string | null
+          custom_ai_key?: string | null
+          custom_ai_model?: string | null
+          language?: string
+          preferred_engine?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_provider?: string
+          astrology_api_key?: string | null
+          astrology_api_user_id?: string | null
+          custom_ai_key?: string | null
+          custom_ai_model?: string | null
+          language?: string
+          preferred_engine?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
