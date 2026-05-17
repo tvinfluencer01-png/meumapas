@@ -2,7 +2,7 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { Shield, MessageSquare, Save, Send, CheckCircle2, AlertTriangle, Users, Search, ShieldOff, ShieldCheck } from "lucide-react";
+import { Shield, MessageSquare, Save, Send, CheckCircle2, AlertTriangle, Users, Search, ShieldOff, ShieldCheck, History, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +16,7 @@ import {
   sendTwilioTest,
   listAdminUsers,
   setUserAdmin,
+  listRoleAuditLog,
 } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -58,6 +59,7 @@ function AdminPage() {
       </header>
 
       <UsersAdmin />
+      <RoleAuditLog />
       <TwilioForm />
     </div>
   );
@@ -81,6 +83,7 @@ function UsersAdmin() {
     onSuccess: (_r, vars) => {
       toast.success(vars.is_admin ? "Usuário promovido a admin." : "Acesso de admin removido.");
       qc.invalidateQueries({ queryKey: ["admin-users"] });
+      qc.invalidateQueries({ queryKey: ["role-audit-log"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -369,6 +372,87 @@ function TwilioForm() {
             </Button>
           </div>
         </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function RoleAuditLog() {
+  const qc = useQueryClient();
+  const listFn = useServerFn(listRoleAuditLog);
+  const { data, isLoading, isFetching } = useQuery({
+    queryKey: ["role-audit-log"],
+    queryFn: () => listFn({ data: { limit: 100 } }),
+  });
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <History className="size-5 text-gold" /> Histórico de alterações de papel
+            </CardTitle>
+            <CardDescription>
+              Quem alterou, quando e o que mudou. Últimas 100 alterações.
+            </CardDescription>
+          </div>
+          <Button
+            variant="outline" size="sm"
+            disabled={isFetching}
+            onClick={() => qc.invalidateQueries({ queryKey: ["role-audit-log"] })}
+          >
+            <RefreshCw className={`size-3 mr-1 ${isFetching ? "animate-spin" : ""}`} /> Atualizar
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="text-muted-foreground text-sm">Carregando histórico…</div>
+        ) : !data?.entries.length ? (
+          <div className="text-muted-foreground text-sm">Nenhuma alteração registrada ainda.</div>
+        ) : (
+          <div className="rounded-md border border-border overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-secondary/40 text-left">
+                <tr>
+                  <th className="px-3 py-2 font-medium">Quando</th>
+                  <th className="px-3 py-2 font-medium">Ação</th>
+                  <th className="px-3 py-2 font-medium">Usuário alvo</th>
+                  <th className="px-3 py-2 font-medium">Executado por</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.entries.map((e) => (
+                  <tr key={e.id} className="border-t border-border">
+                    <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">
+                      {new Date(e.created_at).toLocaleString("pt-BR")}
+                    </td>
+                    <td className="px-3 py-2">
+                      {e.action === "grant" ? (
+                        <span className="inline-flex items-center gap-1 text-emerald-500 text-xs">
+                          <ShieldCheck className="size-3" /> Promoveu a {e.role}
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-destructive text-xs">
+                          <ShieldOff className="size-3" /> Removeu {e.role}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-3 py-2">
+                      <div>{e.target_email ?? "—"}</div>
+                      <div className="text-xs text-muted-foreground font-mono">{e.target_user_id.slice(0, 8)}…</div>
+                    </td>
+                    <td className="px-3 py-2">
+                      <div>{e.actor_email ?? "—"}</div>
+                      <div className="text-xs text-muted-foreground font-mono">{e.actor_user_id?.slice(0, 8) ?? "—"}…</div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
