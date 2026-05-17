@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Starfield } from "@/components/Starfield";
 import {
-  Sparkles, LayoutDashboard, CircleDot, Hash, MessageCircle, Settings, LogOut, Menu, X, ScrollText,
+  Sparkles, LayoutDashboard, CircleDot, Hash, MessageCircle, Settings, LogOut, Menu, X, ScrollText, Shield,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -30,17 +30,18 @@ function AuthedLayout() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [profileChecked, setProfileChecked] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("onboarding_completed")
-        .eq("id", user.id)
-        .maybeSingle();
+      const [{ data: profile }, { data: role }] = await Promise.all([
+        supabase.from("profiles").select("onboarding_completed").eq("id", user.id).maybeSingle(),
+        supabase.from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle(),
+      ]);
+      setIsAdmin(!!role);
       const path = router.state.location.pathname;
-      if (data && !data.onboarding_completed && path !== "/onboarding") {
+      if (profile && !profile.onboarding_completed && path !== "/onboarding") {
         router.navigate({ to: "/onboarding" });
       }
       setProfileChecked(true);
@@ -92,6 +93,15 @@ function AuthedLayout() {
                 <item.icon className="size-4" /> {item.label}
               </Link>
             ))}
+            {isAdmin && (
+              <Link
+                to="/admin" onClick={() => setOpen(false)}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-gold hover:bg-secondary/40 transition-colors"
+                activeProps={{ className: "bg-secondary text-gold border border-gold/20" }}
+              >
+                <Shield className="size-4" /> Admin
+              </Link>
+            )}
           </nav>
           <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border">
             <div className="text-xs text-muted-foreground truncate mb-2">{user?.email}</div>
