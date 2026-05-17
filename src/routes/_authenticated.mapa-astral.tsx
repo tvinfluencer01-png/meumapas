@@ -339,6 +339,44 @@ const ASPECT_COLOR: Record<string, string> = {
   "Trígono": "hsl(150 60% 55%)",
   "Sextil": "hsl(200 70% 60%)",
 };
+const ASPECT_PRACTICAL: Record<string, string> = {
+  "Conjunção": "Energias coladas — agem juntas. Use uma para alimentar a outra.",
+  "Oposição": "Polos que se puxam. Equilibre os dois lados em vez de escolher um.",
+  "Quadratura": "Atrito que gera ação. Use a tensão como combustível, não como muro.",
+  "Trígono": "Talento natural fluindo. Ative de propósito — não basta esperar.",
+  "Sextil": "Porta aberta. Só funciona se você der o primeiro passo.",
+};
+const MODALITY_OF: Record<string, "Cardinal" | "Fixo" | "Mutável"> = {
+  "Áries": "Cardinal", "Câncer": "Cardinal", "Libra": "Cardinal", "Capricórnio": "Cardinal",
+  "Touro": "Fixo", "Leão": "Fixo", "Escorpião": "Fixo", "Aquário": "Fixo",
+  "Gêmeos": "Mutável", "Virgem": "Mutável", "Sagitário": "Mutável", "Peixes": "Mutável",
+};
+const ELEMENT_LABEL: Record<string, string> = { fire: "Fogo", earth: "Terra", air: "Ar", water: "Água" };
+const HOUSE_MEANING: { title: string; short: string; doNow: string }[] = [
+  { title: "Casa 1 — Identidade",       short: "Como você chega, seu corpo e primeira impressão.",        doNow: "Cuide da sua imagem e iniciativa pessoal." },
+  { title: "Casa 2 — Recursos",          short: "Dinheiro, valores e o que é seu de verdade.",            doNow: "Revise finanças e o que te dá segurança." },
+  { title: "Casa 3 — Comunicação",       short: "Mente, rotina próxima, irmãos e estudos curtos.",        doNow: "Escreva, pergunte, conecte ideias." },
+  { title: "Casa 4 — Raízes",            short: "Casa, família, origem e mundo íntimo.",                  doNow: "Cuide do lar e da sua base emocional." },
+  { title: "Casa 5 — Criação",           short: "Criatividade, romance, prazer e filhos.",                doNow: "Faça algo só pelo gosto. Brinque, crie, namore." },
+  { title: "Casa 6 — Rotina & Saúde",    short: "Trabalho diário, hábitos e corpo.",                      doNow: "Ajuste rotina, sono e cuidados práticos." },
+  { title: "Casa 7 — Parcerias",         short: "Relações 1:1, casamento e sócios.",                      doNow: "Alinhe expectativas com quem é seu par." },
+  { title: "Casa 8 — Transformação",     short: "Intimidade profunda, crise e recursos do outro.",        doNow: "Encare o tabu. Solte o que já morreu." },
+  { title: "Casa 9 — Expansão",          short: "Filosofia, viagens, estudos longos e fé.",               doNow: "Estude, viaje, abra horizonte." },
+  { title: "Casa 10 — Vocação",          short: "Carreira, reputação e papel público.",                   doNow: "Mostre seu trabalho e assuma autoridade." },
+  { title: "Casa 11 — Comunidade",       short: "Grupos, amigos, causas e visão de futuro.",              doNow: "Conecte-se a quem caminha com você." },
+  { title: "Casa 12 — Interior",         short: "Subconsciente, retiro, espiritualidade e cura.",         doNow: "Reserve silêncio, sonho e prática espiritual." },
+];
+
+type HoverInfo = {
+  x: number;
+  y: number;
+  title: string;
+  subtitle?: string;
+  lines?: { label: string; value: string }[];
+  body?: string;
+  accent?: string;
+};
+
 
 function polar(cx: number, cy: number, r: number, deg: number) {
   const a = (deg * Math.PI) / 180;
