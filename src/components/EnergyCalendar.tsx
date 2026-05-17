@@ -172,6 +172,12 @@ export function EnergyCalendar() {
         })}
       </div>
 
+      {favOnly && (data?.days ?? []).every((d) => !favSet.has(d.date)) && (
+        <p className="mt-3 text-xs text-center text-muted-foreground">
+          Nenhum favorito neste mês. <button onClick={() => setFavOnly(false)} className="text-gold underline-offset-2 hover:underline">Ver todos</button>
+        </p>
+      )}
+
       {/* Selected day insight */}
       <div className="mt-6 min-h-[88px] rounded-xl border border-gold/20 bg-background/40 p-4">
         {selectedDay ? (
