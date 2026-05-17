@@ -181,7 +181,6 @@ export function PdfBrandingForm() {
         <div className="flex flex-col md:flex-row gap-4 items-start">
           <div className="w-44 h-28 border border-border rounded-lg grid place-items-center bg-night/30 shrink-0 overflow-hidden">
             {hasLogo ? (
-              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={data!.signedLogoUrl!}
                 alt="Logo"
