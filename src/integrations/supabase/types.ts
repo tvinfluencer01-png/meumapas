@@ -222,6 +222,75 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_log: {
+        Row: {
+          channel: string
+          created_at: string
+          date: string
+          id: string
+          reason: string
+          user_id: string
+        }
+        Insert: {
+          channel: string
+          created_at?: string
+          date: string
+          id?: string
+          reason: string
+          user_id: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          date?: string
+          id?: string
+          reason?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notification_preferences: {
+        Row: {
+          created_at: string
+          email_enabled: boolean
+          phone_e164: string | null
+          timezone: string
+          trigger_favorites: boolean
+          trigger_masters: boolean
+          trigger_moon: boolean
+          trigger_peak: boolean
+          updated_at: string
+          user_id: string
+          whatsapp_enabled: boolean
+        }
+        Insert: {
+          created_at?: string
+          email_enabled?: boolean
+          phone_e164?: string | null
+          timezone?: string
+          trigger_favorites?: boolean
+          trigger_masters?: boolean
+          trigger_moon?: boolean
+          trigger_peak?: boolean
+          updated_at?: string
+          user_id: string
+          whatsapp_enabled?: boolean
+        }
+        Update: {
+          created_at?: string
+          email_enabled?: boolean
+          phone_e164?: string | null
+          timezone?: string
+          trigger_favorites?: boolean
+          trigger_masters?: boolean
+          trigger_moon?: boolean
+          trigger_peak?: boolean
+          updated_at?: string
+          user_id?: string
+          whatsapp_enabled?: boolean
+        }
+        Relationships: []
+      }
       numerology_reports: {
         Row: {
           birth_date: string
