@@ -77,6 +77,9 @@ function AdminPage() {
           <TabsTrigger value="twilio" className="gap-2">
             <MessageSquare className="size-4" /> Twilio
           </TabsTrigger>
+          <TabsTrigger value="mercadopago" className="gap-2">
+            <Wallet className="size-4" /> Mercado Pago
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="settings" className="mt-0">
