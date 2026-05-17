@@ -22,11 +22,11 @@
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
-      "eslint --max-warnings=0 --no-warn-ignored",
-      "prettier --write"
+      "eslint --max-warnings=0 --no-warn-ignored --cache --cache-location node_modules/.cache/eslint/",
+      "prettier --write --cache --cache-location node_modules/.cache/prettier/cache --cache-strategy metadata"
     ],
     "*.{json,md,css,html,yml,yaml}": [
-      "prettier --write"
+      "prettier --write --cache --cache-location node_modules/.cache/prettier/cache --cache-strategy metadata"
     ]
   },
   "dependencies": {
