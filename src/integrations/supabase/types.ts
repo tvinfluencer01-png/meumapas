@@ -222,6 +222,33 @@ export type Database = {
         }
         Relationships: []
       }
+      credit_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          kind: string
+          reference: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          kind: string
+          reference?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          kind?: string
+          reference?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       mercado_pago_settings: {
         Row: {
           access_token: string | null
@@ -365,6 +392,51 @@ export type Database = {
           life_path?: number | null
           personality?: number | null
           soul_urge?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      payment_orders: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          currency: string
+          id: string
+          init_point: string | null
+          mp_payment_id: string | null
+          mp_preference_id: string | null
+          product_id: string
+          product_kind: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          currency?: string
+          id?: string
+          init_point?: string | null
+          mp_payment_id?: string | null
+          mp_preference_id?: string | null
+          product_id: string
+          product_kind: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          init_point?: string | null
+          mp_payment_id?: string | null
+          mp_preference_id?: string | null
+          product_id?: string
+          product_kind?: string
+          status?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -558,6 +630,24 @@ export type Database = {
         }
         Relationships: []
       }
+      user_credits: {
+        Row: {
+          balance: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -610,6 +700,39 @@ export type Database = {
           custom_ai_model?: string | null
           language?: string
           preferred_engine?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_subscriptions: {
+        Row: {
+          addon_id: string
+          created_at: string
+          current_period_end: string | null
+          id: string
+          mp_preapproval_id: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          addon_id: string
+          created_at?: string
+          current_period_end?: string | null
+          id?: string
+          mp_preapproval_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          addon_id?: string
+          created_at?: string
+          current_period_end?: string | null
+          id?: string
+          mp_preapproval_id?: string | null
+          status?: string
           updated_at?: string
           user_id?: string
         }
