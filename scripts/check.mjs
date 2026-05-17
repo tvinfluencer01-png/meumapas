@@ -138,11 +138,30 @@ function checkSyntax() {
   return 1;
 }
 
+function parseTscErrors(out) {
+  // Formato pretty: "path/file.ts:LINHA:COL - error TS1234: mensagem"
+  // Formato plain: "path/file.ts(LINHA,COL): error TS1234: mensagem"
+  const errors = [];
+  const re =
+    /^(.+?)(?:\((\d+),(\d+)\)|:(\d+):(\d+))\s*-?\s*error\s+TS\d+:\s*(.+)$/gm;
+  let m;
+  while ((m = re.exec(out))) {
+    const file = join(ROOT, m[1].trim());
+    errors.push({
+      file,
+      line: Number(m[2] || m[4] || 0),
+      col: Number(m[3] || m[5] || 0),
+      message: m[6].trim(),
+    });
+  }
+  return errors;
+}
+
 function checkTypes() {
   console.log(`\n${DIM}→ TypeScript (tsc --noEmit)${RESET}`);
   const r = spawnSync(
     "npx",
-    ["tsc", "--noEmit", "--pretty", "--incremental", "false"],
+    ["tsc", "--noEmit", "--pretty", "false", "--incremental", "false"],
     { encoding: "utf8" },
   );
   const out = (r.stdout || "") + (r.stderr || "");
@@ -151,22 +170,47 @@ function checkTypes() {
     console.log(`${GREEN}✓ Tipos OK${RESET}`);
     return 0;
   }
-  const count = (out.match(/error TS\d+/g) || []).length;
+  const errors = parseTscErrors(out);
+  const count = errors.length || (out.match(/error TS\d+/g) || []).length;
+  printSummary("Tipos", errors);
   console.log(`${RED}✗ ${count || "?"} erro(s) de tipo${RESET}`);
   return r.status || 1;
 }
 
-
 function checkLint() {
   console.log(`\n${DIM}→ ESLint${RESET}`);
-  const r = spawnSync("npx", ["eslint", ".", "--max-warnings=0"], {
-    encoding: "utf8",
-  });
-  process.stdout.write((r.stdout || "") + (r.stderr || ""));
+  // Saída JSON para extrair contagem por arquivo + posições exatas.
+  const r = spawnSync(
+    "npx",
+    ["eslint", ".", "--max-warnings=0", "--format", "json"],
+    { encoding: "utf8" },
+  );
   if (r.status === 0) {
     console.log(`${GREEN}✓ Lint OK${RESET}`);
     return 0;
   }
+  let results = [];
+  try {
+    results = JSON.parse(r.stdout || "[]");
+  } catch {
+    // Falha de parse: imprime o stdout/stderr cru para diagnóstico.
+    process.stdout.write((r.stdout || "") + (r.stderr || ""));
+    console.log(`${RED}✗ ESLint reportou problemas${RESET}`);
+    return r.status || 1;
+  }
+  const errors = [];
+  for (const f of results) {
+    for (const msg of f.messages || []) {
+      if (msg.severity < 2) continue; // só erros
+      errors.push({
+        file: f.filePath,
+        line: msg.line || 0,
+        col: msg.column || 0,
+        message: `${msg.message}${msg.ruleId ? ` (${msg.ruleId})` : ""}`,
+      });
+    }
+  }
+  printSummary("ESLint", errors);
   console.log(`${RED}✗ ESLint reportou problemas${RESET}`);
   return r.status || 1;
 }
@@ -174,11 +218,26 @@ function checkLint() {
 function checkFormat() {
   console.log(`\n${DIM}→ Prettier${RESET}`);
   const r = spawnSync("npx", ["prettier", "--check", "."], { encoding: "utf8" });
-  process.stdout.write((r.stdout || "") + (r.stderr || ""));
+  const out = (r.stdout || "") + (r.stderr || "");
+  process.stdout.write(out);
   if (r.status === 0) {
     console.log(`${GREEN}✓ Formatação OK${RESET}`);
     return 0;
   }
+  // Prettier reporta arquivos divergentes em linhas "[warn] caminho/arquivo".
+  const errors = [];
+  for (const line of out.split("\n")) {
+    const m = line.match(/^\[warn\]\s+(.+\.[^\s]+)$/);
+    if (m) {
+      errors.push({
+        file: join(ROOT, m[1].trim()),
+        line: 0,
+        col: 0,
+        message: "fora do padrão Prettier",
+      });
+    }
+  }
+  printSummary("Prettier", errors);
   console.log(
     `${RED}✗ Arquivos fora do padrão Prettier${RESET} ${DIM}(rode \`bun run format\`)${RESET}`,
   );
