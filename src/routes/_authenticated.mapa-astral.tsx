@@ -593,7 +593,14 @@ function ChartWheel({ chart }: { chart: any }) {
             <line key={`asp-${i}`} x1={A.x} y1={A.y} x2={B.x} y2={B.y}
               stroke={color} strokeOpacity={0.55} strokeWidth={1.2}
               strokeDasharray={dashed ? "3 3" : undefined}
-              onMouseEnter={(e) => setHover({ x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY, title: `${asp.a} ${asp.aspect} ${asp.b}`, body: `${ASPECT_MEANING[asp.aspect] ?? ""} (orbe ${asp.orb}°)` })}
+              onMouseEnter={(e) => setHover({
+                x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY,
+                title: `${asp.a} ${asp.aspect} ${asp.b}`,
+                subtitle: `Orbe ${asp.orb}°`,
+                body: ASPECT_MEANING[asp.aspect],
+                lines: [{ label: "Como usar", value: ASPECT_PRACTICAL[asp.aspect] ?? "Observe como essas duas energias se misturam em você." }],
+                accent: "aspecto",
+              })}
               onMouseLeave={() => setHover(null)}
               style={{ cursor: "help" }}
             />
