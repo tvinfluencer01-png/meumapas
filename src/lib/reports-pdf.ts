@@ -18,6 +18,18 @@ export type ReportSuggestions = {
   intro?: string;        // 1 frase contextualizando
   items: ReportSuggestion[];
 };
+export type ReportBranding = {
+  enabled: boolean;
+  logoBytes?: Uint8Array;
+  logoMime?: "image/png" | "image/jpeg";
+  logoWidth?: number;
+  logoHeight?: number;
+  displayName?: string | null;
+  footerEnabled?: boolean;
+  footerName?: string | null;
+  footerSite?: string | null;
+  footerPhone?: string | null;
+};
 export type ReportData = {
   kind: "personality" | "love" | "career" | "spiritual";
   title: string;
@@ -33,6 +45,7 @@ export type ReportData = {
   recommendations: ReportRecommendations;
   suggestions: ReportSuggestions;
   summary: string;
+  branding?: ReportBranding;
 };
 
 const GOLD = rgb(0.831, 0.686, 0.216); // #d4af37
