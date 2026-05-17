@@ -339,6 +339,44 @@ const ASPECT_COLOR: Record<string, string> = {
   "Trígono": "hsl(150 60% 55%)",
   "Sextil": "hsl(200 70% 60%)",
 };
+const ASPECT_PRACTICAL: Record<string, string> = {
+  "Conjunção": "Energias coladas — agem juntas. Use uma para alimentar a outra.",
+  "Oposição": "Polos que se puxam. Equilibre os dois lados em vez de escolher um.",
+  "Quadratura": "Atrito que gera ação. Use a tensão como combustível, não como muro.",
+  "Trígono": "Talento natural fluindo. Ative de propósito — não basta esperar.",
+  "Sextil": "Porta aberta. Só funciona se você der o primeiro passo.",
+};
+const MODALITY_OF: Record<string, "Cardinal" | "Fixo" | "Mutável"> = {
+  "Áries": "Cardinal", "Câncer": "Cardinal", "Libra": "Cardinal", "Capricórnio": "Cardinal",
+  "Touro": "Fixo", "Leão": "Fixo", "Escorpião": "Fixo", "Aquário": "Fixo",
+  "Gêmeos": "Mutável", "Virgem": "Mutável", "Sagitário": "Mutável", "Peixes": "Mutável",
+};
+const ELEMENT_LABEL: Record<string, string> = { fire: "Fogo", earth: "Terra", air: "Ar", water: "Água" };
+const HOUSE_MEANING: { title: string; short: string; doNow: string }[] = [
+  { title: "Casa 1 — Identidade",       short: "Como você chega, seu corpo e primeira impressão.",        doNow: "Cuide da sua imagem e iniciativa pessoal." },
+  { title: "Casa 2 — Recursos",          short: "Dinheiro, valores e o que é seu de verdade.",            doNow: "Revise finanças e o que te dá segurança." },
+  { title: "Casa 3 — Comunicação",       short: "Mente, rotina próxima, irmãos e estudos curtos.",        doNow: "Escreva, pergunte, conecte ideias." },
+  { title: "Casa 4 — Raízes",            short: "Casa, família, origem e mundo íntimo.",                  doNow: "Cuide do lar e da sua base emocional." },
+  { title: "Casa 5 — Criação",           short: "Criatividade, romance, prazer e filhos.",                doNow: "Faça algo só pelo gosto. Brinque, crie, namore." },
+  { title: "Casa 6 — Rotina & Saúde",    short: "Trabalho diário, hábitos e corpo.",                      doNow: "Ajuste rotina, sono e cuidados práticos." },
+  { title: "Casa 7 — Parcerias",         short: "Relações 1:1, casamento e sócios.",                      doNow: "Alinhe expectativas com quem é seu par." },
+  { title: "Casa 8 — Transformação",     short: "Intimidade profunda, crise e recursos do outro.",        doNow: "Encare o tabu. Solte o que já morreu." },
+  { title: "Casa 9 — Expansão",          short: "Filosofia, viagens, estudos longos e fé.",               doNow: "Estude, viaje, abra horizonte." },
+  { title: "Casa 10 — Vocação",          short: "Carreira, reputação e papel público.",                   doNow: "Mostre seu trabalho e assuma autoridade." },
+  { title: "Casa 11 — Comunidade",       short: "Grupos, amigos, causas e visão de futuro.",              doNow: "Conecte-se a quem caminha com você." },
+  { title: "Casa 12 — Interior",         short: "Subconsciente, retiro, espiritualidade e cura.",         doNow: "Reserve silêncio, sonho e prática espiritual." },
+];
+
+type HoverInfo = {
+  x: number;
+  y: number;
+  title: string;
+  subtitle?: string;
+  lines?: { label: string; value: string }[];
+  body?: string;
+  accent?: string;
+};
+
 
 function polar(cx: number, cy: number, r: number, deg: number) {
   const a = (deg * Math.PI) / 180;
@@ -372,7 +410,7 @@ function spreadAngles(items: { angle: number }[], minGap = 7) {
 }
 
 function ChartWheel({ chart }: { chart: any }) {
-  const [hover, setHover] = useState<{ x: number; y: number; title: string; body: string } | null>(null);
+  const [hover, setHover] = useState<HoverInfo | null>(null);
   const size = 560;
   const cx = size / 2, cy = size / 2;
   const rOuter = 258, rZodiac = 222, rInner = 188, rHouseNum = 158, rPlanet = 138, rAspect = 118;
@@ -479,7 +517,17 @@ function ChartWheel({ chart }: { chart: any }) {
           const meaning = SIGN_MEANING[SIGNS[i]];
           return (
             <g key={`sec-${i}`}
-              onMouseEnter={(e) => setHover({ x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY, title: `${meaning?.glyph} ${SIGNS[i]}`, body: meaning?.short ?? "" })}
+              onMouseEnter={(e) => {
+                const g = SIGN_GUIDANCE[SIGNS[i]];
+                setHover({
+                  x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY,
+                  title: `${meaning?.glyph} ${SIGNS[i]}`,
+                  subtitle: `${ELEMENT_LABEL[el]} · ${MODALITY_OF[SIGNS[i]]}`,
+                  body: meaning?.short,
+                  lines: g ? [{ label: "Faça agora", value: g.doNow }, { label: "Evite", value: g.avoid }] : undefined,
+                  accent: "signo",
+                });
+              }}
               onMouseLeave={() => setHover(null)}
               style={{ cursor: "help" }}>
               <path d={d} fill={ELEMENT_COLOR[el]} stroke="hsl(45 70% 50% / 0.25)" />
@@ -498,16 +546,33 @@ function ChartWheel({ chart }: { chart: any }) {
           return <line key={`tick-${i}`} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="hsl(45 70% 60% / 0.35)" strokeWidth={i % 6 === 0 ? 1 : 0.5} />;
         })}
 
-        {/* House spokes (equal house from Asc) + numbers */}
+        {/* House sectors (invisible hover pies) + spokes + numbers */}
         {Array.from({ length: 12 }).map((_, i) => {
-          const angle = (180 + i * 30) % 360;
-          const a = polar(cx, cy, rAspect, angle);
-          const b = polar(cx, cy, rInner, angle);
-          const numPos = polar(cx, cy, rHouseNum, angle + 15);
+          const startDeg = (180 + i * 30) % 360;
+          const endDeg = startDeg + 30;
+          const p1 = polar(cx, cy, rInner, startDeg);
+          const p2 = polar(cx, cy, rInner, endDeg);
+          const p3 = polar(cx, cy, rAspect, endDeg);
+          const p4 = polar(cx, cy, rAspect, startDeg);
+          const d = `M ${p1.x} ${p1.y} A ${rInner} ${rInner} 0 0 1 ${p2.x} ${p2.y} L ${p3.x} ${p3.y} A ${rAspect} ${rAspect} 0 0 0 ${p4.x} ${p4.y} Z`;
+          const a = polar(cx, cy, rAspect, startDeg);
+          const b = polar(cx, cy, rInner, startDeg);
+          const numPos = polar(cx, cy, rHouseNum, startDeg + 15);
+          const h = HOUSE_MEANING[i];
           return (
             <g key={`house-${i}`}>
-              <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="hsl(45 70% 50% / 0.2)" />
-              <text x={numPos.x} y={numPos.y} fontSize="10" fill="hsl(45 60% 65% / 0.6)" textAnchor="middle" dominantBaseline="middle">
+              <path d={d} fill="transparent" style={{ cursor: "help" }}
+                onMouseEnter={(e) => setHover({
+                  x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY,
+                  title: h.title,
+                  subtitle: "Setor de vida",
+                  body: h.short,
+                  lines: [{ label: "Faça agora", value: h.doNow }],
+                })}
+                onMouseLeave={() => setHover(null)}
+              />
+              <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="hsl(45 70% 50% / 0.2)" style={{ pointerEvents: "none" }} />
+              <text x={numPos.x} y={numPos.y} fontSize="10" fill="hsl(45 60% 65% / 0.6)" textAnchor="middle" dominantBaseline="middle" style={{ pointerEvents: "none" }}>
                 {i + 1}
               </text>
             </g>
@@ -528,7 +593,14 @@ function ChartWheel({ chart }: { chart: any }) {
             <line key={`asp-${i}`} x1={A.x} y1={A.y} x2={B.x} y2={B.y}
               stroke={color} strokeOpacity={0.55} strokeWidth={1.2}
               strokeDasharray={dashed ? "3 3" : undefined}
-              onMouseEnter={(e) => setHover({ x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY, title: `${asp.a} ${asp.aspect} ${asp.b}`, body: `${ASPECT_MEANING[asp.aspect] ?? ""} (orbe ${asp.orb}°)` })}
+              onMouseEnter={(e) => setHover({
+                x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY,
+                title: `${asp.a} ${asp.aspect} ${asp.b}`,
+                subtitle: `Orbe ${asp.orb}°`,
+                body: ASPECT_MEANING[asp.aspect],
+                lines: [{ label: "Como usar", value: ASPECT_PRACTICAL[asp.aspect] ?? "Observe como essas duas energias se misturam em você." }],
+                accent: "aspecto",
+              })}
               onMouseLeave={() => setHover(null)}
               style={{ cursor: "help" }}
             />
@@ -546,7 +618,26 @@ function ChartWheel({ chart }: { chart: any }) {
           const s = SIGN_MEANING[p.sign];
           return (
             <g key={`pl-${i}`}
-              onMouseEnter={(e) => setHover({ x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY, title: `${m?.title ?? p.name} em ${s?.glyph ?? ""} ${p.sign} ${p.degree.toFixed(1)}°`, body: m?.short ?? "" })}
+              onMouseEnter={(e) => {
+                const g = SIGN_GUIDANCE[p.sign];
+                const el = ELEMENT_OF[p.sign];
+                const planetAspects = (chart.aspects ?? []).filter((a: any) => a.a === p.name || a.b === p.name);
+                const aspLines = planetAspects.slice(0, 3).map((a: any) => ({
+                  label: a.aspect,
+                  value: `${a.a === p.name ? a.b : a.a} · orbe ${a.orb}°`,
+                }));
+                setHover({
+                  x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY,
+                  title: `${m?.title ?? p.name} em ${s?.glyph ?? ""} ${p.sign}`,
+                  subtitle: `${p.degree.toFixed(2)}° · ${ELEMENT_LABEL[el]} ${MODALITY_OF[p.sign]}`,
+                  body: m?.short,
+                  lines: [
+                    ...(g ? [{ label: "Faça agora", value: g.doNow }] : []),
+                    ...aspLines,
+                  ],
+                  accent: "planeta",
+                });
+              }}
               onMouseLeave={() => setHover(null)}
               style={{ cursor: "help" }}>
               <line x1={real.x} y1={real.y} x2={dot.x} y2={dot.y} stroke="hsl(45 80% 60% / 0.45)" strokeWidth={0.8} />
@@ -581,11 +672,24 @@ function ChartWheel({ chart }: { chart: any }) {
       {/* HTML hover tooltip */}
       {hover && (
         <div
-          className="pointer-events-none absolute z-10 rounded-md border border-gold/30 bg-background/95 backdrop-blur px-3 py-2 shadow-xl max-w-[220px]"
-          style={{ left: Math.min(hover.x + 12, 420), top: Math.max(hover.y - 8, 8) }}
+          className="pointer-events-none absolute z-10 rounded-lg border border-gold/30 bg-background/95 backdrop-blur px-3 py-2 shadow-xl w-[260px]"
+          style={{ left: Math.min(hover.x + 14, 360), top: Math.max(hover.y - 8, 8) }}
         >
           <p className="font-serif text-gold text-sm leading-tight">{hover.title}</p>
-          {hover.body && <p className="text-[11px] text-muted-foreground mt-1 leading-snug">{hover.body}</p>}
+          {hover.subtitle && (
+            <p className="text-[10px] uppercase tracking-wider text-gold/70 mt-0.5">{hover.subtitle}</p>
+          )}
+          {hover.body && <p className="text-[11px] text-stardust mt-1.5 leading-snug">{hover.body}</p>}
+          {hover.lines && hover.lines.length > 0 && (
+            <ul className="mt-2 space-y-1.5">
+              {hover.lines.map((ln, k) => (
+                <li key={k} className="text-[11px] leading-snug">
+                  <span className="text-gold/80 uppercase tracking-wider text-[9px] block">{ln.label}</span>
+                  <span className="text-muted-foreground">{ln.value}</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
 
