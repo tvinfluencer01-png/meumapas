@@ -45,6 +45,7 @@ export function EnergyCalendar() {
   const today = new Date();
   const [cursor, setCursor] = useState({ year: today.getFullYear(), month: today.getMonth() + 1 });
   const [selected, setSelected] = useState<string | null>(null);
+  const [favOnly, setFavOnly] = useState(false);
 
   const fetchCal = useServerFn(getEnergyCalendar);
   const fetchFavs = useServerFn(listFavorites);
@@ -99,6 +100,20 @@ export function EnergyCalendar() {
           </h2>
         </div>
         <div className="flex items-center gap-1">
+          <button
+            onClick={() => setFavOnly((v) => !v)}
+            aria-pressed={favOnly}
+            title={favOnly ? "Mostrar todos os dias" : "Mostrar só favoritos"}
+            className={cn(
+              "mr-1 flex items-center gap-1.5 text-[11px] px-2.5 py-1.5 rounded-full border transition-colors",
+              favOnly
+                ? "border-gold/60 bg-gold/15 text-gold"
+                : "border-stardust/15 text-muted-foreground hover:border-gold/40 hover:text-gold",
+            )}
+          >
+            <Star className={cn("size-3", favOnly && "fill-gold")} />
+            {favOnly ? "Só favoritos" : "Filtrar favoritos"}
+          </button>
           <button onClick={goPrev} aria-label="Mês anterior"
             className="p-2 rounded-full hover:bg-gold/10 text-stardust transition-colors">
             <ChevronLeft className="size-4" />
@@ -123,11 +138,12 @@ export function EnergyCalendar() {
           const isToday = d.date === todayISO;
           const isSelected = d.date === selected;
           const isFav = favSet.has(d.date);
+          const dimmed = favOnly && !!d.date && !isFav;
           return (
             <button
               key={d.day}
-              onClick={() => d.date && setSelected(d.date)}
-              disabled={!d.date}
+              onClick={() => d.date && !dimmed && setSelected(d.date)}
+              disabled={!d.date || dimmed}
               className={cn(
                 "relative aspect-square rounded-lg flex flex-col items-center justify-center text-xs transition-all",
                 "border border-transparent hover:border-gold/40",
@@ -136,6 +152,7 @@ export function EnergyCalendar() {
                 isSelected && "ring-2 ring-gold scale-105",
                 isFav && "border-gold/60",
                 isLoading && "animate-pulse",
+                dimmed && "opacity-15 grayscale hover:border-transparent cursor-default",
               )}
             >
               <span className="font-serif text-sm leading-none">{d.day}</span>
@@ -154,6 +171,12 @@ export function EnergyCalendar() {
           );
         })}
       </div>
+
+      {favOnly && (data?.days ?? []).every((d) => !favSet.has(d.date)) && (
+        <p className="mt-3 text-xs text-center text-muted-foreground">
+          Nenhum favorito neste mês. <button onClick={() => setFavOnly(false)} className="text-gold underline-offset-2 hover:underline">Ver todos</button>
+        </p>
+      )}
 
       {/* Selected day insight */}
       <div className="mt-6 min-h-[88px] rounded-xl border border-gold/20 bg-background/40 p-4">
