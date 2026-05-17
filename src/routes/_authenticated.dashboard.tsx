@@ -7,6 +7,7 @@ import { Sparkles, Sun, Moon, Star, Heart, Flame, ChevronRight } from "lucide-re
 import { Button } from "@/components/ui/button";
 import { EnergyCalendar } from "@/components/EnergyCalendar";
 import { WeeklyReading } from "@/components/WeeklyReading";
+import { FavoritesSummary } from "@/components/FavoritesSummary";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
@@ -93,6 +94,9 @@ function Dashboard() {
 
       {/* Energy Calendar */}
       <EnergyCalendar />
+
+      {/* Favorites summary */}
+      <FavoritesSummary />
 
       {/* CTAs */}
       <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
