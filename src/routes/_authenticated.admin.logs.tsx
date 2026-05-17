@@ -211,54 +211,14 @@ function ServerFnLogsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {logs.flatMap((l: any) => {
-                    const isOpen = expanded === l.id;
-                    return [
-                        <tr
-                          key={l.id}
-                          className="border-b border-border/40 hover:bg-secondary/20 cursor-pointer"
-                          onClick={() => setExpanded(isOpen ? null : l.id)}
-                        >
-                          <td className="py-2 pr-3 align-top whitespace-nowrap text-muted-foreground">
-                            {new Date(l.created_at).toLocaleString("pt-BR")}
-                          </td>
-                          <td className="py-2 pr-3 align-top">
-                            <code className="text-gold text-xs">{l.fn ?? "—"}</code>
-                          </td>
-                          <td className="py-2 pr-3 align-top text-destructive max-w-[480px] truncate">
-                            <AlertTriangle className="inline size-3 mr-1" />
-                            {l.message ?? "—"}
-                          </td>
-                          <td className="py-2 pr-3 align-top">
-                            <div className="text-stardust">{l.user_name || "—"}</div>
-                            <div className="text-xs text-muted-foreground truncate max-w-[180px]">
-                              {l.user_email ?? l.user_id ?? "anônimo"}
-                            </div>
-                          </td>
-                        </tr>,
-                        isOpen ? (
-                          <tr key={`${l.id}-d`} className="bg-secondary/10">
-                            <td colSpan={4} className="p-4">
-                              {l.stack && (
-                                <pre className="text-[11px] text-muted-foreground bg-background/60 border border-border rounded p-3 overflow-x-auto whitespace-pre-wrap">
-                                  {l.stack}
-                                </pre>
-                              )}
-                              {l.extra && Object.keys(l.extra).length > 0 && (
-                                <div className="mt-3">
-                                  <div className="text-xs uppercase tracking-wider text-gold mb-1">
-                                    Contexto
-                                  </div>
-                                  <pre className="text-[11px] text-stardust bg-background/60 border border-border rounded p-3 overflow-x-auto">
-                                    {JSON.stringify(l.extra, null, 2)}
-                                  </pre>
-                                </div>
-                              )}
-                            </td>
-                          </tr>
-                        ) : null,
-                    ];
-                  })}
+                  {logs.map((l: any) => (
+                    <LogRow
+                      key={l.id}
+                      log={l}
+                      isOpen={expanded === l.id}
+                      onToggle={() => setExpanded(expanded === l.id ? null : l.id)}
+                    />
+                  ))}
                 </tbody>
               </table>
             </div>
@@ -266,5 +226,62 @@ function ServerFnLogsPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function LogRow({
+  log,
+  isOpen,
+  onToggle,
+}: {
+  log: any;
+  isOpen: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <Fragment>
+      <tr
+        className="border-b border-border/40 hover:bg-secondary/20 cursor-pointer"
+        onClick={onToggle}
+      >
+        <td className="py-2 pr-3 align-top whitespace-nowrap text-muted-foreground">
+          {new Date(log.created_at).toLocaleString("pt-BR")}
+        </td>
+        <td className="py-2 pr-3 align-top">
+          <code className="text-gold text-xs">{log.fn ?? "—"}</code>
+        </td>
+        <td className="py-2 pr-3 align-top text-destructive max-w-[480px] truncate">
+          <AlertTriangle className="inline size-3 mr-1" />
+          {log.message ?? "—"}
+        </td>
+        <td className="py-2 pr-3 align-top">
+          <div className="text-stardust">{log.user_name || "—"}</div>
+          <div className="text-xs text-muted-foreground truncate max-w-[180px]">
+            {log.user_email ?? log.user_id ?? "anônimo"}
+          </div>
+        </td>
+      </tr>
+      {isOpen && (
+        <tr className="bg-secondary/10">
+          <td colSpan={4} className="p-4">
+            {log.stack && (
+              <pre className="text-[11px] text-muted-foreground bg-background/60 border border-border rounded p-3 overflow-x-auto whitespace-pre-wrap">
+                {log.stack}
+              </pre>
+            )}
+            {log.extra && Object.keys(log.extra).length > 0 && (
+              <div className="mt-3">
+                <div className="text-xs uppercase tracking-wider text-gold mb-1">
+                  Contexto
+                </div>
+                <pre className="text-[11px] text-stardust bg-background/60 border border-border rounded p-3 overflow-x-auto">
+                  {JSON.stringify(log.extra, null, 2)}
+                </pre>
+              </div>
+            )}
+          </td>
+        </tr>
+      )}
+    </Fragment>
   );
 }
