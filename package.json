@@ -17,7 +17,17 @@
     "check:types": "node scripts/check.mjs --types",
     "check:lint": "node scripts/check.mjs --lint",
     "check:format": "node scripts/check.mjs --format",
-    "predev": "node scripts/check.mjs --syntax --lint || true"
+    "predev": "node scripts/check.mjs --syntax --lint || true",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "eslint --max-warnings=0 --no-warn-ignored",
+      "prettier --write"
+    ],
+    "*.{json,md,css,html,yml,yaml}": [
+      "prettier --write"
+    ]
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^2.0.47",
