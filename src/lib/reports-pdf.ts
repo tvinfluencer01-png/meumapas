@@ -308,9 +308,9 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
   drawHeading("Selo final", 18);
   drawParagraph(data.closing, { italic: true, color: rgb(0.3, 0.25, 0.2) });
 
-  // SWOT
-  setChapter("Analise SWOT");
-  drawHeading("Analise SWOT", 20);
+  // Analise
+  setChapter("Analise");
+  drawHeading("Analise", 20);
   drawParagraph(
     "Sintese das forcas, fraquezas, oportunidades e ameacas reveladas pelo seu mapa.",
     { italic: true, size: 11, color: MUTED },
