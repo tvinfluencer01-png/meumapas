@@ -221,11 +221,56 @@ const SaveSchema = z.object({
   enabled: z.boolean(),
 });
 
+async function validateTwilioCredentials(accountSid: string, authToken: string) {
+  let res: Response;
+  try {
+    const auth = btoa(`${accountSid}:${authToken}`);
+    res = await fetch(
+      `https://api.twilio.com/2010-04-01/Accounts/${accountSid}.json`,
+      { method: "GET", headers: { Authorization: `Basic ${auth}` } },
+    );
+  } catch {
+    throw new Error("Não foi possível contatar a Twilio. Verifique sua conexão e tente novamente.");
+  }
+  if (res.status === 401) {
+    throw new Error("Credenciais inválidas: a Twilio rejeitou o Account SID ou o Auth Token.");
+  }
+  if (res.status === 404) {
+    throw new Error("Account SID não encontrado na Twilio.");
+  }
+  if (!res.ok) {
+    const json = await res.json().catch(() => ({} as { message?: string }));
+    throw new Error(`Twilio recusou as credenciais (HTTP ${res.status}): ${json?.message ?? "erro desconhecido"}.`);
+  }
+  const json = await res.json().catch(() => ({} as { status?: string }));
+  if (json?.status && json.status !== "active") {
+    throw new Error(`Conta Twilio está com status "${json.status}", não é possível enviar mensagens.`);
+  }
+}
+
 export const saveTwilioSettings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => SaveSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
+
+    // Validate credentials against Twilio before persisting (only when SID is set)
+    if (data.account_sid) {
+      let tokenToCheck = data.auth_token?.trim() || "";
+      if (!tokenToCheck) {
+        const { data: existing } = await supabaseAdmin
+          .from("twilio_settings")
+          .select("auth_token")
+          .eq("id", true)
+          .maybeSingle();
+        tokenToCheck = existing?.auth_token ?? "";
+      }
+      if (!tokenToCheck) {
+        throw new Error("Informe o Auth Token para validar as credenciais.");
+      }
+      await validateTwilioCredentials(data.account_sid, tokenToCheck);
+    }
+
     const update = {
       account_sid: data.account_sid || null,
       whatsapp_from: data.whatsapp_from || null,
