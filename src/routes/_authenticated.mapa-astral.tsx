@@ -383,9 +383,68 @@ function ChartWheel({ chart }: { chart: any }) {
   const planetAngles = chart.planets.map((p: any) => toAngle(p.longitude));
   const display = spreadAngles(planetAngles.map((angle: number) => ({ angle })), 8);
 
+  // Pan & zoom via viewBox manipulation
+  const svgRef = useRef<SVGSVGElement | null>(null);
+  const [view, setView] = useState({ x: 0, y: 0, w: size, h: size });
+  const drag = useRef<{ x: number; y: number; vx: number; vy: number } | null>(null);
+  const MIN_W = size / 4;
+  const MAX_W = size * 1.5;
+
+  const onWheel = (e: React.WheelEvent<SVGSVGElement>) => {
+    e.preventDefault();
+    const svg = svgRef.current;
+    if (!svg) return;
+    const rect = svg.getBoundingClientRect();
+    const focalX = view.x + ((e.clientX - rect.left) / rect.width) * view.w;
+    const focalY = view.y + ((e.clientY - rect.top) / rect.height) * view.h;
+    const factor = e.deltaY > 0 ? 1.15 : 1 / 1.15;
+    const newW = Math.min(MAX_W, Math.max(MIN_W, view.w * factor));
+    const k = newW / view.w;
+    setView({ x: focalX - (focalX - view.x) * k, y: focalY - (focalY - view.y) * k, w: newW, h: newW });
+  };
+  const onPointerDown = (e: React.PointerEvent<SVGSVGElement>) => {
+    (e.currentTarget as SVGSVGElement).setPointerCapture(e.pointerId);
+    drag.current = { x: e.clientX, y: e.clientY, vx: view.x, vy: view.y };
+    setHover(null);
+  };
+  const onPointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
+    if (!drag.current || !svgRef.current) return;
+    const rect = svgRef.current.getBoundingClientRect();
+    const dx = ((e.clientX - drag.current.x) / rect.width) * view.w;
+    const dy = ((e.clientY - drag.current.y) / rect.height) * view.h;
+    setView((v) => ({ ...v, x: drag.current!.vx - dx, y: drag.current!.vy - dy }));
+  };
+  const onPointerUp = (e: React.PointerEvent<SVGSVGElement>) => {
+    drag.current = null;
+    try { (e.currentTarget as SVGSVGElement).releasePointerCapture(e.pointerId); } catch {}
+  };
+  const resetView = () => setView({ x: 0, y: 0, w: size, h: size });
+  const zoomBy = (factor: number) => {
+    const newW = Math.min(MAX_W, Math.max(MIN_W, view.w * factor));
+    const cxv = view.x + view.w / 2, cyv = view.y + view.h / 2;
+    setView({ x: cxv - newW / 2, y: cyv - newW / 2, w: newW, h: newW });
+  };
+  const isZoomed = view.w !== size || view.x !== 0 || view.y !== 0;
+
   return (
     <div className="glass-card rounded-2xl p-4 relative">
-      <svg viewBox={`0 0 ${size} ${size}`} className="w-full max-w-[560px] block mx-auto">
+      <div className="absolute top-3 right-3 z-10 flex items-center gap-1">
+        <button type="button" onClick={() => zoomBy(1 / 1.3)} className="size-7 rounded-md border border-gold/30 bg-background/70 text-gold text-sm hover:bg-gold/10" aria-label="Aproximar">+</button>
+        <button type="button" onClick={() => zoomBy(1.3)} className="size-7 rounded-md border border-gold/30 bg-background/70 text-gold text-sm hover:bg-gold/10" aria-label="Afastar">−</button>
+        <button type="button" onClick={resetView} disabled={!isZoomed} className="h-7 px-2 rounded-md border border-gold/30 bg-background/70 text-gold text-[10px] hover:bg-gold/10 disabled:opacity-40">Reset</button>
+      </div>
+      <p className="absolute bottom-2 left-3 text-[10px] text-muted-foreground/70 pointer-events-none">Arraste para mover · scroll para zoom</p>
+      <svg
+        ref={svgRef}
+        viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`}
+        className="w-full max-w-[560px] block mx-auto touch-none select-none"
+        style={{ cursor: drag.current ? "grabbing" : "grab" }}
+        onWheel={onWheel}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+      >
         <defs>
           <radialGradient id="cw-nebula" cx="50%" cy="50%" r="50%">
             <stop offset="0%" stopColor="hsl(255 60% 25%)" stopOpacity="0.45" />
