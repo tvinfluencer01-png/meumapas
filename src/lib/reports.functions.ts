@@ -57,6 +57,18 @@ const AiOutput = z.object({
     .min(4)
     .max(8),
   closing: z.string().min(120),
+  swot: z.object({
+    strengths: z.array(z.string().min(3)).min(3).max(6),
+    weaknesses: z.array(z.string().min(3)).min(3).max(6),
+    opportunities: z.array(z.string().min(3)).min(3).max(6),
+    threats: z.array(z.string().min(3)).min(3).max(6),
+  }),
+  recommendations: z.object({
+    improve: z.array(z.string().min(3)).min(3).max(6),
+    avoid: z.array(z.string().min(3)).min(3).max(6),
+    follow: z.array(z.string().min(3)).min(3).max(6),
+  }),
+  summary: z.string().min(200),
 });
 
 export const generateReport = createServerFn({ method: "POST" })
