@@ -381,3 +381,79 @@ export const sendTwilioTest = createServerFn({ method: "POST" })
     }
     return { ok: true, sid: json.sid };
   });
+
+// --- Server function diagnostics ------------------------------------------
+export const listServerFnLogs = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({
+      fn: z.string().trim().max(120).optional(),
+      hours: z.number().int().min(1).max(720).optional().default(24),
+      limit: z.number().int().min(1).max(200).optional().default(100),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    const since = new Date(Date.now() - data.hours * 3600_000).toISOString();
+
+    let query = supabaseAdmin
+      .from("app_logs")
+      .select("id, created_at, event, user_id, payload")
+      .eq("event", "serverfn_error")
+      .gte("created_at", since)
+      .order("created_at", { ascending: false })
+      .limit(data.limit);
+
+    const { data: logs, error } = await query;
+    if (error) throw new Error(error.message);
+
+    // Filter by fn name (in payload) client-side since payload is jsonb
+    const filtered = data.fn
+      ? (logs ?? []).filter((l: any) =>
+          String(l.payload?.fn ?? "").toLowerCase().includes(data.fn!.toLowerCase()),
+        )
+      : (logs ?? []);
+
+    // Hydrate user emails
+    const userIds = Array.from(
+      new Set(filtered.map((l: any) => l.user_id).filter(Boolean)),
+    ) as string[];
+
+    const emailsById: Record<string, string> = {};
+    const namesById: Record<string, string> = {};
+    if (userIds.length) {
+      const { data: profs } = await supabaseAdmin
+        .from("profiles")
+        .select("id, full_name")
+        .in("id", userIds);
+      for (const p of profs ?? []) namesById[p.id] = p.full_name ?? "";
+
+      // emails via auth admin
+      for (const uid of userIds) {
+        try {
+          const { data: u } = await supabaseAdmin.auth.admin.getUserById(uid);
+          if (u?.user?.email) emailsById[uid] = u.user.email;
+        } catch {
+          /* ignore */
+        }
+      }
+    }
+
+    return {
+      logs: filtered.map((l: any) => ({
+        id: l.id,
+        created_at: l.created_at,
+        event: l.event,
+        fn: l.payload?.fn ?? null,
+        message: l.payload?.message ?? null,
+        stack: l.payload?.stack ?? null,
+        extra: (() => {
+          const { fn, message, stack, ...rest } = l.payload ?? {};
+          return rest;
+        })(),
+        user_id: l.user_id,
+        user_email: l.user_id ? emailsById[l.user_id] ?? null : null,
+        user_name: l.user_id ? namesById[l.user_id] ?? null : null,
+      })),
+    };
+  });
