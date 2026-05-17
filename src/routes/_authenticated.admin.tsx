@@ -2,7 +2,7 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { Shield, MessageSquare, Save, Send, CheckCircle2, AlertTriangle } from "lucide-react";
+import { Shield, MessageSquare, Save, Send, CheckCircle2, AlertTriangle, Users, Search, ShieldOff, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +14,8 @@ import {
   getTwilioSettings,
   saveTwilioSettings,
   sendTwilioTest,
+  listAdminUsers,
+  setUserAdmin,
 } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -55,8 +57,136 @@ function AdminPage() {
         </div>
       </header>
 
+      <UsersAdmin />
       <TwilioForm />
     </div>
+  );
+}
+
+function UsersAdmin() {
+  const qc = useQueryClient();
+  const listFn = useServerFn(listAdminUsers);
+  const setFn = useServerFn(setUserAdmin);
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+
+  const { data, isLoading, isFetching } = useQuery({
+    queryKey: ["admin-users", search, page],
+    queryFn: () => listFn({ data: { search, page } }),
+  });
+
+  const mut = useMutation({
+    mutationFn: (vars: { user_id: string; is_admin: boolean }) =>
+      setFn({ data: vars }),
+    onSuccess: (_r, vars) => {
+      toast.success(vars.is_admin ? "Usuário promovido a admin." : "Acesso de admin removido.");
+      qc.invalidateQueries({ queryKey: ["admin-users"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Users className="size-5 text-gold" /> Usuários e permissões
+        </CardTitle>
+        <CardDescription>
+          Promova ou remova o acesso de administrador. Mostra até 50 usuários por página.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative flex-1 min-w-[220px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por e-mail ou nome…"
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              className="pl-9"
+              maxLength={120}
+            />
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <Button
+              variant="outline" size="sm"
+              disabled={page <= 1 || isFetching}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+            >Anterior</Button>
+            <span className="text-muted-foreground">Página {page}</span>
+            <Button
+              variant="outline" size="sm"
+              disabled={!data?.hasMore || isFetching}
+              onClick={() => setPage((p) => p + 1)}
+            >Próxima</Button>
+          </div>
+        </div>
+
+        {isLoading ? (
+          <div className="text-muted-foreground text-sm">Carregando usuários…</div>
+        ) : !data?.users.length ? (
+          <div className="text-muted-foreground text-sm">Nenhum usuário encontrado.</div>
+        ) : (
+          <div className="rounded-md border border-border overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-secondary/40 text-left">
+                <tr>
+                  <th className="px-3 py-2 font-medium">Usuário</th>
+                  <th className="px-3 py-2 font-medium">Criado em</th>
+                  <th className="px-3 py-2 font-medium">Papel</th>
+                  <th className="px-3 py-2 font-medium text-right">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.users.map((u) => (
+                  <tr key={u.id} className="border-t border-border">
+                    <td className="px-3 py-2">
+                      <div className="font-medium">{u.full_name || "—"}</div>
+                      <div className="text-xs text-muted-foreground">{u.email}</div>
+                    </td>
+                    <td className="px-3 py-2 text-muted-foreground">
+                      {u.created_at ? new Date(u.created_at).toLocaleDateString("pt-BR") : "—"}
+                    </td>
+                    <td className="px-3 py-2">
+                      {u.is_admin ? (
+                        <span className="inline-flex items-center gap-1 text-gold text-xs">
+                          <ShieldCheck className="size-3" /> Admin
+                        </span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">Usuário</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-2 text-right">
+                      {u.is_admin ? (
+                        <Button
+                          size="sm" variant="outline"
+                          disabled={mut.isPending}
+                          onClick={() => {
+                            if (confirm(`Remover acesso de admin de ${u.email}?`)) {
+                              mut.mutate({ user_id: u.id, is_admin: false });
+                            }
+                          }}
+                        >
+                          <ShieldOff className="size-3 mr-1" /> Remover admin
+                        </Button>
+                      ) : (
+                        <Button
+                          size="sm"
+                          disabled={mut.isPending}
+                          onClick={() => mut.mutate({ user_id: u.id, is_admin: true })}
+                        >
+                          <ShieldCheck className="size-3 mr-1" /> Promover
+                        </Button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
