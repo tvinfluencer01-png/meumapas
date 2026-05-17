@@ -184,6 +184,11 @@ function FavRow({
       </div>
       {!editing && (
         <div className="flex flex-col gap-1">
+          <button onClick={onGenerate} disabled={generating} aria-label="Gerar nota com IA"
+            title="Gerar nota com IA a partir do insight do dia"
+            className="p-1.5 rounded-md text-muted-foreground hover:text-gold hover:bg-gold/10 disabled:opacity-50">
+            {generating ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}
+          </button>
           <button onClick={onStartEdit} aria-label="Editar nota"
             className="p-1.5 rounded-md text-muted-foreground hover:text-gold hover:bg-gold/10">
             <Pencil className="size-3.5" />
