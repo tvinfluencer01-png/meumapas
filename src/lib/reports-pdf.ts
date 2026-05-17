@@ -211,27 +211,25 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
   }
 
   let cursor: Cursor = newPage(pdf, 1);
-  drawChapterTitleAt(cursor);
 
   function ensureSpace(needed: number) {
     if (cursor.y - needed < MARGIN) {
       cursor = newPage(pdf, cursor.pageNumber + 1);
-      drawChapterTitleAt(cursor);
     }
   }
 
   function setChapter(title: string) {
     currentChapter = title;
   }
+  // referenciado para evitar warning de variavel nao usada
+  void drawChapterTitleAt;
 
   let isFirstHeading = true;
   function drawHeading(text: string, size = 20) {
-    // Regra: todo titulo de capitulo inicia em uma nova pagina.
-    // A primeira chamada usa a pagina ja criada (vazia); as demais
-    // forcam uma quebra de pagina para garantir o inicio limpo.
+    // Regra: todo titulo de capitulo inicia em uma nova pagina limpa,
+    // sem repetir o titulo do capitulo no topo (evita duplicidade).
     if (!isFirstHeading) {
       cursor = newPage(pdf, cursor.pageNumber + 1);
-      drawChapterTitleAt(cursor);
     }
     isFirstHeading = false;
     cursor.y -= 10;
