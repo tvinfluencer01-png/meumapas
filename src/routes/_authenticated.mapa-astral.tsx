@@ -672,11 +672,24 @@ function ChartWheel({ chart }: { chart: any }) {
       {/* HTML hover tooltip */}
       {hover && (
         <div
-          className="pointer-events-none absolute z-10 rounded-md border border-gold/30 bg-background/95 backdrop-blur px-3 py-2 shadow-xl max-w-[220px]"
-          style={{ left: Math.min(hover.x + 12, 420), top: Math.max(hover.y - 8, 8) }}
+          className="pointer-events-none absolute z-10 rounded-lg border border-gold/30 bg-background/95 backdrop-blur px-3 py-2 shadow-xl w-[260px]"
+          style={{ left: Math.min(hover.x + 14, 360), top: Math.max(hover.y - 8, 8) }}
         >
           <p className="font-serif text-gold text-sm leading-tight">{hover.title}</p>
-          {hover.body && <p className="text-[11px] text-muted-foreground mt-1 leading-snug">{hover.body}</p>}
+          {hover.subtitle && (
+            <p className="text-[10px] uppercase tracking-wider text-gold/70 mt-0.5">{hover.subtitle}</p>
+          )}
+          {hover.body && <p className="text-[11px] text-stardust mt-1.5 leading-snug">{hover.body}</p>}
+          {hover.lines && hover.lines.length > 0 && (
+            <ul className="mt-2 space-y-1.5">
+              {hover.lines.map((ln, k) => (
+                <li key={k} className="text-[11px] leading-snug">
+                  <span className="text-gold/80 uppercase tracking-wider text-[9px] block">{ln.label}</span>
+                  <span className="text-muted-foreground">{ln.value}</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
 
