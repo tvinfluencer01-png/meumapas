@@ -14,6 +14,7 @@ import {
   getTwilioSettings,
   saveTwilioSettings,
   sendTwilioTest,
+  testTwilioCredentials,
   listAdminUsers,
   setUserAdmin,
   listRoleAuditLog,
