@@ -203,7 +203,26 @@ export function PdfBrandingForm() {
         </div>
       </header>
 
-      {!form.enabled && (
+      {!subscriptionActive && (
+        <div className="flex items-start gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm">
+          <Lock className="size-4 shrink-0 mt-0.5 text-amber-400" />
+          <div className="flex-1">
+            <p className="font-medium text-amber-100">
+              Assinatura "Branding PDF Pro" necessária
+            </p>
+            <p className="text-xs text-amber-200/80 mt-0.5">
+              Você pode configurar tudo aqui, mas a personalização só será aplicada
+              nos PDFs enquanto a assinatura estiver ativa. Sem ela, os relatórios
+              mantêm o branding padrão do Cosmic AI.
+            </p>
+            <Button asChild size="sm" variant="outline" className="mt-2">
+              <Link to="/addons">Assinar Branding PDF Pro</Link>
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {subscriptionActive && !form.enabled && (
         <div className="flex items-start gap-2 text-xs text-muted-foreground border border-border rounded-lg p-3">
           <Info className="size-4 shrink-0 mt-0.5 text-gold" />
           Add-on desativado. Seus relatórios continuam com o branding padrão do Cosmic AI.
