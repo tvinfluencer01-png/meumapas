@@ -100,6 +100,20 @@ export function EnergyCalendar() {
           </h2>
         </div>
         <div className="flex items-center gap-1">
+          <button
+            onClick={() => setFavOnly((v) => !v)}
+            aria-pressed={favOnly}
+            title={favOnly ? "Mostrar todos os dias" : "Mostrar só favoritos"}
+            className={cn(
+              "mr-1 flex items-center gap-1.5 text-[11px] px-2.5 py-1.5 rounded-full border transition-colors",
+              favOnly
+                ? "border-gold/60 bg-gold/15 text-gold"
+                : "border-stardust/15 text-muted-foreground hover:border-gold/40 hover:text-gold",
+            )}
+          >
+            <Star className={cn("size-3", favOnly && "fill-gold")} />
+            {favOnly ? "Só favoritos" : "Filtrar favoritos"}
+          </button>
           <button onClick={goPrev} aria-label="Mês anterior"
             className="p-2 rounded-full hover:bg-gold/10 text-stardust transition-colors">
             <ChevronLeft className="size-4" />
