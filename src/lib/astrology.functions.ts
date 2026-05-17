@@ -154,67 +154,78 @@ export const computeNatalChart = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => ChartInput.parse(d))
   .handler(async ({ data, context }) => {
-    const time = data.timeUnknown ? "12:00:00" : (data.birthTime ?? "12:00:00");
-    // Build UTC date from local components + offset
-    const [h, mi, s] = time.split(":").map(Number);
-    const [y, mo, d] = data.birthDate.split("-").map(Number);
-    const utcMs =
-      Date.UTC(y, mo - 1, d, h, mi, s ?? 0) - data.timezoneOffset * 3600_000;
-    const date = new Date(utcMs);
+    try {
+      const time = data.timeUnknown ? "12:00:00" : (data.birthTime ?? "12:00:00");
+      const [h, mi, s] = time.split(":").map(Number);
+      const [y, mo, d] = data.birthDate.split("-").map(Number);
+      const utcMs =
+        Date.UTC(y, mo - 1, d, h, mi, s ?? 0) - data.timezoneOffset * 3600_000;
+      const date = new Date(utcMs);
 
-    const observer = new Astro.Observer(data.latitude, data.longitude, 0);
+      const observer = new Astro.Observer(data.latitude, data.longitude, 0);
 
-    const planets = PLANETS.map(({ name, body }) => {
-      const eq = Astro.Equator(body, date, observer, true, true);
-      const lon = eclipticLongitudeFromEqu(eq.ra, eq.dec, date);
-      const s = signOf(lon);
-      return { name, ...s };
-    });
+      const planets = PLANETS.map(({ name, body }) => {
+        const eq = Astro.Equator(body, date, observer, true, true);
+        const lon = eclipticLongitudeFromEqu(eq.ra, eq.dec, date);
+        const s = signOf(lon);
+        return { name, ...s };
+      });
 
-    const { ascendant, midheaven } = computeAscendantMC(
-      date,
-      data.latitude,
-      data.longitude,
-    );
-    const houses = placidusHouses(ascendant, midheaven).map((deg, i) => ({
-      house: i + 1,
-      ...signOf(deg),
-    }));
-    const ascSign = signOf(ascendant);
-    const mcSign = signOf(midheaven);
+      const { ascendant, midheaven } = computeAscendantMC(
+        date,
+        data.latitude,
+        data.longitude,
+      );
+      const houses = placidusHouses(ascendant, midheaven).map((deg, i) => ({
+        house: i + 1,
+        ...signOf(deg),
+      }));
+      const ascSign = signOf(ascendant);
+      const mcSign = signOf(midheaven);
 
-    const aspects = computeAspects(planets);
+      const aspects = computeAspects(planets);
 
-    const summary =
-      `${data.fullName} — Sol em ${planets[0].sign}, Lua em ${planets[1].sign}, Ascendente em ${ascSign.sign}. ` +
-      `${aspects.length} aspectos principais detectados.`;
+      const summary =
+        `${data.fullName} — Sol em ${planets[0].sign}, Lua em ${planets[1].sign}, Ascendente em ${ascSign.sign}. ` +
+        `${aspects.length} aspectos principais detectados.`;
 
-    // Persist
-    const { data: saved, error } = await context.supabase
-      .from("astro_charts")
-      .insert({
-        user_id: context.userId,
-        birth_data_id: data.birthDataId ?? null,
-        engine: "swiss_ephemeris",
+      const { data: saved, error } = await context.supabase
+        .from("astro_charts")
+        .insert({
+          user_id: context.userId,
+          birth_data_id: data.birthDataId ?? null,
+          engine: "swiss_ephemeris",
+          planets,
+          houses,
+          aspects,
+          ascendant,
+          midheaven,
+          summary,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error("[astro] save error:", error);
+        await logFnError("computeNatalChart.persist", error, context.userId, {
+          birthDataId: data.birthDataId ?? null,
+        });
+      }
+
+      return {
+        id: saved?.id ?? null,
         planets,
         houses,
         aspects,
-        ascendant,
-        midheaven,
+        ascendant: { ...ascSign, longitude: ascendant },
+        midheaven: { ...mcSign, longitude: midheaven },
         summary,
-      })
-      .select()
-      .single();
-
-    if (error) console.error("[astro] save error:", error);
-
-    return {
-      id: saved?.id ?? null,
-      planets,
-      houses,
-      aspects,
-      ascendant: { ...ascSign, longitude: ascendant },
-      midheaven: { ...mcSign, longitude: midheaven },
-      summary,
-    };
+      };
+    } catch (err) {
+      await logFnError("computeNatalChart", err, context.userId, {
+        birthDataId: data.birthDataId ?? null,
+        birthDate: data.birthDate,
+      });
+      throw err;
+    }
   });
