@@ -122,7 +122,39 @@ function checkTypes() {
   return r.status || 1;
 }
 
+
+function checkLint() {
+  console.log(`\n${DIM}→ ESLint${RESET}`);
+  const r = spawnSync("npx", ["eslint", ".", "--max-warnings=0"], {
+    encoding: "utf8",
+  });
+  process.stdout.write((r.stdout || "") + (r.stderr || ""));
+  if (r.status === 0) {
+    console.log(`${GREEN}✓ Lint OK${RESET}`);
+    return 0;
+  }
+  console.log(`${RED}✗ ESLint reportou problemas${RESET}`);
+  return r.status || 1;
+}
+
+function checkFormat() {
+  console.log(`\n${DIM}→ Prettier${RESET}`);
+  const r = spawnSync("npx", ["prettier", "--check", "."], { encoding: "utf8" });
+  process.stdout.write((r.stdout || "") + (r.stderr || ""));
+  if (r.status === 0) {
+    console.log(`${GREEN}✓ Formatação OK${RESET}`);
+    return 0;
+  }
+  console.log(
+    `${RED}✗ Arquivos fora do padrão Prettier${RESET} ${DIM}(rode \`bun run format\`)${RESET}`,
+  );
+  return r.status || 1;
+}
+
 let code = 0;
-if (!onlyTypes) code |= checkSyntax();
-if (!onlySyntax) code |= checkTypes();
+if (run.syntax) code |= checkSyntax();
+if (run.lint) code |= checkLint();
+if (run.format) code |= checkFormat();
+if (run.types) code |= checkTypes();
 process.exit(code);
+
