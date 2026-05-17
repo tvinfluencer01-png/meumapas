@@ -236,6 +236,9 @@ A lista "sections" deve ter entre 5 e 6 itens. Cada item de SWOT e recommendatio
       intro: ai.intro,
       sections: ai.sections,
       closing: ai.closing,
+      swot: ai.swot,
+      recommendations: ai.recommendations,
+      summary: ai.summary,
     };
 
     const pdfBytes = await buildReportPdf(reportData);
