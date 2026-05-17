@@ -40,8 +40,9 @@ function LandingPage() {
       <Numerology />
       <OracleSection />
       <Compatibility />
-      <Reports />
-      <Testimonials />
+        <Reports />
+        <BrandIdentity />
+        <Testimonials />
       <Pricing />
       <PlanComparison />
       <FAQ />
@@ -512,6 +513,186 @@ function CTASection() {
         <Link to="/auth" className="gold-glow inline-block rounded-full bg-gold px-12 py-5 text-sm font-semibold uppercase tracking-[0.2em] text-primary-foreground transition-all hover:bg-gold-glow">
           Descobrir meu mapa agora
         </Link>
+      </div>
+    </section>
+  );
+}
+
+/* ---------------- BRAND IDENTITY ---------------- */
+function BrandIdentity() {
+  const palette = [
+    { name: "Night", token: "--night", hex: "#0A0A14", className: "bg-night" },
+    { name: "Gold", token: "--gold", hex: "#C9A961", className: "bg-gold" },
+    { name: "Stardust", token: "--stardust", hex: "#E8DCC4", className: "bg-stardust" },
+    { name: "Nebula", token: "--nebula", hex: "#6B5B95", className: "bg-nebula" },
+  ];
+  return (
+    <section className="relative overflow-hidden border-y border-border bg-card/30 py-32">
+      <Starfield count={40} />
+      <div className="relative mx-auto max-w-7xl px-6">
+        {/* Header */}
+        <div className="mb-20 flex flex-col items-start justify-between gap-8 md:flex-row md:items-end">
+          <div className="max-w-xl">
+            <span className="mb-4 block text-xs uppercase tracking-[0.4em] text-gold/70">
+              Sistema de Marca · v1.0
+            </span>
+            <h2 className="font-serif text-5xl italic leading-tight">
+              Identidade <span className="text-gold">visual</span>
+            </h2>
+            <p className="mt-6 leading-relaxed text-muted-foreground">
+              Cada detalhe — da tipografia ao pulso dourado — foi desenhado para
+              traduzir o sagrado em forma. Um sistema arquetípico, calibrado em
+              ouro cerimonial sobre noite profunda.
+            </p>
+          </div>
+          <div className="flex items-center gap-4 text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+            <span className="size-1.5 rounded-full bg-gold" />
+            Atualizado · 05.2026
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-px border border-border bg-border lg:grid-cols-12">
+          {/* Monogram */}
+          <article className="bg-background p-12 lg:col-span-5">
+            <span className="mb-8 block text-[10px] uppercase tracking-[0.35em] text-muted-foreground">
+              Monograma
+            </span>
+            <div className="relative mx-auto flex aspect-square w-full max-w-xs items-center justify-center">
+              <div className="absolute inset-0 rounded-full border border-gold/15" />
+              <div className="absolute inset-4 rounded-full border border-gold/10" />
+              <div className="absolute inset-8 rounded-full border border-gold/5" />
+              {Array.from({ length: 12 }).map((_, i) => {
+                const angle = (i * 30 * Math.PI) / 180;
+                const r = 44;
+                return (
+                  <span
+                    key={i}
+                    className="absolute size-1 rounded-full bg-gold/40"
+                    style={{
+                      top: `${50 + Math.sin(angle) * r}%`,
+                      left: `${50 - Math.cos(angle) * r}%`,
+                      transform: "translate(-50%, -50%)",
+                    }}
+                  />
+                );
+              })}
+              <span className="relative font-serif text-7xl italic text-gold">
+                C<span className="text-stardust">·</span>AI
+              </span>
+            </div>
+            <div className="mt-10 flex items-center justify-between text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+              <span>Glifo principal</span>
+              <span className="text-gold/70">Espaço seguro · 1.5×</span>
+            </div>
+          </article>
+
+          {/* Wordmark + Typography */}
+          <article className="bg-background p-12 lg:col-span-7">
+            <span className="mb-8 block text-[10px] uppercase tracking-[0.35em] text-muted-foreground">
+              Logotipo & Tipografia
+            </span>
+
+            <div className="border-b border-border pb-10">
+              <div className="flex items-center gap-3">
+                <span className="size-2 rounded-full bg-gold shadow-[0_0_12px_var(--gold)]" />
+                <span className="font-serif text-4xl uppercase tracking-[0.3em] text-gold">
+                  Cosmic AI
+                </span>
+              </div>
+              <p className="mt-3 text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+                Wordmark · tracking 0.3em · ouro cerimonial
+              </p>
+            </div>
+
+            <div className="mt-10 grid grid-cols-1 gap-10 sm:grid-cols-2">
+              <div>
+                <p className="font-serif text-6xl italic leading-none text-foreground">
+                  Aa
+                </p>
+                <div className="mt-4 space-y-1 text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+                  <p className="text-gold">Cormorant Garamond</p>
+                  <p>Display · Itálico · 400–600</p>
+                </div>
+                <p className="mt-4 font-serif text-base italic text-stardust">
+                  "Decifre seu mapa celestial."
+                </p>
+              </div>
+              <div>
+                <p className="text-6xl font-light leading-none text-foreground">Aa</p>
+                <div className="mt-4 space-y-1 text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+                  <p className="text-gold">Inter</p>
+                  <p>Texto · 300–600</p>
+                </div>
+                <p className="mt-4 text-sm font-light text-muted-foreground">
+                  Clareza absoluta para parágrafos longos e dados precisos.
+                </p>
+              </div>
+            </div>
+          </article>
+
+          {/* Palette */}
+          <article className="bg-background p-12 lg:col-span-7">
+            <span className="mb-8 block text-[10px] uppercase tracking-[0.35em] text-muted-foreground">
+              Paleta Cromática
+            </span>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+              {palette.map((c) => (
+                <div key={c.name} className="group">
+                  <div
+                    className={`relative aspect-square w-full overflow-hidden rounded-md border border-border ${c.className} transition-transform group-hover:-translate-y-1`}
+                  >
+                    <span className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-foreground/10 to-transparent" />
+                  </div>
+                  <div className="mt-4 space-y-1">
+                    <p className="font-serif text-lg text-foreground">{c.name}</p>
+                    <p className="text-[10px] uppercase tracking-[0.25em] text-gold/70">
+                      {c.hex}
+                    </p>
+                    <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+                      {c.token}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </article>
+
+          {/* Principles */}
+          <article className="bg-background p-12 lg:col-span-5">
+            <span className="mb-8 block text-[10px] uppercase tracking-[0.35em] text-muted-foreground">
+              Princípios
+            </span>
+            <ul className="space-y-6">
+              {[
+                {
+                  k: "01",
+                  t: "Ouro como gesto",
+                  d: "Nunca decorativo. Sempre acento de significado.",
+                },
+                {
+                  k: "02",
+                  t: "Silêncio é estrutura",
+                  d: "Respiro generoso. Hierarquia pelo vazio.",
+                },
+                {
+                  k: "03",
+                  t: "Serifa como alma",
+                  d: "Itálico para o sagrado, sans para o útil.",
+                },
+              ].map((p) => (
+                <li key={p.k} className="flex gap-5 border-b border-border/50 pb-5 last:border-0">
+                  <span className="font-serif text-2xl italic text-gold">{p.k}</span>
+                  <div>
+                    <p className="font-serif text-lg text-foreground">{p.t}</p>
+                    <p className="mt-1 text-sm font-light leading-relaxed text-muted-foreground">
+                      {p.d}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </article>
+        </div>
       </div>
     </section>
   );
