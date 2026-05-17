@@ -83,6 +83,7 @@ function UsersAdmin() {
     onSuccess: (_r, vars) => {
       toast.success(vars.is_admin ? "Usuário promovido a admin." : "Acesso de admin removido.");
       qc.invalidateQueries({ queryKey: ["admin-users"] });
+      qc.invalidateQueries({ queryKey: ["role-audit-log"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
