@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getEnergyCalendar } from "@/lib/energy-calendar.functions";
-import { ChevronLeft, ChevronRight, Sparkles, Moon, Heart, Compass, AlertTriangle } from "lucide-react";
+import { listFavorites, toggleFavorite } from "@/lib/favorites.functions";
+import { ChevronLeft, ChevronRight, Sparkles, Moon, Heart, Compass, AlertTriangle, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const WEEKDAYS = ["D", "S", "T", "Q", "Q", "S", "S"];
@@ -46,10 +47,27 @@ export function EnergyCalendar() {
   const [selected, setSelected] = useState<string | null>(null);
 
   const fetchCal = useServerFn(getEnergyCalendar);
+  const fetchFavs = useServerFn(listFavorites);
+  const toggleFav = useServerFn(toggleFavorite);
+  const qc = useQueryClient();
+
   const { data, isLoading } = useQuery({
     queryKey: ["energy-calendar", cursor.year, cursor.month],
     queryFn: () => fetchCal({ data: cursor }),
     staleTime: 1000 * 60 * 30,
+  });
+  const { data: favorites } = useQuery({
+    queryKey: ["calendar-favorites"],
+    queryFn: () => fetchFavs({ data: undefined }),
+    staleTime: 1000 * 60 * 5,
+  });
+  const favSet = useMemo(() => new Set((favorites ?? []).map((f) => f.date)), [favorites]);
+
+  const toggleMutation = useMutation({
+    mutationFn: (date: string) => toggleFav({ data: { date } }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["calendar-favorites"] });
+    },
   });
 
   const firstWeekday = useMemo(() => {
@@ -104,6 +122,7 @@ export function EnergyCalendar() {
         }))).map((d) => {
           const isToday = d.date === todayISO;
           const isSelected = d.date === selected;
+          const isFav = favSet.has(d.date);
           return (
             <button
               key={d.day}
@@ -115,6 +134,7 @@ export function EnergyCalendar() {
                 INTENSITY_STYLES[d.intensity],
                 isToday && "ring-1 ring-gold",
                 isSelected && "ring-2 ring-gold scale-105",
+                isFav && "border-gold/60",
                 isLoading && "animate-pulse",
               )}
             >
@@ -126,6 +146,9 @@ export function EnergyCalendar() {
                 <svg viewBox="0 0 12 12" className="absolute top-1 right-1 size-2.5">
                   <MoonGlyph icon={d.moon.icon} />
                 </svg>
+              )}
+              {isFav && (
+                <Star className="absolute bottom-0.5 left-0.5 size-2.5 text-gold fill-gold" />
               )}
             </button>
           );
