@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet, redirect, Link, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Outlet, Link, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -9,10 +9,6 @@ import {
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated")({
-  beforeLoad: async () => {
-    const { data, error } = await supabase.auth.getUser();
-    if (error || !data.user) throw redirect({ to: "/auth" });
-  },
   component: AuthedLayout,
 });
 
@@ -26,14 +22,26 @@ const NAV = [
 ] as const;
 
 function AuthedLayout() {
-  const { signOut, user } = useAuth();
+  const { signOut, user, loading } = useAuth();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [profileChecked, setProfileChecked] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    if (!user) return;
+    if (!loading || !user) {
+      setProfileChecked(false);
+    }
+  }, [loading, user]);
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.navigate({ to: "/auth", replace: true });
+    }
+  }, [loading, user, router]);
+
+  useEffect(() => {
+    if (loading || !user) return;
     (async () => {
       const [{ data: profile }, { data: role }] = await Promise.all([
         supabase.from("profiles").select("onboarding_completed").eq("id", user.id).maybeSingle(),
@@ -46,14 +54,14 @@ function AuthedLayout() {
       }
       setProfileChecked(true);
     })();
-  }, [user, router]);
+  }, [loading, user, router]);
 
   async function handleSignOut() {
     await signOut();
     router.navigate({ to: "/" });
   }
 
-  if (!profileChecked) {
+  if (loading || !user || !profileChecked) {
     return (
       <div className="min-h-screen grid place-items-center bg-background">
         <Sparkles className="size-8 text-gold animate-pulse" />
