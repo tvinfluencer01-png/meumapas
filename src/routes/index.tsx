@@ -498,6 +498,10 @@ function CTASection() {
     <section className="relative overflow-hidden border-y border-border py-32 nebula-bg">
       <Starfield count={80} />
       <div className="relative mx-auto max-w-3xl px-6 text-center">
+        <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-gold/30 px-4 py-1.5 text-[10px] uppercase tracking-[0.3em] text-gold">
+          <span className="size-1.5 animate-pulse rounded-full bg-gold" />
+          Apenas 27 vagas restantes este mês
+        </span>
         <h2 className="mb-6 font-serif text-5xl italic leading-tight md:text-6xl">
           As estrelas já <br />
           <span className="shimmer-text">sabem seu nome</span>
@@ -505,9 +509,9 @@ function CTASection() {
         <p className="mb-12 text-muted-foreground">
           Comece grátis. Sem cartão. Receba seu mapa astral em 60 segundos.
         </p>
-        <button className="gold-glow rounded-full bg-gold px-12 py-5 text-sm font-semibold uppercase tracking-[0.2em] text-primary-foreground transition-all hover:bg-gold-glow">
+        <Link to="/auth" className="gold-glow inline-block rounded-full bg-gold px-12 py-5 text-sm font-semibold uppercase tracking-[0.2em] text-primary-foreground transition-all hover:bg-gold-glow">
           Descobrir meu mapa agora
-        </button>
+        </Link>
       </div>
     </section>
   );
