@@ -1,7 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { listFavorites, toggleFavorite, updateFavoriteNote } from "@/lib/favorites.functions";
-import { Star, Trash2, Pencil, Check, X } from "lucide-react";
+import { listFavorites, toggleFavorite, updateFavoriteNote, generateFavoriteNote } from "@/lib/favorites.functions";
+import { Star, Trash2, Pencil, Check, X, Sparkles, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
