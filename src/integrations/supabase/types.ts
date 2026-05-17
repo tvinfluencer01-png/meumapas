@@ -222,6 +222,39 @@ export type Database = {
         }
         Relationships: []
       }
+      mercado_pago_settings: {
+        Row: {
+          access_token: string | null
+          enabled: boolean
+          environment: string
+          id: boolean
+          public_key: string | null
+          updated_at: string
+          updated_by: string | null
+          webhook_secret: string | null
+        }
+        Insert: {
+          access_token?: string | null
+          enabled?: boolean
+          environment?: string
+          id?: boolean
+          public_key?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          webhook_secret?: string | null
+        }
+        Update: {
+          access_token?: string | null
+          enabled?: boolean
+          environment?: string
+          id?: boolean
+          public_key?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          webhook_secret?: string | null
+        }
+        Relationships: []
+      }
       notification_log: {
         Row: {
           channel: string

@@ -2,7 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { Shield, MessageSquare, Save, Send, CheckCircle2, AlertTriangle, Users, Search, ShieldOff, ShieldCheck, History, RefreshCw, Settings as SettingsIcon } from "lucide-react";
+import { Shield, MessageSquare, Save, Send, CheckCircle2, AlertTriangle, Users, Search, ShieldOff, ShieldCheck, History, RefreshCw, Settings as SettingsIcon, Wallet } from "lucide-react";
+import { MercadoPagoForm } from "@/components/MercadoPagoForm";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -76,6 +77,9 @@ function AdminPage() {
           <TabsTrigger value="twilio" className="gap-2">
             <MessageSquare className="size-4" /> Twilio
           </TabsTrigger>
+          <TabsTrigger value="mercadopago" className="gap-2">
+            <Wallet className="size-4" /> Mercado Pago
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="settings" className="mt-0">
@@ -89,6 +93,9 @@ function AdminPage() {
         </TabsContent>
         <TabsContent value="twilio" className="mt-0">
           <TwilioForm />
+        </TabsContent>
+        <TabsContent value="mercadopago" className="mt-0">
+          <MercadoPagoForm />
         </TabsContent>
       </Tabs>
     </div>

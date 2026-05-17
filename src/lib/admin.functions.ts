@@ -457,3 +457,129 @@ export const listServerFnLogs = createServerFn({ method: "POST" })
       })),
     };
   });
+
+// ===== Mercado Pago integration =====
+
+const MP_ENV = z.enum(["sandbox", "production"]);
+
+export const getMercadoPagoSettings = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.userId);
+    const { data, error } = await supabaseAdmin
+      .from("mercado_pago_settings")
+      .select("public_key, environment, enabled, updated_at, access_token, webhook_secret")
+      .eq("id", true)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return {
+      public_key: data?.public_key ?? "",
+      environment: (data?.environment as "sandbox" | "production") ?? "sandbox",
+      enabled: data?.enabled ?? false,
+      updated_at: data?.updated_at ?? null,
+      has_access_token: !!data?.access_token,
+      has_webhook_secret: !!data?.webhook_secret,
+    };
+  });
+
+const MpSaveSchema = z.object({
+  public_key: z.string().trim().max(200).optional().default(""),
+  access_token: z.string().trim().max(400).optional().default(""),
+  webhook_secret: z.string().trim().max(200).optional().default(""),
+  environment: MP_ENV,
+  enabled: z.boolean(),
+});
+
+async function validateMercadoPagoToken(token: string) {
+  let res: Response;
+  try {
+    res = await fetch("https://api.mercadopago.com/users/me", {
+      method: "GET",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch {
+    throw new Error("Não foi possível contatar o Mercado Pago. Verifique sua conexão.");
+  }
+  if (res.status === 401 || res.status === 403) {
+    throw new Error("Access Token inválido ou sem permissão.");
+  }
+  if (!res.ok) {
+    throw new Error(`Mercado Pago recusou as credenciais (HTTP ${res.status}).`);
+  }
+  const json = (await res.json().catch(() => ({}))) as {
+    id?: number;
+    nickname?: string;
+    email?: string;
+    site_id?: string;
+  };
+  return {
+    id: json.id ?? null,
+    nickname: json.nickname ?? "",
+    email: json.email ?? "",
+    site_id: json.site_id ?? "",
+  };
+}
+
+export const testMercadoPagoCredentials = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({ access_token: z.string().trim().optional().default("") }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    let token = data.access_token?.trim() || "";
+    if (!token) {
+      const { data: existing } = await supabaseAdmin
+        .from("mercado_pago_settings")
+        .select("access_token")
+        .eq("id", true)
+        .maybeSingle();
+      token = existing?.access_token ?? "";
+    }
+    if (!token) throw new Error("Informe o Access Token para validar.");
+    const info = await validateMercadoPagoToken(token);
+    return { ok: true, ...info };
+  });
+
+export const saveMercadoPagoSettings = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => MpSaveSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+
+    // If access token provided, validate it. If enabling without a new token, validate existing.
+    if (data.access_token || data.enabled) {
+      let token = data.access_token?.trim() || "";
+      if (!token) {
+        const { data: existing } = await supabaseAdmin
+          .from("mercado_pago_settings")
+          .select("access_token")
+          .eq("id", true)
+          .maybeSingle();
+        token = existing?.access_token ?? "";
+      }
+      if (data.enabled && !token) {
+        throw new Error("Informe o Access Token antes de ativar a integração.");
+      }
+      if (token) await validateMercadoPagoToken(token);
+    }
+
+    const update = {
+      public_key: data.public_key || null,
+      environment: data.environment,
+      enabled: data.enabled,
+      updated_by: context.userId,
+      ...(data.access_token && data.access_token.length > 0
+        ? { access_token: data.access_token }
+        : {}),
+      ...(data.webhook_secret && data.webhook_secret.length > 0
+        ? { webhook_secret: data.webhook_secret }
+        : {}),
+    };
+    const { error } = await supabaseAdmin
+      .from("mercado_pago_settings")
+      .update(update)
+      .eq("id", true);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
