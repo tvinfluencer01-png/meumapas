@@ -211,10 +211,9 @@ function ServerFnLogsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {logs.map((l: any) => {
+                  {logs.flatMap((l: any) => {
                     const isOpen = expanded === l.id;
-                    return (
-                      <Fragment key={l.id}>
+                    return [
                         <tr
                           key={l.id}
                           className="border-b border-border/40 hover:bg-secondary/20 cursor-pointer"
@@ -236,8 +235,8 @@ function ServerFnLogsPage() {
                               {l.user_email ?? l.user_id ?? "anônimo"}
                             </div>
                           </td>
-                        </tr>
-                        {isOpen && (
+                        </tr>,
+                        isOpen ? (
                           <tr key={`${l.id}-d`} className="bg-secondary/10">
                             <td colSpan={4} className="p-4">
                               {l.stack && (
@@ -257,9 +256,8 @@ function ServerFnLogsPage() {
                               )}
                             </td>
                           </tr>
-                        )}
-                      </Fragment>
-                    );
+                        ) : null,
+                    ];
                   })}
                 </tbody>
               </table>
