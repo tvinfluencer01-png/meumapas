@@ -144,17 +144,25 @@ export const generateReport = createServerFn({ method: "POST" })
     }
 
     // 3) Generate humanized structured content
+    const firstName = String(birth.full_name).trim().split(/\s+/)[0] ?? "";
+
     const system = `Voce e o **Oraculo Cosmico**, escritor espiritual premium em portugues do Brasil.
-Escreva textos longos, profundos, poeticos, calorosos, especificos e PESSOAIS (use o primeiro nome do consulente varias vezes).
+Escreva textos longos, profundos, poeticos, calorosos, especificos e PESSOAIS.
 Cite planetas, signos, aspectos e numeros REAIS recebidos. Nunca fale em termos genericos.
 Cada secao deve ter no minimo 3 paragrafos densos. Tom acolhedor, sabio, levemente literario.
 Nunca prometa eventos certos nem faca diagnostico clinico.
-NAO use markdown nem emojis. Use somente texto corrido com paragrafos separados por linhas em branco.`;
+NAO use markdown nem emojis. Use somente texto corrido com paragrafos separados por linhas em branco.
+
+REGRA DE NOMENCLATURA (obrigatoria):
+- Use o NOME COMPLETO do consulente ("${birth.full_name}") UMA UNICA VEZ, na primeira mencao do relatorio (idealmente na intro, como saudacao ou abertura solene).
+- Em TODAS as mencoes seguintes ao longo de todo o relatorio (intro, sections e closing), use APENAS o primeiro nome ("${firstName}") para criar intimidade e calor.
+- Nunca repita o nome completo depois da primeira mencao. Nunca use sobrenomes isolados.`;
 
     const prompt = `Gere um RELATORIO PREMIUM do tipo "${meta.title}" focado em ${meta.focus}
 
 Dados do consulente:
-Nome: ${birth.full_name}
+Nome completo (usar apenas 1x, na primeira mencao): ${birth.full_name}
+Primeiro nome (usar em todas as mencoes seguintes): ${firstName}
 Nascimento: ${birth.birth_date}${birth.birth_time ? ` ${birth.birth_time}` : ""}
 Local: ${birth.city ?? ""}${birth.country ? ", " + birth.country : ""}
 
