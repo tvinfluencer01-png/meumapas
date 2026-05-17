@@ -68,27 +68,53 @@ function RelatoriosPage() {
     },
   });
 
+  async function downloadFromUrl(url: string, filename: string) {
+    // Baixa via fetch+blob para evitar ERR_BLOCKED_BY_CLIENT (adblockers)
+    // que bloqueiam window.open para dominios de storage.
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("Falha ao baixar o arquivo");
+    const blob = await res.blob();
+    const objUrl = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = objUrl;
+    a.download = filename;
+    a.rel = "noopener";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(objUrl), 2000);
+  }
+
   const genMutation = useMutation({
     mutationFn: async (kind: Kind) => {
       setLoadingKind(kind);
       return await generate({ data: { kind } });
     },
-    onSuccess: (res) => {
-      toast.success("Relatorio pronto. Abrindo...");
+    onSuccess: async (res, kind) => {
       qc.invalidateQueries({ queryKey: ["reports", user?.id] });
-      if (res.signedUrl) window.open(res.signedUrl, "_blank");
+      if (res.signedUrl) {
+        try {
+          await downloadFromUrl(res.signedUrl, `${res.title || kind}.pdf`);
+          toast.success("Relatorio pronto. Download iniciado.");
+        } catch {
+          toast.error("PDF gerado, mas o download falhou. Tente novamente em 'Seus relatorios'.");
+        }
+      }
     },
     onError: (e: Error) => toast.error(e.message || "Falha ao gerar relatorio"),
     onSettled: () => setLoadingKind(null),
   });
 
-  async function openReport(id: string) {
+  async function openReport(id: string, title: string) {
     try {
       const { signedUrl } = await getUrl({ data: { id } });
-      if (signedUrl) window.open(signedUrl, "_blank");
-      else toast.error("Nao foi possivel gerar o link");
+      if (!signedUrl) {
+        toast.error("Nao foi possivel gerar o link");
+        return;
+      }
+      await downloadFromUrl(signedUrl, `${title || "relatorio"}.pdf`);
     } catch {
-      toast.error("Erro ao abrir o relatorio");
+      toast.error("Erro ao baixar o relatorio");
     }
   }
 
