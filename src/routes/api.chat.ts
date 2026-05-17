@@ -33,7 +33,8 @@ async function buildContext(userId: string, accessToken: string) {
 
   let context = "";
   if (birth) {
-    context += `\n## Dados do Consulente\n- Nome: ${birth.full_name}\n- Nascimento: ${new Date(birth.birth_date).toLocaleDateString("pt-BR")}${birth.birth_time ? ` às ${birth.birth_time}` : " (hora desconhecida)"}\n- Local: ${birth.city ?? ""}${birth.country ? `, ${birth.country}` : ""}\n`;
+    const firstName = String(birth.full_name).trim().split(/\s+/)[0] ?? "";
+    context += `\n## Dados do Consulente\n- Nome completo (usar apenas na 1a mencao da conversa): ${birth.full_name}\n- Primeiro nome (usar em todas as mencoes seguintes): ${firstName}\n- Nascimento: ${new Date(birth.birth_date).toLocaleDateString("pt-BR")}${birth.birth_time ? ` às ${birth.birth_time}` : " (hora desconhecida)"}\n- Local: ${birth.city ?? ""}${birth.country ? `, ${birth.country}` : ""}\n`;
 
     const num = computeNumerology(birth.full_name, birth.birth_date);
     context += `\n## Numerologia\n`;
