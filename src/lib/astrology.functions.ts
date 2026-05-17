@@ -1,7 +1,29 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import * as Astro from "astronomy-engine";
+
+// Fire-and-forget structured error logger. Writes to app_logs via service role
+// so failures are captured even when the user context is absent.
+async function logFnError(
+  fn: string,
+  err: unknown,
+  userId: string | null,
+  extra: Record<string, unknown> = {},
+) {
+  try {
+    const message = err instanceof Error ? err.message : String(err ?? "unknown");
+    const stack = err instanceof Error ? err.stack ?? null : null;
+    await supabaseAdmin.from("app_logs").insert({
+      event: "serverfn_error",
+      user_id: userId,
+      payload: { fn, message, stack, ...extra },
+    });
+  } catch (logErr) {
+    console.error("[logFnError] failed:", logErr);
+  }
+}
 
 // --- helpers --------------------------------------------------------------
 const SIGNS = [
