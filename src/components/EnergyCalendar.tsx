@@ -149,11 +149,31 @@ export function EnergyCalendar() {
                 <span className="text-gold">Dia pessoal {selectedDay.personal_day}</span>
               )}
             </div>
-            <p className="mt-2 text-sm text-stardust/90 leading-relaxed">
-              {insight ?? (data?.hasBirth
-                ? "A IA está canalizando este dia..."
-                : "Complete seus dados de nascimento para receber insights personalizados.")}
-            </p>
+            {insight && typeof insight === "object" ? (
+              <div className="mt-4 grid gap-3 md:grid-cols-3">
+                <InsightCard
+                  tone="emotions"
+                  label="Emoções"
+                  text={insight.emotions}
+                />
+                <InsightCard
+                  tone="actions"
+                  label="Ações recomendadas"
+                  text={insight.actions}
+                />
+                <InsightCard
+                  tone="alert"
+                  label="Alerta"
+                  text={insight.alert}
+                />
+              </div>
+            ) : (
+              <p className="mt-2 text-sm text-stardust/90 leading-relaxed">
+                {data?.hasBirth
+                  ? "A IA está canalizando este dia..."
+                  : "Complete seus dados de nascimento para receber insights personalizados."}
+              </p>
+            )}
           </div>
         ) : (
           <p className="text-sm text-muted-foreground">
