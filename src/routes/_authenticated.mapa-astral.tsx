@@ -517,7 +517,17 @@ function ChartWheel({ chart }: { chart: any }) {
           const meaning = SIGN_MEANING[SIGNS[i]];
           return (
             <g key={`sec-${i}`}
-              onMouseEnter={(e) => setHover({ x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY, title: `${meaning?.glyph} ${SIGNS[i]}`, body: meaning?.short ?? "" })}
+              onMouseEnter={(e) => {
+                const g = SIGN_GUIDANCE[SIGNS[i]];
+                setHover({
+                  x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY,
+                  title: `${meaning?.glyph} ${SIGNS[i]}`,
+                  subtitle: `${ELEMENT_LABEL[el]} · ${MODALITY_OF[SIGNS[i]]}`,
+                  body: meaning?.short,
+                  lines: g ? [{ label: "Faça agora", value: g.doNow }, { label: "Evite", value: g.avoid }] : undefined,
+                  accent: "signo",
+                });
+              }}
               onMouseLeave={() => setHover(null)}
               style={{ cursor: "help" }}>
               <path d={d} fill={ELEMENT_COLOR[el]} stroke="hsl(45 70% 50% / 0.25)" />
