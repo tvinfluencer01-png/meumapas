@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { motion } from "motion/react";
 import { Starfield } from "@/components/Starfield";
 import heroAstrolabe from "@/assets/hero-astrolabe.jpg";
 import oracleOrb from "@/assets/oracle-orb.jpg";
@@ -553,19 +554,51 @@ function BrandIdentity() {
 
         <div className="grid grid-cols-1 gap-px border border-border bg-border lg:grid-cols-12">
           {/* Monogram */}
-          <article className="bg-background p-12 lg:col-span-5">
+          <motion.article
+            className="group/mono relative bg-background p-12 lg:col-span-5"
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+          >
             <span className="mb-8 block text-[10px] uppercase tracking-[0.35em] text-muted-foreground">
               Monograma
             </span>
-            <div className="relative mx-auto flex aspect-square w-full max-w-xs items-center justify-center">
-              <div className="absolute inset-0 rounded-full border border-gold/15" />
-              <div className="absolute inset-4 rounded-full border border-gold/10" />
+            <motion.div
+              className="relative mx-auto flex aspect-square w-full max-w-xs items-center justify-center"
+              whileHover="hover"
+              initial="rest"
+              animate="rest"
+            >
+              <motion.div
+                className="absolute inset-0 rounded-full border border-gold/15"
+                variants={{ rest: { rotate: 0 }, hover: { rotate: 360 } }}
+                transition={{ duration: 18, ease: "linear", repeat: Infinity }}
+                animate={{ rotate: 360 }}
+              />
+              <motion.div
+                className="absolute inset-4 rounded-full border border-gold/10"
+                animate={{ rotate: -360 }}
+                transition={{ duration: 26, ease: "linear", repeat: Infinity }}
+              />
               <div className="absolute inset-8 rounded-full border border-gold/5" />
+              <motion.div
+                className="pointer-events-none absolute inset-0 rounded-full"
+                variants={{
+                  rest: { opacity: 0, scale: 0.9 },
+                  hover: { opacity: 1, scale: 1 },
+                }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+                style={{
+                  background:
+                    "radial-gradient(circle, color-mix(in oklab, var(--gold) 22%, transparent) 0%, transparent 65%)",
+                }}
+              />
               {Array.from({ length: 12 }).map((_, i) => {
                 const angle = (i * 30 * Math.PI) / 180;
                 const r = 44;
                 return (
-                  <span
+                  <motion.span
                     key={i}
                     className="absolute size-1 rounded-full bg-gold/40"
                     style={{
@@ -573,18 +606,35 @@ function BrandIdentity() {
                       left: `${50 - Math.cos(angle) * r}%`,
                       transform: "translate(-50%, -50%)",
                     }}
+                    animate={{ opacity: [0.25, 0.9, 0.25], scale: [1, 1.4, 1] }}
+                    transition={{
+                      duration: 3,
+                      repeat: Infinity,
+                      delay: i * 0.18,
+                      ease: "easeInOut",
+                    }}
                   />
                 );
               })}
-              <span className="relative font-serif text-7xl italic text-gold">
+              <motion.span
+                className="relative font-serif text-7xl italic text-gold"
+                variants={{
+                  rest: { scale: 1, textShadow: "0 0 0px rgba(0,0,0,0)" },
+                  hover: {
+                    scale: 1.06,
+                    textShadow: "0 0 24px color-mix(in oklab, var(--gold) 60%, transparent)",
+                  },
+                }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+              >
                 C<span className="text-stardust">·</span>AI
-              </span>
-            </div>
+              </motion.span>
+            </motion.div>
             <div className="mt-10 flex items-center justify-between text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
               <span>Glifo principal</span>
               <span className="text-gold/70">Espaço seguro · 1.5×</span>
             </div>
-          </article>
+          </motion.article>
 
           {/* Wordmark + Typography */}
           <article className="bg-background p-12 lg:col-span-7">
@@ -631,20 +681,48 @@ function BrandIdentity() {
           </article>
 
           {/* Palette */}
-          <article className="bg-background p-12 lg:col-span-7">
+          <motion.article
+            className="bg-background p-12 lg:col-span-7"
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+          >
             <span className="mb-8 block text-[10px] uppercase tracking-[0.35em] text-muted-foreground">
               Paleta Cromática
             </span>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-              {palette.map((c) => (
-                <div key={c.name} className="group">
-                  <div
-                    className={`relative aspect-square w-full overflow-hidden rounded-md border border-border ${c.className} transition-transform group-hover:-translate-y-1`}
+              {palette.map((c, i) => (
+                <motion.div
+                  key={c.name}
+                  className="group"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-60px" }}
+                  transition={{
+                    duration: 0.55,
+                    delay: i * 0.08,
+                    ease: [0.22, 1, 0.36, 1],
+                  }}
+                >
+                  <motion.div
+                    whileHover={{ y: -6, scale: 1.03 }}
+                    transition={{ type: "spring", stiffness: 260, damping: 18 }}
+                    className={`relative aspect-square w-full overflow-hidden rounded-md border border-border ${c.className} shadow-[0_0_0_0_transparent] transition-shadow duration-500 group-hover:shadow-[0_18px_40px_-18px_color-mix(in_oklab,var(--gold)_45%,transparent)]`}
                   >
                     <span className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-foreground/10 to-transparent" />
-                  </div>
-                  <div className="mt-4 space-y-1">
-                    <p className="font-serif text-lg text-foreground">{c.name}</p>
+                    <motion.span
+                      className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+                      style={{
+                        background:
+                          "radial-gradient(circle at 30% 30%, rgba(255,255,255,0.18), transparent 60%)",
+                      }}
+                    />
+                  </motion.div>
+                  <div className="mt-4 space-y-1 transition-transform duration-300 group-hover:translate-x-0.5">
+                    <p className="font-serif text-lg text-foreground transition-colors group-hover:text-gold">
+                      {c.name}
+                    </p>
                     <p className="text-[10px] uppercase tracking-[0.25em] text-gold/70">
                       {c.hex}
                     </p>
@@ -652,13 +730,19 @@ function BrandIdentity() {
                       {c.token}
                     </p>
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
-          </article>
+          </motion.article>
 
           {/* Principles */}
-          <article className="bg-background p-12 lg:col-span-5">
+          <motion.article
+            className="bg-background p-12 lg:col-span-5"
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+          >
             <span className="mb-8 block text-[10px] uppercase tracking-[0.35em] text-muted-foreground">
               Princípios
             </span>
@@ -679,19 +763,40 @@ function BrandIdentity() {
                   t: "Serifa como alma",
                   d: "Itálico para o sagrado, sans para o útil.",
                 },
-              ].map((p) => (
-                <li key={p.k} className="flex gap-5 border-b border-border/50 pb-5 last:border-0">
-                  <span className="font-serif text-2xl italic text-gold">{p.k}</span>
+              ].map((p, i) => (
+                <motion.li
+                  key={p.k}
+                  className="group/p relative flex cursor-default gap-5 border-b border-border/50 pb-5 last:border-0"
+                  initial={{ opacity: 0, x: -16 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true, margin: "-40px" }}
+                  transition={{
+                    duration: 0.55,
+                    delay: i * 0.12,
+                    ease: [0.22, 1, 0.36, 1],
+                  }}
+                  whileHover={{ x: 6 }}
+                >
+                  <span className="pointer-events-none absolute -left-3 top-2 h-6 w-px origin-top scale-y-0 bg-gold transition-transform duration-500 group-hover/p:scale-y-100" />
+                  <motion.span
+                    className="font-serif text-2xl italic text-gold"
+                    whileHover={{ scale: 1.15, rotate: -4 }}
+                    transition={{ type: "spring", stiffness: 320, damping: 14 }}
+                  >
+                    {p.k}
+                  </motion.span>
                   <div>
-                    <p className="font-serif text-lg text-foreground">{p.t}</p>
+                    <p className="font-serif text-lg text-foreground transition-colors duration-300 group-hover/p:text-gold">
+                      {p.t}
+                    </p>
                     <p className="mt-1 text-sm font-light leading-relaxed text-muted-foreground">
                       {p.d}
                     </p>
                   </div>
-                </li>
+                </motion.li>
               ))}
             </ul>
-          </article>
+          </motion.article>
         </div>
       </div>
     </section>
