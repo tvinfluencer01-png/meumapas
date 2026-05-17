@@ -47,6 +47,39 @@ function walk(dir, out = []) {
   return out;
 }
 
+const MAX_LISTED = 15;
+
+/**
+ * Imprime resumo "N erros em M arquivos" + agrupamento por arquivo
+ * + lista os primeiros MAX_LISTED erros como arquivo:linha:coluna  message.
+ * `errors` deve ser uma lista de { file, line, col, message }.
+ */
+function printSummary(label, errors) {
+  if (errors.length === 0) return;
+  const byFile = new Map();
+  for (const e of errors) {
+    byFile.set(e.file, (byFile.get(e.file) || 0) + 1);
+  }
+  const sortedFiles = [...byFile.entries()].sort((a, b) => b[1] - a[1]);
+
+  console.log(
+    `\n${DIM}── Resumo ${label} ──${RESET} ${RED}${errors.length}${RESET} erro(s) em ${YELLOW}${byFile.size}${RESET} arquivo(s)`,
+  );
+  for (const [file, n] of sortedFiles) {
+    console.log(`  ${YELLOW}${String(n).padStart(4)}${RESET}  ${relative(ROOT, file)}`);
+  }
+
+  const shown = errors.slice(0, MAX_LISTED);
+  console.log(`\n${DIM}Primeiros ${shown.length} erro(s):${RESET}`);
+  for (const e of shown) {
+    const loc = `${relative(ROOT, e.file)}:${e.line || 0}:${e.col || 0}`;
+    console.log(`  ${RED}•${RESET} ${loc}  ${DIM}${e.message}${RESET}`);
+  }
+  if (errors.length > shown.length) {
+    console.log(`  ${DIM}… +${errors.length - shown.length} adicional(is)${RESET}`);
+  }
+}
+
 function showContext(file, line, col) {
   try {
     const lines = readFileSync(file, "utf8").split("\n");
