@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { Image as ImageIcon, Upload, Trash2, Save, Sparkles, Info } from "lucide-react";
+import { Image as ImageIcon, Upload, Trash2, Save, Sparkles, Info, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +15,7 @@ import {
   uploadPdfLogo,
   removePdfLogo,
 } from "@/lib/pdf-branding.functions";
+import { getAddonsOverview } from "@/lib/addons.functions";
 
 type FormState = {
   enabled: boolean;
@@ -79,6 +81,15 @@ export function PdfBrandingForm() {
     queryKey: ["pdf-branding"],
     queryFn: () => getFn(),
   });
+
+  const addonsFn = useServerFn(getAddonsOverview);
+  const { data: addons } = useQuery({
+    queryKey: ["addons-overview"],
+    queryFn: () => addonsFn(),
+  });
+  const subscriptionActive = !!addons?.subscriptions.some(
+    (s) => s.addon_id === "sub_branding_pdf" && s.status === "active",
+  );
 
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
 
@@ -192,7 +203,26 @@ export function PdfBrandingForm() {
         </div>
       </header>
 
-      {!form.enabled && (
+      {!subscriptionActive && (
+        <div className="flex items-start gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm">
+          <Lock className="size-4 shrink-0 mt-0.5 text-amber-400" />
+          <div className="flex-1">
+            <p className="font-medium text-amber-100">
+              Assinatura "Branding PDF Pro" necessária
+            </p>
+            <p className="text-xs text-amber-200/80 mt-0.5">
+              Você pode configurar tudo aqui, mas a personalização só será aplicada
+              nos PDFs enquanto a assinatura estiver ativa. Sem ela, os relatórios
+              mantêm o branding padrão do Cosmic AI.
+            </p>
+            <Button asChild size="sm" variant="outline" className="mt-2">
+              <Link to="/addons">Assinar Branding PDF Pro</Link>
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {subscriptionActive && !form.enabled && (
         <div className="flex items-start gap-2 text-xs text-muted-foreground border border-border rounded-lg p-3">
           <Info className="size-4 shrink-0 mt-0.5 text-gold" />
           Add-on desativado. Seus relatórios continuam com o branding padrão do Cosmic AI.
