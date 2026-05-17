@@ -16,31 +16,43 @@ const KIND = z.enum(["personality", "love", "career", "spiritual"]);
 
 const REPORT_META: Record<
   z.infer<typeof KIND>,
-  { title: string; subtitle: string; focus: string }
+  { title: string; subtitle: string; focus: string; suggestionHeading: string; suggestionGuide: string }
 > = {
   personality: {
     title: "Mapa da Personalidade",
     subtitle: "Quem voce e na sua essencia mais profunda",
     focus:
       "personalidade, dons naturais, sombras, padroes de comportamento, ferida de origem, talentos a desenvolver e proposito da alma nesta encarnacao.",
+    suggestionHeading: "Habitos e praticas sugeridas",
+    suggestionGuide:
+      "habitos diarios, praticas de autoconhecimento, leituras, exercicios e atitudes que potencializam a personalidade desta pessoa (ex: journaling matinal, meditacao guiada, terapia somatica, leitura de Jung). Cada sugestao precisa explicar POR QUE combina com o mapa e a numerologia dela.",
   },
   love: {
     title: "Amor e Relacionamento",
     subtitle: "A linguagem do seu coracao e o tipo de vinculo que voce atrai",
     focus:
       "como voce ama e e amado, padroes afetivos, feridas relacionais, tipo ideal de parceiro(a), magnetismo afetivo, sexualidade, ciclos de vinculo, e como atrair amor saudavel.",
+    suggestionHeading: "Perfis afetivos e praticas amorosas sugeridas",
+    suggestionGuide:
+      "perfis de parceiro(a) que tendem a complementar/harmonizar com esta pessoa (ex: 'Parceiro com Lua em signo de agua', 'Pessoa Caminho de Vida 6'), alem de praticas concretas para a vida afetiva (ex: rituais de encontro, conversas de vulnerabilidade, terapia de casal). Cada sugestao precisa explicar POR QUE combina com o mapa e a numerologia dela.",
   },
   career: {
     title: "Vocacao e Proposito",
     subtitle: "O chamado profissional inscrito no seu mapa",
     focus:
       "talentos vocacionais, missao, areas de prosperidade, lideranca, padroes de bloqueio financeiro e caminho de realizacao material.",
+    suggestionHeading: "Profissoes e caminhos sugeridos",
+    suggestionGuide:
+      "profissoes, carreiras, nichos de atuacao e empreendimentos que se alinham aos talentos desta pessoa (ex: 'Terapeuta holistica', 'Designer de marca', 'Educador independente', 'Consultor estrategico'). Cada sugestao precisa explicar POR QUE combina com o mapa e a numerologia dela.",
   },
   spiritual: {
     title: "Jornada Espiritual",
     subtitle: "O caminho interior e a evolucao da alma",
     focus:
       "missao karmica, ferida ancestral, dons mediunicos, caminho de despertar, praticas e portais espirituais alinhados ao mapa.",
+    suggestionHeading: "Praticas espirituais sugeridas",
+    suggestionGuide:
+      "praticas, tradicoes, rituais e ferramentas espirituais alinhadas a esta alma (ex: 'Meditacao vipassana', 'Trabalho com Tarot de Marselha', 'Yoga kundalini', 'Escrita automatica', 'Reiki nivel 1'). Cada sugestao precisa explicar POR QUE combina com o mapa e a numerologia dela.",
   },
 };
 
@@ -67,6 +79,13 @@ const AiOutput = z.object({
     improve: z.array(z.string().min(3)).min(3).max(6),
     avoid: z.array(z.string().min(3)).min(3).max(6),
     follow: z.array(z.string().min(3)).min(3).max(6),
+  }),
+  suggestions: z.object({
+    intro: z.string().optional(),
+    items: z
+      .array(z.object({ name: z.string().min(2), why: z.string().min(20) }))
+      .min(5)
+      .max(10),
   }),
   summary: z.string().min(200),
 });
@@ -199,9 +218,16 @@ Responda APENAS com um JSON valido (sem markdown, sem cercas de codigo) no forma
     "avoid": ["o que ${firstName} deve EVITAR (frase curta e acionavel)", "..."],
     "follow": ["o que ${firstName} deve SEGUIR / cultivar (frase curta e acionavel)", "..."]
   },
+  "suggestions": {
+    "intro": "1 frase contextualizando a lista para ${firstName}",
+    "items": [
+      { "name": "Nome curto e direto da sugestao", "why": "1 a 2 frases explicando POR QUE essa sugestao combina com o mapa/numerologia de ${firstName}, citando signo, planeta, aspecto ou numero especifico." }
+    ]
+  },
   "summary": "Resumo final em 2 paragrafos densos, integrando o que foi dito"
 }
-A lista "sections" deve ter entre 5 e 6 itens. Cada item de SWOT e recommendations deve ter de 3 a 5 itens, especificos ao mapa e numerologia do consulente.`;
+A lista "sections" deve ter entre 5 e 6 itens. Cada item de SWOT e recommendations deve ter de 3 a 5 itens, especificos ao mapa e numerologia do consulente.
+A lista "suggestions.items" deve ter entre 6 e 8 itens, cada um com "name" curto e "why" explicando a conexao com o mapa real desta pessoa. Tema das sugestoes: ${meta.suggestionGuide}`;
 
     const { text } = await generateText({ model, system, prompt });
 
@@ -238,6 +264,11 @@ A lista "sections" deve ter entre 5 e 6 itens. Cada item de SWOT e recommendatio
       closing: ai.closing,
       swot: ai.swot,
       recommendations: ai.recommendations,
+      suggestions: {
+        heading: meta.suggestionHeading,
+        intro: ai.suggestions.intro,
+        items: ai.suggestions.items,
+      },
       summary: ai.summary,
     };
 

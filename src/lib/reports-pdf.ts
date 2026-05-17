@@ -12,6 +12,12 @@ export type ReportRecommendations = {
   avoid: string[];
   follow: string[];
 };
+export type ReportSuggestion = { name: string; why: string };
+export type ReportSuggestions = {
+  heading: string;       // ex: "Profissoes sugeridas"
+  intro?: string;        // 1 frase contextualizando
+  items: ReportSuggestion[];
+};
 export type ReportData = {
   kind: "personality" | "love" | "career" | "spiritual";
   title: string;
@@ -25,6 +31,7 @@ export type ReportData = {
   closing: string;
   swot: ReportSwot;
   recommendations: ReportRecommendations;
+  suggestions: ReportSuggestions;
   summary: string;
 };
 
@@ -333,6 +340,40 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
   drawBulletList(data.recommendations.avoid);
   drawSubHeading("O que SEGUIR", rgb(0.65, 0.5, 0.1));
   drawBulletList(data.recommendations.follow);
+
+  // Sugestoes (personalizadas por tema)
+  if (data.suggestions?.items?.length) {
+    setChapter(data.suggestions.heading);
+    drawHeading(data.suggestions.heading, 20);
+    if (data.suggestions.intro) {
+      drawParagraph(data.suggestions.intro, { italic: true, size: 11, color: MUTED });
+    }
+    const nameSize = 12;
+    const whySize = 11;
+    const lineH = whySize * 1.5;
+    for (const item of data.suggestions.items) {
+      // Nome em negrito
+      ensureSpace(nameSize + 6);
+      cursor.page.drawText(safe("- " + item.name), {
+        x: MARGIN, y: cursor.y - nameSize,
+        size: nameSize, font: serifBold, color: NIGHT,
+      });
+      cursor.y -= nameSize + 4;
+      // Justificativa em texto corrido com indent
+      const whyLines = wrap(safe(item.why), serif, whySize, CONTENT_W - 14);
+      for (const wl of whyLines) {
+        ensureSpace(lineH);
+        if (wl) {
+          cursor.page.drawText(wl, {
+            x: MARGIN + 14, y: cursor.y - whySize,
+            size: whySize, font: serif, color: INK,
+          });
+        }
+        cursor.y -= lineH;
+      }
+      cursor.y -= 4;
+    }
+  }
 
   // Resumo
   setChapter("Resumo");
