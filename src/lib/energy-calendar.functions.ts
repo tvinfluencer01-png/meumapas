@@ -95,13 +95,21 @@ export const getEnergyCalendar = createServerFn({ method: "POST" })
       return diff >= -0.5 && diff <= 7;
     }).slice(0, 7);
 
-    let insights: Record<string, string> = {};
+    type DayInsight = { emotions: string; actions: string; alert: string };
+    let insights: Record<string, DayInsight> = {};
     const apiKey = process.env.LOVABLE_API_KEY;
     if (apiKey && upcoming.length > 0) {
       try {
         const gateway = createLovableAiGatewayProvider(apiKey);
         const model = gateway("google/gemini-3-flash-preview");
-        const prompt = `Você é um astrólogo e numerólogo cabalístico. Para cada dia abaixo, escreva UMA frase poética em português (máx 16 palavras) com guia espiritual personalizado. Considere o número pessoal e a fase da lua. Responda APENAS em JSON no formato {"YYYY-MM-DD":"frase",...} sem comentários.
+        const prompt = `Você é um astrólogo e numerólogo cabalístico. Para cada dia abaixo, gere 3 mensagens curtas, humanizadas e personalizadas em português:
+- "emotions": clima emocional esperado (1 frase, máx 20 palavras, tom acolhedor)
+- "actions": 1 ou 2 ações práticas recomendadas (máx 22 palavras, verbos no imperativo suave)
+- "alert": um alerta ou cuidado a observar (máx 18 palavras, sem alarmismo)
+
+Considere o número pessoal e a fase da lua de cada dia. Responda APENAS em JSON válido no formato:
+{"YYYY-MM-DD":{"emotions":"...","actions":"...","alert":"..."}, ...}
+Sem comentários, sem markdown, sem texto antes ou depois.
 
 ${upcoming.map((u) => `- ${u.date}: número pessoal ${u.personal_day ?? "?"}, ${u.moon.label}`).join("\n")}`;
 
