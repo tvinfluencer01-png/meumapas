@@ -199,6 +199,7 @@ function TwilioForm() {
   const loadFn = useServerFn(getTwilioSettings);
   const saveFn = useServerFn(saveTwilioSettings);
   const testFn = useServerFn(sendTwilioTest);
+  const testCredsFn = useServerFn(testTwilioCredentials);
 
   const { data, isLoading } = useQuery({
     queryKey: ["twilio-settings"],
