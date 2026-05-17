@@ -55,9 +55,28 @@ export function FavoritesSummary() {
           </p>
           <h2 className="font-serif text-2xl text-stardust mt-1">Seus marcos energéticos</h2>
         </div>
-        <span className="text-xs text-muted-foreground">
-          {favorites?.length ?? 0} {favorites?.length === 1 ? "favorito" : "favoritos"}
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-muted-foreground">
+            {favorites?.length ?? 0} {favorites?.length === 1 ? "favorito" : "favoritos"}
+          </span>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              disabled={(favorites?.length ?? 0) === 0}
+              className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border border-gold/30 text-gold hover:bg-gold/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              aria-label="Exportar favoritos"
+            >
+              <Download className="size-3.5" /> Exportar
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-background/95 border-gold/20">
+              <DropdownMenuItem onClick={() => exportFavoritesPDF(favorites ?? [])} className="gap-2">
+                <FileText className="size-4 text-gold" /> Baixar PDF
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => exportFavoritesCSV(favorites ?? [])} className="gap-2">
+                <FileSpreadsheet className="size-4 text-gold" /> Baixar CSV
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </header>
 
       {isLoading ? (
