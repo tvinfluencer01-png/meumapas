@@ -8,7 +8,7 @@ import {
   createAnthropicProvider,
   createGeminiProvider,
 } from "@/lib/ai-gateway";
-import { computeNumerology, NUMBER_MEANINGS } from "@/lib/numerology";
+import { computeNumerology, NUMBER_MEANINGS, formatBirthDateBR } from "@/lib/numerology";
 
 type ChatBody = { messages?: UIMessage[] };
 
