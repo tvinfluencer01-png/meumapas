@@ -245,6 +245,15 @@ function TwilioForm() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const testCredsMut = useMutation({
+    mutationFn: () =>
+      testCredsFn({
+        data: { account_sid: form.account_sid, auth_token: form.auth_token },
+      }),
+    onSuccess: () => toast.success("Credenciais válidas. A Twilio aceitou o Account SID e o Auth Token."),
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   if (isLoading) return <div className="text-muted-foreground">Carregando configurações…</div>;
 
   return (
