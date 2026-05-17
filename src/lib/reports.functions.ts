@@ -187,9 +187,21 @@ Responda APENAS com um JSON valido (sem markdown, sem cercas de codigo) no forma
 {
   "intro": "texto longo, 4 a 6 paragrafos separados por \\n\\n",
   "sections": [{"title": "Titulo curto", "body": "3 a 5 paragrafos longos separados por \\n\\n"}],
-  "closing": "2 a 3 paragrafos finais"
+  "closing": "2 a 3 paragrafos finais",
+  "swot": {
+    "strengths": ["forca 1 personalizada", "..."],
+    "weaknesses": ["fraqueza 1 personalizada", "..."],
+    "opportunities": ["oportunidade 1 personalizada", "..."],
+    "threats": ["ameaca/risco 1 personalizado", "..."]
+  },
+  "recommendations": {
+    "improve": ["o que ${firstName} deve MELHORAR (frase curta e acionavel)", "..."],
+    "avoid": ["o que ${firstName} deve EVITAR (frase curta e acionavel)", "..."],
+    "follow": ["o que ${firstName} deve SEGUIR / cultivar (frase curta e acionavel)", "..."]
+  },
+  "summary": "Resumo final em 2 paragrafos densos, integrando o que foi dito"
 }
-A lista "sections" deve ter entre 5 e 6 itens.`;
+A lista "sections" deve ter entre 5 e 6 itens. Cada item de SWOT e recommendations deve ter de 3 a 5 itens, especificos ao mapa e numerologia do consulente.`;
 
     const { text } = await generateText({ model, system, prompt });
 
