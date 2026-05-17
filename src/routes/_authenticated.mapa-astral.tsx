@@ -546,16 +546,33 @@ function ChartWheel({ chart }: { chart: any }) {
           return <line key={`tick-${i}`} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="hsl(45 70% 60% / 0.35)" strokeWidth={i % 6 === 0 ? 1 : 0.5} />;
         })}
 
-        {/* House spokes (equal house from Asc) + numbers */}
+        {/* House sectors (invisible hover pies) + spokes + numbers */}
         {Array.from({ length: 12 }).map((_, i) => {
-          const angle = (180 + i * 30) % 360;
-          const a = polar(cx, cy, rAspect, angle);
-          const b = polar(cx, cy, rInner, angle);
-          const numPos = polar(cx, cy, rHouseNum, angle + 15);
+          const startDeg = (180 + i * 30) % 360;
+          const endDeg = startDeg + 30;
+          const p1 = polar(cx, cy, rInner, startDeg);
+          const p2 = polar(cx, cy, rInner, endDeg);
+          const p3 = polar(cx, cy, rAspect, endDeg);
+          const p4 = polar(cx, cy, rAspect, startDeg);
+          const d = `M ${p1.x} ${p1.y} A ${rInner} ${rInner} 0 0 1 ${p2.x} ${p2.y} L ${p3.x} ${p3.y} A ${rAspect} ${rAspect} 0 0 0 ${p4.x} ${p4.y} Z`;
+          const a = polar(cx, cy, rAspect, startDeg);
+          const b = polar(cx, cy, rInner, startDeg);
+          const numPos = polar(cx, cy, rHouseNum, startDeg + 15);
+          const h = HOUSE_MEANING[i];
           return (
             <g key={`house-${i}`}>
-              <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="hsl(45 70% 50% / 0.2)" />
-              <text x={numPos.x} y={numPos.y} fontSize="10" fill="hsl(45 60% 65% / 0.6)" textAnchor="middle" dominantBaseline="middle">
+              <path d={d} fill="transparent" style={{ cursor: "help" }}
+                onMouseEnter={(e) => setHover({
+                  x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY,
+                  title: h.title,
+                  subtitle: "Setor de vida",
+                  body: h.short,
+                  lines: [{ label: "Faça agora", value: h.doNow }],
+                })}
+                onMouseLeave={() => setHover(null)}
+              />
+              <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="hsl(45 70% 50% / 0.2)" style={{ pointerEvents: "none" }} />
+              <text x={numPos.x} y={numPos.y} fontSize="10" fill="hsl(45 60% 65% / 0.6)" textAnchor="middle" dominantBaseline="middle" style={{ pointerEvents: "none" }}>
                 {i + 1}
               </text>
             </g>
