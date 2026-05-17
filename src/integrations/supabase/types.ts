@@ -198,6 +198,30 @@ export type Database = {
         }
         Relationships: []
       }
+      calendar_favorites: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          note: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id?: string
+          note?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          note?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       numerology_reports: {
         Row: {
           birth_date: string
