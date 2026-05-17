@@ -9,6 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { computeNatalChart, pingAstro } from "@/lib/astrology.functions";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { PLANET_MEANING, SIGN_MEANING, ASPECT_MEANING } from "@/lib/astro-meanings";
 
 export const Route = createFileRoute("/_authenticated/mapa-astral")({
   component: MapaAstral,
@@ -231,55 +233,88 @@ function MapaAstral() {
       )}
 
       {current && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <ChartWheel chart={current} />
-          <div className="space-y-4">
-            <div className="glass-card rounded-2xl p-6">
-              <h3 className="font-serif text-xl text-gold">Síntese</h3>
-              <p className="mt-2 text-stardust">{current.summary}</p>
-              <div className="grid grid-cols-2 gap-3 mt-4 text-sm">
-                <div className="rounded-lg bg-secondary/40 p-3">
-                  <div className="text-xs text-muted-foreground">Ascendente</div>
-                  <div className="font-serif text-lg text-stardust">{current.ascendant.sign}</div>
-                </div>
-                <div className="rounded-lg bg-secondary/40 p-3">
-                  <div className="text-xs text-muted-foreground">Meio do Céu</div>
-                  <div className="font-serif text-lg text-stardust">{current.midheaven.sign}</div>
+        <TooltipProvider delayDuration={150}>
+          <ChartSummary chart={current} />
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+            <ChartWheel chart={current} />
+            <div className="space-y-4">
+              <div className="glass-card rounded-2xl p-6">
+                <h3 className="font-serif text-xl text-gold">Síntese</h3>
+                <p className="mt-2 text-stardust">{current.summary}</p>
+                <div className="grid grid-cols-2 gap-3 mt-4 text-sm">
+                  <div className="rounded-lg bg-secondary/40 p-3">
+                    <div className="text-xs text-muted-foreground">Ascendente</div>
+                    <div className="font-serif text-lg text-stardust">{current.ascendant.sign}</div>
+                  </div>
+                  <div className="rounded-lg bg-secondary/40 p-3">
+                    <div className="text-xs text-muted-foreground">Meio do Céu</div>
+                    <div className="font-serif text-lg text-stardust">{current.midheaven.sign}</div>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="glass-card rounded-2xl p-6">
-              <h3 className="font-serif text-xl text-gold mb-3">Planetas</h3>
-              <ul className="space-y-2">
-                {current.planets.map((p: any) => (
-                  <li key={p.name} className="flex items-center justify-between text-sm">
-                    <span className="flex items-center gap-2 text-stardust">
-                      <span className="text-gold w-5">{PLANET_GLYPH[p.name]}</span> {p.name}
-                    </span>
-                    <span className="text-muted-foreground">
-                      {p.sign} {p.degree.toFixed(1)}°
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {current.aspects?.length > 0 && (
               <div className="glass-card rounded-2xl p-6">
-                <h3 className="font-serif text-xl text-gold mb-3">Aspectos principais</h3>
-                <ul className="space-y-1.5 text-sm">
-                  {current.aspects.slice(0, 12).map((a: any, i: number) => (
-                    <li key={i} className="flex justify-between text-stardust">
-                      <span>{a.a} <span className="text-muted-foreground">↔</span> {a.b}</span>
-                      <span className="text-gold">{a.aspect} <span className="text-muted-foreground">({a.orb}°)</span></span>
-                    </li>
-                  ))}
+                <h3 className="font-serif text-xl text-gold mb-3">Planetas</h3>
+                <p className="text-xs text-muted-foreground mb-3">Passe o mouse sobre cada ícone para ver o significado.</p>
+                <ul className="space-y-2">
+                  {current.planets.map((p: any) => {
+                    const m = PLANET_MEANING[p.name];
+                    const s = SIGN_MEANING[p.sign];
+                    return (
+                      <li key={p.name} className="flex items-center justify-between text-sm">
+                        <span className="flex items-center gap-2 text-stardust">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="text-gold w-5 cursor-help">{PLANET_GLYPH[p.name]}</span>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="max-w-xs">
+                              <p className="font-serif text-gold">{m?.title ?? p.name}</p>
+                              <p className="text-xs text-muted-foreground mt-1">{m?.short}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                          {p.name}
+                        </span>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="text-muted-foreground cursor-help">
+                              {p.sign} {p.degree.toFixed(1)}°
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-xs">
+                            <p className="font-serif text-gold">{s?.glyph} {p.sign}</p>
+                            <p className="text-xs text-muted-foreground mt-1">{s?.short}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
-            )}
+
+              {current.aspects?.length > 0 && (
+                <div className="glass-card rounded-2xl p-6">
+                  <h3 className="font-serif text-xl text-gold mb-3">Aspectos principais</h3>
+                  <ul className="space-y-1.5 text-sm">
+                    {current.aspects.slice(0, 12).map((a: any, i: number) => (
+                      <li key={i} className="flex justify-between text-stardust">
+                        <span>{a.a} <span className="text-muted-foreground">↔</span> {a.b}</span>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="text-gold cursor-help">{a.aspect} <span className="text-muted-foreground">({a.orb}°)</span></span>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-xs">
+                            <p className="text-xs text-muted-foreground">{ASPECT_MEANING[a.aspect] ?? "Relação angular entre os astros."}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        </TooltipProvider>
       )}
     </div>
   );
@@ -314,6 +349,7 @@ function ChartWheel({ chart }: { chart: any }) {
           const ty = cy + Math.sin(mid) * ((rOuter + rInner) / 2);
           return (
             <g key={i}>
+              <title>{SIGNS[i]} — {SIGN_MEANING[SIGNS[i]]?.short}</title>
               <line x1={cx + Math.cos(a1)*rInner} y1={cy + Math.sin(a1)*rInner}
                     x2={x1} y2={y1} stroke="hsl(45 70% 50% / 0.3)" />
               <text x={tx} y={ty} fontSize="20" fill="hsl(45 80% 70%)" textAnchor="middle" dominantBaseline="middle">
@@ -340,7 +376,8 @@ function ChartWheel({ chart }: { chart: any }) {
           const x = cx + Math.cos(angle) * rPlanet;
           const y = cy + Math.sin(angle) * rPlanet;
           return (
-            <g key={i}>
+            <g key={i} style={{ cursor: "help" }}>
+              <title>{PLANET_MEANING[p.name]?.title ?? p.name} em {p.sign} {p.degree.toFixed(1)}° — {PLANET_MEANING[p.name]?.short}</title>
               <circle cx={x} cy={y} r="14" fill="hsl(255 30% 15%)" stroke="hsl(45 80% 60%)" />
               <text x={x} y={y} fontSize="14" fill="hsl(45 90% 75%)" textAnchor="middle" dominantBaseline="middle">
                 {PLANET_GLYPH[p.name]}
@@ -356,6 +393,52 @@ function ChartWheel({ chart }: { chart: any }) {
           ASC
         </text>
       </svg>
+    </div>
+  );
+}
+
+function ChartSummary({ chart }: { chart: any }) {
+  const sun = chart.planets.find((p: any) => p.name === "Sol");
+  const moon = chart.planets.find((p: any) => p.name === "Lua");
+  const ascSign = chart.ascendant?.sign;
+
+  const trio = [
+    sun && { label: "Sol", sign: sun.sign, hint: SIGN_MEANING[sun.sign]?.short },
+    moon && { label: "Lua", sign: moon.sign, hint: SIGN_MEANING[moon.sign]?.short },
+    ascSign && { label: "Ascendente", sign: ascSign, hint: SIGN_MEANING[ascSign]?.short },
+  ].filter(Boolean) as { label: string; sign: string; hint?: string }[];
+
+  return (
+    <div className="glass-card gold-glow rounded-2xl p-6 relative overflow-hidden">
+      <div className="absolute inset-0 nebula-bg opacity-50 pointer-events-none" />
+      <div className="relative">
+        <div className="flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-gold">
+          <Sparkles className="size-3.5" /> Resumo do seu céu
+        </div>
+        <p className="mt-3 text-stardust font-serif text-lg leading-relaxed">
+          {sun && (
+            <>Você brilha como <span className="text-gold">{sun.sign}</span></>
+          )}
+          {moon && (
+            <>, sente o mundo como <span className="text-gold">{moon.sign}</span></>
+          )}
+          {ascSign && (
+            <> e se apresenta com a aura de <span className="text-gold">{ascSign}</span></>
+          )}
+          .
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
+          {trio.map((t) => (
+            <div key={t.label} className="rounded-xl bg-secondary/30 border border-gold/15 p-3">
+              <div className="text-xs uppercase tracking-widest text-muted-foreground">{t.label}</div>
+              <div className="font-serif text-lg text-stardust mt-0.5">
+                {SIGN_MEANING[t.sign]?.glyph} {t.sign}
+              </div>
+              {t.hint && <p className="text-xs text-muted-foreground mt-1">{t.hint}</p>}
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

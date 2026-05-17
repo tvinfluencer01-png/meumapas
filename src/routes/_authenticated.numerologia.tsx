@@ -50,26 +50,61 @@ function NumerologiaPage() {
       )}
 
       {nums && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {CARDS.map((c) => {
-            const n = (nums as any)[c.key] as number;
-            const meaning = NUMBER_MEANINGS[n];
-            return (
-              <div key={c.key} className="glass-card rounded-2xl p-6 hover:gold-glow transition-all">
-                <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground">
-                  <c.icon className="size-3.5 text-gold" /> {c.label}
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {CARDS.map((c) => {
+              const n = (nums as any)[c.key] as number;
+              const meaning = NUMBER_MEANINGS[n];
+              return (
+                <div key={c.key} className="glass-card rounded-2xl p-6 hover:gold-glow transition-all">
+                  <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground">
+                    <c.icon className="size-3.5 text-gold" /> {c.label}
+                  </div>
+                  <div className="font-serif text-6xl text-stardust mt-3 shimmer-text">{n}</div>
+                  <div className="mt-3">
+                    <div className="font-serif text-lg text-gold">{meaning?.title}</div>
+                    <p className="text-sm text-muted-foreground mt-1">{meaning?.essence}</p>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-3 italic">{c.desc}</p>
                 </div>
-                <div className="font-serif text-6xl text-stardust mt-3 shimmer-text">{n}</div>
-                <div className="mt-3">
-                  <div className="font-serif text-lg text-gold">{meaning?.title}</div>
-                  <p className="text-sm text-muted-foreground mt-1">{meaning?.essence}</p>
-                </div>
-                <p className="text-xs text-muted-foreground mt-3 italic">{c.desc}</p>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+
+          <NumerologySynthesis nums={nums} />
+        </>
       )}
+    </div>
+  );
+}
+
+function NumerologySynthesis({ nums }: { nums: ReturnType<typeof computeNumerology> }) {
+  const lp = NUMBER_MEANINGS[nums.life_path];
+  const ds = NUMBER_MEANINGS[nums.destiny];
+  const su = NUMBER_MEANINGS[nums.soul_urge];
+  const pe = NUMBER_MEANINGS[nums.personality];
+
+  return (
+    <div className="glass-card gold-glow rounded-2xl p-6 mt-6 relative overflow-hidden">
+      <div className="absolute inset-0 nebula-bg opacity-50 pointer-events-none" />
+      <div className="relative">
+        <div className="flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-gold">
+          <Sparkles className="size-3.5" /> Síntese numerológica
+        </div>
+        <p className="mt-3 text-stardust font-serif text-lg leading-relaxed">
+          Sua jornada se desenha pelo Caminho de Vida{" "}
+          <span className="text-gold">{nums.life_path} — {lp?.title}</span>, com a missão de
+          expressar o Destino <span className="text-gold">{nums.destiny} — {ds?.title}</span>.
+          No fundo do peito, sua Alma pede{" "}
+          <span className="text-gold">{nums.soul_urge} — {su?.title}</span>, enquanto o mundo
+          te enxerga como <span className="text-gold">{nums.personality} — {pe?.title}</span>.
+        </p>
+        <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+          Cada número é um portal: o Caminho é o cenário, o Destino é o roteiro, a Alma é o
+          motor secreto e a Personalidade é a máscara que apresenta tudo isso ao mundo.
+          Juntos, eles compõem a frequência única que você veio vibrar nesta encarnação.
+        </p>
+      </div>
     </div>
   );
 }
