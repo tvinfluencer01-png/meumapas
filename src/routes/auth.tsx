@@ -100,7 +100,10 @@ function AuthPage() {
   async function handleSuperAdmin() {
     setSubmitting(true);
     try {
-      const creds = await bootstrap({});
+      const creds = await bootstrap();
+      if (!creds?.email || !creds?.password) {
+        throw new Error("Credenciais de Super Admin indisponíveis. Verifique SUPER_ADMIN_EMAIL/SUPER_ADMIN_PASSWORD.");
+      }
       const { error } = await supabase.auth.signInWithPassword({
         email: creds.email,
         password: creds.password,
