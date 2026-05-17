@@ -425,8 +425,23 @@ function ChartWheel({ chart }: { chart: any }) {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [view, setView] = useState({ x: 0, y: 0, w: size, h: size });
   const drag = useRef<{ x: number; y: number; vx: number; vy: number } | null>(null);
-  const MIN_W = size / 4;
-  const MAX_W = size * 1.5;
+  // Locked zoom range: 1x (sem zoom out, evita áreas vazias) até 5x.
+  const MIN_ZOOM = 1;
+  const MAX_ZOOM = 5;
+  const MIN_W = size / MAX_ZOOM;
+  const MAX_W = size / MIN_ZOOM;
+  const zoomLevel = size / view.w;
+
+  // Mantém o viewBox dentro do mapa para não distorcer com pan fora dos limites.
+  const clampView = (v: { x: number; y: number; w: number; h: number }) => {
+    const maxX = size - v.w;
+    const maxY = size - v.h;
+    return {
+      ...v,
+      x: Math.min(Math.max(v.x, 0), Math.max(0, maxX)),
+      y: Math.min(Math.max(v.y, 0), Math.max(0, maxY)),
+    };
+  };
 
   const onWheel = (e: React.WheelEvent<SVGSVGElement>) => {
     e.preventDefault();
@@ -437,8 +452,9 @@ function ChartWheel({ chart }: { chart: any }) {
     const focalY = view.y + ((e.clientY - rect.top) / rect.height) * view.h;
     const factor = e.deltaY > 0 ? 1.15 : 1 / 1.15;
     const newW = Math.min(MAX_W, Math.max(MIN_W, view.w * factor));
+    if (newW === view.w) return;
     const k = newW / view.w;
-    setView({ x: focalX - (focalX - view.x) * k, y: focalY - (focalY - view.y) * k, w: newW, h: newW });
+    setView(clampView({ x: focalX - (focalX - view.x) * k, y: focalY - (focalY - view.y) * k, w: newW, h: newW }));
   };
   const onPointerDown = (e: React.PointerEvent<SVGSVGElement>) => {
     (e.currentTarget as SVGSVGElement).setPointerCapture(e.pointerId);
@@ -450,7 +466,7 @@ function ChartWheel({ chart }: { chart: any }) {
     const rect = svgRef.current.getBoundingClientRect();
     const dx = ((e.clientX - drag.current.x) / rect.width) * view.w;
     const dy = ((e.clientY - drag.current.y) / rect.height) * view.h;
-    setView((v) => ({ ...v, x: drag.current!.vx - dx, y: drag.current!.vy - dy }));
+    setView((v) => clampView({ ...v, x: drag.current!.vx - dx, y: drag.current!.vy - dy }));
   };
   const onPointerUp = (e: React.PointerEvent<SVGSVGElement>) => {
     drag.current = null;
@@ -459,16 +475,25 @@ function ChartWheel({ chart }: { chart: any }) {
   const resetView = () => setView({ x: 0, y: 0, w: size, h: size });
   const zoomBy = (factor: number) => {
     const newW = Math.min(MAX_W, Math.max(MIN_W, view.w * factor));
+    if (newW === view.w) return;
     const cxv = view.x + view.w / 2, cyv = view.y + view.h / 2;
-    setView({ x: cxv - newW / 2, y: cyv - newW / 2, w: newW, h: newW });
+    setView(clampView({ x: cxv - newW / 2, y: cyv - newW / 2, w: newW, h: newW }));
   };
   const isZoomed = view.w !== size || view.x !== 0 || view.y !== 0;
+  const atMaxZoom = view.w <= MIN_W + 0.001;
+  const atMinZoom = view.w >= MAX_W - 0.001;
 
   return (
     <div className="glass-card rounded-2xl p-4 relative">
       <div className="absolute top-3 right-3 z-10 flex items-center gap-1">
-        <button type="button" onClick={() => zoomBy(1 / 1.3)} className="size-7 rounded-md border border-gold/30 bg-background/70 text-gold text-sm hover:bg-gold/10" aria-label="Aproximar">+</button>
-        <button type="button" onClick={() => zoomBy(1.3)} className="size-7 rounded-md border border-gold/30 bg-background/70 text-gold text-sm hover:bg-gold/10" aria-label="Afastar">−</button>
+        <span
+          className="h-7 px-2 rounded-md border border-gold/30 bg-background/70 text-gold text-[10px] font-mono inline-flex items-center tabular-nums"
+          title={`Zoom travado entre ${MIN_ZOOM}× e ${MAX_ZOOM}×`}
+        >
+          {zoomLevel.toFixed(2)}×
+        </span>
+        <button type="button" onClick={() => zoomBy(1 / 1.3)} disabled={atMaxZoom} className="size-7 rounded-md border border-gold/30 bg-background/70 text-gold text-sm hover:bg-gold/10 disabled:opacity-40" aria-label="Aproximar">+</button>
+        <button type="button" onClick={() => zoomBy(1.3)} disabled={atMinZoom} className="size-7 rounded-md border border-gold/30 bg-background/70 text-gold text-sm hover:bg-gold/10 disabled:opacity-40" aria-label="Afastar">−</button>
         <button type="button" onClick={resetView} disabled={!isZoomed} className="h-7 px-2 rounded-md border border-gold/30 bg-background/70 text-gold text-[10px] hover:bg-gold/10 disabled:opacity-40">Reset</button>
       </div>
       <p className="absolute bottom-2 left-3 text-[10px] text-muted-foreground/70 pointer-events-none">Arraste para mover · scroll para zoom</p>
