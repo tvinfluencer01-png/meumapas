@@ -9,6 +9,7 @@ import { EnergyCalendar } from "@/components/EnergyCalendar";
 import { WeeklyReading } from "@/components/WeeklyReading";
 import { FavoritesSummary } from "@/components/FavoritesSummary";
 import { FavoritesImpact } from "@/components/FavoritesImpact";
+import { AIInsights } from "@/components/AIInsights";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
@@ -90,6 +91,9 @@ function Dashboard() {
         <StatCard icon={Heart} label="Alma (desejo)" value={num?.soul_urge?.toString() ?? "—"}
           hint={num ? NUMBER_MEANINGS[num.soul_urge]?.title : "—"} />
       </section>
+
+      {/* AI Insights — aplica resumo prático ao agora */}
+      <AIInsights />
 
       {/* Weekly AI Reading */}
       <WeeklyReading />
