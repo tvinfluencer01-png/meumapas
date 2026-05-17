@@ -123,11 +123,35 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
     borderColor: GOLD, borderWidth: 0.3,
   });
 
-  // top label
-  const label = safe("COSMIC AI  -  RELATORIO PREMIUM");
-  const labelW = sans.widthOfTextAtSize(label, 9);
-  cover.drawText(label, {
-    x: (PAGE_W - labelW) / 2, y: PAGE_H - 100,
+  // Branding (add-on): logo image OR custom display name replaces "COSMIC AI"
+  const branding = data.branding?.enabled ? data.branding : null;
+  let topLabel = "COSMIC AI  -  RELATORIO PREMIUM";
+  if (branding?.displayName && !branding.logoBytes) {
+    topLabel = branding.displayName.toUpperCase();
+  }
+
+  if (branding?.logoBytes && branding.logoMime) {
+    try {
+      const img =
+        branding.logoMime === "image/png"
+          ? await pdf.embedPng(branding.logoBytes)
+          : await pdf.embedJpg(branding.logoBytes);
+      const lw = Math.max(40, Math.min(240, branding.logoWidth ?? 120));
+      const lh = Math.max(20, Math.min(160, branding.logoHeight ?? 60));
+      cover.drawImage(img, {
+        x: (PAGE_W - lw) / 2,
+        y: PAGE_H - 90 - lh,
+        width: lw,
+        height: lh,
+      });
+    } catch (e) {
+      console.error("[reports-pdf] failed to embed logo", e);
+    }
+  } else {
+    const label = safe(topLabel);
+    const labelW = sans.widthOfTextAtSize(label, 9);
+    cover.drawText(label, {
+      x: (PAGE_W - labelW) / 2, y: PAGE_H - 100,
     size: 9, font: sans, color: GOLD,
   });
 
