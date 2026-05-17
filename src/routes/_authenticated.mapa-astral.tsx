@@ -28,6 +28,7 @@ function MapaAstral() {
   const [loading, setLoading] = useState(false);
   const [chart, setChart] = useState<any>(null);
   const [genError, setGenError] = useState<string | null>(null);
+  const [retryInfo, setRetryInfo] = useState<{ attempt: number; max: number; waitMs: number } | null>(null);
 
   // Health probe: confirms the astrology serverFn is deployed/reachable.
   const health = useQuery({
