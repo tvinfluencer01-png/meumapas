@@ -1,7 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { listFavorites, toggleFavorite, updateFavoriteNote } from "@/lib/favorites.functions";
-import { Star, Trash2, Pencil, Check, X } from "lucide-react";
+import { listFavorites, toggleFavorite, updateFavoriteNote, generateFavoriteNote } from "@/lib/favorites.functions";
+import { Star, Trash2, Pencil, Check, X, Sparkles, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -25,6 +26,15 @@ export function FavoritesSummary() {
     mutationFn: ({ date, note }: { date: string; note: string }) =>
       updateNote({ data: { date, note } }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["calendar-favorites"] }),
+  });
+  const generateFn = useServerFn(generateFavoriteNote);
+  const generateMutation = useMutation({
+    mutationFn: (date: string) => generateFn({ data: { date } }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["calendar-favorites"] });
+      toast.success("Nota gerada com sua energia do dia ✨");
+    },
+    onError: (e: Error) => toast.error(e.message || "Não foi possível gerar a nota."),
   });
 
   const [editing, setEditing] = useState<string | null>(null);
@@ -79,6 +89,8 @@ export function FavoritesSummary() {
                       setEditing(null);
                     }}
                     onRemove={() => removeMutation.mutate(f.date)}
+                    onGenerate={() => generateMutation.mutate(f.date)}
+                    generating={generateMutation.isPending && generateMutation.variables === f.date}
                   />
                 ))}
               </div>
@@ -103,6 +115,8 @@ export function FavoritesSummary() {
                       setEditing(null);
                     }}
                     onRemove={() => removeMutation.mutate(f.date)}
+                    onGenerate={() => generateMutation.mutate(f.date)}
+                    generating={generateMutation.isPending && generateMutation.variables === f.date}
                   />
                 ))}
               </div>
@@ -118,10 +132,12 @@ type Fav = { id: string; date: string; note: string | null; created_at: string }
 
 function FavRow({
   fav, isToday, editing, draft, onStartEdit, onCancel, onDraftChange, onSave, onRemove,
+  onGenerate, generating,
 }: {
   fav: Fav; isToday: boolean; editing: boolean; draft: string;
   onStartEdit: () => void; onCancel: () => void;
   onDraftChange: (v: string) => void; onSave: () => void; onRemove: () => void;
+  onGenerate: () => void; generating: boolean;
 }) {
   const d = new Date(fav.date + "T12:00:00Z");
   return (
@@ -168,6 +184,11 @@ function FavRow({
       </div>
       {!editing && (
         <div className="flex flex-col gap-1">
+          <button onClick={onGenerate} disabled={generating} aria-label="Gerar nota com IA"
+            title="Gerar nota com IA a partir do insight do dia"
+            className="p-1.5 rounded-md text-muted-foreground hover:text-gold hover:bg-gold/10 disabled:opacity-50">
+            {generating ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}
+          </button>
           <button onClick={onStartEdit} aria-label="Editar nota"
             className="p-1.5 rounded-md text-muted-foreground hover:text-gold hover:bg-gold/10">
             <Pencil className="size-3.5" />
