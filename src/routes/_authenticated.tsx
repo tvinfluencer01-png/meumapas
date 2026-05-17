@@ -1,0 +1,111 @@
+import { createFileRoute, Outlet, redirect, Link, useRouter } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
+import { Starfield } from "@/components/Starfield";
+import {
+  Sparkles, LayoutDashboard, CircleDot, Hash, MessageCircle, Settings, LogOut, Menu, X,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+export const Route = createFileRoute("/_authenticated")({
+  beforeLoad: async () => {
+    const { data, error } = await supabase.auth.getUser();
+    if (error || !data.user) throw redirect({ to: "/auth" });
+  },
+  component: AuthedLayout,
+});
+
+const NAV = [
+  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/mapa-astral", label: "Mapa Astral", icon: CircleDot },
+  { to: "/numerologia", label: "Numerologia", icon: Hash },
+  { to: "/oraculo", label: "Oráculo IA", icon: MessageCircle },
+  { to: "/configuracoes", label: "Configurações", icon: Settings },
+] as const;
+
+function AuthedLayout() {
+  const { signOut, user } = useAuth();
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [profileChecked, setProfileChecked] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("onboarding_completed")
+        .eq("id", user.id)
+        .maybeSingle();
+      const path = router.state.location.pathname;
+      if (data && !data.onboarding_completed && path !== "/onboarding") {
+        router.navigate({ to: "/onboarding" });
+      }
+      setProfileChecked(true);
+    })();
+  }, [user, router]);
+
+  async function handleSignOut() {
+    await signOut();
+    router.navigate({ to: "/" });
+  }
+
+  if (!profileChecked) {
+    return (
+      <div className="min-h-screen grid place-items-center bg-background">
+        <Sparkles className="size-8 text-gold animate-pulse" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative min-h-screen bg-background text-foreground">
+      <Starfield count={60} className="fixed" />
+
+      {/* Mobile top bar */}
+      <header className="lg:hidden sticky top-0 z-30 flex items-center justify-between border-b border-border bg-background/80 backdrop-blur px-4 py-3">
+        <Link to="/dashboard" className="flex items-center gap-2">
+          <Sparkles className="size-5 text-gold" />
+          <span className="font-serif text-lg shimmer-text">Cosmic AI</span>
+        </Link>
+        <Button variant="ghost" size="icon" onClick={() => setOpen(!open)}>
+          {open ? <X className="size-5" /> : <Menu className="size-5" />}
+        </Button>
+      </header>
+
+      <div className="relative z-10 flex">
+        {/* Sidebar */}
+        <aside className={`${open ? "block" : "hidden"} lg:block fixed lg:sticky inset-0 lg:inset-auto lg:top-0 z-20 lg:z-auto h-screen w-full lg:w-64 border-r border-border bg-background/90 backdrop-blur-xl`}>
+          <div className="hidden lg:flex items-center gap-2 px-6 py-6 border-b border-border">
+            <Sparkles className="size-6 text-gold" />
+            <span className="font-serif text-xl shimmer-text">Cosmic AI</span>
+          </div>
+          <nav className="p-4 space-y-1">
+            {NAV.map((item) => (
+              <Link
+                key={item.to} to={item.to} onClick={() => setOpen(false)}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-gold hover:bg-secondary/40 transition-colors"
+                activeProps={{ className: "bg-secondary text-gold border border-gold/20" }}
+              >
+                <item.icon className="size-4" /> {item.label}
+              </Link>
+            ))}
+          </nav>
+          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border">
+            <div className="text-xs text-muted-foreground truncate mb-2">{user?.email}</div>
+            <Button onClick={handleSignOut} variant="ghost" size="sm" className="w-full justify-start text-muted-foreground hover:text-destructive">
+              <LogOut className="size-4 mr-2" /> Sair
+            </Button>
+          </div>
+        </aside>
+
+        <main className="flex-1 min-h-screen lg:pl-0">
+          <div className="p-4 lg:p-8 max-w-7xl mx-auto">
+            <Outlet />
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+}
