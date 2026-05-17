@@ -138,11 +138,12 @@ export function EnergyCalendar() {
           const isToday = d.date === todayISO;
           const isSelected = d.date === selected;
           const isFav = favSet.has(d.date);
+          const dimmed = favOnly && !!d.date && !isFav;
           return (
             <button
               key={d.day}
-              onClick={() => d.date && setSelected(d.date)}
-              disabled={!d.date}
+              onClick={() => d.date && !dimmed && setSelected(d.date)}
+              disabled={!d.date || dimmed}
               className={cn(
                 "relative aspect-square rounded-lg flex flex-col items-center justify-center text-xs transition-all",
                 "border border-transparent hover:border-gold/40",
@@ -151,6 +152,7 @@ export function EnergyCalendar() {
                 isSelected && "ring-2 ring-gold scale-105",
                 isFav && "border-gold/60",
                 isLoading && "animate-pulse",
+                dimmed && "opacity-15 grayscale hover:border-transparent cursor-default",
               )}
             >
               <span className="font-serif text-sm leading-none">{d.day}</span>
