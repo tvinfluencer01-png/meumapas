@@ -221,7 +221,16 @@ const SaveSchema = z.object({
   enabled: z.boolean(),
 });
 
-async function validateTwilioCredentials(accountSid: string, authToken: string) {
+type TwilioAccountInfo = {
+  status: string;
+  friendly_name: string;
+  type: string;
+};
+
+async function validateTwilioCredentials(
+  accountSid: string,
+  authToken: string,
+): Promise<TwilioAccountInfo> {
   let res: Response;
   try {
     const auth = btoa(`${accountSid}:${authToken}`);
@@ -239,13 +248,15 @@ async function validateTwilioCredentials(accountSid: string, authToken: string) 
     throw new Error("Account SID não encontrado na Twilio.");
   }
   if (!res.ok) {
-    const json = await res.json().catch(() => ({} as { message?: string }));
-    throw new Error(`Twilio recusou as credenciais (HTTP ${res.status}): ${json?.message ?? "erro desconhecido"}.`);
+    const j = await res.json().catch(() => ({} as { message?: string }));
+    throw new Error(`Twilio recusou as credenciais (HTTP ${res.status}): ${j?.message ?? "erro desconhecido"}.`);
   }
-  const json = await res.json().catch(() => ({} as { status?: string }));
-  if (json?.status && json.status !== "active") {
-    throw new Error(`Conta Twilio está com status "${json.status}", não é possível enviar mensagens.`);
-  }
+  const json = await res.json().catch(() => ({} as Partial<TwilioAccountInfo>));
+  return {
+    status: String(json?.status ?? "unknown"),
+    friendly_name: String(json?.friendly_name ?? ""),
+    type: String(json?.type ?? ""),
+  };
 }
 
 export const testTwilioCredentials = createServerFn({ method: "POST" })
@@ -270,8 +281,8 @@ export const testTwilioCredentials = createServerFn({ method: "POST" })
     if (!tokenToCheck) {
       throw new Error("Informe o Auth Token para validar as credenciais.");
     }
-    await validateTwilioCredentials(data.account_sid, tokenToCheck);
-    return { ok: true };
+    const info = await validateTwilioCredentials(data.account_sid, tokenToCheck);
+    return { ok: true, ...info };
   });
 
 export const saveTwilioSettings = createServerFn({ method: "POST" })
