@@ -260,7 +260,7 @@ A lista "suggestions.items" deve ter entre 6 e 8 itens, cada um com "name" curto
       spiritual: brandRow?.enabled_spiritual ?? true,
     };
     let brandingPayload: ReportData["branding"] = undefined;
-    if (brandRow?.enabled && kindEnabledMap[data.kind]) {
+    if (brandingAddonActive && brandRow?.enabled && kindEnabledMap[data.kind]) {
       let logoBytes: Uint8Array | undefined;
       let logoMime: "image/png" | "image/jpeg" | undefined;
       if (brandRow.logo_path) {
