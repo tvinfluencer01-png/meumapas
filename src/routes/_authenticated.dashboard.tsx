@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { computeNumerology, NUMBER_MEANINGS } from "@/lib/numerology";
 import { Sparkles, Sun, Moon, Star, Heart, Flame, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { EnergyCalendar } from "@/components/EnergyCalendar";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
@@ -85,6 +86,9 @@ function Dashboard() {
         <StatCard icon={Heart} label="Alma (desejo)" value={num?.soul_urge?.toString() ?? "—"}
           hint={num ? NUMBER_MEANINGS[num.soul_urge]?.title : "—"} />
       </section>
+
+      {/* Energy Calendar */}
+      <EnergyCalendar />
 
       {/* CTAs */}
       <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
