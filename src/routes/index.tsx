@@ -34,16 +34,20 @@ function LandingPage() {
     <div className="min-h-screen bg-background text-foreground antialiased">
       <Nav />
       <Hero />
+      <TrustBar />
       <Pillars />
       <AstralPreview />
       <Numerology />
       <OracleSection />
+      <Compatibility />
       <Reports />
       <Testimonials />
       <Pricing />
+      <PlanComparison />
       <FAQ />
       <CTASection />
       <Footer />
+      <ChatbotFloat />
       <WhatsAppFloat />
     </div>
   );
