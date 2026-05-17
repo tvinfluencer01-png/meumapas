@@ -349,6 +349,7 @@ function ChartWheel({ chart }: { chart: any }) {
           const ty = cy + Math.sin(mid) * ((rOuter + rInner) / 2);
           return (
             <g key={i}>
+              <title>{SIGNS[i]} — {SIGN_MEANING[SIGNS[i]]?.short}</title>
               <line x1={cx + Math.cos(a1)*rInner} y1={cy + Math.sin(a1)*rInner}
                     x2={x1} y2={y1} stroke="hsl(45 70% 50% / 0.3)" />
               <text x={tx} y={ty} fontSize="20" fill="hsl(45 80% 70%)" textAnchor="middle" dominantBaseline="middle">
@@ -375,7 +376,8 @@ function ChartWheel({ chart }: { chart: any }) {
           const x = cx + Math.cos(angle) * rPlanet;
           const y = cy + Math.sin(angle) * rPlanet;
           return (
-            <g key={i}>
+            <g key={i} style={{ cursor: "help" }}>
+              <title>{PLANET_MEANING[p.name]?.title ?? p.name} em {p.sign} {p.degree.toFixed(1)}° — {PLANET_MEANING[p.name]?.short}</title>
               <circle cx={x} cy={y} r="14" fill="hsl(255 30% 15%)" stroke="hsl(45 80% 60%)" />
               <text x={x} y={y} fontSize="14" fill="hsl(45 90% 75%)" textAnchor="middle" dominantBaseline="middle">
                 {PLANET_GLYPH[p.name]}
