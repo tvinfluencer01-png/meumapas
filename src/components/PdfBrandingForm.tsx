@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { Image as ImageIcon, Upload, Trash2, Save, Sparkles, Info } from "lucide-react";
+import { Image as ImageIcon, Upload, Trash2, Save, Sparkles, Info, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +15,7 @@ import {
   uploadPdfLogo,
   removePdfLogo,
 } from "@/lib/pdf-branding.functions";
+import { getAddonsOverview } from "@/lib/addons.functions";
 
 type FormState = {
   enabled: boolean;
