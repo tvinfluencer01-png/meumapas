@@ -618,7 +618,26 @@ function ChartWheel({ chart }: { chart: any }) {
           const s = SIGN_MEANING[p.sign];
           return (
             <g key={`pl-${i}`}
-              onMouseEnter={(e) => setHover({ x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY, title: `${m?.title ?? p.name} em ${s?.glyph ?? ""} ${p.sign} ${p.degree.toFixed(1)}°`, body: m?.short ?? "" })}
+              onMouseEnter={(e) => {
+                const g = SIGN_GUIDANCE[p.sign];
+                const el = ELEMENT_OF[p.sign];
+                const planetAspects = (chart.aspects ?? []).filter((a: any) => a.a === p.name || a.b === p.name);
+                const aspLines = planetAspects.slice(0, 3).map((a: any) => ({
+                  label: a.aspect,
+                  value: `${a.a === p.name ? a.b : a.a} · orbe ${a.orb}°`,
+                }));
+                setHover({
+                  x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY,
+                  title: `${m?.title ?? p.name} em ${s?.glyph ?? ""} ${p.sign}`,
+                  subtitle: `${p.degree.toFixed(2)}° · ${ELEMENT_LABEL[el]} ${MODALITY_OF[p.sign]}`,
+                  body: m?.short,
+                  lines: [
+                    ...(g ? [{ label: "Faça agora", value: g.doNow }] : []),
+                    ...aspLines,
+                  ],
+                  accent: "planeta",
+                });
+              }}
               onMouseLeave={() => setHover(null)}
               style={{ cursor: "help" }}>
               <line x1={real.x} y1={real.y} x2={dot.x} y2={dot.y} stroke="hsl(45 80% 60% / 0.45)" strokeWidth={0.8} />
