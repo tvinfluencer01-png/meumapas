@@ -97,12 +97,14 @@ export const generateReport = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
 
     // 1) Load user context
-    const [{ data: birth }, { data: chart }, { data: settings }, { data: brandRow }] = await Promise.all([
+    const [{ data: birth }, { data: chart }, { data: settings }, { data: brandRow }, { data: brandingSub }] = await Promise.all([
       supabase.from("birth_data").select("*").eq("user_id", userId).eq("is_primary", true).maybeSingle(),
       supabase.from("astro_charts").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(1).maybeSingle(),
       supabase.from("user_settings").select("*").eq("user_id", userId).maybeSingle(),
       supabase.from("pdf_branding").select("*").eq("user_id", userId).maybeSingle(),
+      supabase.from("user_subscriptions").select("status").eq("user_id", userId).eq("addon_id", "sub_branding_pdf").eq("status", "active").maybeSingle(),
     ]);
+    const brandingAddonActive = !!brandingSub;
 
     if (!birth) {
       throw new Error("Complete seus dados de nascimento antes de gerar relatorios.");
