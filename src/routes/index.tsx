@@ -683,10 +683,10 @@ function BrandIdentity() {
 
             <div className="mt-10 grid grid-cols-1 gap-10 sm:grid-cols-2">
               <div>
-                <p className="font-serif text-6xl italic leading-none text-foreground">
+                <p aria-hidden="true" className="font-serif text-6xl italic leading-none text-foreground">
                   Aa
                 </p>
-                <div className="mt-4 space-y-1 text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+                <div className="mt-4 space-y-1 text-xs font-medium uppercase tracking-[0.3em] text-stardust/80">
                   <p className="text-gold">Cormorant Garamond</p>
                   <p>Display · Itálico · 400–600</p>
                 </div>
@@ -695,12 +695,12 @@ function BrandIdentity() {
                 </p>
               </div>
               <div>
-                <p className="text-6xl font-light leading-none text-foreground">Aa</p>
-                <div className="mt-4 space-y-1 text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+                <p aria-hidden="true" className="text-6xl font-light leading-none text-foreground">Aa</p>
+                <div className="mt-4 space-y-1 text-xs font-medium uppercase tracking-[0.3em] text-stardust/80">
                   <p className="text-gold">Inter</p>
                   <p>Texto · 300–600</p>
                 </div>
-                <p className="mt-4 text-sm font-light text-muted-foreground">
+                <p className="mt-4 text-sm font-light text-foreground/75">
                   Clareza absoluta para parágrafos longos e dados precisos.
                 </p>
               </div>
@@ -709,18 +709,22 @@ function BrandIdentity() {
 
           {/* Palette */}
           <motion.article
+            aria-labelledby="brand-palette-heading"
             className="bg-background p-12 lg:col-span-7"
             initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-80px" }}
             transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
           >
-            <span className="mb-8 block text-[10px] uppercase tracking-[0.35em] text-muted-foreground">
+            <h3
+              id="brand-palette-heading"
+              className="mb-8 text-xs font-medium uppercase tracking-[0.35em] text-stardust/85"
+            >
               Paleta Cromática
-            </span>
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            </h3>
+            <ul className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               {palette.map((c, i) => (
-                <motion.div
+                <motion.li
                   key={c.name}
                   className="group"
                   initial={{ opacity: 0, y: 20 }}
@@ -733,12 +737,15 @@ function BrandIdentity() {
                   }}
                 >
                   <motion.div
+                    role="img"
+                    aria-label={`Cor ${c.name}, token ${c.token}, hexadecimal ${c.hex}`}
                     whileHover={{ y: -6, scale: 1.03 }}
                     transition={{ type: "spring", stiffness: 260, damping: 18 }}
                     className={`relative aspect-square w-full overflow-hidden rounded-md border border-border ${c.className} shadow-[0_0_0_0_transparent] transition-shadow duration-500 group-hover:shadow-[0_18px_40px_-18px_color-mix(in_oklab,var(--gold)_45%,transparent)]`}
                   >
-                    <span className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-foreground/10 to-transparent" />
+                    <span aria-hidden="true" className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-foreground/10 to-transparent" />
                     <motion.span
+                      aria-hidden="true"
                       className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
                       style={{
                         background:
@@ -750,30 +757,34 @@ function BrandIdentity() {
                     <p className="font-serif text-lg text-foreground transition-colors group-hover:text-gold">
                       {c.name}
                     </p>
-                    <p className="text-[10px] uppercase tracking-[0.25em] text-gold/70">
+                    <p className="text-xs font-medium uppercase tracking-[0.25em] text-gold">
                       {c.hex}
                     </p>
-                    <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+                    <p className="text-xs font-medium uppercase tracking-[0.25em] text-stardust/80">
                       {c.token}
                     </p>
                   </div>
-                </motion.div>
+                </motion.li>
               ))}
-            </div>
+            </ul>
           </motion.article>
 
           {/* Principles */}
           <motion.article
+            aria-labelledby="brand-principles-heading"
             className="bg-background p-12 lg:col-span-5"
             initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-80px" }}
             transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
           >
-            <span className="mb-8 block text-[10px] uppercase tracking-[0.35em] text-muted-foreground">
+            <h3
+              id="brand-principles-heading"
+              className="mb-8 text-xs font-medium uppercase tracking-[0.35em] text-stardust/85"
+            >
               Princípios
-            </span>
-            <ul className="space-y-6">
+            </h3>
+            <ol className="space-y-6">
               {[
                 {
                   k: "01",
@@ -804,8 +815,9 @@ function BrandIdentity() {
                   }}
                   whileHover={{ x: 6 }}
                 >
-                  <span className="pointer-events-none absolute -left-3 top-2 h-6 w-px origin-top scale-y-0 bg-gold transition-transform duration-500 group-hover/p:scale-y-100" />
+                  <span aria-hidden="true" className="pointer-events-none absolute -left-3 top-2 h-6 w-px origin-top scale-y-0 bg-gold transition-transform duration-500 group-hover/p:scale-y-100" />
                   <motion.span
+                    aria-hidden="true"
                     className="font-serif text-2xl italic text-gold"
                     whileHover={{ scale: 1.15, rotate: -4 }}
                     transition={{ type: "spring", stiffness: 320, damping: 14 }}
@@ -813,16 +825,16 @@ function BrandIdentity() {
                     {p.k}
                   </motion.span>
                   <div>
-                    <p className="font-serif text-lg text-foreground transition-colors duration-300 group-hover/p:text-gold">
+                    <h4 className="font-serif text-lg text-foreground transition-colors duration-300 group-hover/p:text-gold">
                       {p.t}
-                    </p>
-                    <p className="mt-1 text-sm font-light leading-relaxed text-muted-foreground">
+                    </h4>
+                    <p className="mt-1 text-sm font-light leading-relaxed text-foreground/75">
                       {p.d}
                     </p>
                   </div>
                 </motion.li>
               ))}
-            </ul>
+            </ol>
           </motion.article>
         </div>
       </div>
