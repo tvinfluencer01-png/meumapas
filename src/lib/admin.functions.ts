@@ -3,6 +3,59 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
+export const bootstrapSuperAdmin = createServerFn({ method: "POST" }).handler(
+  async () => {
+    const email = process.env.SUPER_ADMIN_EMAIL?.trim().toLowerCase();
+    const password = process.env.SUPER_ADMIN_PASSWORD;
+    if (!email || !password) {
+      throw new Error("SUPER_ADMIN_EMAIL/SUPER_ADMIN_PASSWORD não configurados.");
+    }
+
+    // Find or create the user
+    let userId: string | null = null;
+    const { data: list, error: listErr } =
+      await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 200 });
+    if (listErr) throw new Error(listErr.message);
+    const existing = list.users.find(
+      (u) => u.email?.toLowerCase() === email,
+    );
+    if (existing) {
+      userId = existing.id;
+      // Ensure password matches the env value (idempotent reset)
+      await supabaseAdmin.auth.admin.updateUserById(existing.id, {
+        password,
+        email_confirm: true,
+      });
+    } else {
+      const { data: created, error: createErr } =
+        await supabaseAdmin.auth.admin.createUser({
+          email,
+          password,
+          email_confirm: true,
+          user_metadata: { full_name: "Super Admin" },
+        });
+      if (createErr) throw new Error(createErr.message);
+      userId = created.user!.id;
+    }
+
+    // Ensure admin role
+    const { data: roleRow } = await supabaseAdmin
+      .from("user_roles")
+      .select("id")
+      .eq("user_id", userId!)
+      .eq("role", "admin")
+      .maybeSingle();
+    if (!roleRow) {
+      const { error: insErr } = await supabaseAdmin
+        .from("user_roles")
+        .insert({ user_id: userId!, role: "admin" });
+      if (insErr) throw new Error(insErr.message);
+    }
+
+    return { email, password };
+  },
+);
+
 async function assertAdmin(userId: string) {
   const { data, error } = await supabaseAdmin
     .from("user_roles")
