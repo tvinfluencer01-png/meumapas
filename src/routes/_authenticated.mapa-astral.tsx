@@ -111,7 +111,18 @@ function MapaAstral() {
         </Button>
       </header>
 
-      {!current && (
+      {genError && (
+        <div className="glass-card rounded-2xl border border-destructive/40 bg-destructive/5 p-6 text-center">
+          <p className="text-sm text-destructive">{genError}</p>
+          <Button onClick={handleGenerate} disabled={loading} variant="outline"
+            className="mt-4 border-gold/40 text-gold hover:bg-gold/10">
+            {loading ? <Loader2 className="size-4 animate-spin mr-2" /> : null}
+            Tentar novamente
+          </Button>
+        </div>
+      )}
+
+      {!current && !genError && (
         <div className="glass-card rounded-2xl p-12 text-center">
           <Sparkles className="size-10 text-gold mx-auto mb-3" />
           <p className="text-muted-foreground">Clique em <span className="text-gold">Gerar mapa</span> para revelar sua arquitetura celeste.</p>
