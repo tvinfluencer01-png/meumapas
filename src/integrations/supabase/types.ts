@@ -341,6 +341,10 @@ export type Database = {
           created_at: string
           display_name: string | null
           enabled: boolean
+          enabled_career: boolean
+          enabled_love: boolean
+          enabled_personality: boolean
+          enabled_spiritual: boolean
           footer_enabled: boolean
           footer_name: string | null
           footer_phone: string | null
@@ -355,6 +359,10 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           enabled?: boolean
+          enabled_career?: boolean
+          enabled_love?: boolean
+          enabled_personality?: boolean
+          enabled_spiritual?: boolean
           footer_enabled?: boolean
           footer_name?: string | null
           footer_phone?: string | null
@@ -369,6 +377,10 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           enabled?: boolean
+          enabled_career?: boolean
+          enabled_love?: boolean
+          enabled_personality?: boolean
+          enabled_spiritual?: boolean
           footer_enabled?: boolean
           footer_name?: string | null
           footer_phone?: string | null
