@@ -273,6 +273,39 @@ export type Database = {
         }
         Relationships: []
       }
+      reports: {
+        Row: {
+          ai_model: string | null
+          created_at: string
+          id: string
+          kind: string
+          storage_path: string
+          summary: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          ai_model?: string | null
+          created_at?: string
+          id?: string
+          kind: string
+          storage_path: string
+          summary?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          ai_model?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          storage_path?: string
+          summary?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_settings: {
         Row: {
           ai_provider: string
