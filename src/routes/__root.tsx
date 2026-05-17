@@ -72,11 +72,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "Cosmic AI — Mapa Astral, Numerologia e IA Espiritual" },
+      { name: "description", content: "Onde a inteligência artificial encontra o sagrado. Mapa astral, numerologia cabalística e IA espiritual em uma plataforma cinematográfica." },
+      { name: "author", content: "Cosmic AI" },
+      { property: "og:title", content: "Cosmic AI — Onde a IA encontra o Sagrado" },
+      { property: "og:description", content: "Mapa astral, numerologia e IA espiritual com precisão cósmica." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
@@ -96,7 +96,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="pt-BR">
       <head>
         <HeadContent />
       </head>
