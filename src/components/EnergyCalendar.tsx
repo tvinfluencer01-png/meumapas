@@ -45,6 +45,7 @@ export function EnergyCalendar() {
   const today = new Date();
   const [cursor, setCursor] = useState({ year: today.getFullYear(), month: today.getMonth() + 1 });
   const [selected, setSelected] = useState<string | null>(null);
+  const [favOnly, setFavOnly] = useState(false);
 
   const fetchCal = useServerFn(getEnergyCalendar);
   const fetchFavs = useServerFn(listFavorites);
