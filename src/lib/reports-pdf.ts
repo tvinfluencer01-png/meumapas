@@ -232,8 +232,15 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
     page.drawText(numTxt, {
       x: PAGE_W - MARGIN - nw, y: PAGE_H - MARGIN + 30, size: 8, font: sans, color: GOLD,
     });
-    // footer
-    const footer = safe("Cosmic AI - Inteligencia espiritual personalizada");
+    // footer (branding add-on overrides when enabled + footerEnabled + any field)
+    let footerText = "Cosmic AI - Inteligencia espiritual personalizada";
+    if (branding && branding.footerEnabled !== false) {
+      const parts = [branding.footerName, branding.footerSite, branding.footerPhone]
+        .map((s) => (s ?? "").trim())
+        .filter(Boolean);
+      if (parts.length) footerText = parts.join("  -  ");
+    }
+    const footer = safe(footerText);
     const fw = sans.widthOfTextAtSize(footer, 8);
     page.drawText(footer, {
       x: (PAGE_W - fw) / 2, y: MARGIN - 24, size: 8, font: sans, color: MUTED,
