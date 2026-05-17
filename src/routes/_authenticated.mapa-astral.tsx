@@ -233,55 +233,88 @@ function MapaAstral() {
       )}
 
       {current && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <ChartWheel chart={current} />
-          <div className="space-y-4">
-            <div className="glass-card rounded-2xl p-6">
-              <h3 className="font-serif text-xl text-gold">Síntese</h3>
-              <p className="mt-2 text-stardust">{current.summary}</p>
-              <div className="grid grid-cols-2 gap-3 mt-4 text-sm">
-                <div className="rounded-lg bg-secondary/40 p-3">
-                  <div className="text-xs text-muted-foreground">Ascendente</div>
-                  <div className="font-serif text-lg text-stardust">{current.ascendant.sign}</div>
-                </div>
-                <div className="rounded-lg bg-secondary/40 p-3">
-                  <div className="text-xs text-muted-foreground">Meio do Céu</div>
-                  <div className="font-serif text-lg text-stardust">{current.midheaven.sign}</div>
+        <TooltipProvider delayDuration={150}>
+          <ChartSummary chart={current} />
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+            <ChartWheel chart={current} />
+            <div className="space-y-4">
+              <div className="glass-card rounded-2xl p-6">
+                <h3 className="font-serif text-xl text-gold">Síntese</h3>
+                <p className="mt-2 text-stardust">{current.summary}</p>
+                <div className="grid grid-cols-2 gap-3 mt-4 text-sm">
+                  <div className="rounded-lg bg-secondary/40 p-3">
+                    <div className="text-xs text-muted-foreground">Ascendente</div>
+                    <div className="font-serif text-lg text-stardust">{current.ascendant.sign}</div>
+                  </div>
+                  <div className="rounded-lg bg-secondary/40 p-3">
+                    <div className="text-xs text-muted-foreground">Meio do Céu</div>
+                    <div className="font-serif text-lg text-stardust">{current.midheaven.sign}</div>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="glass-card rounded-2xl p-6">
-              <h3 className="font-serif text-xl text-gold mb-3">Planetas</h3>
-              <ul className="space-y-2">
-                {current.planets.map((p: any) => (
-                  <li key={p.name} className="flex items-center justify-between text-sm">
-                    <span className="flex items-center gap-2 text-stardust">
-                      <span className="text-gold w-5">{PLANET_GLYPH[p.name]}</span> {p.name}
-                    </span>
-                    <span className="text-muted-foreground">
-                      {p.sign} {p.degree.toFixed(1)}°
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {current.aspects?.length > 0 && (
               <div className="glass-card rounded-2xl p-6">
-                <h3 className="font-serif text-xl text-gold mb-3">Aspectos principais</h3>
-                <ul className="space-y-1.5 text-sm">
-                  {current.aspects.slice(0, 12).map((a: any, i: number) => (
-                    <li key={i} className="flex justify-between text-stardust">
-                      <span>{a.a} <span className="text-muted-foreground">↔</span> {a.b}</span>
-                      <span className="text-gold">{a.aspect} <span className="text-muted-foreground">({a.orb}°)</span></span>
-                    </li>
-                  ))}
+                <h3 className="font-serif text-xl text-gold mb-3">Planetas</h3>
+                <p className="text-xs text-muted-foreground mb-3">Passe o mouse sobre cada ícone para ver o significado.</p>
+                <ul className="space-y-2">
+                  {current.planets.map((p: any) => {
+                    const m = PLANET_MEANING[p.name];
+                    const s = SIGN_MEANING[p.sign];
+                    return (
+                      <li key={p.name} className="flex items-center justify-between text-sm">
+                        <span className="flex items-center gap-2 text-stardust">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="text-gold w-5 cursor-help">{PLANET_GLYPH[p.name]}</span>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="max-w-xs">
+                              <p className="font-serif text-gold">{m?.title ?? p.name}</p>
+                              <p className="text-xs text-muted-foreground mt-1">{m?.short}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                          {p.name}
+                        </span>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="text-muted-foreground cursor-help">
+                              {p.sign} {p.degree.toFixed(1)}°
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-xs">
+                            <p className="font-serif text-gold">{s?.glyph} {p.sign}</p>
+                            <p className="text-xs text-muted-foreground mt-1">{s?.short}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
-            )}
+
+              {current.aspects?.length > 0 && (
+                <div className="glass-card rounded-2xl p-6">
+                  <h3 className="font-serif text-xl text-gold mb-3">Aspectos principais</h3>
+                  <ul className="space-y-1.5 text-sm">
+                    {current.aspects.slice(0, 12).map((a: any, i: number) => (
+                      <li key={i} className="flex justify-between text-stardust">
+                        <span>{a.a} <span className="text-muted-foreground">↔</span> {a.b}</span>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="text-gold cursor-help">{a.aspect} <span className="text-muted-foreground">({a.orb}°)</span></span>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-xs">
+                            <p className="text-xs text-muted-foreground">{ASPECT_MEANING[a.aspect] ?? "Relação angular entre os astros."}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        </TooltipProvider>
       )}
     </div>
   );
