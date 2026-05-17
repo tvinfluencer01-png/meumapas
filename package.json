@@ -17,7 +17,17 @@
     "check:types": "node scripts/check.mjs --types",
     "check:lint": "node scripts/check.mjs --lint",
     "check:format": "node scripts/check.mjs --format",
-    "predev": "node scripts/check.mjs --syntax --lint || true"
+    "predev": "node scripts/check.mjs --syntax --lint || true",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "eslint --max-warnings=0 --no-warn-ignored",
+      "prettier --write"
+    ],
+    "*.{json,md,css,html,yml,yaml}": [
+      "prettier --write"
+    ]
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^2.0.47",
@@ -97,6 +107,8 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^15.15.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.5",
     "prettier": "^3.7.3",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.56.1",
