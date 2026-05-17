@@ -58,6 +58,19 @@ export function computeNumerology(fullName: string | null | undefined, birthDate
   };
 }
 
+/**
+ * Formata uma data ISO (YYYY-MM-DD) no padrão pt-BR (DD/MM/YYYY)
+ * sem aplicar conversão de fuso horário — evita que datas armazenadas
+ * como "2011-09-06" apareçam como "05/09/2011" em fusos negativos (UTC-3).
+ */
+export function formatBirthDateBR(birthDate: string | null | undefined): string {
+  if (typeof birthDate !== "string") return "";
+  const match = birthDate.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!match) return birthDate;
+  const [, y, m, d] = match;
+  return `${d}/${m}/${y}`;
+}
+
 export const NUMBER_MEANINGS: Record<number, { title: string; essence: string }> = {
   1: { title: "Pioneiro", essence: "Liderança, originalidade e coragem para abrir caminhos." },
   2: { title: "Diplomata", essence: "Sensibilidade, parceria e equilíbrio entre opostos." },
