@@ -336,6 +336,51 @@ export type Database = {
         }
         Relationships: []
       }
+      pdf_branding: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          enabled: boolean
+          footer_enabled: boolean
+          footer_name: string | null
+          footer_phone: string | null
+          footer_site: string | null
+          logo_height: number
+          logo_path: string | null
+          logo_width: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          enabled?: boolean
+          footer_enabled?: boolean
+          footer_name?: string | null
+          footer_phone?: string | null
+          footer_site?: string | null
+          logo_height?: number
+          logo_path?: string | null
+          logo_width?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          enabled?: boolean
+          footer_enabled?: boolean
+          footer_name?: string | null
+          footer_phone?: string | null
+          footer_site?: string | null
+          logo_height?: number
+          logo_path?: string | null
+          logo_width?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

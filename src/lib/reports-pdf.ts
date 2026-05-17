@@ -18,6 +18,18 @@ export type ReportSuggestions = {
   intro?: string;        // 1 frase contextualizando
   items: ReportSuggestion[];
 };
+export type ReportBranding = {
+  enabled: boolean;
+  logoBytes?: Uint8Array;
+  logoMime?: "image/png" | "image/jpeg";
+  logoWidth?: number;
+  logoHeight?: number;
+  displayName?: string | null;
+  footerEnabled?: boolean;
+  footerName?: string | null;
+  footerSite?: string | null;
+  footerPhone?: string | null;
+};
 export type ReportData = {
   kind: "personality" | "love" | "career" | "spiritual";
   title: string;
@@ -33,6 +45,7 @@ export type ReportData = {
   recommendations: ReportRecommendations;
   suggestions: ReportSuggestions;
   summary: string;
+  branding?: ReportBranding;
 };
 
 const GOLD = rgb(0.831, 0.686, 0.216); // #d4af37
@@ -110,13 +123,38 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
     borderColor: GOLD, borderWidth: 0.3,
   });
 
-  // top label
-  const label = safe("COSMIC AI  -  RELATORIO PREMIUM");
-  const labelW = sans.widthOfTextAtSize(label, 9);
-  cover.drawText(label, {
-    x: (PAGE_W - labelW) / 2, y: PAGE_H - 100,
-    size: 9, font: sans, color: GOLD,
-  });
+  // Branding (add-on): logo image OR custom display name replaces "COSMIC AI"
+  const branding = data.branding?.enabled ? data.branding : null;
+  let topLabel = "COSMIC AI  -  RELATORIO PREMIUM";
+  if (branding?.displayName && !branding.logoBytes) {
+    topLabel = branding.displayName.toUpperCase();
+  }
+
+  if (branding?.logoBytes && branding.logoMime) {
+    try {
+      const img =
+        branding.logoMime === "image/png"
+          ? await pdf.embedPng(branding.logoBytes)
+          : await pdf.embedJpg(branding.logoBytes);
+      const lw = Math.max(40, Math.min(240, branding.logoWidth ?? 120));
+      const lh = Math.max(20, Math.min(160, branding.logoHeight ?? 60));
+      cover.drawImage(img, {
+        x: (PAGE_W - lw) / 2,
+        y: PAGE_H - 90 - lh,
+        width: lw,
+        height: lh,
+      });
+    } catch (e) {
+      console.error("[reports-pdf] failed to embed logo", e);
+    }
+  } else {
+    const label = safe(topLabel);
+    const labelW = sans.widthOfTextAtSize(label, 9);
+    cover.drawText(label, {
+      x: (PAGE_W - labelW) / 2, y: PAGE_H - 100,
+      size: 9, font: sans, color: GOLD,
+    });
+  }
 
   // title
   const titleSize = 38;
@@ -194,8 +232,15 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
     page.drawText(numTxt, {
       x: PAGE_W - MARGIN - nw, y: PAGE_H - MARGIN + 30, size: 8, font: sans, color: GOLD,
     });
-    // footer
-    const footer = safe("Cosmic AI - Inteligencia espiritual personalizada");
+    // footer (branding add-on overrides when enabled + footerEnabled + any field)
+    let footerText = "Cosmic AI - Inteligencia espiritual personalizada";
+    if (branding && branding.footerEnabled !== false) {
+      const parts = [branding.footerName, branding.footerSite, branding.footerPhone]
+        .map((s) => (s ?? "").trim())
+        .filter(Boolean);
+      if (parts.length) footerText = parts.join("  -  ");
+    }
+    const footer = safe(footerText);
     const fw = sans.widthOfTextAtSize(footer, 8);
     page.drawText(footer, {
       x: (PAGE_W - fw) / 2, y: MARGIN - 24, size: 8, font: sans, color: MUTED,

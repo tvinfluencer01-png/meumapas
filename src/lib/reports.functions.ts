@@ -97,10 +97,11 @@ export const generateReport = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
 
     // 1) Load user context
-    const [{ data: birth }, { data: chart }, { data: settings }] = await Promise.all([
+    const [{ data: birth }, { data: chart }, { data: settings }, { data: brandRow }] = await Promise.all([
       supabase.from("birth_data").select("*").eq("user_id", userId).eq("is_primary", true).maybeSingle(),
       supabase.from("astro_charts").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(1).maybeSingle(),
       supabase.from("user_settings").select("*").eq("user_id", userId).maybeSingle(),
+      supabase.from("pdf_branding").select("*").eq("user_id", userId).maybeSingle(),
     ]);
 
     if (!birth) {
@@ -249,6 +250,41 @@ A lista "suggestions.items" deve ter entre 6 e 8 itens, cada um com "name" curto
     const ai = AiOutput.parse(parsed);
 
     // 4) Build PDF
+    // Load branding logo bytes (if add-on enabled and a logo is configured)
+    let brandingPayload: ReportData["branding"] = undefined;
+    if (brandRow?.enabled) {
+      let logoBytes: Uint8Array | undefined;
+      let logoMime: "image/png" | "image/jpeg" | undefined;
+      if (brandRow.logo_path) {
+        try {
+          const { data: blob } = await supabaseAdmin.storage
+            .from("pdf-branding")
+            .download(brandRow.logo_path);
+          if (blob) {
+            const ab = await blob.arrayBuffer();
+            logoBytes = new Uint8Array(ab);
+            logoMime = brandRow.logo_path.toLowerCase().endsWith(".png")
+              ? "image/png"
+              : "image/jpeg";
+          }
+        } catch (e) {
+          console.error("[reports] failed to load branding logo", e);
+        }
+      }
+      brandingPayload = {
+        enabled: true,
+        logoBytes,
+        logoMime,
+        logoWidth: brandRow.logo_width ?? 120,
+        logoHeight: brandRow.logo_height ?? 60,
+        displayName: brandRow.display_name,
+        footerEnabled: brandRow.footer_enabled,
+        footerName: brandRow.footer_name,
+        footerSite: brandRow.footer_site,
+        footerPhone: brandRow.footer_phone,
+      };
+    }
+
     const reportData: ReportData = {
       kind: data.kind,
       title: meta.title,
@@ -270,6 +306,7 @@ A lista "suggestions.items" deve ter entre 6 e 8 itens, cada um com "name" curto
         items: ai.suggestions.items,
       },
       summary: ai.summary,
+      branding: brandingPayload,
     };
 
     const pdfBytes = await buildReportPdf(reportData);
