@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { EnergyCalendar } from "@/components/EnergyCalendar";
 import { WeeklyReading } from "@/components/WeeklyReading";
 import { FavoritesSummary } from "@/components/FavoritesSummary";
+import { FavoritesImpact } from "@/components/FavoritesImpact";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
@@ -95,7 +96,8 @@ function Dashboard() {
       {/* Energy Calendar */}
       <EnergyCalendar />
 
-      {/* Favorites summary */}
+      {/* Favorites impact + summary */}
+      <FavoritesImpact />
       <FavoritesSummary />
 
       {/* CTAs */}
