@@ -27,6 +27,15 @@ export function FavoritesSummary() {
       updateNote({ data: { date, note } }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["calendar-favorites"] }),
   });
+  const generateFn = useServerFn(generateFavoriteNote);
+  const generateMutation = useMutation({
+    mutationFn: (date: string) => generateFn({ data: { date } }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["calendar-favorites"] });
+      toast.success("Nota gerada com sua energia do dia ✨");
+    },
+    onError: (e: Error) => toast.error(e.message || "Não foi possível gerar a nota."),
+  });
 
   const [editing, setEditing] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
