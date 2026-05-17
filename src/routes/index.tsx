@@ -572,9 +572,8 @@ function BrandIdentity() {
             >
               <motion.div
                 className="absolute inset-0 rounded-full border border-gold/15"
-                variants={{ rest: { rotate: 0 }, hover: { rotate: 360 } }}
-                transition={{ duration: 18, ease: "linear", repeat: Infinity }}
                 animate={{ rotate: 360 }}
+                transition={{ duration: 18, ease: "linear", repeat: Infinity }}
               />
               <motion.div
                 className="absolute inset-4 rounded-full border border-gold/10"
