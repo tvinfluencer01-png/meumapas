@@ -527,29 +527,36 @@ function BrandIdentity() {
     { name: "Stardust", token: "--stardust", hex: "#E8DCC4", className: "bg-stardust" },
     { name: "Nebula", token: "--nebula", hex: "#6B5B95", className: "bg-nebula" },
   ];
+  const prefersReduced = useReducedMotion();
   return (
-    <section className="relative overflow-hidden border-y border-border bg-card/30 py-32">
+    <section
+      aria-labelledby="brand-identity-heading"
+      className="relative overflow-hidden border-y border-border bg-card/30 py-32"
+    >
       <Starfield count={40} />
       <div className="relative mx-auto max-w-7xl px-6">
         {/* Header */}
         <div className="mb-20 flex flex-col items-start justify-between gap-8 md:flex-row md:items-end">
           <div className="max-w-xl">
-            <span className="mb-4 block text-xs uppercase tracking-[0.4em] text-gold/70">
+            <p className="mb-4 block text-xs font-medium uppercase tracking-[0.4em] text-gold">
               Sistema de Marca · v1.0
-            </span>
-            <h2 className="font-serif text-5xl italic leading-tight">
+            </p>
+            <h2
+              id="brand-identity-heading"
+              className="font-serif text-5xl italic leading-tight"
+            >
               Identidade <span className="text-gold">visual</span>
             </h2>
-            <p className="mt-6 leading-relaxed text-muted-foreground">
+            <p className="mt-6 leading-relaxed text-foreground/80">
               Cada detalhe — da tipografia ao pulso dourado — foi desenhado para
               traduzir o sagrado em forma. Um sistema arquetípico, calibrado em
               ouro cerimonial sobre noite profunda.
             </p>
           </div>
-          <div className="flex items-center gap-4 text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-            <span className="size-1.5 rounded-full bg-gold" />
+          <p className="flex items-center gap-3 text-xs font-medium uppercase tracking-[0.3em] text-stardust/85">
+            <span aria-hidden="true" className="size-1.5 rounded-full bg-gold" />
             Atualizado · 05.2026
-          </div>
+          </p>
         </div>
 
         <div className="grid grid-cols-1 gap-px border border-border bg-border lg:grid-cols-12">
