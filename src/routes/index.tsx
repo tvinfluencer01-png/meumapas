@@ -562,33 +562,42 @@ function BrandIdentity() {
         <div className="grid grid-cols-1 gap-px border border-border bg-border lg:grid-cols-12">
           {/* Monogram */}
           <motion.article
+            aria-labelledby="brand-monogram-heading"
             className="group/mono relative bg-background p-12 lg:col-span-5"
             initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-80px" }}
             transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
           >
-            <span className="mb-8 block text-[10px] uppercase tracking-[0.35em] text-muted-foreground">
+            <h3
+              id="brand-monogram-heading"
+              className="mb-8 text-xs font-medium uppercase tracking-[0.35em] text-stardust/85"
+            >
               Monograma
-            </span>
+            </h3>
             <motion.div
+              role="img"
+              aria-label="Monograma Cosmic AI: glifo C·AI em ouro cerimonial sobre noite profunda"
               className="relative mx-auto flex aspect-square w-full max-w-xs items-center justify-center"
               whileHover="hover"
               initial="rest"
               animate="rest"
             >
               <motion.div
+                aria-hidden="true"
                 className="absolute inset-0 rounded-full border border-gold/15"
-                animate={{ rotate: 360 }}
+                animate={prefersReduced ? undefined : { rotate: 360 }}
                 transition={{ duration: 18, ease: "linear", repeat: Infinity }}
               />
               <motion.div
+                aria-hidden="true"
                 className="absolute inset-4 rounded-full border border-gold/10"
-                animate={{ rotate: -360 }}
+                animate={prefersReduced ? undefined : { rotate: -360 }}
                 transition={{ duration: 26, ease: "linear", repeat: Infinity }}
               />
-              <div className="absolute inset-8 rounded-full border border-gold/5" />
+              <div aria-hidden="true" className="absolute inset-8 rounded-full border border-gold/5" />
               <motion.div
+                aria-hidden="true"
                 className="pointer-events-none absolute inset-0 rounded-full"
                 variants={{
                   rest: { opacity: 0, scale: 0.9 },
@@ -606,13 +615,18 @@ function BrandIdentity() {
                 return (
                   <motion.span
                     key={i}
+                    aria-hidden="true"
                     className="absolute size-1 rounded-full bg-gold/40"
                     style={{
                       top: `${50 + Math.sin(angle) * r}%`,
                       left: `${50 - Math.cos(angle) * r}%`,
                       transform: "translate(-50%, -50%)",
                     }}
-                    animate={{ opacity: [0.25, 0.9, 0.25], scale: [1, 1.4, 1] }}
+                    animate={
+                      prefersReduced
+                        ? undefined
+                        : { opacity: [0.25, 0.9, 0.25], scale: [1, 1.4, 1] }
+                    }
                     transition={{
                       duration: 3,
                       repeat: Infinity,
@@ -623,6 +637,7 @@ function BrandIdentity() {
                 );
               })}
               <motion.span
+                aria-hidden="true"
                 className="relative font-serif text-7xl italic text-gold"
                 variants={{
                   rest: { scale: 1, textShadow: "0 0 0px rgba(0,0,0,0)" },
@@ -636,26 +651,32 @@ function BrandIdentity() {
                 C<span className="text-stardust">·</span>AI
               </motion.span>
             </motion.div>
-            <div className="mt-10 flex items-center justify-between text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+            <div className="mt-10 flex items-center justify-between text-xs font-medium uppercase tracking-[0.3em] text-stardust/80">
               <span>Glifo principal</span>
-              <span className="text-gold/70">Espaço seguro · 1.5×</span>
+              <span className="text-gold">Espaço seguro · 1.5×</span>
             </div>
           </motion.article>
 
           {/* Wordmark + Typography */}
-          <article className="bg-background p-12 lg:col-span-7">
-            <span className="mb-8 block text-[10px] uppercase tracking-[0.35em] text-muted-foreground">
+          <article
+            aria-labelledby="brand-type-heading"
+            className="bg-background p-12 lg:col-span-7"
+          >
+            <h3
+              id="brand-type-heading"
+              className="mb-8 text-xs font-medium uppercase tracking-[0.35em] text-stardust/85"
+            >
               Logotipo & Tipografia
-            </span>
+            </h3>
 
             <div className="border-b border-border pb-10">
               <div className="flex items-center gap-3">
-                <span className="size-2 rounded-full bg-gold shadow-[0_0_12px_var(--gold)]" />
+                <span aria-hidden="true" className="size-2 rounded-full bg-gold shadow-[0_0_12px_var(--gold)]" />
                 <span className="font-serif text-4xl uppercase tracking-[0.3em] text-gold">
                   Cosmic AI
                 </span>
               </div>
-              <p className="mt-3 text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+              <p className="mt-3 text-xs font-medium uppercase tracking-[0.3em] text-stardust/80">
                 Wordmark · tracking 0.3em · ouro cerimonial
               </p>
             </div>
