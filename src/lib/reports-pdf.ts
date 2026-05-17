@@ -224,8 +224,16 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
     currentChapter = title;
   }
 
+  let isFirstHeading = true;
   function drawHeading(text: string, size = 20) {
-    ensureSpace(size + 30);
+    // Regra: todo titulo de capitulo inicia em uma nova pagina.
+    // A primeira chamada usa a pagina ja criada (vazia); as demais
+    // forcam uma quebra de pagina para garantir o inicio limpo.
+    if (!isFirstHeading) {
+      cursor = newPage(pdf, cursor.pageNumber + 1);
+      drawChapterTitleAt(cursor);
+    }
+    isFirstHeading = false;
     cursor.y -= 10;
     cursor.page.drawText(safe(text), {
       x: MARGIN, y: cursor.y - size, size, font: serifBold, color: NIGHT,
