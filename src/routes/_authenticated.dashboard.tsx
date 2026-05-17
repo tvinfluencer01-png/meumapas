@@ -95,7 +95,8 @@ function Dashboard() {
       {/* Energy Calendar */}
       <EnergyCalendar />
 
-      {/* Favorites summary */}
+      {/* Favorites impact + summary */}
+      <FavoritesImpact />
       <FavoritesSummary />
 
       {/* CTAs */}
