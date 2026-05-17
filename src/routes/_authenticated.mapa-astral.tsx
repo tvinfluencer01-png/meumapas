@@ -68,6 +68,18 @@ function MapaAstral() {
       toast.error("Complete seus dados de nascimento primeiro.");
       return;
     }
+    // Backend health gate — re-probe right before computing to avoid
+    // sending a request the server can't handle.
+    try {
+      const probe = await ping();
+      if (!probe || (probe as any).ok !== true) throw new Error("unhealthy");
+    } catch {
+      const msg = "Serviço astrológico indisponível. Tente novamente em instantes.";
+      setGenError(msg);
+      toast.error(msg);
+      health.refetch();
+      return;
+    }
     setLoading(true);
     setGenError(null);
     try {
