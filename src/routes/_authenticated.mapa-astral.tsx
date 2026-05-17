@@ -83,34 +83,58 @@ function MapaAstral() {
     }
     setLoading(true);
     setGenError(null);
+    setRetryInfo(null);
+
+    const offset = -new Date().getTimezoneOffset() / 60;
+    const payload = {
+      birthDataId: birth.id,
+      fullName: birth.full_name,
+      birthDate: birth.birth_date,
+      birthTime: birth.birth_time ?? undefined,
+      timeUnknown: birth.time_unknown,
+      latitude: Number(birth.latitude),
+      longitude: Number(birth.longitude),
+      timezoneOffset: offset,
+    };
+
+    // Treat as retriable: 5xx, network/fetch failures, or "server function info not found" (deploy lag)
+    const isRetriable = (msg: string) =>
+      /status code 5\d\d|HTTPError|server function info not found|failed to fetch|networkerror|timeout|ECONNRESET/i.test(msg);
+
+    const MAX_ATTEMPTS = 4;
+    const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+    let lastError: unknown = null;
     try {
-      const offset = -new Date().getTimezoneOffset() / 60;
-      const result = await compute({
-        data: {
-          birthDataId: birth.id,
-          fullName: birth.full_name,
-          birthDate: birth.birth_date,
-          birthTime: birth.birth_time ?? undefined,
-          timeUnknown: birth.time_unknown,
-          latitude: Number(birth.latitude),
-          longitude: Number(birth.longitude),
-          timezoneOffset: offset,
-        },
-      });
-      // Defensive: garante que o resultado seja um chart utilizável antes de renderizar
-      if (!result || typeof result !== "object" || !Array.isArray((result as any).planets)) {
-        throw new Error("Resposta inválida do servidor.");
+      for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+        try {
+          const result = await compute({ data: payload });
+          if (!result || typeof result !== "object" || !Array.isArray((result as any).planets)) {
+            throw new Error("Resposta inválida do servidor.");
+          }
+          setChart(result);
+          setRetryInfo(null);
+          toast.success(attempt > 1 ? `Mapa astral revelado (tentativa ${attempt}).` : "Mapa astral revelado.");
+          return;
+        } catch (e) {
+          lastError = e;
+          const msg = e instanceof Error ? e.message : String(e ?? "");
+          if (attempt >= MAX_ATTEMPTS || !isRetriable(msg)) throw e;
+          // Exponential backoff with jitter: 1s, 2s, 4s (+ up to 400ms)
+          const waitMs = Math.round(1000 * Math.pow(2, attempt - 1) + Math.random() * 400);
+          setRetryInfo({ attempt, max: MAX_ATTEMPTS, waitMs });
+          await sleep(waitMs);
+        }
       }
-      setChart(result);
-      toast.success("Mapa astral revelado.");
     } catch (e) {
-      const raw = e instanceof Error ? e.message : String(e ?? "");
-      const friendly = /server function info not found|HTTPError|status code 5\d\d|failed to fetch|networkerror/i.test(raw)
-        ? "Não foi possível gerar o mapa agora. O serviço astrológico está temporariamente indisponível — tente novamente em instantes."
+      const raw = e instanceof Error ? e.message : String(e ?? lastError ?? "");
+      const friendly = isRetriable(raw)
+        ? `Não foi possível gerar o mapa após ${MAX_ATTEMPTS} tentativas. O serviço astrológico está temporariamente indisponível — tente novamente em instantes.`
         : (raw || "Erro ao calcular o mapa.");
       setGenError(friendly);
       toast.error(friendly);
     } finally {
+      setRetryInfo(null);
       setLoading(false);
     }
   }
