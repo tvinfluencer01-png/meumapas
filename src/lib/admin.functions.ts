@@ -305,7 +305,10 @@ export const saveTwilioSettings = createServerFn({ method: "POST" })
       if (!tokenToCheck) {
         throw new Error("Informe o Auth Token para validar as credenciais.");
       }
-      await validateTwilioCredentials(data.account_sid, tokenToCheck);
+      const info = await validateTwilioCredentials(data.account_sid, tokenToCheck);
+      if (info.status !== "active") {
+        throw new Error(`Conta Twilio está com status "${info.status}", não é possível salvar.`);
+      }
     }
 
     const update = {
