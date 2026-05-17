@@ -410,7 +410,7 @@ function spreadAngles(items: { angle: number }[], minGap = 7) {
 }
 
 function ChartWheel({ chart }: { chart: any }) {
-  const [hover, setHover] = useState<{ x: number; y: number; title: string; body: string } | null>(null);
+  const [hover, setHover] = useState<HoverInfo | null>(null);
   const size = 560;
   const cx = size / 2, cy = size / 2;
   const rOuter = 258, rZodiac = 222, rInner = 188, rHouseNum = 158, rPlanet = 138, rAspect = 118;
