@@ -56,6 +56,85 @@ export const bootstrapSuperAdmin = createServerFn({ method: "POST" }).handler(
   },
 );
 
+export const listAdminUsers = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({
+      search: z.string().trim().max(120).optional().default(""),
+      page: z.number().int().min(1).max(50).optional().default(1),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    const perPage = 50;
+    const { data: list, error } = await supabaseAdmin.auth.admin.listUsers({
+      page: data.page,
+      perPage,
+    });
+    if (error) throw new Error(error.message);
+
+    const ids = list.users.map((u) => u.id);
+    const { data: roles } = await supabaseAdmin
+      .from("user_roles")
+      .select("user_id, role")
+      .in("user_id", ids.length ? ids : ["00000000-0000-0000-0000-000000000000"])
+      .eq("role", "admin");
+    const adminSet = new Set((roles ?? []).map((r) => r.user_id));
+
+    const q = data.search.toLowerCase();
+    const users = list.users
+      .map((u) => ({
+        id: u.id,
+        email: u.email ?? "",
+        full_name:
+          (u.user_metadata?.full_name as string | undefined) ??
+          (u.user_metadata?.name as string | undefined) ??
+          "",
+        created_at: u.created_at,
+        is_admin: adminSet.has(u.id),
+      }))
+      .filter((u) =>
+        q
+          ? u.email.toLowerCase().includes(q) ||
+            u.full_name.toLowerCase().includes(q)
+          : true,
+      );
+
+    return { users, page: data.page, perPage, hasMore: list.users.length === perPage };
+  });
+
+export const setUserAdmin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({
+      user_id: z.string().uuid(),
+      is_admin: z.boolean(),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    if (data.user_id === context.userId && !data.is_admin) {
+      throw new Error("Você não pode remover seu próprio acesso de admin.");
+    }
+    if (data.is_admin) {
+      const { error } = await supabaseAdmin
+        .from("user_roles")
+        .upsert(
+          { user_id: data.user_id, role: "admin" },
+          { onConflict: "user_id,role", ignoreDuplicates: true },
+        );
+      if (error) throw new Error(error.message);
+    } else {
+      const { error } = await supabaseAdmin
+        .from("user_roles")
+        .delete()
+        .eq("user_id", data.user_id)
+        .eq("role", "admin");
+      if (error) throw new Error(error.message);
+    }
+    return { ok: true };
+  });
+
 async function assertAdmin(userId: string) {
   const { data, error } = await supabaseAdmin
     .from("user_roles")
