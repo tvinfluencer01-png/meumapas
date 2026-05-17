@@ -128,7 +128,7 @@ ${context}
           const result = streamText({
             model,
             system,
-            messages: convertToModelMessages(messages),
+            messages: await convertToModelMessages(messages),
             abortSignal: request.signal,
           });
 
