@@ -564,18 +564,18 @@ export const saveMercadoPagoSettings = createServerFn({ method: "POST" })
       if (token) await validateMercadoPagoToken(token);
     }
 
-    const update: Record<string, unknown> = {
+    const update = {
       public_key: data.public_key || null,
       environment: data.environment,
       enabled: data.enabled,
       updated_by: context.userId,
+      ...(data.access_token && data.access_token.length > 0
+        ? { access_token: data.access_token }
+        : {}),
+      ...(data.webhook_secret && data.webhook_secret.length > 0
+        ? { webhook_secret: data.webhook_secret }
+        : {}),
     };
-    if (data.access_token && data.access_token.length > 0) {
-      update.access_token = data.access_token;
-    }
-    if (data.webhook_secret && data.webhook_secret.length > 0) {
-      update.webhook_secret = data.webhook_secret;
-    }
     const { error } = await supabaseAdmin
       .from("mercado_pago_settings")
       .update(update)
