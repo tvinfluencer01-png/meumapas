@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getEnergyCalendar } from "@/lib/energy-calendar.functions";
-import { ChevronLeft, ChevronRight, Sparkles, Moon } from "lucide-react";
+import { ChevronLeft, ChevronRight, Sparkles, Moon, Heart, Compass, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const WEEKDAYS = ["D", "S", "T", "Q", "Q", "S", "S"];
@@ -199,3 +199,25 @@ function Legend({ swatch, label }: { swatch: string; label: string }) {
     </div>
   );
 }
+
+const INSIGHT_STYLES = {
+  emotions: { icon: Heart, ring: "border-primary/30 bg-primary/5", iconColor: "text-primary" },
+  actions: { icon: Compass, ring: "border-gold/30 bg-gold/5", iconColor: "text-gold" },
+  alert: { icon: AlertTriangle, ring: "border-amber-500/30 bg-amber-500/5", iconColor: "text-amber-400" },
+} as const;
+
+function InsightCard({ tone, label, text }: { tone: keyof typeof INSIGHT_STYLES; label: string; text?: string }) {
+  const s = INSIGHT_STYLES[tone];
+  const Icon = s.icon;
+  return (
+    <div className={cn("rounded-xl border p-3", s.ring)}>
+      <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-muted-foreground">
+        <Icon className={cn("size-3.5", s.iconColor)} /> {label}
+      </div>
+      <p className="mt-1.5 text-sm text-stardust/90 leading-relaxed">
+        {text ?? "—"}
+      </p>
+    </div>
+  );
+}
+
