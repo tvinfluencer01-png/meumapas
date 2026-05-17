@@ -347,6 +347,40 @@ export function PdfBrandingForm() {
         </div>
       </section>
 
+      {/* Per-kind toggles */}
+      <section className="space-y-3">
+        <h3 className="text-sm uppercase tracking-widest text-gold">Aplicar em quais relatórios</h3>
+        <p className="text-xs text-muted-foreground">
+          Escolha as categorias que devem usar seu branding. As desativadas continuam com o branding padrão do Cosmic AI, mesmo com o add-on ativo.
+        </p>
+        <div className="grid sm:grid-cols-2 gap-3">
+          {KIND_TOGGLES.map((k) => {
+            const checked = form[k.key] as boolean;
+            return (
+              <div
+                key={k.key}
+                className="flex items-center justify-between gap-3 border border-border rounded-lg p-3 bg-night/20"
+              >
+                <div className="min-w-0">
+                  <Label htmlFor={`toggle-${k.key}`} className="text-sm block">
+                    {k.label}
+                  </Label>
+                  <p className="text-xs text-muted-foreground truncate">{k.hint}</p>
+                </div>
+                <Switch
+                  id={`toggle-${k.key}`}
+                  checked={checked}
+                  disabled={!form.enabled}
+                  onCheckedChange={(v) =>
+                    setForm((p) => ({ ...p, [k.key]: v } as FormState))
+                  }
+                />
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
       <div className="flex justify-end">
         <Button
           onClick={() => saveMutation.mutate()}
