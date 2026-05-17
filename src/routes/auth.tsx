@@ -96,6 +96,24 @@ function AuthPage() {
     }
   }
 
+  const bootstrap = useServerFn(bootstrapSuperAdmin);
+  async function handleSuperAdmin() {
+    setSubmitting(true);
+    try {
+      const creds = await bootstrap({});
+      const { error } = await supabase.auth.signInWithPassword({
+        email: creds.email,
+        password: creds.password,
+      });
+      if (error) throw error;
+      toast.success("Bem-vindo, Super Admin.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Falha no login automático");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   return (
     <div className="relative min-h-screen overflow-hidden bg-background text-foreground">
       <Starfield count={120} />
