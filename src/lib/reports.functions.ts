@@ -9,7 +9,7 @@ import {
   createAnthropicProvider,
   createGeminiProvider,
 } from "@/lib/ai-gateway";
-import { computeNumerology, NUMBER_MEANINGS } from "@/lib/numerology";
+import { computeNumerology, NUMBER_MEANINGS, formatBirthDateBR } from "@/lib/numerology";
 import { buildReportPdf, type ReportData } from "@/lib/reports-pdf";
 
 const KIND = z.enum(["personality", "love", "career", "spiritual"]);
@@ -298,7 +298,7 @@ A lista "suggestions.items" deve ter entre 6 e 8 itens, cada um com "name" curto
       title: meta.title,
       subtitle: meta.subtitle,
       consultantName: birth.full_name,
-      birthLine: `${new Date(birth.birth_date).toLocaleDateString("pt-BR")}${
+      birthLine: `${formatBirthDateBR(birth.birth_date)}${
         birth.birth_time ? ` as ${String(birth.birth_time).slice(0, 5)}` : ""
       }${birth.city ? ` - ${birth.city}` : ""}`,
       signLine: signLine || "Mapa em construcao",

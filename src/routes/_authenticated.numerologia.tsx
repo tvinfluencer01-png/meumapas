@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { computeNumerology, NUMBER_MEANINGS } from "@/lib/numerology";
+import { computeNumerology, NUMBER_MEANINGS, formatBirthDateBR } from "@/lib/numerology";
 import { Hash, Heart, Eye, User as UserIcon, Cake, Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/numerologia")({
@@ -39,7 +39,7 @@ function NumerologiaPage() {
         <p className="text-xs uppercase tracking-[0.3em] text-gold">Numerologia Cabalística</p>
         <h1 className="font-serif text-3xl lg:text-5xl mt-2 shimmer-text">Os números da sua alma</h1>
         {birth && (
-          <p className="mt-2 text-muted-foreground">{birth.full_name} — nascido em {new Date(birth.birth_date).toLocaleDateString("pt-BR")}</p>
+          <p className="mt-2 text-muted-foreground">{birth.full_name} — nascido em {formatBirthDateBR(birth.birth_date)}</p>
         )}
       </header>
 
