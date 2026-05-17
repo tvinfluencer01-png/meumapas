@@ -133,6 +133,7 @@ function checkSyntax() {
     const ctx = showContext(err.file, err.line, err.col);
     if (ctx) console.log(ctx);
   }
+  printSummary("Sintaxe", errors);
   console.log(`\n${RED}✗ ${errors.length} erro(s) de sintaxe${RESET}`);
   return 1;
 }
