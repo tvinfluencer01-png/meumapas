@@ -132,7 +132,40 @@ export const setUserAdmin = createServerFn({ method: "POST" })
         .eq("role", "admin");
       if (error) throw new Error(error.message);
     }
+
+    // Audit log (best-effort: fetch emails for readability)
+    const [{ data: actor }, { data: target }] = await Promise.all([
+      supabaseAdmin.auth.admin.getUserById(context.userId),
+      supabaseAdmin.auth.admin.getUserById(data.user_id),
+    ]);
+    await supabaseAdmin.from("role_audit_log").insert({
+      target_user_id: data.user_id,
+      target_email: target?.user?.email ?? null,
+      actor_user_id: context.userId,
+      actor_email: actor?.user?.email ?? null,
+      role: "admin",
+      action: data.is_admin ? "grant" : "revoke",
+    });
+
     return { ok: true };
+  });
+
+export const listRoleAuditLog = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({
+      limit: z.number().int().min(1).max(200).optional().default(50),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    const { data: rows, error } = await supabaseAdmin
+      .from("role_audit_log")
+      .select("id, target_user_id, target_email, actor_user_id, actor_email, role, action, created_at")
+      .order("created_at", { ascending: false })
+      .limit(data.limit);
+    if (error) throw new Error(error.message);
+    return { entries: rows ?? [] };
   });
 
 async function assertAdmin(userId: string) {
