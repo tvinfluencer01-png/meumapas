@@ -9,7 +9,7 @@ import {
   createAnthropicProvider,
   createGeminiProvider,
 } from "@/lib/ai-gateway";
-import { computeNumerology, NUMBER_MEANINGS } from "@/lib/numerology";
+import { computeNumerology, NUMBER_MEANINGS, formatBirthDateBR } from "@/lib/numerology";
 import { buildReportPdf, type ReportData } from "@/lib/reports-pdf";
 
 const KIND = z.enum(["personality", "love", "career", "spiritual"]);
