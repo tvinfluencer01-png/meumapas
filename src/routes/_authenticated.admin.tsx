@@ -250,8 +250,19 @@ function TwilioForm() {
       testCredsFn({
         data: { account_sid: form.account_sid, auth_token: form.auth_token },
       }),
-    onSuccess: () => toast.success("Credenciais válidas. A Twilio aceitou o Account SID e o Auth Token."),
-    onError: (e: Error) => toast.error(e.message),
+    onSuccess: (r) => {
+      const name = r.friendly_name ? ` (${r.friendly_name})` : "";
+      if (r.status === "active") {
+        toast.success(`Conta Twilio ativa${name}.`);
+      } else if (r.status === "suspended") {
+        toast.warning(`Conta Twilio suspensa${name}. Regularize antes de enviar mensagens.`);
+      } else if (r.status === "closed") {
+        toast.error(`Conta Twilio encerrada${name}.`);
+      } else {
+        toast.warning(`Conta Twilio com status "${r.status}"${name}.`);
+      }
+    },
+    onError: (e: Error) => toast.error(`Credenciais inválidas: ${e.message}`),
   });
 
   if (isLoading) return <div className="text-muted-foreground">Carregando configurações…</div>;
