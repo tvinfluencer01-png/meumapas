@@ -12,6 +12,12 @@ export type ReportRecommendations = {
   avoid: string[];
   follow: string[];
 };
+export type ReportSuggestion = { name: string; why: string };
+export type ReportSuggestions = {
+  heading: string;       // ex: "Profissoes sugeridas"
+  intro?: string;        // 1 frase contextualizando
+  items: ReportSuggestion[];
+};
 export type ReportData = {
   kind: "personality" | "love" | "career" | "spiritual";
   title: string;
@@ -25,6 +31,7 @@ export type ReportData = {
   closing: string;
   swot: ReportSwot;
   recommendations: ReportRecommendations;
+  suggestions: ReportSuggestions;
   summary: string;
 };
 
