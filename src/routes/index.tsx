@@ -40,8 +40,9 @@ function LandingPage() {
       <Numerology />
       <OracleSection />
       <Compatibility />
-      <Reports />
-      <Testimonials />
+        <Reports />
+        <BrandIdentity />
+        <Testimonials />
       <Pricing />
       <PlanComparison />
       <FAQ />
