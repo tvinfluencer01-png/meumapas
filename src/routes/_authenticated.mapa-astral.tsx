@@ -320,79 +320,225 @@ function MapaAstral() {
   );
 }
 
+const ELEMENT_OF: Record<string, "fire" | "earth" | "air" | "water"> = {
+  "Áries": "fire", "Leão": "fire", "Sagitário": "fire",
+  "Touro": "earth", "Virgem": "earth", "Capricórnio": "earth",
+  "Gêmeos": "air", "Libra": "air", "Aquário": "air",
+  "Câncer": "water", "Escorpião": "water", "Peixes": "water",
+};
+const ELEMENT_COLOR: Record<string, string> = {
+  fire: "hsl(14 80% 60% / 0.18)",
+  earth: "hsl(120 30% 45% / 0.16)",
+  air: "hsl(200 70% 60% / 0.16)",
+  water: "hsl(220 70% 60% / 0.18)",
+};
+const ASPECT_COLOR: Record<string, string> = {
+  "Conjunção": "hsl(45 90% 65%)",
+  "Oposição": "hsl(0 75% 60%)",
+  "Quadratura": "hsl(15 80% 60%)",
+  "Trígono": "hsl(150 60% 55%)",
+  "Sextil": "hsl(200 70% 60%)",
+};
+
+function polar(cx: number, cy: number, r: number, deg: number) {
+  const a = (deg * Math.PI) / 180;
+  return { x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r };
+}
+
+// Anti-collision: spread planets that are too close angularly
+function spreadAngles(items: { angle: number }[], minGap = 7) {
+  const sorted = items
+    .map((it, i) => ({ ...it, i, display: it.angle }))
+    .sort((a, b) => a.angle - b.angle);
+  for (let pass = 0; pass < 6; pass++) {
+    let moved = false;
+    for (let k = 0; k < sorted.length; k++) {
+      const a = sorted[k];
+      const b = sorted[(k + 1) % sorted.length];
+      let diff = b.display - a.display;
+      if (diff < 0) diff += 360;
+      if (diff < minGap) {
+        const push = (minGap - diff) / 2;
+        a.display -= push;
+        b.display += push;
+        moved = true;
+      }
+    }
+    if (!moved) break;
+  }
+  const out: number[] = new Array(items.length);
+  sorted.forEach((s) => (out[s.i] = s.display));
+  return out;
+}
+
 function ChartWheel({ chart }: { chart: any }) {
-  const size = 520;
+  const [hover, setHover] = useState<{ x: number; y: number; title: string; body: string } | null>(null);
+  const size = 560;
   const cx = size / 2, cy = size / 2;
-  const rOuter = 240, rSign = 210, rInner = 170, rPlanet = 145;
+  const rOuter = 258, rZodiac = 222, rInner = 188, rHouseNum = 158, rPlanet = 138, rAspect = 118;
+  const ascLon = chart.ascendant?.longitude ?? 0;
+  // Map a celestial longitude to screen angle so Ascendant sits at 180° (left)
+  const toAngle = (lon: number) => (lon - ascLon + 180 + 360) % 360;
+
+  const planetAngles = chart.planets.map((p: any) => toAngle(p.longitude));
+  const display = spreadAngles(planetAngles.map((angle: number) => ({ angle })), 8);
 
   return (
-    <div className="glass-card rounded-2xl p-4 flex items-center justify-center">
-      <svg viewBox={`0 0 ${size} ${size}`} className="w-full max-w-[520px]">
+    <div className="glass-card rounded-2xl p-4 relative">
+      <svg viewBox={`0 0 ${size} ${size}`} className="w-full max-w-[560px] block mx-auto">
         <defs>
-          <radialGradient id="nebula" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="hsl(45 70% 50%)" stopOpacity="0.12"/>
-            <stop offset="100%" stopColor="transparent"/>
+          <radialGradient id="cw-nebula" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="hsl(255 60% 25%)" stopOpacity="0.45" />
+            <stop offset="60%" stopColor="hsl(255 50% 12%)" stopOpacity="0.3" />
+            <stop offset="100%" stopColor="transparent" />
           </radialGradient>
+          <radialGradient id="cw-core" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="hsl(45 80% 55%)" stopOpacity="0.22" />
+            <stop offset="100%" stopColor="transparent" />
+          </radialGradient>
+          <filter id="cw-glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="2.5" result="b" />
+            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
         </defs>
-        <circle cx={cx} cy={cy} r={rOuter} fill="url(#nebula)" />
-        <circle cx={cx} cy={cy} r={rOuter} fill="none" stroke="hsl(45 70% 50% / 0.35)" />
-        <circle cx={cx} cy={cy} r={rInner} fill="none" stroke="hsl(45 70% 50% / 0.2)" />
 
-        {/* Sign sectors */}
+        {/* Background */}
+        <circle cx={cx} cy={cy} r={rOuter} fill="url(#cw-nebula)" />
+        <circle cx={cx} cy={cy} r={rAspect + 30} fill="url(#cw-core)" />
+
+        {/* Element-colored sign sectors */}
         {Array.from({ length: 12 }).map((_, i) => {
-          const a1 = ((i * 30 - 90 - (chart.ascendant?.longitude ?? 0)) * Math.PI) / 180;
-          const a2 = (((i + 1) * 30 - 90 - (chart.ascendant?.longitude ?? 0)) * Math.PI) / 180;
-          const x1 = cx + Math.cos(a1) * rOuter, y1 = cy + Math.sin(a1) * rOuter;
-          const x2 = cx + Math.cos(a2) * rSign, y2 = cy + Math.sin(a2) * rSign;
-          const mid = (a1 + a2) / 2;
-          const tx = cx + Math.cos(mid) * ((rOuter + rInner) / 2);
-          const ty = cy + Math.sin(mid) * ((rOuter + rInner) / 2);
+          const startDeg = toAngle(i * 30);
+          const endDeg = startDeg + 30;
+          const p1 = polar(cx, cy, rOuter, startDeg);
+          const p2 = polar(cx, cy, rOuter, endDeg);
+          const p3 = polar(cx, cy, rInner, endDeg);
+          const p4 = polar(cx, cy, rInner, startDeg);
+          const d = `M ${p1.x} ${p1.y} A ${rOuter} ${rOuter} 0 0 1 ${p2.x} ${p2.y} L ${p3.x} ${p3.y} A ${rInner} ${rInner} 0 0 0 ${p4.x} ${p4.y} Z`;
+          const el = ELEMENT_OF[SIGNS[i]];
+          const mid = polar(cx, cy, (rOuter + rInner) / 2, startDeg + 15);
+          const meaning = SIGN_MEANING[SIGNS[i]];
           return (
-            <g key={i}>
-              <title>{SIGNS[i]} — {SIGN_MEANING[SIGNS[i]]?.short}</title>
-              <line x1={cx + Math.cos(a1)*rInner} y1={cy + Math.sin(a1)*rInner}
-                    x2={x1} y2={y1} stroke="hsl(45 70% 50% / 0.3)" />
-              <text x={tx} y={ty} fontSize="20" fill="hsl(45 80% 70%)" textAnchor="middle" dominantBaseline="middle">
+            <g key={`sec-${i}`}
+              onMouseEnter={(e) => setHover({ x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY, title: `${meaning?.glyph} ${SIGNS[i]}`, body: meaning?.short ?? "" })}
+              onMouseLeave={() => setHover(null)}
+              style={{ cursor: "help" }}>
+              <path d={d} fill={ELEMENT_COLOR[el]} stroke="hsl(45 70% 50% / 0.25)" />
+              <text x={mid.x} y={mid.y} fontSize="22" fill="hsl(45 85% 72%)" textAnchor="middle" dominantBaseline="middle" style={{ pointerEvents: "none" }}>
                 {SIGN_GLYPHS[i]}
               </text>
             </g>
           );
         })}
 
-        {/* Houses (12 spokes from Asc) */}
-        {Array.from({ length: 12 }).map((_, i) => {
-          const a = ((i * 30 - 90 - 0) * Math.PI) / 180; // Asc placed at left (180°)
-          // Use house-from-Asc representation
-          const angle = ((i * 30 + 180) * Math.PI) / 180;
-          const x1 = cx + Math.cos(angle) * 60, y1 = cy + Math.sin(angle) * 60;
-          const x2 = cx + Math.cos(angle) * rInner, y2 = cy + Math.sin(angle) * rInner;
-          return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="hsl(45 70% 50% / 0.15)" />;
+        {/* Degree ticks */}
+        {Array.from({ length: 72 }).map((_, i) => {
+          const deg = i * 5;
+          const a = polar(cx, cy, rInner, deg);
+          const b = polar(cx, cy, rInner - (i % 6 === 0 ? 8 : i % 2 === 0 ? 5 : 2.5), deg);
+          return <line key={`tick-${i}`} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="hsl(45 70% 60% / 0.35)" strokeWidth={i % 6 === 0 ? 1 : 0.5} />;
         })}
+
+        {/* House spokes (equal house from Asc) + numbers */}
+        {Array.from({ length: 12 }).map((_, i) => {
+          const angle = (180 + i * 30) % 360;
+          const a = polar(cx, cy, rAspect, angle);
+          const b = polar(cx, cy, rInner, angle);
+          const numPos = polar(cx, cy, rHouseNum, angle + 15);
+          return (
+            <g key={`house-${i}`}>
+              <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="hsl(45 70% 50% / 0.2)" />
+              <text x={numPos.x} y={numPos.y} fontSize="10" fill="hsl(45 60% 65% / 0.6)" textAnchor="middle" dominantBaseline="middle">
+                {i + 1}
+              </text>
+            </g>
+          );
+        })}
+
+        {/* Aspect lines (traçado entre planetas) */}
+        {(chart.aspects ?? []).map((asp: any, i: number) => {
+          const pa = chart.planets.find((x: any) => x.name === asp.a);
+          const pb = chart.planets.find((x: any) => x.name === asp.b);
+          if (!pa || !pb) return null;
+          const ai = chart.planets.indexOf(pa), bi = chart.planets.indexOf(pb);
+          const A = polar(cx, cy, rAspect, display[ai]);
+          const B = polar(cx, cy, rAspect, display[bi]);
+          const color = ASPECT_COLOR[asp.aspect] ?? "hsl(45 70% 60%)";
+          const dashed = asp.aspect === "Quadratura" || asp.aspect === "Oposição";
+          return (
+            <line key={`asp-${i}`} x1={A.x} y1={A.y} x2={B.x} y2={B.y}
+              stroke={color} strokeOpacity={0.55} strokeWidth={1.2}
+              strokeDasharray={dashed ? "3 3" : undefined}
+              onMouseEnter={(e) => setHover({ x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY, title: `${asp.a} ${asp.aspect} ${asp.b}`, body: `${ASPECT_MEANING[asp.aspect] ?? ""} (orbe ${asp.orb}°)` })}
+              onMouseLeave={() => setHover(null)}
+              style={{ cursor: "help" }}
+            />
+          );
+        })}
+        <circle cx={cx} cy={cy} r={rAspect} fill="none" stroke="hsl(45 70% 50% / 0.25)" />
+        <circle cx={cx} cy={cy} r={rInner} fill="none" stroke="hsl(45 70% 50% / 0.35)" />
+        <circle cx={cx} cy={cy} r={rOuter} fill="none" stroke="hsl(45 70% 50% / 0.45)" />
 
         {/* Planets */}
         {chart.planets.map((p: any, i: number) => {
-          const rel = p.longitude - (chart.ascendant?.longitude ?? 0);
-          const angle = ((rel + 180) * Math.PI) / 180;
-          const x = cx + Math.cos(angle) * rPlanet;
-          const y = cy + Math.sin(angle) * rPlanet;
+          const real = polar(cx, cy, rAspect, planetAngles[i]);
+          const dot = polar(cx, cy, rPlanet, display[i]);
+          const m = PLANET_MEANING[p.name];
+          const s = SIGN_MEANING[p.sign];
           return (
-            <g key={i} style={{ cursor: "help" }}>
-              <title>{PLANET_MEANING[p.name]?.title ?? p.name} em {p.sign} {p.degree.toFixed(1)}° — {PLANET_MEANING[p.name]?.short}</title>
-              <circle cx={x} cy={y} r="14" fill="hsl(255 30% 15%)" stroke="hsl(45 80% 60%)" />
-              <text x={x} y={y} fontSize="14" fill="hsl(45 90% 75%)" textAnchor="middle" dominantBaseline="middle">
+            <g key={`pl-${i}`}
+              onMouseEnter={(e) => setHover({ x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY, title: `${m?.title ?? p.name} em ${s?.glyph ?? ""} ${p.sign} ${p.degree.toFixed(1)}°`, body: m?.short ?? "" })}
+              onMouseLeave={() => setHover(null)}
+              style={{ cursor: "help" }}>
+              <line x1={real.x} y1={real.y} x2={dot.x} y2={dot.y} stroke="hsl(45 80% 60% / 0.45)" strokeWidth={0.8} />
+              <circle cx={real.x} cy={real.y} r={2} fill="hsl(45 90% 70%)" />
+              <circle cx={dot.x} cy={dot.y} r={16} fill="hsl(255 35% 12%)" stroke="hsl(45 85% 62%)" strokeWidth={1.2} filter="url(#cw-glow)" />
+              <text x={dot.x} y={dot.y} fontSize="15" fill="hsl(45 95% 78%)" textAnchor="middle" dominantBaseline="middle" style={{ pointerEvents: "none" }}>
                 {PLANET_GLYPH[p.name]}
               </text>
             </g>
           );
         })}
 
-        {/* Ascendant marker */}
-        <line x1={cx - rOuter - 6} y1={cy} x2={cx - rInner + 6} y2={cy}
-              stroke="hsl(45 90% 70%)" strokeWidth="2" />
-        <text x={cx - rOuter - 18} y={cy} fontSize="11" fill="hsl(45 90% 70%)" textAnchor="end" dominantBaseline="middle">
-          ASC
-        </text>
+        {/* ASC / MC markers */}
+        <g>
+          <line x1={cx - rOuter - 10} y1={cy} x2={cx - rInner + 4} y2={cy} stroke="hsl(45 95% 72%)" strokeWidth={2} />
+          <text x={cx - rOuter - 14} y={cy} fontSize="11" fill="hsl(45 95% 75%)" textAnchor="end" dominantBaseline="middle">ASC</text>
+        </g>
+        {chart.midheaven?.longitude != null && (() => {
+          const ang = toAngle(chart.midheaven.longitude);
+          const a = polar(cx, cy, rOuter + 10, ang);
+          const b = polar(cx, cy, rInner - 4, ang);
+          const lbl = polar(cx, cy, rOuter + 18, ang);
+          return (
+            <g>
+              <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="hsl(45 95% 72%)" strokeWidth={2} />
+              <text x={lbl.x} y={lbl.y} fontSize="11" fill="hsl(45 95% 75%)" textAnchor="middle" dominantBaseline="middle">MC</text>
+            </g>
+          );
+        })()}
       </svg>
+
+      {/* HTML hover tooltip */}
+      {hover && (
+        <div
+          className="pointer-events-none absolute z-10 rounded-md border border-gold/30 bg-background/95 backdrop-blur px-3 py-2 shadow-xl max-w-[220px]"
+          style={{ left: Math.min(hover.x + 12, 420), top: Math.max(hover.y - 8, 8) }}
+        >
+          <p className="font-serif text-gold text-sm leading-tight">{hover.title}</p>
+          {hover.body && <p className="text-[11px] text-muted-foreground mt-1 leading-snug">{hover.body}</p>}
+        </div>
+      )}
+
+      {/* Legend */}
+      <div className="mt-3 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[10px] text-muted-foreground">
+        {Object.entries(ASPECT_COLOR).map(([k, c]) => (
+          <span key={k} className="inline-flex items-center gap-1">
+            <span className="inline-block w-4 h-[2px]" style={{ background: c }} />
+            {k}
+          </span>
+        ))}
+      </div>
     </div>
   );
 }
