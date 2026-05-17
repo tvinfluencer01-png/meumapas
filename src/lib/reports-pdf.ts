@@ -1,6 +1,17 @@
 import { PDFDocument, StandardFonts, rgb, PageSizes } from "pdf-lib";
 
 export type ReportSection = { title: string; body: string };
+export type ReportSwot = {
+  strengths: string[];
+  weaknesses: string[];
+  opportunities: string[];
+  threats: string[];
+};
+export type ReportRecommendations = {
+  improve: string[];
+  avoid: string[];
+  follow: string[];
+};
 export type ReportData = {
   kind: "personality" | "love" | "career" | "spiritual";
   title: string;
@@ -12,6 +23,9 @@ export type ReportData = {
   intro: string;
   sections: ReportSection[];
   closing: string;
+  swot: ReportSwot;
+  recommendations: ReportRecommendations;
+  summary: string;
 };
 
 const GOLD = rgb(0.831, 0.686, 0.216); // #d4af37
