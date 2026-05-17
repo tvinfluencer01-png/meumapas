@@ -1,13 +1,15 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { Shield, MessageSquare, Save, Send, CheckCircle2, AlertTriangle, Users, Search, ShieldOff, ShieldCheck, History, RefreshCw } from "lucide-react";
+import { Shield, MessageSquare, Save, Send, CheckCircle2, AlertTriangle, Users, Search, ShieldOff, ShieldCheck, History, RefreshCw, Settings as SettingsIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SettingsForm } from "@/components/SettingsForm";
 import { toast } from "sonner";
 import {
   checkIsAdmin,
@@ -55,13 +57,39 @@ function AdminPage() {
         <Shield className="size-6 text-gold" />
         <div>
           <h1 className="text-2xl font-serif shimmer-text">Painel do Super Admin</h1>
-          <p className="text-sm text-muted-foreground">Configurações sensíveis e integrações.</p>
+          <p className="text-sm text-muted-foreground">Configurações sensíveis, integrações e gestão de usuários.</p>
         </div>
       </header>
 
-      <UsersAdmin />
-      <RoleAuditLog />
-      <TwilioForm />
+      <Tabs defaultValue="settings" className="space-y-6">
+        <TabsList className="flex flex-wrap h-auto">
+          <TabsTrigger value="settings" className="gap-2">
+            <SettingsIcon className="size-4" /> Configurações
+          </TabsTrigger>
+          <TabsTrigger value="users" className="gap-2">
+            <Users className="size-4" /> Usuários
+          </TabsTrigger>
+          <TabsTrigger value="audit" className="gap-2">
+            <History className="size-4" /> Histórico
+          </TabsTrigger>
+          <TabsTrigger value="twilio" className="gap-2">
+            <MessageSquare className="size-4" /> Twilio
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="settings" className="mt-0">
+          <SettingsForm />
+        </TabsContent>
+        <TabsContent value="users" className="mt-0">
+          <UsersAdmin />
+        </TabsContent>
+        <TabsContent value="audit" className="mt-0">
+          <RoleAuditLog />
+        </TabsContent>
+        <TabsContent value="twilio" className="mt-0">
+          <TwilioForm />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
