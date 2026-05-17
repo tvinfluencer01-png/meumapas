@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
+import { showLoader, hideLoader, updateLoader } from "@/components/system-feedback";
 import { Loader2, Sparkles, Wand2, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -84,6 +85,16 @@ function MapaAstral() {
     setLoading(true);
     setGenError(null);
     setRetryInfo(null);
+    showLoader({
+      title: "Calculando seu Mapa Astral",
+      subtitle: "Swiss Ephemeris",
+      messages: [
+        "Posicionando os planetas no céu do seu nascimento...",
+        "Traçando casas astrológicas e ângulos...",
+        "Calculando aspectos entre os astros...",
+        "Revelando o desenho da sua alma...",
+      ],
+    });
 
     const offset = -new Date().getTimezoneOffset() / 60;
     const payload = {
@@ -123,6 +134,9 @@ function MapaAstral() {
           // Exponential backoff with jitter: 1s, 2s, 4s (+ up to 400ms)
           const waitMs = Math.round(1000 * Math.pow(2, attempt - 1) + Math.random() * 400);
           setRetryInfo({ attempt, max: MAX_ATTEMPTS, waitMs });
+          updateLoader({
+            messages: [`Tentativa ${attempt + 1} de ${MAX_ATTEMPTS} em instantes...`],
+          });
           await sleep(waitMs);
         }
       }
@@ -136,6 +150,7 @@ function MapaAstral() {
     } finally {
       setRetryInfo(null);
       setLoading(false);
+      hideLoader();
     }
   }
 

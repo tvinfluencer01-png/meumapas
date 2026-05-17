@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { generateReport, getReportUrl, deleteReport } from "@/lib/reports.functions";
 import { toast } from "sonner";
+import { showLoader, hideLoader, updateLoader, confirmDialog } from "@/components/system-feedback";
 import {
   FileText, Download, Sparkles, Heart, Briefcase, Flame, Loader2, Trash2, ScrollText,
 } from "lucide-react";
@@ -88,12 +89,25 @@ function RelatoriosPage() {
   const genMutation = useMutation({
     mutationFn: async (kind: Kind) => {
       setLoadingKind(kind);
+      const title = CARDS.find((c) => c.kind === kind)?.title ?? "Relatorio";
+      showLoader({
+        title: `Gerando ${title}`,
+        subtitle: "Oraculo em ação",
+        messages: [
+          "Lendo seu mapa astral e numerologia...",
+          "Consultando o Oráculo Cósmico...",
+          "Tecendo capítulos personalizados...",
+          "Compondo análise e recomendações...",
+          "Diagramando seu PDF cinematográfico...",
+        ],
+      });
       return await generate({ data: { kind } });
     },
     onSuccess: async (res, kind) => {
       qc.invalidateQueries({ queryKey: ["reports", user?.id] });
       if (res.signedUrl) {
         try {
+          updateLoader({ messages: ["Preparando download do PDF..."] });
           await downloadFromUrl(res.signedUrl, `${res.title || kind}.pdf`);
           toast.success("Relatorio pronto. Download iniciado.");
         } catch {
@@ -102,10 +116,18 @@ function RelatoriosPage() {
       }
     },
     onError: (e: Error) => toast.error(e.message || "Falha ao gerar relatorio"),
-    onSettled: () => setLoadingKind(null),
+    onSettled: () => {
+      setLoadingKind(null);
+      hideLoader();
+    },
   });
 
   async function openReport(id: string, title: string) {
+    showLoader({
+      title: "Preparando seu relatorio",
+      subtitle: "Biblioteca Cosmica",
+      messages: ["Gerando link seguro...", "Baixando seu PDF..."],
+    });
     try {
       const { signedUrl } = await getUrl({ data: { id } });
       if (!signedUrl) {
@@ -115,11 +137,19 @@ function RelatoriosPage() {
       await downloadFromUrl(signedUrl, `${title || "relatorio"}.pdf`);
     } catch {
       toast.error("Erro ao baixar o relatorio");
+    } finally {
+      hideLoader();
     }
   }
 
   async function removeReport(id: string) {
-    if (!confirm("Apagar este relatorio?")) return;
+    const ok = await confirmDialog({
+      title: "Apagar relatorio?",
+      description: "Esta ação remove o PDF da sua Biblioteca Cosmica e não pode ser desfeita.",
+      confirmText: "Apagar",
+      destructive: true,
+    });
+    if (!ok) return;
     await removeFn({ data: { id } });
     qc.invalidateQueries({ queryKey: ["reports", user?.id] });
     toast.success("Relatorio apagado");
