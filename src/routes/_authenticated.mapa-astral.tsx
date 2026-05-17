@@ -500,6 +500,27 @@ function ChartWheel({ chart, userId }: { chart: any; userId?: string }) {
   const atMaxZoom = view.w <= MIN_W + 0.001;
   const atMinZoom = view.w >= MAX_W - 0.001;
 
+  // Re-restaura quando troca o usuário (login/logout entre contas no mesmo browser).
+  useEffect(() => {
+    setView(readStoredView());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storageKey]);
+
+  // Persiste zoom + posição com debounce; remove a entrada quando volta ao padrão.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const t = window.setTimeout(() => {
+      try {
+        if (!isZoomed) {
+          window.localStorage.removeItem(storageKey);
+        } else {
+          window.localStorage.setItem(storageKey, JSON.stringify(view));
+        }
+      } catch {}
+    }, 250);
+    return () => window.clearTimeout(t);
+  }, [view, isZoomed, storageKey]);
+
   return (
     <div className="glass-card rounded-2xl p-4 relative">
       <div className="absolute top-3 right-3 z-10 flex items-center gap-1">
