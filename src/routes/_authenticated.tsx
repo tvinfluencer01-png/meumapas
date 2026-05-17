@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Starfield } from "@/components/Starfield";
 import {
-  Sparkles, LayoutDashboard, CircleDot, Hash, MessageCircle, LogOut, Menu, X, ScrollText, Shield, Settings,
+  Sparkles, LayoutDashboard, CircleDot, Hash, MessageCircle, LogOut, Menu, X, ScrollText, Shield, Settings, Coins,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -18,6 +18,7 @@ const NAV = [
   { to: "/numerologia", label: "Numerologia", icon: Hash },
   { to: "/oraculo", label: "Oráculo IA", icon: MessageCircle },
   { to: "/relatorios", label: "Relatórios", icon: ScrollText },
+  { to: "/addons", label: "Add-ons", icon: Coins },
   { to: "/configuracoes", label: "Configurações", icon: Settings },
 ] as const;
 

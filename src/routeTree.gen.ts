@@ -21,6 +21,7 @@ import { Route as AuthenticatedMapaAstralRouteImport } from './routes/_authentic
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated.dashboard'
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated.configuracoes'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated.admin'
+import { Route as AuthenticatedAddonsRouteImport } from './routes/_authenticated.addons'
 import { Route as AuthenticatedAdminLogsRouteImport } from './routes/_authenticated.admin.logs'
 
 const AuthRoute = AuthRouteImport.update({
@@ -84,6 +85,11 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedAddonsRoute = AuthenticatedAddonsRouteImport.update({
+  id: '/addons',
+  path: '/addons',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedAdminLogsRoute = AuthenticatedAdminLogsRouteImport.update({
   id: '/logs',
   path: '/logs',
@@ -93,6 +99,7 @@ const AuthenticatedAdminLogsRoute = AuthenticatedAdminLogsRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/addons': typeof AuthenticatedAddonsRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -107,6 +114,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/addons': typeof AuthenticatedAddonsRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -123,6 +131,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/addons': typeof AuthenticatedAddonsRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
@@ -139,6 +148,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/addons'
     | '/admin'
     | '/configuracoes'
     | '/dashboard'
@@ -153,6 +163,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/addons'
     | '/admin'
     | '/configuracoes'
     | '/dashboard'
@@ -168,6 +179,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/addons'
     | '/_authenticated/admin'
     | '/_authenticated/configuracoes'
     | '/_authenticated/dashboard'
@@ -273,6 +285,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/addons': {
+      id: '/_authenticated/addons'
+      path: '/addons'
+      fullPath: '/addons'
+      preLoaderRoute: typeof AuthenticatedAddonsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/admin/logs': {
       id: '/_authenticated/admin/logs'
       path: '/logs'
@@ -295,6 +314,7 @@ const AuthenticatedAdminRouteWithChildren =
   AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
 
 interface AuthenticatedRouteChildren {
+  AuthenticatedAddonsRoute: typeof AuthenticatedAddonsRoute
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
@@ -306,6 +326,7 @@ interface AuthenticatedRouteChildren {
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedAddonsRoute: AuthenticatedAddonsRoute,
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
