@@ -16,7 +16,8 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 });
 
 const SIGNS = ["Áries","Touro","Gêmeos","Câncer","Leão","Virgem","Libra","Escorpião","Sagitário","Capricórnio","Aquário","Peixes"];
-function sunSignFromDate(d: string) {
+function sunSignFromDate(d: string | null | undefined) {
+  if (typeof d !== "string" || !/^\d{4}-\d{2}-\d{2}/.test(d)) return null;
   const [, m, day] = d.split("-").map(Number);
   const cutoffs: [number, number, string][] = [
     [1,20,"Capricórnio"],[2,19,"Aquário"],[3,21,"Peixes"],[4,20,"Áries"],
