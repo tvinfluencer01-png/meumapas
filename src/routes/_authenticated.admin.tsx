@@ -345,6 +345,15 @@ function TwilioForm() {
             <Save className="size-4 mr-2" />
             {saveMut.isPending ? "Salvando…" : "Salvar configurações"}
           </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => testCredsMut.mutate()}
+            disabled={testCredsMut.isPending || !form.account_sid}
+          >
+            <ShieldCheck className="size-4 mr-2" />
+            {testCredsMut.isPending ? "Validando…" : "Testar credenciais"}
+          </Button>
           {data?.updated_at && (
             <span className="text-xs text-muted-foreground">
               Atualizado em {new Date(data.updated_at).toLocaleString("pt-BR")}
