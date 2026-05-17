@@ -2,6 +2,10 @@
 @source "../src";
 @import "tw-animate-css";
 
+/* Identidade Visual — tokens, utilitários e keyframes da marca.
+   Edite SOMENTE em src/styles/brand.css. */
+@import "./styles/brand.css";
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -37,6 +41,7 @@
   --color-nebula: var(--nebula);
   --color-night: var(--night);
 
+  /* Aliases para Tailwind — definições em src/styles/brand.css */
   --font-serif: "Cormorant Garamond", ui-serif, Georgia, serif;
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
 
@@ -76,10 +81,8 @@
   --input: oklch(1 0 0 / 12%);
   --ring: oklch(0.82 0.13 85 / 50%);
 
-  --gold: oklch(0.82 0.13 85);
-  --gold-glow: oklch(0.90 0.11 90);
-  --stardust: oklch(0.92 0.01 250);
-  --nebula: oklch(0.45 0.18 295);
+  /* Tokens de marca (--gold, --gold-glow, --stardust, --nebula, --night)
+     são definidos em src/styles/brand.css. */
 }
 
 .dark {
@@ -103,47 +106,6 @@
   }
 }
 
-@layer utilities {
-  .font-serif { font-family: var(--font-serif); }
-
-  .glass-card {
-    background: linear-gradient(135deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.01) 100%);
-    backdrop-filter: blur(12px);
-    border: 1px solid color-mix(in oklab, var(--gold) 12%, transparent);
-  }
-
-  .shimmer-text {
-    background: linear-gradient(90deg,
-      color-mix(in oklab, var(--gold) 100%, transparent),
-      color-mix(in oklab, var(--stardust) 100%, transparent),
-      color-mix(in oklab, var(--gold) 100%, transparent));
-    background-size: 200% auto;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: shimmer 8s linear infinite;
-  }
-
-  .gold-glow {
-    box-shadow: var(--shadow-glow);
-  }
-
-  .nebula-bg {
-    background-image: var(--gradient-radial-nebula);
-  }
-
-  @keyframes shimmer {
-    to { background-position: 200% center; }
-  }
-
-  @keyframes twinkle {
-    0%, 100% { opacity: 0.2; }
-    50% { opacity: 1; }
-  }
-  .animate-twinkle { animation: twinkle 4s ease-in-out infinite; }
-
-  @keyframes slow-spin {
-    to { transform: rotate(360deg); }
-  }
-  .animate-slow-spin { animation: slow-spin 60s linear infinite; }
-}
+/* Utilitários de marca (.font-serif, .glass-card, .shimmer-text, .gold-glow,
+   .nebula-bg, .animate-twinkle, .animate-slow-spin, etc.) e seus keyframes
+   vivem em src/styles/brand.css. */

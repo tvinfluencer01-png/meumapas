@@ -1,0 +1,126 @@
+/* ============================================================
+   Cosmic AI — Brand Tokens
+   ------------------------------------------------------------
+   Fonte única da Identidade Visual.
+   Importado por src/styles.css. Use SEMPRE estes tokens
+   (via var(--token) ou classes utilitárias) no lugar de
+   valores hardcoded (#hex, rgba, px de sombra, etc.).
+
+   Sumário
+     1. Cores de marca           — --gold, --stardust, --nebula, --night
+     2. Tipografia               — --font-serif, --font-sans, --tracking-*
+     3. Sombras & brilhos        — --shadow-*, --glow-*
+     4. Gradientes               — --gradient-*
+     5. Easings & durações       — --ease-*, --duration-*
+     6. Utilitários              — .font-serif, .glass-card, .shimmer-text,
+                                   .gold-glow, .nebula-bg, .text-gold,
+                                   .border-gold-soft, .ring-gold
+     7. Keyframes                — shimmer, twinkle, slow-spin
+   ============================================================ */
+
+:root {
+  /* ---------- 1. Cores de marca (Ethereal Obsidian) ---------- */
+  /* Ouro cerimonial — usado APENAS como acento de significado. */
+  --gold:        oklch(0.82 0.13 85);
+  --gold-glow:   oklch(0.90 0.11 90);
+  /* Branco estelar — texto destacado, citações, glifos. */
+  --stardust:    oklch(0.92 0.01 250);
+  /* Violeta nebuloso — fundos místicos, profundidade. */
+  --nebula:      oklch(0.45 0.18 295);
+  /* Noite profunda — base de toda composição. */
+  --night:       oklch(0.12 0.02 270);
+
+  /* ---------- 2. Tipografia ---------- */
+  --font-serif:  "Cormorant Garamond", ui-serif, Georgia, serif;
+  --font-sans:   "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  /* Tracking (letter-spacing) padronizado para eyebrows/labels. */
+  --tracking-eyebrow: 0.3em;   /* labels institucionais */
+  --tracking-micro:   0.25em;  /* metadados pequenos */
+  --tracking-wide:    0.4em;   /* títulos de seção sutis */
+
+  /* ---------- 3. Sombras & brilhos ---------- */
+  --shadow-glow:       0 0 40px -8px color-mix(in oklab, var(--gold) 40%, transparent);
+  --shadow-glow-soft:  0 0 24px -6px color-mix(in oklab, var(--gold) 25%, transparent);
+  --shadow-elevated:   0 18px 40px -18px color-mix(in oklab, var(--gold) 45%, transparent);
+  --shadow-cinematic:  0 30px 80px -20px color-mix(in oklab, var(--night) 80%, transparent);
+
+  /* Glow textual reaproveitável (text-shadow). */
+  --glow-gold:         0 0 24px color-mix(in oklab, var(--gold) 60%, transparent);
+  --glow-stardust:     0 0 18px color-mix(in oklab, var(--stardust) 35%, transparent);
+
+  /* ---------- 4. Gradientes ---------- */
+  --gradient-radial-nebula:
+    radial-gradient(circle at 50% 50%, color-mix(in oklab, var(--nebula) 18%, transparent), transparent 70%);
+  --gradient-gold-line:
+    linear-gradient(90deg, transparent, var(--gold), transparent);
+  --gradient-night-fade:
+    linear-gradient(180deg, transparent, color-mix(in oklab, var(--night) 90%, transparent));
+  --gradient-shimmer:
+    linear-gradient(90deg, var(--gold), var(--stardust), var(--gold));
+
+  /* ---------- 5. Easings & durações ---------- */
+  --ease-cinematic: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-soft:      cubic-bezier(0.4, 0, 0.2, 1);
+  --duration-fast:  200ms;
+  --duration-base:  400ms;
+  --duration-slow:  700ms;
+}
+
+/* ============================================================
+   6. Utilitários (use diretamente nas classes JSX)
+   ============================================================ */
+@layer utilities {
+  /* Tipografia */
+  .font-serif        { font-family: var(--font-serif); }
+  .tracking-eyebrow  { letter-spacing: var(--tracking-eyebrow); }
+  .tracking-micro    { letter-spacing: var(--tracking-micro); }
+
+  /* Cores de marca aplicáveis a texto/borda */
+  .text-gold         { color: var(--gold); }
+  .text-stardust     { color: var(--stardust); }
+  .text-nebula       { color: var(--nebula); }
+  .bg-gold           { background-color: var(--gold); }
+  .bg-night          { background-color: var(--night); }
+  .border-gold-soft  { border-color: color-mix(in oklab, var(--gold) 25%, transparent); }
+  .ring-gold         { box-shadow: 0 0 0 1px color-mix(in oklab, var(--gold) 40%, transparent); }
+
+  /* Cartão de vidro — fundos sobre noite profunda. */
+  .glass-card {
+    background: linear-gradient(135deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.01) 100%);
+    backdrop-filter: blur(12px);
+    border: 1px solid color-mix(in oklab, var(--gold) 12%, transparent);
+  }
+
+  /* Texto com brilho cintilante — reservado a títulos curtos. */
+  .shimmer-text {
+    background: var(--gradient-shimmer);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: shimmer 8s linear infinite;
+  }
+
+  .gold-glow      { box-shadow: var(--shadow-glow); }
+  .gold-glow-soft { box-shadow: var(--shadow-glow-soft); }
+  .text-glow-gold { text-shadow: var(--glow-gold); }
+
+  .nebula-bg      { background-image: var(--gradient-radial-nebula); }
+  .gold-divider {
+    height: 1px;
+    background: var(--gradient-gold-line);
+  }
+
+  /* ---------- 7. Keyframes ---------- */
+  @keyframes shimmer { to { background-position: 200% center; } }
+
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.2; }
+    50%      { opacity: 1; }
+  }
+  .animate-twinkle { animation: twinkle 4s ease-in-out infinite; }
+
+  @keyframes slow-spin { to { transform: rotate(360deg); } }
+  .animate-slow-spin { animation: slow-spin 60s linear infinite; }
+}
