@@ -211,27 +211,25 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
   }
 
   let cursor: Cursor = newPage(pdf, 1);
-  drawChapterTitleAt(cursor);
 
   function ensureSpace(needed: number) {
     if (cursor.y - needed < MARGIN) {
       cursor = newPage(pdf, cursor.pageNumber + 1);
-      drawChapterTitleAt(cursor);
     }
   }
 
   function setChapter(title: string) {
     currentChapter = title;
   }
+  // referenciado para evitar warning de variavel nao usada
+  void drawChapterTitleAt;
 
   let isFirstHeading = true;
   function drawHeading(text: string, size = 20) {
-    // Regra: todo titulo de capitulo inicia em uma nova pagina.
-    // A primeira chamada usa a pagina ja criada (vazia); as demais
-    // forcam uma quebra de pagina para garantir o inicio limpo.
+    // Regra: todo titulo de capitulo inicia em uma nova pagina limpa,
+    // sem repetir o titulo do capitulo no topo (evita duplicidade).
     if (!isFirstHeading) {
       cursor = newPage(pdf, cursor.pageNumber + 1);
-      drawChapterTitleAt(cursor);
     }
     isFirstHeading = false;
     cursor.y -= 10;
@@ -310,9 +308,9 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
   drawHeading("Selo final", 18);
   drawParagraph(data.closing, { italic: true, color: rgb(0.3, 0.25, 0.2) });
 
-  // SWOT
-  setChapter("Analise SWOT");
-  drawHeading("Analise SWOT", 20);
+  // Analise
+  setChapter("Analise");
+  drawHeading("Analise", 20);
   drawParagraph(
     "Sintese das forcas, fraquezas, oportunidades e ameacas reveladas pelo seu mapa.",
     { italic: true, size: 11, color: MUTED },
