@@ -250,9 +250,15 @@ A lista "suggestions.items" deve ter entre 6 e 8 itens, cada um com "name" curto
     const ai = AiOutput.parse(parsed);
 
     // 4) Build PDF
-    // Load branding logo bytes (if add-on enabled and a logo is configured)
+    // Load branding logo bytes (if add-on enabled, kind is enabled, and a logo is configured)
+    const kindEnabledMap: Record<z.infer<typeof KIND>, boolean> = {
+      personality: brandRow?.enabled_personality ?? true,
+      love: brandRow?.enabled_love ?? true,
+      career: brandRow?.enabled_career ?? true,
+      spiritual: brandRow?.enabled_spiritual ?? true,
+    };
     let brandingPayload: ReportData["branding"] = undefined;
-    if (brandRow?.enabled) {
+    if (brandRow?.enabled && kindEnabledMap[data.kind]) {
       let logoBytes: Uint8Array | undefined;
       let logoMime: "image/png" | "image/jpeg" | undefined;
       if (brandRow.logo_path) {
