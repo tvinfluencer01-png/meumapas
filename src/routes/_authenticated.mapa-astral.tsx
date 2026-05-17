@@ -409,7 +409,7 @@ function spreadAngles(items: { angle: number }[], minGap = 7) {
   return out;
 }
 
-function ChartWheel({ chart }: { chart: any }) {
+function ChartWheel({ chart, userId }: { chart: any; userId?: string }) {
   const [hover, setHover] = useState<HoverInfo | null>(null);
   const size = 560;
   const cx = size / 2, cy = size / 2;
@@ -423,7 +423,24 @@ function ChartWheel({ chart }: { chart: any }) {
 
   // Pan & zoom via viewBox manipulation
   const svgRef = useRef<SVGSVGElement | null>(null);
-  const [view, setView] = useState({ x: 0, y: 0, w: size, h: size });
+  // Persistência por usuário: zoom + posição são restaurados ao voltar à página.
+  const storageKey = userId ? `cosmic-ai:chart-view:${userId}` : "cosmic-ai:chart-view:anon";
+  const readStoredView = () => {
+    if (typeof window === "undefined") return { x: 0, y: 0, w: size, h: size };
+    try {
+      const raw = window.localStorage.getItem(storageKey);
+      if (!raw) return { x: 0, y: 0, w: size, h: size };
+      const parsed = JSON.parse(raw);
+      if (
+        parsed && typeof parsed === "object" &&
+        ["x", "y", "w", "h"].every((k) => typeof parsed[k] === "number" && Number.isFinite(parsed[k]))
+      ) {
+        return parsed as { x: number; y: number; w: number; h: number };
+      }
+    } catch {}
+    return { x: 0, y: 0, w: size, h: size };
+  };
+  const [view, setView] = useState(readStoredView);
   const drag = useRef<{ x: number; y: number; vx: number; vy: number } | null>(null);
   // Locked zoom range: 1x (sem zoom out, evita áreas vazias) até 5x.
   const MIN_ZOOM = 1;
