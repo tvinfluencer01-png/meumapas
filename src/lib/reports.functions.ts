@@ -163,19 +163,32 @@ Numerologia: ${numBlock}
 Mapa Astral:
 ${astroBlock}
 
-Devolva JSON com:
-- intro: abertura cinematografica acolhedora chamando ${birth.full_name} pelo nome (4-6 paragrafos).
-- sections: 5 a 6 capitulos com titulo curto e corpo longo (3-5 paragrafos). Capitulos coerentes com o foco do relatorio.
-- closing: selo final inspirador e personalizado (2-3 paragrafos).`;
+Responda APENAS com um JSON valido (sem markdown, sem cercas de codigo) no formato:
+{
+  "intro": "texto longo, 4 a 6 paragrafos separados por \\n\\n",
+  "sections": [{"title": "Titulo curto", "body": "3 a 5 paragrafos longos separados por \\n\\n"}],
+  "closing": "2 a 3 paragrafos finais"
+}
+A lista "sections" deve ter entre 5 e 6 itens.`;
 
-    const { experimental_output } = await generateText({
-      model,
-      system,
-      prompt,
-      experimental_output: Output.object({ schema: AiOutput }),
-    });
+    const { text } = await generateText({ model, system, prompt });
 
-    const ai = experimental_output;
+    // Extract JSON (some models wrap in code fences)
+    let jsonStr = text.trim();
+    const fence = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (fence) jsonStr = fence[1].trim();
+    const firstBrace = jsonStr.indexOf("{");
+    const lastBrace = jsonStr.lastIndexOf("}");
+    if (firstBrace > 0 || lastBrace > 0) jsonStr = jsonStr.slice(firstBrace, lastBrace + 1);
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(jsonStr);
+    } catch (e) {
+      console.error("[reports] JSON parse failed", e, text.slice(0, 400));
+      throw new Error("A IA devolveu um formato invalido. Tente novamente.");
+    }
+    const ai = AiOutput.parse(parsed);
 
     // 4) Build PDF
     const reportData: ReportData = {
