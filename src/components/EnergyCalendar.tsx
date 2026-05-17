@@ -159,7 +159,7 @@ export function EnergyCalendar() {
       <div className="mt-6 min-h-[88px] rounded-xl border border-gold/20 bg-background/40 p-4">
         {selectedDay ? (
           <div>
-            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
               <span className="font-serif text-lg text-stardust">
                 {new Date(selectedDay.date + "T12:00:00Z").toLocaleDateString("pt-BR", {
                   weekday: "long", day: "2-digit", month: "long",
@@ -171,6 +171,19 @@ export function EnergyCalendar() {
               {selectedDay.personal_day !== null && (
                 <span className="text-gold">Dia pessoal {selectedDay.personal_day}</span>
               )}
+              <button
+                onClick={() => toggleMutation.mutate(selectedDay.date)}
+                disabled={toggleMutation.isPending}
+                className={cn(
+                  "ml-auto flex items-center gap-1.5 px-3 py-1 rounded-full text-xs border transition-all",
+                  favSet.has(selectedDay.date)
+                    ? "border-gold/60 bg-gold/15 text-gold"
+                    : "border-stardust/20 text-stardust hover:border-gold/40 hover:text-gold",
+                )}
+              >
+                <Star className={cn("size-3.5", favSet.has(selectedDay.date) && "fill-gold")} />
+                {favSet.has(selectedDay.date) ? "Favorito" : "Marcar como importante"}
+              </button>
             </div>
             {insight && typeof insight === "object" ? (
               <div className="mt-4 grid gap-3 md:grid-cols-3">
