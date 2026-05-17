@@ -396,3 +396,49 @@ function ChartWheel({ chart }: { chart: any }) {
     </div>
   );
 }
+
+function ChartSummary({ chart }: { chart: any }) {
+  const sun = chart.planets.find((p: any) => p.name === "Sol");
+  const moon = chart.planets.find((p: any) => p.name === "Lua");
+  const ascSign = chart.ascendant?.sign;
+
+  const trio = [
+    sun && { label: "Sol", sign: sun.sign, hint: SIGN_MEANING[sun.sign]?.short },
+    moon && { label: "Lua", sign: moon.sign, hint: SIGN_MEANING[moon.sign]?.short },
+    ascSign && { label: "Ascendente", sign: ascSign, hint: SIGN_MEANING[ascSign]?.short },
+  ].filter(Boolean) as { label: string; sign: string; hint?: string }[];
+
+  return (
+    <div className="glass-card gold-glow rounded-2xl p-6 relative overflow-hidden">
+      <div className="absolute inset-0 nebula-bg opacity-50 pointer-events-none" />
+      <div className="relative">
+        <div className="flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-gold">
+          <Sparkles className="size-3.5" /> Resumo do seu céu
+        </div>
+        <p className="mt-3 text-stardust font-serif text-lg leading-relaxed">
+          {sun && (
+            <>Você brilha como <span className="text-gold">{sun.sign}</span></>
+          )}
+          {moon && (
+            <>, sente o mundo como <span className="text-gold">{moon.sign}</span></>
+          )}
+          {ascSign && (
+            <> e se apresenta com a aura de <span className="text-gold">{ascSign}</span></>
+          )}
+          .
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
+          {trio.map((t) => (
+            <div key={t.label} className="rounded-xl bg-secondary/30 border border-gold/15 p-3">
+              <div className="text-xs uppercase tracking-widest text-muted-foreground">{t.label}</div>
+              <div className="font-serif text-lg text-stardust mt-0.5">
+                {SIGN_MEANING[t.sign]?.glyph} {t.sign}
+              </div>
+              {t.hint && <p className="text-xs text-muted-foreground mt-1">{t.hint}</p>}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
