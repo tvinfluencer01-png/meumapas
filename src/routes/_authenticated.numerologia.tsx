@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { computeNumerology, NUMBER_MEANINGS } from "@/lib/numerology";
+import { computeNumerology, NUMBER_MEANINGS, formatBirthDateBR } from "@/lib/numerology";
 import { Hash, Heart, Eye, User as UserIcon, Cake, Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/numerologia")({
