@@ -94,6 +94,9 @@ function AdminPage() {
         <TabsContent value="twilio" className="mt-0">
           <TwilioForm />
         </TabsContent>
+        <TabsContent value="mercadopago" className="mt-0">
+          <MercadoPagoForm />
+        </TabsContent>
       </Tabs>
     </div>
   );
