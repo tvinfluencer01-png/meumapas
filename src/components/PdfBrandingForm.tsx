@@ -24,6 +24,10 @@ type FormState = {
   footer_name: string;
   footer_site: string;
   footer_phone: string;
+  enabled_personality: boolean;
+  enabled_love: boolean;
+  enabled_career: boolean;
+  enabled_spiritual: boolean;
 };
 
 const DEFAULT_FORM: FormState = {
@@ -35,7 +39,18 @@ const DEFAULT_FORM: FormState = {
   footer_name: "",
   footer_site: "",
   footer_phone: "",
+  enabled_personality: true,
+  enabled_love: true,
+  enabled_career: true,
+  enabled_spiritual: true,
 };
+
+const KIND_TOGGLES: Array<{ key: keyof FormState; label: string; hint: string }> = [
+  { key: "enabled_personality", label: "Personalidade", hint: "Mapa da Personalidade" },
+  { key: "enabled_love", label: "Amor", hint: "Amor e Relacionamento" },
+  { key: "enabled_career", label: "Carreira", hint: "Vocação e Propósito" },
+  { key: "enabled_spiritual", label: "Espiritualidade", hint: "Jornada Espiritual" },
+];
 
 function fileToBase64(file: File): Promise<{ base64: string; mime: "image/png" | "image/jpeg" }> {
   return new Promise((resolve, reject) => {
@@ -69,6 +84,7 @@ export function PdfBrandingForm() {
 
   useEffect(() => {
     if (data?.branding) {
+      const b = data.branding as Record<string, unknown>;
       setForm({
         enabled: data.branding.enabled,
         logo_width: data.branding.logo_width,
@@ -78,6 +94,10 @@ export function PdfBrandingForm() {
         footer_name: data.branding.footer_name ?? "",
         footer_site: data.branding.footer_site ?? "",
         footer_phone: data.branding.footer_phone ?? "",
+        enabled_personality: (b.enabled_personality as boolean | undefined) ?? true,
+        enabled_love: (b.enabled_love as boolean | undefined) ?? true,
+        enabled_career: (b.enabled_career as boolean | undefined) ?? true,
+        enabled_spiritual: (b.enabled_spiritual as boolean | undefined) ?? true,
       });
     }
   }, [data]);
@@ -94,6 +114,10 @@ export function PdfBrandingForm() {
           footer_name: form.footer_name,
           footer_site: form.footer_site,
           footer_phone: form.footer_phone,
+          enabled_personality: form.enabled_personality,
+          enabled_love: form.enabled_love,
+          enabled_career: form.enabled_career,
+          enabled_spiritual: form.enabled_spiritual,
         },
       }),
     onSuccess: () => {
