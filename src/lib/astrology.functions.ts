@@ -122,6 +122,12 @@ const ChartInput = z.object({
   timezoneOffset: z.number().min(-14).max(14).default(0),
 });
 
+// Health probe — confirms the astrology serverFn is deployed and reachable.
+// Used by the UI to disable "Gerar mapa" gracefully when the backend is stale.
+export const pingAstro = createServerFn({ method: "GET" }).handler(async () => {
+  return { ok: true as const, at: Date.now() };
+});
+
 export const computeNatalChart = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => ChartInput.parse(d))
