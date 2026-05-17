@@ -258,7 +258,7 @@ function ServerFnLogsPage() {
                             </td>
                           </tr>
                         )}
-                      </>
+                      </Fragment>
                     );
                   })}
                 </tbody>
