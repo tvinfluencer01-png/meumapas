@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
+import { showLoader, hideLoader, updateLoader } from "@/components/system-feedback";
 import { Loader2, Sparkles, Wand2, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -84,6 +85,16 @@ function MapaAstral() {
     setLoading(true);
     setGenError(null);
     setRetryInfo(null);
+    showLoader({
+      title: "Calculando seu Mapa Astral",
+      subtitle: "Swiss Ephemeris",
+      messages: [
+        "Posicionando os planetas no céu do seu nascimento...",
+        "Traçando casas astrológicas e ângulos...",
+        "Calculando aspectos entre os astros...",
+        "Revelando o desenho da sua alma...",
+      ],
+    });
 
     const offset = -new Date().getTimezoneOffset() / 60;
     const payload = {

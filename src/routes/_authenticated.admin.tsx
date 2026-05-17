@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SettingsForm } from "@/components/SettingsForm";
 import { toast } from "sonner";
+import { confirmDialog } from "@/components/system-feedback";
 import {
   checkIsAdmin,
   getTwilioSettings,
@@ -193,10 +194,14 @@ function UsersAdmin() {
                         <Button
                           size="sm" variant="outline"
                           disabled={mut.isPending}
-                          onClick={() => {
-                            if (confirm(`Remover acesso de admin de ${u.email}?`)) {
-                              mut.mutate({ user_id: u.id, is_admin: false });
-                            }
+                          onClick={async () => {
+                            const ok = await confirmDialog({
+                              title: "Remover acesso de admin?",
+                              description: `O usuário ${u.email} perderá os privilégios de Super Admin.`,
+                              confirmText: "Remover admin",
+                              destructive: true,
+                            });
+                            if (ok) mut.mutate({ user_id: u.id, is_admin: false });
                           }}
                         >
                           <ShieldOff className="size-3 mr-1" /> Remover admin
