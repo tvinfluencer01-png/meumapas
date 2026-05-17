@@ -134,6 +134,9 @@ function MapaAstral() {
           // Exponential backoff with jitter: 1s, 2s, 4s (+ up to 400ms)
           const waitMs = Math.round(1000 * Math.pow(2, attempt - 1) + Math.random() * 400);
           setRetryInfo({ attempt, max: MAX_ATTEMPTS, waitMs });
+          updateLoader({
+            messages: [`Tentativa ${attempt + 1} de ${MAX_ATTEMPTS} em instantes...`],
+          });
           await sleep(waitMs);
         }
       }
@@ -147,6 +150,7 @@ function MapaAstral() {
     } finally {
       setRetryInfo(null);
       setLoading(false);
+      hideLoader();
     }
   }
 
