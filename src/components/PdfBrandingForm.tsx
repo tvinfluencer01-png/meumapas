@@ -82,6 +82,15 @@ export function PdfBrandingForm() {
     queryFn: () => getFn(),
   });
 
+  const addonsFn = useServerFn(getAddonsOverview);
+  const { data: addons } = useQuery({
+    queryKey: ["addons-overview"],
+    queryFn: () => addonsFn(),
+  });
+  const subscriptionActive = !!addons?.subscriptions.some(
+    (s) => s.addon_id === "sub_branding_pdf" && s.status === "active",
+  );
+
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
 
   useEffect(() => {
