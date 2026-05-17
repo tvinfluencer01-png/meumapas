@@ -61,17 +61,15 @@ export const saveTwilioSettings = createServerFn({ method: "POST" })
   .inputValidator((d) => SaveSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
-    const update: Record<string, unknown> = {
+    const update = {
       account_sid: data.account_sid || null,
       whatsapp_from: data.whatsapp_from || null,
       messaging_service_sid: data.messaging_service_sid || null,
       sms_from: data.sms_from || null,
       enabled: data.enabled,
       updated_by: context.userId,
+      ...(data.auth_token && data.auth_token.length > 0 ? { auth_token: data.auth_token } : {}),
     };
-    if (data.auth_token && data.auth_token.length > 0) {
-      update.auth_token = data.auth_token;
-    }
     const { error } = await supabaseAdmin
       .from("twilio_settings")
       .update(update)
