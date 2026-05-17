@@ -115,6 +115,8 @@ export function FavoritesSummary() {
                       setEditing(null);
                     }}
                     onRemove={() => removeMutation.mutate(f.date)}
+                    onGenerate={() => generateMutation.mutate(f.date)}
+                    generating={generateMutation.isPending && generateMutation.variables === f.date}
                   />
                 ))}
               </div>
