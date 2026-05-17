@@ -26,6 +26,7 @@ function MapaAstral() {
   const compute = useServerFn(computeNatalChart);
   const [loading, setLoading] = useState(false);
   const [chart, setChart] = useState<any>(null);
+  const [genError, setGenError] = useState<string | null>(null);
 
   const { data: birth } = useQuery({
     queryKey: ["birth", user?.id],
@@ -53,6 +54,7 @@ function MapaAstral() {
       return;
     }
     setLoading(true);
+    setGenError(null);
     try {
       const offset = -new Date().getTimezoneOffset() / 60;
       const result = await compute({
@@ -67,10 +69,19 @@ function MapaAstral() {
           timezoneOffset: offset,
         },
       });
+      // Defensive: garante que o resultado seja um chart utilizável antes de renderizar
+      if (!result || typeof result !== "object" || !Array.isArray((result as any).planets)) {
+        throw new Error("Resposta inválida do servidor.");
+      }
       setChart(result);
       toast.success("Mapa astral revelado.");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Erro ao calcular");
+      const raw = e instanceof Error ? e.message : String(e ?? "");
+      const friendly = /server function info not found|HTTPError|status code 5\d\d|failed to fetch|networkerror/i.test(raw)
+        ? "Não foi possível gerar o mapa agora. O serviço astrológico está temporariamente indisponível — tente novamente em instantes."
+        : (raw || "Erro ao calcular o mapa.");
+      setGenError(friendly);
+      toast.error(friendly);
     } finally {
       setLoading(false);
     }
