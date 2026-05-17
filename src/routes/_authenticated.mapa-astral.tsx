@@ -9,6 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { computeNatalChart, pingAstro } from "@/lib/astrology.functions";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { PLANET_MEANING, SIGN_MEANING, ASPECT_MEANING } from "@/lib/astro-meanings";
 
 export const Route = createFileRoute("/_authenticated/mapa-astral")({
   component: MapaAstral,
