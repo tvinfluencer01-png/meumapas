@@ -237,7 +237,7 @@ function MapaAstral() {
           <ChartSummary chart={current} />
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-            <ChartWheel chart={current} />
+            <ChartWheel chart={current} userId={user?.id} />
             <div className="space-y-4">
               <div className="glass-card rounded-2xl p-6">
                 <h3 className="font-serif text-xl text-gold">Síntese</h3>
