@@ -214,7 +214,7 @@ function ServerFnLogsPage() {
                   {logs.map((l: any) => {
                     const isOpen = expanded === l.id;
                     return (
-                      <>
+                      <Fragment key={l.id}>
                         <tr
                           key={l.id}
                           className="border-b border-border/40 hover:bg-secondary/20 cursor-pointer"
