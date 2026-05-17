@@ -24,9 +24,24 @@ const PLANET_GLYPH: Record<string,string> = {
 function MapaAstral() {
   const { user } = useAuth();
   const compute = useServerFn(computeNatalChart);
+  const ping = useServerFn(pingAstro);
   const [loading, setLoading] = useState(false);
   const [chart, setChart] = useState<any>(null);
   const [genError, setGenError] = useState<string | null>(null);
+
+  // Health probe: confirms the astrology serverFn is deployed/reachable.
+  const health = useQuery({
+    queryKey: ["astro-health"],
+    queryFn: async () => {
+      const r = await ping();
+      if (!r || (r as any).ok !== true) throw new Error("unhealthy");
+      return r;
+    },
+    retry: 1,
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+  });
+  const backendDown = health.isError;
 
   const { data: birth } = useQuery({
     queryKey: ["birth", user?.id],
