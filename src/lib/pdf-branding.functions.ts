@@ -15,6 +15,10 @@ const BrandingShape = z.object({
   footer_name: z.string().trim().max(80).nullable().optional(),
   footer_site: z.string().trim().max(120).nullable().optional(),
   footer_phone: z.string().trim().max(40).nullable().optional(),
+  enabled_personality: z.boolean(),
+  enabled_love: z.boolean(),
+  enabled_career: z.boolean(),
+  enabled_spiritual: z.boolean(),
 });
 
 export const getPdfBranding = createServerFn({ method: "GET" })
@@ -52,6 +56,10 @@ export const savePdfBranding = createServerFn({ method: "POST" })
       footer_name: data.footer_name?.trim() || null,
       footer_site: data.footer_site?.trim() || null,
       footer_phone: data.footer_phone?.trim() || null,
+      enabled_personality: data.enabled_personality,
+      enabled_love: data.enabled_love,
+      enabled_career: data.enabled_career,
+      enabled_spiritual: data.enabled_spiritual,
     };
     const { error } = await supabase
       .from("pdf_branding")
