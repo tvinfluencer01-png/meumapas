@@ -9,7 +9,10 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "check": "node scripts/check.mjs",
+    "check:syntax": "node scripts/check.mjs --syntax",
+    "check:types": "node scripts/check.mjs --types"
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^2.0.47",
