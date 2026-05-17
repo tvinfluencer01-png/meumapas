@@ -554,3 +554,137 @@ function WhatsAppFloat() {
     </a>
   );
 }
+
+/* ---------------- TRUST BAR ---------------- */
+function TrustBar() {
+  const stats = [
+    { n: "12.847", t: "Mapas gerados" },
+    { n: "4.9★", t: "Avaliação média" },
+    { n: "93%", t: "Renovam o plano" },
+    { n: "48", t: "Países atendidos" },
+  ];
+  return (
+    <section className="border-y border-border bg-card/20">
+      <div className="mx-auto grid max-w-7xl grid-cols-2 gap-px bg-border md:grid-cols-4">
+        {stats.map((s) => (
+          <div key={s.t} className="bg-background px-6 py-8 text-center">
+            <div className="font-serif text-3xl text-gold md:text-4xl">{s.n}</div>
+            <div className="mt-2 text-[10px] uppercase tracking-[0.3em] text-muted-foreground">{s.t}</div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/* ---------------- COMPATIBILITY ---------------- */
+function Compatibility() {
+  return (
+    <section className="mx-auto max-w-7xl px-6 py-32">
+      <div className="grid items-center gap-16 lg:grid-cols-2">
+        <div className="relative mx-auto aspect-square w-full max-w-md">
+          <div className="absolute left-1/4 top-1/2 size-48 -translate-y-1/2 rounded-full border border-gold/40 bg-gradient-to-br from-gold/20 to-transparent backdrop-blur-sm" />
+          <div className="absolute right-1/4 top-1/2 size-48 -translate-y-1/2 rounded-full border border-nebula/40 bg-gradient-to-br from-nebula/20 to-transparent backdrop-blur-sm" />
+          <div className="absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
+            <div className="size-16 rounded-full bg-gold-glow shadow-[0_0_60px_var(--gold)]" />
+          </div>
+        </div>
+        <div>
+          <span className="mb-4 block text-xs uppercase tracking-[0.4em] text-gold/70">
+            Sinastria & Vínculos
+          </span>
+          <h2 className="mb-6 font-serif text-5xl italic leading-tight">
+            Dois mapas. <br /> <span className="text-gold">Uma única dança.</span>
+          </h2>
+          <p className="mb-8 max-w-md leading-relaxed text-muted-foreground">
+            Cruzamos seu mapa com o de quem você ama, com seu sócio ou com sua equipe — e
+            revelamos a geometria invisível que une (ou tensiona) cada vínculo.
+          </p>
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            {[
+              "Compatibilidade amorosa",
+              "Conexão espiritual",
+              "Sinastria empresarial",
+              "Mapa de sócios",
+            ].map((c) => (
+              <div key={c} className="flex items-center gap-3 rounded-lg border border-border px-4 py-3">
+                <span className="size-1.5 rounded-full bg-gold" />
+                <span className="text-muted-foreground">{c}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ---------------- PLAN COMPARISON ---------------- */
+function PlanComparison() {
+  const rows = [
+    { f: "Mapa astral completo", a: true, b: true, c: true },
+    { f: "Previsão diária de trânsitos", a: true, b: true, c: true },
+    { f: "Numerologia cabalística", a: false, b: true, c: true },
+    { f: "Sinastria amorosa", a: false, b: true, c: true },
+    { f: "IA espiritual ilimitada", a: false, b: true, c: true },
+    { f: "Relatórios PDF premium", a: false, b: true, c: true },
+    { f: "Análise empresarial", a: false, b: false, c: true },
+    { f: "Tarot IA + Mentor", a: false, b: false, c: true },
+    { f: "Notificações WhatsApp", a: false, b: false, c: true },
+  ];
+  return (
+    <section className="border-y border-border bg-card/20 py-32">
+      <div className="mx-auto max-w-5xl px-6">
+        <h2 className="mb-4 text-center font-serif text-4xl italic">Compare em detalhes</h2>
+        <p className="mb-16 text-center text-xs uppercase tracking-[0.3em] text-muted-foreground">
+          O que cada nível desbloqueia
+        </p>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="border-b border-border">
+                <th className="py-5 text-left text-xs font-normal uppercase tracking-[0.25em] text-muted-foreground"></th>
+                <th className="py-5 text-center text-xs font-semibold uppercase tracking-[0.25em] text-foreground">Iniciante</th>
+                <th className="py-5 text-center text-xs font-semibold uppercase tracking-[0.25em] text-gold">Adepto</th>
+                <th className="py-5 text-center text-xs font-semibold uppercase tracking-[0.25em] text-foreground">Oráculo</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.f} className="border-b border-border/50">
+                  <td className="py-4 text-muted-foreground">{r.f}</td>
+                  <td className="py-4 text-center">
+                    {r.a ? <span className="text-gold">✓</span> : <span className="text-muted-foreground/30">—</span>}
+                  </td>
+                  <td className="bg-gold/5 py-4 text-center">
+                    {r.b ? <span className="text-gold">✓</span> : <span className="text-muted-foreground/30">—</span>}
+                  </td>
+                  <td className="py-4 text-center">
+                    {r.c ? <span className="text-gold">✓</span> : <span className="text-muted-foreground/30">—</span>}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ---------------- CHATBOT FLOAT ---------------- */
+function ChatbotFloat() {
+  return (
+    <Link
+      to="/auth"
+      aria-label="Abrir oráculo IA"
+      className="group fixed bottom-24 right-6 z-50 flex items-center gap-3 rounded-full border border-gold/40 bg-background/90 px-5 py-3 text-xs uppercase tracking-[0.2em] text-gold backdrop-blur-md transition-all hover:bg-gold hover:text-primary-foreground"
+    >
+      <span className="relative flex size-2">
+        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-gold opacity-75" />
+        <span className="relative inline-flex size-2 rounded-full bg-gold" />
+      </span>
+      Falar com o Oráculo
+    </Link>
+  );
+}
