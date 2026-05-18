@@ -121,10 +121,10 @@ const AiOutput = z.object({
       z.object({
         title: z.string().min(2),
         body: z.string().min(200),
-        plan: SectionPlanSchema,
+        plan: SectionPlanSchema.optional(),
       }),
     )
-    .min(4)
+    .min(3)
     .max(8),
   closing: z.string().min(120),
   swot: z.object({
