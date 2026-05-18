@@ -51,7 +51,9 @@ function sanitize(s: string): string {
 
 function wrap(text: string, font: PDFFont, size: number, maxWidth: number): string[] {
   const out: string[] = [];
-  const paragraphs = text.split(/\n+/);
+  // Sanitiza ANTES de medir — font.widthOfTextAtSize lança erro para glyphs
+  // fora do WinAnsi (ex.: letras hebraicas) com fontes Standard como Helvetica.
+  const paragraphs = sanitize(text).split(/\n+/);
   for (const para of paragraphs) {
     const words = para.split(/\s+/);
     let line = "";
