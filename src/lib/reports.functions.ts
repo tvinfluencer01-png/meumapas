@@ -686,17 +686,17 @@ Assinatura astral: ${signLine || astroBlock}`;
 
     const basePrompt = `${reportContext}
 
-Monte apenas a ESTRUTURA BASE do relatório e responda APENAS com JSON valido neste formato:
+Monte apenas a ESTRUTURA BASE do relatório com PROFUNDIDADE REAL. Responda APENAS com JSON valido neste formato:
 {
-  "intro": "2 paragrafos em linguagem simples",
+  "intro": "ABERTURA cinematográfica de 4 a 5 parágrafos longos (mínimo 700 caracteres no total). Comece nomeando ${firstName} e situando o momento de vida com poesia sóbria. Conecte explicitamente Sol, Lua e Caminho de Vida ao tema do relatório. Mostre a tensão central que ${firstName} vive nessa área, o convite simbólico do mapa e o tom da jornada que esse PDF vai percorrer. Linguagem humana, viva, sem clichês esotéricos genéricos.",
   "sectionBlueprints": [
-    { "title": "Titulo 1", "focus": "Qual o foco pratico desta secao" },
-    { "title": "Titulo 2", "focus": "Qual o foco pratico desta secao" },
-    { "title": "Titulo 3", "focus": "Qual o foco pratico desta secao" }
+    { "title": "Titulo 1", "focus": "Foco aprofundado e específico desta seção (mínimo 60 caracteres)" },
+    { "title": "Titulo 2", "focus": "Foco aprofundado e específico desta seção (mínimo 60 caracteres)" },
+    { "title": "Titulo 3", "focus": "Foco aprofundado e específico desta seção (mínimo 60 caracteres)" }
   ],
-  "closing": "1 ou 2 paragrafos finais",
+  "closing": "ENCERRAMENTO de 2 a 3 parágrafos densos (mínimo 250 caracteres). Costure de volta o fio simbólico da abertura, reconheça a complexidade da jornada e entregue uma bênção concreta a ${firstName}.",
   "swot": {
-    "strengths": ["...", "...", "..."],
+    "strengths": ["frase específica e ancorada no mapa", "...", "..."],
     "weaknesses": ["...", "...", "..."],
     "opportunities": ["...", "...", "..."],
     "threats": ["...", "...", "..."]
@@ -709,22 +709,23 @@ Monte apenas a ESTRUTURA BASE do relatório e responda APENAS com JSON valido ne
   "suggestions": {
     "intro": "1 frase curta para ${firstName}",
     "items": [
-      { "name": "Sugestao 1", "why": "Por que combina com o mapa e numerologia" },
+      { "name": "Sugestao 1", "why": "Por que combina com o mapa e numerologia (mínimo 40 caracteres)" },
       { "name": "Sugestao 2", "why": "..." },
       { "name": "Sugestao 3", "why": "..." },
       { "name": "Sugestao 4", "why": "..." },
       { "name": "Sugestao 5", "why": "..." }
     ]
   },
-  "summary": "Resumo final forte e simples"
+  "summary": "SÍNTESE final densa de 2 parágrafos (mínimo 350 caracteres) que amarra os 3 capítulos, a SWOT e as recomendações em uma leitura única e memorável para ${firstName}."
 }
 
 Regras:
-- sectionBlueprints precisa ter EXATAMENTE 3 itens, com temas diferentes e complementares.
-- SWOT e recommendations devem ter EXATAMENTE 3 itens por lista.
+- sectionBlueprints precisa ter EXATAMENTE 3 itens, com temas diferentes e complementares, cada um digno de várias páginas.
+- SWOT e recommendations devem ter EXATAMENTE 3 itens por lista, frases específicas (não genéricas).
 - suggestions.items deve ter EXATAMENTE 5 itens.
 - Tema das sugestoes: ${meta.suggestionGuide}
-- Use o nome completo apenas 1x na intro. Depois, use apenas ${firstName}.`;
+- Use o nome completo apenas 1x na intro. Depois, use apenas ${firstName}.
+- Nada de respostas curtas, superficiais ou repetitivas. Profundidade é obrigatória.`;
 
     const makeSectionBodyPrompt = (
       blueprint: z.infer<typeof BaseAiOutput>["sectionBlueprints"][number],
