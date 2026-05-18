@@ -110,7 +110,7 @@ function AuthedLayout() {
             <span className="font-serif text-xl shimmer-text">Cosmic AI</span>
           </div>
           <nav className="p-4 space-y-1">
-            {NAV.map((item) => (
+            {NAV.filter((item) => !item.addonId || activeAddons.has(item.addonId)).map((item) => (
               <Link
                 key={item.to} to={item.to} onClick={() => setOpen(false)}
                 className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-gold hover:bg-secondary/40 transition-colors"
