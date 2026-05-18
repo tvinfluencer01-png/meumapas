@@ -419,7 +419,7 @@ REGRAS DO JSON:
               system,
               prompt,
               abortSignal: ac.signal,
-              maxOutputTokens: 8000,
+              
               maxRetries: 0,
             });
             modelName = candidate;
