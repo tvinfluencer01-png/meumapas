@@ -235,7 +235,7 @@ export const generateReport = createServerFn({ method: "POST" })
     const customKey = settings?.custom_ai_key as string | null;
     const customModel = (settings?.custom_ai_model as string | null) ?? null;
 
-    let model;
+    let model: ReturnType<ReturnType<typeof createLovableAiGatewayProvider>>;
     let modelName = customModel ?? "google/gemini-3.1-flash-lite-preview";
     if (provider === "openai" && customKey) {
       modelName = customModel ?? "gpt-4o-mini";
