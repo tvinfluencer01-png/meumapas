@@ -380,7 +380,14 @@ function NumerologiaCabalisticaPage() {
                   <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground">
                     <c.icon className="size-3.5 text-gold" /> {c.label}
                   </div>
-                  <div className="font-serif text-6xl text-stardust mt-3 shimmer-text">{display}</div>
+                  <div className="flex items-baseline gap-4 mt-3">
+                    <div className="font-serif text-6xl text-stardust shimmer-text">{display}</div>
+                    {meaning && (
+                      <div className="font-serif text-5xl text-gold" lang="he" dir="rtl">
+                        {meaning.hebrewLetter}
+                      </div>
+                    )}
+                  </div>
                   <div className="mt-3">
                     <div className="font-serif text-lg text-gold">{meaning?.title ?? "—"}</div>
                     <p className="text-sm text-muted-foreground mt-1">{meaning?.essence ?? "Informe seu nome completo."}</p>
