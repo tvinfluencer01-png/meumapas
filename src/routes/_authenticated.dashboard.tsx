@@ -17,7 +17,7 @@ import { FavoritesImpact } from "@/components/FavoritesImpact";
 import { AIInsights } from "@/components/AIInsights";
 import { generateReport } from "@/lib/reports.functions";
 import { emitCreditsChanged } from "@/lib/credits-events";
-import { showLoader, hideLoader } from "@/components/system-feedback";
+import { showLoader, hideLoader, updateLoader } from "@/components/system-feedback";
 import { toast } from "sonner";
 import { CreditCostBadge } from "@/components/CreditCostBadge";
 
