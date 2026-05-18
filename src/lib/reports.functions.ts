@@ -634,6 +634,26 @@ ${astroBlock}`;
       };
     }
 
+    function normalizeSectionPayload(parsed: unknown, blueprint?: z.infer<typeof BaseAiOutput>["sectionBlueprints"][number]) {
+      const fallbackTitle = cleanInlineText(blueprint?.title) || "Capítulo";
+      const fallbackBody = cleanInlineText(blueprint?.focus)
+        ? `${firstName}, esta parte do relatório aprofunda ${cleanInlineText(blueprint?.focus)} com base no seu mapa e na sua numerologia. O objetivo é transformar símbolos em percepção prática, para que você reconheça padrões, ajuste escolhas e avance com mais consciência no próximo ciclo.`
+        : `${firstName}, esta parte do relatório aprofunda a leitura do seu mapa e da sua numerologia com linguagem prática e humana. A intenção é te oferecer clareza, direção e consciência para agir com mais coerência.`;
+
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+        return {
+          title: fallbackTitle,
+          body: fallbackBody,
+        };
+      }
+
+      const record = parsed as Record<string, unknown>;
+      return {
+        title: cleanInlineText(record.title) || fallbackTitle,
+        body: cleanInlineText(record.body) || fallbackBody,
+      };
+    }
+
     function parseJsonWithSchema<T>(
       text: string,
       schema: z.ZodType<T>,
