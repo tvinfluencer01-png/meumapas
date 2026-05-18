@@ -40,6 +40,26 @@ export const CREDIT_COST_CATALOG = {
     label: "Relatório PDF — Caminho Espiritual",
     description: "Geração do PDF completo do caminho espiritual.",
   },
+  report_finance: {
+    amount: 5,
+    label: "Relatório PDF — Questões Financeiras",
+    description: "Análise profunda de prosperidade, padrões financeiros e direção monetária baseada no mapa e numerologia.",
+  },
+  report_family: {
+    amount: 5,
+    label: "Relatório PDF — Vida Familiar",
+    description: "Dinâmicas familiares, padrões ancestrais e caminhos de harmonização no lar.",
+  },
+  report_health: {
+    amount: 5,
+    label: "Relatório PDF — Saúde",
+    description: "Tendências de vitalidade corpo-mente-espírito e práticas de cuidado baseadas no mapa e numerologia.",
+  },
+  report_friendships: {
+    amount: 5,
+    label: "Relatório PDF — Amizades",
+    description: "Padrões sociais, vínculos de amizade e como cultivar círculos verdadeiros.",
+  },
   tarot_reading: {
     amount: 2,
     label: "Leitura de Tarot",

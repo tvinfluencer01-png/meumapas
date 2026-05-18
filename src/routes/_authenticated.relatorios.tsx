@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { showLoader, hideLoader, updateLoader, confirmDialog } from "@/components/system-feedback";
 import {
   FileText, Download, Sparkles, Heart, Briefcase, Flame, Loader2, Trash2, ScrollText,
+  Coins, Home, HeartPulse, Users,
 } from "lucide-react";
 import { CreditCostBadge } from "@/components/CreditCostBadge";
 
@@ -18,7 +19,7 @@ export const Route = createFileRoute("/_authenticated/relatorios")({
   head: () => ({ meta: [{ title: "Relatorios Premium — Cosmic AI" }] }),
 });
 
-type Kind = "personality" | "love" | "career" | "spiritual";
+type Kind = "personality" | "love" | "career" | "spiritual" | "finance" | "family" | "health" | "friendships";
 
 const CARDS: { kind: Kind; title: string; desc: string; icon: typeof Sparkles; gradient: string }[] = [
   {
@@ -48,6 +49,34 @@ const CARDS: { kind: Kind; title: string; desc: string; icon: typeof Sparkles; g
     desc: "Karma, missao da alma e os portais que estao se abrindo no seu caminho.",
     icon: Flame,
     gradient: "from-violet-500/30 via-indigo-400/10 to-transparent",
+  },
+  {
+    kind: "finance",
+    title: "Questões Financeiras",
+    desc: "Padrões de prosperidade, bloqueios financeiros e direções para abundância — segundo o seu mapa e numerologia.",
+    icon: Coins,
+    gradient: "from-yellow-500/30 via-amber-400/10 to-transparent",
+  },
+  {
+    kind: "family",
+    title: "Vida Familiar",
+    desc: "Dinâmicas do lar, padrões ancestrais e caminhos de harmonização com pais, filhos e irmãos.",
+    icon: Home,
+    gradient: "from-orange-500/30 via-amber-400/10 to-transparent",
+  },
+  {
+    kind: "health",
+    title: "Saúde",
+    desc: "Vitalidade do corpo, mente e espírito com práticas integrativas alinhadas ao seu mapa.",
+    icon: HeartPulse,
+    gradient: "from-red-500/30 via-rose-400/10 to-transparent",
+  },
+  {
+    kind: "friendships",
+    title: "Amizades",
+    desc: "Padrões sociais, perfis de amigos que te complementam e como cultivar círculos verdadeiros.",
+    icon: Users,
+    gradient: "from-sky-500/30 via-cyan-400/10 to-transparent",
   },
 ];
 

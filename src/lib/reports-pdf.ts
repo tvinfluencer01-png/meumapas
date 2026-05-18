@@ -31,7 +31,7 @@ export type ReportBranding = {
   footerPhone?: string | null;
 };
 export type ReportData = {
-  kind: "personality" | "love" | "career" | "spiritual";
+  kind: "personality" | "love" | "career" | "spiritual" | "finance" | "family" | "health" | "friendships";
   title: string;
   subtitle: string;
   consultantName: string;
