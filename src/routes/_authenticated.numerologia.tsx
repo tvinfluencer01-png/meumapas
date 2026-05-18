@@ -96,11 +96,11 @@ const GUIDANCE: Record<number, Guidance> = {
 };
 
 function NumerologySynthesis({ nums }: { nums: ReturnType<typeof computeNumerology> }) {
-  const lp = NUMBER_MEANINGS[nums.life_path];
-  const ds = NUMBER_MEANINGS[nums.destiny];
-  const gLp = GUIDANCE[nums.life_path];
-  const gDs = GUIDANCE[nums.destiny];
-  const gSu = GUIDANCE[nums.soul_urge];
+  const lp = nums.life_path ? NUMBER_MEANINGS[nums.life_path] : undefined;
+  const ds = nums.destiny ? NUMBER_MEANINGS[nums.destiny] : undefined;
+  const gLp = nums.life_path ? GUIDANCE[nums.life_path] : undefined;
+  const gDs = nums.destiny ? GUIDANCE[nums.destiny] : undefined;
+  const gSu = nums.soul_urge ? GUIDANCE[nums.soul_urge] : undefined;
 
   return (
     <div className="glass-card gold-glow rounded-2xl p-6 mt-6 relative overflow-hidden">
