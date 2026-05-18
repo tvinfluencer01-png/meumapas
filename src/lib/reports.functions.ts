@@ -114,15 +114,19 @@ export const generateReport = createServerFn({ method: "POST" })
     // Charge credits unless user has unlimited reports subscription
     const action: CreditAction = `report_${data.kind}` as CreditAction;
     const unlimited = await hasUnlimitedAccess(userId, action);
+    let charged = false;
     if (!unlimited) {
       const cost = await getCreditCost(action);
-      const charged = await consumeCredits(userId, action, `Relatório ${data.kind}`);
-      if (!charged) {
+      const ok = await consumeCredits(userId, action, `Relatório ${data.kind}`);
+      if (!ok) {
         throw new Error(
           `Saldo insuficiente. Este relatório custa ${cost} créditos. Compre mais em /addons.`,
         );
       }
+      charged = true;
     }
+
+    try {
 
     const num = computeNumerology(birth.full_name, birth.birth_date);
     const meta = REPORT_META[data.kind];
