@@ -106,6 +106,115 @@ function NumerologiaCabalisticaPage() {
       "");
   const nums = fullName ? computeCabalistic(fullName) : null;
 
+  const [downloading, setDownloading] = useState(false);
+
+  const handleDownload = async () => {
+    if (!nums || !fullName) return;
+    setDownloading(true);
+    try {
+      const labelOf = (k: "destiny" | "soul" | "impression") =>
+        k === "destiny" ? "Destino" : k === "soul" ? "Alma (Vogais)" : "Impressão (Consoantes)";
+      const descOf = (k: "destiny" | "soul" | "impression") =>
+        k === "destiny"
+          ? "Vibração total do seu nome completo — a missão que sua alma trouxe nesta encarnação."
+          : k === "soul"
+          ? "Soma das vogais — o que move seu interior sagrado, seus desejos mais profundos."
+          : "Soma das consoantes — a imagem que o mundo capta de você, sua aura externa.";
+
+      const blocks: SimplePdfBlock[] = [
+        { type: "h2", text: "Introdução à Numerologia Cabalística" },
+        {
+          type: "p",
+          text:
+            "A numerologia cabalística é uma tradição milenar oriunda da Kabbalah hebraica. " +
+            "Diferente da pitagórica, ela trabalha exclusivamente com o nome — a vibração sonora " +
+            "que acompanha a alma desde o nascimento — e utiliza uma tabela inspirada no alfabeto " +
+            "hebraico que vai de 1 a 8. O número 9 é considerado sagrado, ligado à plenitude divina, " +
+            "e quando aparece é tratado como um sinal especial de serviço espiritual.",
+        },
+        {
+          type: "p",
+          text:
+            "Cada letra do seu nome carrega uma vibração energética. Ao somar essas vibrações e " +
+            "reduzi-las, revelamos três aspectos centrais do seu ser: o Destino (nome completo), " +
+            "a Alma (vogais) e a Impressão (consoantes).",
+        },
+        { type: "h2", text: "Seus números" },
+        {
+          type: "kv",
+          rows: [
+            { k: "Nome analisado", v: fullName },
+            ...(birth?.birth_date ? [{ k: "Data de nascimento", v: formatBirthDateBR(birth.birth_date) }] : []),
+            { k: "Destino", v: String(nums.destiny ?? "—") },
+            { k: "Alma (Vogais)", v: String(nums.soul ?? "—") },
+            { k: "Impressão (Consoantes)", v: String(nums.impression ?? "—") },
+          ],
+        },
+      ];
+
+      (["destiny", "soul", "impression"] as const).forEach((k) => {
+        const n = nums[k];
+        const m = typeof n === "number" && n > 0 ? CAB_MEANINGS[n] : undefined;
+        blocks.push({ type: "h2", text: `${labelOf(k)} — Número ${n ?? "—"}` });
+        blocks.push({ type: "p", text: descOf(k) });
+        if (m) {
+          blocks.push({ type: "quote", text: m.title });
+          blocks.push({ type: "p", text: `Essência: ${m.essence}` });
+          blocks.push({ type: "p", text: `Orientação: ${m.guidance}` });
+        }
+      });
+
+      blocks.push({ type: "h2", text: "Síntese cabalística" });
+      blocks.push({
+        type: "p",
+        text:
+          `Seu nome "${fullName}" vibra na frequência ${nums.destiny ?? "—"} como Destino, ` +
+          `${nums.soul ?? "—"} como Alma e ${nums.impression ?? "—"} como Impressão. ` +
+          `Esta combinação revela como a sua essência interior se manifesta no mundo e qual o ` +
+          `chamado espiritual que acompanha sua jornada. Use estas vibrações como bússola — ` +
+          `não como destino fechado, mas como mapa de potenciais a serem cultivados.`,
+      });
+      blocks.push({
+        type: "list",
+        items: [
+          "Medite sobre a letra hebraica do seu número de Destino — ela carrega a chave da sua missão.",
+          "Observe quando sua Alma se manifesta com mais força (relações íntimas, criação, silêncio).",
+          "A Impressão é como o mundo te recebe — alinhe-a à sua verdade interior para evitar máscaras.",
+          "Quando o número 9 aparece, acolha-o como um chamado ao serviço e à compaixão universal.",
+        ],
+      });
+
+      const bytes = await buildSimplePdf({
+        brand: "Cosmic AI",
+        eyebrow: "Numerologia Cabalística",
+        title: "A vibração hebraica do seu nome",
+        subtitle: "Relatório completo da tradição cabalística",
+        consultantName: fullName,
+        meta: [
+          `Emitido em ${new Date().toLocaleDateString("pt-BR")}`,
+          ...(birth?.birth_date ? [`Nascimento: ${formatBirthDateBR(birth.birth_date)}`] : []),
+        ],
+        blocks,
+      });
+
+      const blob = new Blob([bytes as BlobPart], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `numerologia-cabalistica-${fullName.replace(/\s+/g, "-").toLowerCase()}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast.success("Relatório gerado com sucesso");
+    } catch (e) {
+      console.error(e);
+      toast.error("Não foi possível gerar o relatório");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   return (
     <div className="space-y-8">
       <header>
@@ -120,6 +229,14 @@ function NumerologiaCabalisticaPage() {
         </p>
         {fullName && (
           <p className="mt-2 text-muted-foreground">{fullName}{birth?.birth_date ? ` — nascido em ${formatBirthDateBR(birth.birth_date)}` : ""}</p>
+        )}
+        {nums && (
+          <div className="mt-4">
+            <Button onClick={handleDownload} disabled={downloading} className="gap-2">
+              {downloading ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />}
+              {downloading ? "Gerando relatório…" : "Baixar relatório completo (PDF)"}
+            </Button>
+          </div>
         )}
       </header>
 
