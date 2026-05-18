@@ -91,3 +91,14 @@ export const NUMBER_MEANINGS: Record<number, { title: string; essence: string }>
   22: { title: "Mestre Construtor", essence: "Manifestação prática de visões elevadas." },
   33: { title: "Mestre Curador", essence: "Amor incondicional e serviço à humanidade." },
 };
+
+/** Helpers que lidam com campos numerológicos possivelmente indefinidos (sem nome). */
+export const numLabel = (n: number | null | undefined): string =>
+  typeof n === "number" && n > 0 ? String(n) : "—";
+
+export const numMeaning = (n: number | null | undefined) =>
+  typeof n === "number" && n > 0 ? NUMBER_MEANINGS[n] : undefined;
+
+export const numTitle = (n: number | null | undefined): string =>
+  numMeaning(n)?.title ?? "—";
+
