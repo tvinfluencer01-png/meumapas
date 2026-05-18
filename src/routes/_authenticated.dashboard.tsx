@@ -57,33 +57,33 @@ function Dashboard() {
   const dayMeaning = NUMBER_MEANINGS[dayNum];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <header>
-        <p className="text-xs uppercase tracking-[0.3em] text-gold">
+        <p className="text-[11px] sm:text-xs uppercase tracking-[0.25em] sm:tracking-[0.3em] text-gold">
           {day.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" })}
         </p>
-        <h1 className="font-serif text-3xl lg:text-5xl mt-2 shimmer-text">
+        <h1 className="font-serif text-[1.75rem] leading-tight sm:text-3xl lg:text-5xl mt-2 shimmer-text">
           Bem-vindo, {birth?.full_name?.split(" ")[0] ?? "viajante"}
         </h1>
-        <p className="mt-2 text-muted-foreground">A energia do dia te observa. Veja o que ela revela.</p>
+        <p className="mt-2 text-sm sm:text-base text-muted-foreground">A energia do dia te observa. Veja o que ela revela.</p>
       </header>
 
       {/* Energy of the day */}
-      <section className="glass-card rounded-2xl p-6 lg:p-8 gold-glow">
-        <div className="flex items-start gap-4">
-          <div className="rounded-full bg-gold/10 p-3"><Flame className="size-6 text-gold" /></div>
-          <div className="flex-1">
-            <p className="text-xs uppercase tracking-widest text-muted-foreground">Vibração do dia</p>
-            <h2 className="font-serif text-2xl text-stardust mt-1">
+      <section className="glass-card rounded-2xl p-5 sm:p-6 lg:p-8 gold-glow">
+        <div className="flex items-start gap-3 sm:gap-4">
+          <div className="rounded-full bg-gold/10 p-2.5 sm:p-3 shrink-0"><Flame className="size-5 sm:size-6 text-gold" /></div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[11px] sm:text-xs uppercase tracking-widest text-muted-foreground">Vibração do dia</p>
+            <h2 className="font-serif text-xl sm:text-2xl text-stardust mt-1 leading-snug">
               {dayNum} — {dayMeaning?.title}
             </h2>
-            <p className="mt-2 text-muted-foreground">{dayMeaning?.essence}</p>
+            <p className="mt-2 text-sm sm:text-base text-muted-foreground">{dayMeaning?.essence}</p>
           </div>
         </div>
       </section>
 
       {/* Quick stats */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
         <StatCard icon={Sun} label="Sol em" value={sunSign ?? "—"}
           hint="Sua identidade essencial" />
         <StatCard icon={Star} label="Caminho de vida" value={numLabel(num?.life_path)}
