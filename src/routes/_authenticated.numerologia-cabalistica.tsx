@@ -114,8 +114,8 @@ function NumerologiaCabalisticaPage() {
           e utiliza uma tabela inspirada no alfabeto hebraico, reduzindo os valores entre 1 e 8 — o número 9 é
           considerado sagrado e não entra no resultado final.
         </p>
-        {birth && (
-          <p className="mt-2 text-muted-foreground">{birth.full_name}{birth.birth_date ? ` — nascido em ${formatBirthDateBR(birth.birth_date)}` : ""}</p>
+        {fullName && (
+          <p className="mt-2 text-muted-foreground">{fullName}{birth?.birth_date ? ` — nascido em ${formatBirthDateBR(birth.birth_date)}` : ""}</p>
         )}
       </header>
 
