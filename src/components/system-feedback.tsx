@@ -37,11 +37,15 @@ export function showLoader(opts: {
   title: string;
   subtitle?: string;
   messages?: string[];
+  progress?: number;
+  step?: string;
 }) {
   loaderState = {
     open: true,
     title: opts.title,
     subtitle: opts.subtitle,
+    progress: opts.progress,
+    step: opts.step,
     messages:
       opts.messages && opts.messages.length
         ? opts.messages
