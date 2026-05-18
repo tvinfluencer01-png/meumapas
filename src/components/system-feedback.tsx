@@ -22,6 +22,8 @@ type LoaderState = {
   title: string;
   subtitle?: string;
   messages: string[];
+  progress?: number; // 0..100, optional
+  step?: string; // current step label override
 };
 
 let loaderState: LoaderState = { open: false, title: "", messages: [] };
