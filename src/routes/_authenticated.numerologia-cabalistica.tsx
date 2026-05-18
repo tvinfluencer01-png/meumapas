@@ -441,6 +441,26 @@ function NumerologiaCabalisticaPage() {
               ))}
             </div>
           </div>
+
+          <div className="glass-card rounded-2xl p-6">
+            <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground">
+              <TreePine className="size-3.5 text-gold" /> Alfabeto hebraico (Otiyot)
+            </div>
+            <p className="text-sm text-muted-foreground mt-2">
+              As 22 letras sagradas — segundo o Sefer Yetzirah, os tijolos com que o Eterno criou os mundos.
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 mt-4 text-sm">
+              {HEBREW_ALPHABET.map((l) => (
+                <div key={l.name} className="rounded-lg border border-gold/15 bg-background/30 p-3 flex items-center gap-3">
+                  <div className="font-serif text-3xl text-gold leading-none" lang="he" dir="rtl">{l.letter}</div>
+                  <div className="min-w-0">
+                    <div className="text-stardust font-medium">{l.name}</div>
+                    <div className="text-xs text-muted-foreground">Valor: {l.value}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </>
       )}
     </div>
