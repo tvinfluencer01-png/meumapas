@@ -151,10 +151,41 @@ function AuthPage() {
     }
   }
 
+  const activeSteps = statusMode === "signup" ? SIGNUP_STEPS : SIGNIN_STEPS;
+
   return (
     <div className="relative min-h-screen overflow-hidden bg-background text-foreground">
       <Starfield count={120} />
       <div className="absolute inset-0 nebula-bg pointer-events-none" />
+
+      {submitting && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-md animate-fade-in">
+          <div className="glass-card rounded-2xl px-8 py-10 gold-glow flex flex-col items-center gap-5 max-w-sm mx-4 text-center">
+            <div className="relative">
+              <Sparkles className="size-10 text-gold animate-pulse" />
+              <Loader2 className="absolute -inset-3 size-16 text-gold/40 animate-spin" />
+            </div>
+            <div className="space-y-1">
+              <p className="font-serif text-lg shimmer-text">
+                {statusMode === "signup" ? "Criando sua conta" : "Entrando"}
+              </p>
+              <p key={statusStep} className="text-sm text-stardust animate-fade-in min-h-[1.25rem]">
+                {activeSteps[statusStep]}
+              </p>
+            </div>
+            <div className="flex gap-1.5">
+              {activeSteps.map((_, i) => (
+                <span
+                  key={i}
+                  className={`h-1.5 w-1.5 rounded-full transition-all ${
+                    i === statusStep ? "bg-gold w-4" : "bg-gold/30"
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       <Link
         to="/"
