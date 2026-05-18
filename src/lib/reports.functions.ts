@@ -613,31 +613,6 @@ Regras:
 - O body precisa ser especifico ao tema e ancorado no mapa/numerologia.
 - Nao use o nome completo. Use apenas ${firstName}.`;
 
-    const makeSectionPlanPrompt = (
-      blueprint: z.infer<typeof BaseAiOutput>["sectionBlueprints"][number],
-      sectionBody: string,
-    ) => `${compactSectionContext}
-
-Crie apenas o PLANO DE 7 DIAS da secao "${blueprint.title}".
-Foco da secao: ${blueprint.focus}
-Resumo da secao ja escrita:
-${sectionBody}
-
-Responda APENAS com JSON valido neste formato:
-{
-  "plan": {
-    "improve": ["Dia 1: ...", "Dia 2: ...", "Dia 3: ...", "Dia 4: ...", "Dia 5: ...", "Dia 6: ...", "Dia 7: ..."],
-    "avoid": ["Dia 1: ...", "Dia 2: ...", "Dia 3: ...", "Dia 4: ...", "Dia 5: ...", "Dia 6: ...", "Dia 7: ..."],
-    "follow": ["Dia 1: ...", "Dia 2: ...", "Dia 3: ...", "Dia 4: ...", "Dia 5: ...", "Dia 6: ...", "Dia 7: ..."]
-  }
-}
-
-Regras:
-- Cada lista deve ter EXATAMENTE 7 itens, de Dia 1 a Dia 7.
-- Cada item deve ser curto, concreto e acionavel.
-- O plano deve combinar com o texto da secao e com o mapa/numerologia.
-- Evite frases longas ou abstratas.`;
-
     yield { type: "progress" as const, progress: 28, step: "Montando a estrutura do relatório..." };
     const baseText = await callWithRetry({
       prompt: basePrompt,
@@ -665,18 +640,7 @@ Regras:
         progress: 48 + index * 10,
         step: `Montando plano do capítulo ${index + 1}...`,
       };
-      let sectionPlan: z.infer<typeof SectionPlanOutput>;
-      try {
-        const sectionPlanText = await callWithRetry({
-          prompt: makeSectionPlanPrompt(blueprint, sectionBody.body),
-          timeoutMs: 4_500,
-          errorMessage: "A geração demorou além do limite. Tente novamente; agora o relatório usa um modo mais rápido.",
-        });
-        sectionPlan = parseJsonWithSchema(sectionPlanText, SectionPlanOutput, `section-plan-${index + 1}`);
-      } catch (planError) {
-        console.error(`[reports] plan fallback used (section=${index + 1})`, planError);
-        sectionPlan = createLocalSectionPlan(blueprint, sectionBody.body);
-      }
+      const sectionPlan = createLocalSectionPlan(blueprint, sectionBody.body);
 
       sections.push({
         title: sectionBody.title,
