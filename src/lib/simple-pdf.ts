@@ -73,9 +73,24 @@ function wrap(text: string, font: PDFFont, size: number, maxWidth: number): stri
 
 export async function buildSimplePdf(data: SimplePdfData): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
+  doc.registerFontkit(fontkit);
   const font = await doc.embedFont(StandardFonts.Helvetica);
   const fontBold = await doc.embedFont(StandardFonts.HelveticaBold);
   const fontItalic = await doc.embedFont(StandardFonts.HelveticaOblique);
+
+  // Tenta carregar fonte hebraica (Noto Sans Hebrew). Se falhar, o PDF segue
+  // com as letras hebraicas substituídas por "?" via sanitize().
+  let fontHebrew: PDFFont | null = null;
+  try {
+    const res = await fetch("/fonts/NotoSansHebrew-Regular.ttf");
+    if (res.ok) {
+      const bytes = await res.arrayBuffer();
+      fontHebrew = await doc.embedFont(bytes, { subset: true });
+    }
+  } catch {
+    fontHebrew = null;
+  }
+
   const accent = hexToRgb(data.accentHex ?? "#d4af37");
   const ink = rgb(0.07, 0.08, 0.12);
   const muted = rgb(0.45, 0.45, 0.5);
