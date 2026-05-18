@@ -28,7 +28,7 @@ const NAV: NavItem[] = [
   { to: "/numerologia", label: "Numerologia", icon: Hash },
   { to: "/oraculo", label: "Oráculo IA", icon: MessageCircle },
   { to: "/tarot", label: "Tarot", icon: Wand2 },
-  { to: "/meditacao", label: "Meditação Cabalística", icon: TreePine, addonId: "sub_kabbalah_unlimited" },
+  
   { to: "/relatorios", label: "Relatórios", icon: ScrollText },
   { to: "/addons", label: "Add-ons", icon: Coins },
   { to: "/configuracoes", label: "Configurações", icon: Settings },
