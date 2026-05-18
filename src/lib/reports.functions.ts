@@ -134,7 +134,7 @@ const SuggestionsSchema = z.object({
 
 const SectionBodyOutput = z.object({
   title: z.string().min(2),
-  body: z.string().min(120),
+  body: z.string().min(600),
 });
 
 const SectionPlanOutput = z.object({
@@ -143,28 +143,28 @@ const SectionPlanOutput = z.object({
 
 const SectionOutput = z.object({
   title: z.string().min(2),
-  body: z.string().min(120),
+  body: z.string().min(600),
   plan: SectionPlanSchema,
 });
 
 const BaseAiOutput = z.object({
-  intro: z.string().min(120),
+  intro: z.string().min(600),
   sectionBlueprints: z.array(z.object({ title: z.string().min(2), focus: z.string().min(30) })).length(3),
-  closing: z.string().min(80),
+  closing: z.string().min(200),
   swot: SwotSchema,
   recommendations: RecommendationsSchema,
   suggestions: SuggestionsSchema,
-  summary: z.string().min(120),
+  summary: z.string().min(300),
 });
 
 const AiOutput = z.object({
-  intro: z.string().min(120),
+  intro: z.string().min(600),
   sections: z.array(SectionBodyOutput).length(3),
-  closing: z.string().min(80),
+  closing: z.string().min(200),
   swot: SwotSchema,
   recommendations: RecommendationsSchema,
   suggestions: SuggestionsSchema,
-  summary: z.string().min(120),
+  summary: z.string().min(300),
 });
 
 export const generateReport = createServerFn({ method: "POST" })
