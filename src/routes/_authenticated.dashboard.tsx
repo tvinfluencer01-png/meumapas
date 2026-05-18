@@ -1,15 +1,25 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { computeNumerology, NUMBER_MEANINGS, numLabel, numTitle } from "@/lib/numerology";
-import { Sparkles, Sun, Moon, Star, Heart, Flame, ChevronRight } from "lucide-react";
+import {
+  Sparkles, Sun, Moon, Star, Heart, Flame, ChevronRight,
+  Coins, Home, HeartPulse, Users, Loader2, Download,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EnergyCalendar } from "@/components/EnergyCalendar";
 import { WeeklyReading } from "@/components/WeeklyReading";
 import { FavoritesSummary } from "@/components/FavoritesSummary";
 import { FavoritesImpact } from "@/components/FavoritesImpact";
 import { AIInsights } from "@/components/AIInsights";
+import { generateReport } from "@/lib/reports.functions";
+import { emitCreditsChanged } from "@/lib/credits-events";
+import { showLoader, hideLoader } from "@/components/system-feedback";
+import { toast } from "sonner";
+import { CreditCostBadge } from "@/components/CreditCostBadge";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
