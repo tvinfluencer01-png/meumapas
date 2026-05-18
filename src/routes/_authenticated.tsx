@@ -31,6 +31,15 @@ const NAV: NavItem[] = [
   { to: "/configuracoes", label: "Configurações", icon: Settings },
 ];
 
+const ADDON_MENU: Record<string, { label: string; to: string; icon: typeof LayoutDashboard }> = {
+  sub_branding_pdf: { label: "Branding PDF", to: "/configuracoes", icon: FileBadge },
+  sub_unlimited_reports: { label: "Relatórios Ilimitados", to: "/relatorios", icon: InfinityIcon },
+  sub_oracle_premium: { label: "Oráculo Premium", to: "/oraculo", icon: Crown },
+  sub_tarot_unlimited: { label: "Tarot Ilimitado", to: "/tarot", icon: Wand2 },
+  sub_kabbalah_unlimited: { label: "Meditação Ilimitada", to: "/meditacao", icon: TreePine },
+  sub_kabbalistic_numerology: { label: "Numerologia Cabalística", to: "/numerologia", icon: Hash },
+};
+
 function AuthedLayout() {
   const { signOut, user, loading } = useAuth();
   const router = useRouter();
