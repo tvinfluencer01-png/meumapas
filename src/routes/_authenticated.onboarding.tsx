@@ -103,20 +103,45 @@ function OnboardingPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label className="text-stardust flex items-center gap-2"><Calendar className="size-4" /> Data</Label>
-            <Input type="date" value={form.birth_date} required
+            <Label htmlFor="birth_date" className="text-stardust flex items-center gap-2 text-sm">
+              <Calendar className="size-4" /> Data de nascimento
+            </Label>
+            <Input
+              id="birth_date"
+              type="date"
+              value={form.birth_date}
+              required
+              max={new Date().toISOString().slice(0, 10)}
+              min="1900-01-01"
               onChange={(e) => setForm({ ...form, birth_date: e.target.value })}
-              className="mt-1 bg-input border-border" />
+              className="mt-1 h-12 text-base bg-input border-border appearance-none [&::-webkit-calendar-picker-indicator]:opacity-70 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+              inputMode="numeric"
+            />
           </div>
           <div>
-            <Label className="text-stardust flex items-center gap-2"><Clock className="size-4" /> Hora</Label>
-            <Input type="time" value={form.birth_time}
+            <Label htmlFor="birth_time" className="text-stardust flex items-center gap-2 text-sm">
+              <Clock className="size-4" /> Hora
+            </Label>
+            <Input
+              id="birth_time"
+              type="time"
+              value={form.birth_time}
               disabled={form.time_unknown}
+              step={60}
               onChange={(e) => setForm({ ...form, birth_time: e.target.value })}
-              className="mt-1 bg-input border-border" />
-            <label className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-              <Checkbox checked={form.time_unknown}
-                onCheckedChange={(v) => setForm({ ...form, time_unknown: !!v })} />
+              className="mt-1 h-12 text-base bg-input border-border appearance-none [&::-webkit-calendar-picker-indicator]:opacity-70 [&::-webkit-calendar-picker-indicator]:cursor-pointer disabled:opacity-50"
+              inputMode="numeric"
+            />
+            <label
+              htmlFor="time_unknown"
+              className="mt-2 flex items-center gap-2 text-sm text-muted-foreground min-h-11 cursor-pointer select-none"
+            >
+              <Checkbox
+                id="time_unknown"
+                checked={form.time_unknown}
+                onCheckedChange={(v) => setForm({ ...form, time_unknown: !!v, birth_time: v ? "" : form.birth_time })}
+                className="size-5"
+              />
               Não sei minha hora exata
             </label>
           </div>
