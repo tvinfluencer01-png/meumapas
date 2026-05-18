@@ -135,10 +135,10 @@ export const generateReport = createServerFn({ method: "POST" })
     }
 
     const numBlock = [
-      `Caminho de Vida ${num.life_path} (${NUMBER_MEANINGS[num.life_path]?.title})`,
-      `Destino ${num.destiny} (${NUMBER_MEANINGS[num.destiny]?.title})`,
-      `Alma ${num.soul_urge} (${NUMBER_MEANINGS[num.soul_urge]?.title})`,
-      `Personalidade ${num.personality} (${NUMBER_MEANINGS[num.personality]?.title})`,
+      `Caminho de Vida ${numLabel(num.life_path)} (${numTitle(num.life_path)})`,
+      `Destino ${numLabel(num.destiny)} (${numTitle(num.destiny)})`,
+      `Alma ${numLabel(num.soul_urge)} (${numTitle(num.soul_urge)})`,
+      `Personalidade ${numLabel(num.personality)} (${numTitle(num.personality)})`,
     ].join(" | ");
 
     const sun = planets.find((p) => p.name === "Sol");
