@@ -3,6 +3,7 @@ import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useRouter } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
+import { getFreshSession } from "@/lib/auth-session";
 
 type AuthCtx = {
   session: Session | null;
@@ -35,20 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     (async () => {
-      const { data } = await supabase.auth.getSession();
-      let current = data.session;
-      // Proactively refresh if the access token is expired or about to expire
-      const exp = current?.expires_at ?? 0;
-      const nowSec = Math.floor(Date.now() / 1000);
-      if (current && exp - nowSec < 60) {
-        const { data: refreshed, error } = await supabase.auth.refreshSession();
-        if (error) {
-          await supabase.auth.signOut();
-          current = null;
-        } else {
-          current = refreshed.session;
-        }
-      }
+      const current = await getFreshSession();
       setSession(current);
       setLoading(false);
     })();
