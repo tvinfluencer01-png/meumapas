@@ -77,6 +77,8 @@ function AuthedLayout() {
   const balance = credits?.balance ?? 0;
   const peak = credits?.peak ?? 5;
   const pct = Math.max(0, Math.min(100, (balance / peak) * 100));
+
+  useEffect(() => {
     if (!loading || !user) {
       setProfileChecked(false);
     }
