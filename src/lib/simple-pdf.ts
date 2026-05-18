@@ -6,13 +6,17 @@
  * `buildReportPdf` em src/lib/reports-pdf.ts — esta versão é simplificada.
  */
 import { PDFDocument, StandardFonts, rgb, PageSizes, type PDFFont, type PDFPage } from "pdf-lib";
+import fontkit from "@pdf-lib/fontkit";
 
 export type SimplePdfBlock =
   | { type: "h2"; text: string }
+  | { type: "h3"; text: string }
   | { type: "p"; text: string }
   | { type: "quote"; text: string }
   | { type: "list"; items: string[] }
-  | { type: "kv"; rows: { k: string; v: string }[] };
+  | { type: "kv"; rows: { k: string; v: string }[] }
+  | { type: "hebrew-hero"; letter: string; name: string; transliteration: string; meaning: string }
+  | { type: "hebrew-row"; letter: string; name: string; value: number | string; meaning: string };
 
 export type SimplePdfData = {
   brand: string; // ex: "Cosmic AI"
@@ -69,9 +73,24 @@ function wrap(text: string, font: PDFFont, size: number, maxWidth: number): stri
 
 export async function buildSimplePdf(data: SimplePdfData): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
+  doc.registerFontkit(fontkit);
   const font = await doc.embedFont(StandardFonts.Helvetica);
   const fontBold = await doc.embedFont(StandardFonts.HelveticaBold);
   const fontItalic = await doc.embedFont(StandardFonts.HelveticaOblique);
+
+  // Tenta carregar fonte hebraica (Noto Sans Hebrew). Se falhar, o PDF segue
+  // com as letras hebraicas substituídas por "?" via sanitize().
+  let fontHebrew: PDFFont | null = null;
+  try {
+    const res = await fetch("/fonts/NotoSansHebrew-Regular.ttf");
+    if (res.ok) {
+      const bytes = await res.arrayBuffer();
+      fontHebrew = await doc.embedFont(bytes, { subset: true });
+    }
+  } catch {
+    fontHebrew = null;
+  }
+
   const accent = hexToRgb(data.accentHex ?? "#d4af37");
   const ink = rgb(0.07, 0.08, 0.12);
   const muted = rgb(0.45, 0.45, 0.5);
@@ -161,6 +180,65 @@ export async function buildSimplePdf(data: SimplePdfData): Promise<Uint8Array> {
         thickness: 0.5, color: accent,
       });
       y -= 14;
+    } else if (block.type === "h3") {
+      ensureSpace(28);
+      y -= 6;
+      page.drawText(sanitize(block.text), {
+        x: margin, y, size: 12, font: fontBold, color: ink,
+      });
+      y -= 16;
+    } else if (block.type === "hebrew-hero") {
+      // Bloco grande: letra hebraica + nome + transliteração + significado
+      ensureSpace(80);
+      const boxH = 70;
+      page.drawRectangle({
+        x: margin, y: y - boxH, width: contentW, height: boxH,
+        color: rgb(0.98, 0.96, 0.88), borderColor: accent, borderWidth: 1,
+      });
+      // Letra hebraica grande à direita
+      if (fontHebrew) {
+        const hSize = 56;
+        const w = fontHebrew.widthOfTextAtSize(block.letter, hSize);
+        page.drawText(block.letter, {
+          x: margin + contentW - w - 16, y: y - boxH + 14,
+          size: hSize, font: fontHebrew, color: accent,
+        });
+      }
+      page.drawText(sanitize(block.name.toUpperCase()), {
+        x: margin + 14, y: y - 18, size: 10, font: fontBold, color: accent,
+      });
+      page.drawText(sanitize(block.transliteration), {
+        x: margin + 14, y: y - 36, size: 16, font: fontBold, color: ink,
+      });
+      const mLines = wrap(block.meaning, fontItalic, 10, contentW - 100);
+      let my = y - 52;
+      for (const ln of mLines.slice(0, 2)) {
+        page.drawText(sanitize(ln), { x: margin + 14, y: my, size: 10, font: fontItalic, color: muted });
+        my -= 12;
+      }
+      y -= boxH + 12;
+    } else if (block.type === "hebrew-row") {
+      // Linha da tabela do alfabeto: letra | nome | valor | significado
+      ensureSpace(28);
+      // Letra hebraica
+      if (fontHebrew) {
+        page.drawText(block.letter, {
+          x: margin, y: y - 4, size: 18, font: fontHebrew, color: accent,
+        });
+      }
+      page.drawText(sanitize(block.name), {
+        x: margin + 32, y, size: 11, font: fontBold, color: ink,
+      });
+      page.drawText(sanitize(String(block.value)), {
+        x: margin + 110, y, size: 11, font: fontBold, color: accent,
+      });
+      const mLines = wrap(block.meaning, font, 10, contentW - 150);
+      let my = y;
+      for (const ln of mLines.slice(0, 2)) {
+        page.drawText(sanitize(ln), { x: margin + 150, y: my, size: 10, font, color: ink });
+        my -= 12;
+      }
+      y -= Math.max(22, mLines.length * 12 + 4);
     } else if (block.type === "p") {
       const lines = wrap(block.text, font, 11, contentW);
       for (const ln of lines) {

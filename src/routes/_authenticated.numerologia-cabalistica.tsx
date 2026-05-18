@@ -57,17 +57,43 @@ function computeCabalistic(fullName: string | null | undefined) {
   };
 }
 
-const CAB_MEANINGS: Record<number, { title: string; essence: string; guidance: string }> = {
-  1: { title: "Aleph — O Iniciador", essence: "Energia divina criadora, unidade e liderança espiritual.", guidance: "Confie no impulso original; você é canal para começar algo novo." },
-  2: { title: "Bet — O Receptáculo", essence: "Dualidade, parceria sagrada e equilíbrio entre opostos.", guidance: "Cultive escuta e cooperação; o sagrado se manifesta no encontro." },
-  3: { title: "Guimel — A Manifestação", essence: "Verbo criador, expressão e fertilidade da palavra.", guidance: "Use a palavra com consciência: ela materializa realidades." },
-  4: { title: "Dalet — A Porta", essence: "Estrutura, lei e construção do templo interior.", guidance: "Discipline corpo e mente; bases sólidas abrem portas reais." },
-  5: { title: "Hé — O Sopro", essence: "Vida, liberdade e movimento do espírito sobre a matéria.", guidance: "Permita a mudança; o sopro divino renova o que precisa morrer." },
-  6: { title: "Vav — A Conexão", essence: "União do céu e da terra, amor responsável e serviço.", guidance: "Sirva com amor sem se anular; harmonia nasce do limite justo." },
-  7: { title: "Zain — A Espada", essence: "Discernimento, vitória interior e busca da verdade.", guidance: "Separe o essencial do supérfluo; o silêncio é seu mestre." },
-  8: { title: "Chet — O Sagrado", essence: "Transcendência, poder espiritual e abundância iluminada.", guidance: "Eleve seu propósito material a serviço de algo maior." },
-  9: { title: "Tet — A Luz Oculta", essence: "Número sagrado da plenitude divina; sabedoria que transcende a forma.", guidance: "Acolha o mistério: você canaliza uma vibração de serviço universal e compaixão." },
+const CAB_MEANINGS: Record<number, { title: string; essence: string; guidance: string; hebrewLetter: string; letterName: string; deepMeaning: string }> = {
+  1: { title: "Aleph — O Iniciador", hebrewLetter: "א", letterName: "Aleph", essence: "Energia divina criadora, unidade e liderança espiritual.", guidance: "Confie no impulso original; você é canal para começar algo novo.", deepMeaning: "Aleph é a primeira letra do alfabeto hebraico, silenciosa, representando o Sopro Divino antes da palavra. É a unidade absoluta (Echad), o ponto onde tudo começa. Quem vibra em 1 é pioneiro, traz fogo original, mas precisa cuidar do orgulho e da solidão do líder." },
+  2: { title: "Bet — O Receptáculo", hebrewLetter: "ב", letterName: "Bet", essence: "Dualidade, parceria sagrada e equilíbrio entre opostos.", guidance: "Cultive escuta e cooperação; o sagrado se manifesta no encontro.", deepMeaning: "Bet significa 'casa' (Bayit) — é o útero, o templo, o espaço que acolhe. Inicia a Torá (Bereshit). Vibrar em 2 é ser ponte entre mundos, mediador, mas exige aprender a habitar o próprio centro antes de servir aos outros." },
+  3: { title: "Guimel — A Manifestação", hebrewLetter: "ג", letterName: "Guimel", essence: "Verbo criador, expressão e fertilidade da palavra.", guidance: "Use a palavra com consciência: ela materializa realidades.", deepMeaning: "Guimel é o camelo (Gamal) — aquele que atravessa o deserto carregando água. Representa generosidade, movimento e a palavra que nutre. Em 3 vive o artista, o comunicador, o mestre — mas a palavra também fere quando desalinhada do coração." },
+  4: { title: "Dalet — A Porta", hebrewLetter: "ד", letterName: "Dalet", essence: "Estrutura, lei e construção do templo interior.", guidance: "Discipline corpo e mente; bases sólidas abrem portas reais.", deepMeaning: "Dalet é a porta (Delet) — o limiar entre o profano e o sagrado. Carrega humildade (do pobre que pede passagem). Em 4 vibra o construtor, o engenheiro da alma, alguém que materializa o invisível. Cuidado com o excesso de rigidez." },
+  5: { title: "Hé — O Sopro", hebrewLetter: "ה", letterName: "Hé", essence: "Vida, liberdade e movimento do espírito sobre a matéria.", guidance: "Permita a mudança; o sopro divino renova o que precisa morrer.", deepMeaning: "Hé é o sopro suave, presente no nome de Deus (YHVH) duas vezes. Representa a respiração divina que dá vida ao barro. Em 5 mora o viajante, o curioso, o que liberta — mas precisa aprender que liberdade verdadeira nasce do compromisso." },
+  6: { title: "Vav — A Conexão", hebrewLetter: "ו", letterName: "Vav", essence: "União do céu e da terra, amor responsável e serviço.", guidance: "Sirva com amor sem se anular; harmonia nasce do limite justo.", deepMeaning: "Vav é o gancho que conecta — visualmente uma linha vertical unindo o alto e o baixo. É a conjunção 'e' que une todas as coisas. Em 6 vive o curador, o pai/mãe espiritual, aquele que sustenta. Lembre-se: servir não é se anular." },
+  7: { title: "Zain — A Espada", hebrewLetter: "ז", letterName: "Zain", essence: "Discernimento, vitória interior e busca da verdade.", guidance: "Separe o essencial do supérfluo; o silêncio é seu mestre.", deepMeaning: "Zain é a espada/cetro — instrumento de discernimento e governo. Liga-se ao Shabat (sétimo dia), ao descanso sagrado. Em 7 vibra o místico, o pesquisador, o eremita. A solidão é seu templo, mas isolamento prolongado o afasta da missão." },
+  8: { title: "Chet — O Sagrado", hebrewLetter: "ח", letterName: "Chet", essence: "Transcendência, poder espiritual e abundância iluminada.", guidance: "Eleve seu propósito material a serviço de algo maior.", deepMeaning: "Chet representa a vida (Chai = 18 = 8+10), o sopro vital que transcende o material. É a oitava que renova a oitava anterior. Em 8 vive o executivo iluminado, o que prospera servindo. Riqueza sem propósito vira prisão; com propósito, vira templo." },
+  9: { title: "Tet — A Luz Oculta", hebrewLetter: "ט", letterName: "Tet", essence: "Número sagrado da plenitude divina; sabedoria que transcende a forma.", guidance: "Acolha o mistério: você canaliza uma vibração de serviço universal e compaixão.", deepMeaning: "Tet é o ventre, a luz escondida na matéria, o bem (Tov) que se revela após gestação. Na Cabala é o nono mês, a plenitude. Quem vibra em 9 é o humanitarista, o sábio anônimo. Sua missão é servir sem apego ao reconhecimento." },
 };
+
+// Alfabeto hebraico completo (22 letras) — para o relatório
+const HEBREW_ALPHABET: { letter: string; name: string; value: number; meaning: string }[] = [
+  { letter: "א", name: "Aleph", value: 1, meaning: "Boi / Sopro divino — unidade, início, mestre silencioso." },
+  { letter: "ב", name: "Bet", value: 2, meaning: "Casa — receptáculo, lar, dualidade sagrada." },
+  { letter: "ג", name: "Guimel", value: 3, meaning: "Camelo — generosidade, movimento, palavra que nutre." },
+  { letter: "ד", name: "Dalet", value: 4, meaning: "Porta — humildade, limiar, abertura." },
+  { letter: "ה", name: "Hé", value: 5, meaning: "Janela / Sopro — vida, revelação, presença divina." },
+  { letter: "ו", name: "Vav", value: 6, meaning: "Gancho — conexão, união entre céu e terra." },
+  { letter: "ז", name: "Zain", value: 7, meaning: "Espada — discernimento, descanso sagrado." },
+  { letter: "ח", name: "Chet", value: 8, meaning: "Cerca / Vida — transcendência, vitalidade." },
+  { letter: "ט", name: "Tet", value: 9, meaning: "Serpente / Ventre — luz oculta, bondade interior." },
+  { letter: "י", name: "Yod", value: 10, meaning: "Mão — semente divina, ponto criador." },
+  { letter: "כ", name: "Kaf", value: 20, meaning: "Palma da mão — potencial realizado, coroa." },
+  { letter: "ל", name: "Lamed", value: 30, meaning: "Aguilhão — aprendizado, ensino, ascensão." },
+  { letter: "מ", name: "Mem", value: 40, meaning: "Águas — sabedoria fluida, ventre cósmico." },
+  { letter: "נ", name: "Nun", value: 50, meaning: "Peixe — fé, continuidade, queda e ressurreição." },
+  { letter: "ס", name: "Samech", value: 60, meaning: "Apoio — sustentação divina, ciclo." },
+  { letter: "ע", name: "Ayin", value: 70, meaning: "Olho — visão profunda, percepção espiritual." },
+  { letter: "פ", name: "Pé", value: 80, meaning: "Boca — palavra falada, expressão." },
+  { letter: "צ", name: "Tsadê", value: 90, meaning: "Anzol — justiça, retidão do justo." },
+  { letter: "ק", name: "Qof", value: 100, meaning: "Nuca — santidade, ciclos, mistério." },
+  { letter: "ר", name: "Resh", value: 200, meaning: "Cabeça — princípio, liderança, pobreza espiritual." },
+  { letter: "ש", name: "Shin", value: 300, meaning: "Dente / Fogo — transformação, sopro divino, Shaddai." },
+  { letter: "ת", name: "Tav", value: 400, meaning: "Cruz / Selo — verdade, completude, marca." },
+];
 
 const CARDS = [
   { key: "destiny" as const, label: "Destino", icon: Sparkles, desc: "Vibração total do seu nome completo." },
@@ -122,24 +148,35 @@ function NumerologiaCabalisticaPage() {
           : "Soma das consoantes — a imagem que o mundo capta de você, sua aura externa.";
 
       const blocks: SimplePdfBlock[] = [
-        { type: "h2", text: "Introdução à Numerologia Cabalística" },
+        { type: "h2", text: "I. A tradição cabalística" },
         {
           type: "p",
           text:
-            "A numerologia cabalística é uma tradição milenar oriunda da Kabbalah hebraica. " +
-            "Diferente da pitagórica, ela trabalha exclusivamente com o nome — a vibração sonora " +
-            "que acompanha a alma desde o nascimento — e utiliza uma tabela inspirada no alfabeto " +
-            "hebraico que vai de 1 a 8. O número 9 é considerado sagrado, ligado à plenitude divina, " +
-            "e quando aparece é tratado como um sinal especial de serviço espiritual.",
+            "A numerologia cabalística nasce na Kabbalah hebraica, tradição mística milenar que estuda os " +
+            "nomes divinos e os caminhos da Árvore da Vida (Etz Chaim). Para os cabalistas, o universo foi " +
+            "criado por meio de letras e números — as 22 letras do alfabeto hebraico (Otiyot) são consideradas " +
+            "ferramentas de criação, descritas no Sefer Yetzirah (Livro da Formação) como os 'tijolos' com que " +
+            "o Eterno modelou todos os mundos.",
         },
         {
           type: "p",
           text:
-            "Cada letra do seu nome carrega uma vibração energética. Ao somar essas vibrações e " +
-            "reduzi-las, revelamos três aspectos centrais do seu ser: o Destino (nome completo), " +
-            "a Alma (vogais) e a Impressão (consoantes).",
+            "Diferente da numerologia pitagórica, a vertente cabalística trabalha exclusivamente com o NOME " +
+            "— a vibração sonora que acompanha a alma desde o nascimento e a identifica nos planos sutis. " +
+            "A tabela usada no Ocidente adapta o alfabeto hebraico ao latino, reduzindo cada letra a um valor " +
+            "entre 1 e 8. O número 9, ligado a Tet (ט) e à plenitude divina, é considerado sagrado e quando " +
+            "aparece é interpretado como um chamado especial ao serviço espiritual.",
         },
-        { type: "h2", text: "Seus números" },
+        {
+          type: "p",
+          text:
+            "Três aspectos centrais são revelados pelo seu nome: o NÚMERO DE DESTINO (soma de todas as letras) " +
+            "representa a missão da alma nesta encarnação; o NÚMERO DA ALMA (soma das vogais) revela o que " +
+            "vibra no íntimo, os desejos da centelha divina; o NÚMERO DA IMPRESSÃO (soma das consoantes) é " +
+            "a aura externa, como o mundo percebe sua presença.",
+        },
+
+        { type: "h2", text: "II. Seus números cabalísticos" },
         {
           type: "kv",
           rows: [
@@ -152,37 +189,108 @@ function NumerologiaCabalisticaPage() {
         },
       ];
 
+      // Hero box com a letra hebraica do Destino
+      const destinyMeaning = typeof nums.destiny === "number" ? CAB_MEANINGS[nums.destiny] : undefined;
+      if (destinyMeaning) {
+        blocks.push({
+          type: "hebrew-hero",
+          letter: destinyMeaning.hebrewLetter,
+          name: `Letra de Destino · ${destinyMeaning.letterName}`,
+          transliteration: destinyMeaning.title,
+          meaning: destinyMeaning.essence,
+        });
+      }
+
       (["destiny", "soul", "impression"] as const).forEach((k) => {
         const n = nums[k];
         const m = typeof n === "number" && n > 0 ? CAB_MEANINGS[n] : undefined;
         blocks.push({ type: "h2", text: `${labelOf(k)} — Número ${n ?? "—"}` });
         blocks.push({ type: "p", text: descOf(k) });
         if (m) {
-          blocks.push({ type: "quote", text: m.title });
-          blocks.push({ type: "p", text: `Essência: ${m.essence}` });
-          blocks.push({ type: "p", text: `Orientação: ${m.guidance}` });
+          blocks.push({
+            type: "hebrew-hero",
+            letter: m.hebrewLetter,
+            name: `${m.letterName} — letra hebraica regente`,
+            transliteration: m.title,
+            meaning: m.essence,
+          });
+          blocks.push({ type: "h3", text: "Essência vibracional" });
+          blocks.push({ type: "p", text: m.essence });
+          blocks.push({ type: "h3", text: "Significado profundo na tradição cabalística" });
+          blocks.push({ type: "p", text: m.deepMeaning });
+          blocks.push({ type: "h3", text: "Orientação prática" });
+          blocks.push({ type: "quote", text: m.guidance });
         }
       });
 
-      blocks.push({ type: "h2", text: "Síntese cabalística" });
+      blocks.push({ type: "h2", text: "III. O alfabeto hebraico completo" });
       blocks.push({
         type: "p",
         text:
-          `Seu nome "${fullName}" vibra na frequência ${nums.destiny ?? "—"} como Destino, ` +
-          `${nums.soul ?? "—"} como Alma e ${nums.impression ?? "—"} como Impressão. ` +
-          `Esta combinação revela como a sua essência interior se manifesta no mundo e qual o ` +
-          `chamado espiritual que acompanha sua jornada. Use estas vibrações como bússola — ` +
-          `não como destino fechado, mas como mapa de potenciais a serem cultivados.`,
+          "As 22 letras hebraicas (Otiyot) são a espinha dorsal da Kabbalah. Cada uma carrega um som, um " +
+          "número (Guematria), uma forma visual e um significado simbólico. Estudá-las é entrar em diálogo " +
+          "com a linguagem original da criação. Abaixo, todas as letras com seu valor numérico tradicional " +
+          "e seu significado essencial:",
       });
+
+      HEBREW_ALPHABET.forEach((l) => {
+        blocks.push({
+          type: "hebrew-row",
+          letter: l.letter,
+          name: l.name,
+          value: l.value,
+          meaning: l.meaning,
+        });
+      });
+
+      blocks.push({ type: "h2", text: "IV. Síntese cabalística do seu nome" });
+      blocks.push({
+        type: "p",
+        text:
+          `Seu nome "${fullName}" vibra na frequência ${nums.destiny ?? "—"} (${destinyMeaning?.letterName ?? "—"} ${destinyMeaning?.hebrewLetter ?? ""}) ` +
+          `como Destino, ${nums.soul ?? "—"} (${typeof nums.soul === "number" ? CAB_MEANINGS[nums.soul]?.letterName : "—"}) como Alma e ` +
+          `${nums.impression ?? "—"} (${typeof nums.impression === "number" ? CAB_MEANINGS[nums.impression]?.letterName : "—"}) como Impressão. ` +
+          `Esta tríade revela como sua essência divina (Alma) se manifesta no mundo concreto (Impressão) ` +
+          `cumprindo seu chamado espiritual (Destino). Os cabalistas ensinam que o nome é a 'assinatura ` +
+          `da alma' — não foi escolhido por acaso pelos seus pais, mas inspirado pela providência divina.`,
+      });
+
+      blocks.push({ type: "h3", text: "Como o Destino, Alma e Impressão dialogam" });
+      blocks.push({
+        type: "p",
+        text:
+          `Quando Alma (${nums.soul ?? "—"}) e Impressão (${nums.impression ?? "—"}) estão alinhadas, a pessoa ` +
+          `vive em coerência: o que sente, expressa. Quando há grande distância entre os dois números, surge ` +
+          `o desafio de unificar interior e exterior — autenticidade torna-se a prática espiritual central. ` +
+          `O Destino (${nums.destiny ?? "—"}) é a síntese, a missão que se cumpre quando Alma e Impressão se ` +
+          `harmonizam no serviço.`,
+      });
+
+      blocks.push({ type: "h2", text: "V. Práticas cabalísticas recomendadas" });
       blocks.push({
         type: "list",
         items: [
-          "Medite sobre a letra hebraica do seu número de Destino — ela carrega a chave da sua missão.",
-          "Observe quando sua Alma se manifesta com mais força (relações íntimas, criação, silêncio).",
-          "A Impressão é como o mundo te recebe — alinhe-a à sua verdade interior para evitar máscaras.",
-          "Quando o número 9 aparece, acolha-o como um chamado ao serviço e à compaixão universal.",
+          `Medite diariamente sobre a letra ${destinyMeaning?.hebrewLetter ?? ""} (${destinyMeaning?.letterName ?? "sua letra de Destino"}) — visualize-a em ouro sobre fundo violeta por 5 minutos.`,
+          "Escreva seu nome em hebraico (peça a um estudioso a transliteração) e contemple a forma das letras — cada traço carrega uma vibração.",
+          "Estude o Sefer Yetzirah e o Zohar — obras fundadoras que descrevem o poder criador das letras.",
+          "Observe quando sua Alma se manifesta com mais força (relações íntimas, silêncio, criação artística) e cultive esses espaços.",
+          "Alinhe sua Impressão à sua verdade interior: evite máscaras sociais que distorçam o som original do seu nome.",
+          "Quando o número 9 (Tet ט) aparecer em sua vida, acolha-o como chamado ao serviço, à compaixão universal e à luz oculta na matéria.",
+          "Pratique a Guematria: some o valor das palavras importantes da sua vida e contemple as conexões reveladas pelos números iguais.",
         ],
       });
+
+      blocks.push({ type: "h2", text: "VI. Considerações finais" });
+      blocks.push({
+        type: "p",
+        text:
+          "Este relatório é um mapa, não uma sentença. A Kabbalah ensina que o ser humano tem livre-arbítrio " +
+          "(Bechirá Chofshit) e que toda vibração pode ser elevada por meio da intenção (Kavaná) e da ação " +
+          "consciente. Use estes números como bússola para se conhecer mais profundamente, não como destino " +
+          "fechado. Que a luz das 22 letras ilumine seu caminho.",
+      });
+      blocks.push({ type: "quote", text: "\"Em princípio, era o Verbo.\" — Ecos do Bereshit, onde cada letra hebraica é uma porta para o infinito." });
+
 
       const bytes = await buildSimplePdf({
         brand: "Cosmic AI",
@@ -272,7 +380,14 @@ function NumerologiaCabalisticaPage() {
                   <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground">
                     <c.icon className="size-3.5 text-gold" /> {c.label}
                   </div>
-                  <div className="font-serif text-6xl text-stardust mt-3 shimmer-text">{display}</div>
+                  <div className="flex items-baseline gap-4 mt-3">
+                    <div className="font-serif text-6xl text-stardust shimmer-text">{display}</div>
+                    {meaning && (
+                      <div className="font-serif text-5xl text-gold" lang="he" dir="rtl">
+                        {meaning.hebrewLetter}
+                      </div>
+                    )}
+                  </div>
                   <div className="mt-3">
                     <div className="font-serif text-lg text-gold">{meaning?.title ?? "—"}</div>
                     <p className="text-sm text-muted-foreground mt-1">{meaning?.essence ?? "Informe seu nome completo."}</p>
@@ -322,6 +437,26 @@ function NumerologiaCabalisticaPage() {
                 <div key={n} className="rounded-lg border border-gold/15 bg-background/30 p-3">
                   <div className="font-serif text-2xl text-gold">{n}</div>
                   <div className="text-stardust/80">{letters}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="glass-card rounded-2xl p-6">
+            <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground">
+              <TreePine className="size-3.5 text-gold" /> Alfabeto hebraico (Otiyot)
+            </div>
+            <p className="text-sm text-muted-foreground mt-2">
+              As 22 letras sagradas — segundo o Sefer Yetzirah, os tijolos com que o Eterno criou os mundos.
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 mt-4 text-sm">
+              {HEBREW_ALPHABET.map((l) => (
+                <div key={l.name} className="rounded-lg border border-gold/15 bg-background/30 p-3 flex items-center gap-3">
+                  <div className="font-serif text-3xl text-gold leading-none" lang="he" dir="rtl">{l.letter}</div>
+                  <div className="min-w-0">
+                    <div className="text-stardust font-medium">{l.name}</div>
+                    <div className="text-xs text-muted-foreground">Valor: {l.value}</div>
+                  </div>
                 </div>
               ))}
             </div>
