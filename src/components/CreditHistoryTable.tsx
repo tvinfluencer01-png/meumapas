@@ -123,9 +123,11 @@ export function CreditHistoryFilters({
 export function CreditHistoryTable({
   transactions,
   loading,
+  onRefund,
 }: {
   transactions: CreditTx[];
   loading?: boolean;
+  onRefund?: (tx: CreditTx) => void;
 }) {
   if (loading) {
     return <div className="text-sm text-muted-foreground py-6">Carregando…</div>;
@@ -137,6 +139,11 @@ export function CreditHistoryTable({
       </div>
     );
   }
+  const isRefunded = (t: CreditTx) =>
+    !!t.id &&
+    transactions.some(
+      (r) => r.amount > 0 && (r.reference ?? "").includes(`origin=${t.id}`),
+    );
   return (
     <div className="rounded-md border border-border overflow-x-auto">
       <Table>
@@ -148,11 +155,13 @@ export function CreditHistoryTable({
             <TableHead className="text-right hidden sm:table-cell">Saldo antes</TableHead>
             <TableHead className="text-right hidden sm:table-cell">Saldo depois</TableHead>
             <TableHead className="hidden md:table-cell">Referência</TableHead>
+            {onRefund && <TableHead className="text-right">Estorno</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
           {transactions.map((t) => {
             const positive = t.amount >= 0;
+            const refunded = isRefunded(t);
             return (
               <TableRow key={t.id}>
                 <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
@@ -188,6 +197,25 @@ export function CreditHistoryTable({
                 <TableCell className="text-xs text-muted-foreground truncate max-w-[280px] hidden md:table-cell">
                   {t.reference ?? "—"}
                 </TableCell>
+                {onRefund && (
+                  <TableCell className="text-right">
+                    {!positive && !refunded ? (
+                      <button
+                        type="button"
+                        onClick={() => onRefund(t)}
+                        className="text-xs text-primary hover:underline"
+                      >
+                        Estornar
+                      </button>
+                    ) : refunded ? (
+                      <span className="text-xs text-muted-foreground">
+                        Estornado
+                      </span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+                )}
               </TableRow>
             );
           })}
