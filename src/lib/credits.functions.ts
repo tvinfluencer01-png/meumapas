@@ -53,6 +53,53 @@ export async function consumeCredits(
 }
 
 /**
+ * Refund credits back to the user. Use when a charged action fails
+ * (e.g. PDF/map generation error, upstream timeout) or when the user
+ * cancels mid-flight. The transaction is recorded as `refund_<action>`
+ * with a reference containing the reason and the actor who triggered it.
+ *
+ * Returns the amount that was credited back. If `amount` is omitted,
+ * it defaults to the configured cost of the action.
+ */
+export async function refundCredits(
+  userId: string,
+  action: CreditAction,
+  opts: {
+    reason: string;
+    actorUserId?: string | null;
+    actorLabel?: string;
+    amount?: number;
+    originalReference?: string;
+  },
+): Promise<number> {
+  const amount =
+    typeof opts.amount === "number" ? opts.amount : await getCreditCost(action);
+  if (amount <= 0) return 0;
+  const actor =
+    opts.actorLabel ??
+    (opts.actorUserId ? `system[${opts.actorUserId}]` : "system");
+  const ref = [
+    `[refund:${action}]`,
+    `actor=${actor}`,
+    opts.originalReference ? `origin=${opts.originalReference}` : null,
+    `reason=${opts.reason}`,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const { data, error } = await supabaseAdmin.rpc("adjust_credits", {
+    _user_id: userId,
+    _amount: amount,
+    _kind: `refund_${action}`,
+    _reference: ref,
+  });
+  if (error) {
+    console.error("[credits] refund error", error);
+    throw new Error("Falha ao estornar créditos.");
+  }
+  return amount;
+}
+
+/**
  * Check if user has an active subscription that bypasses credit cost
  * for the given action.
  */
