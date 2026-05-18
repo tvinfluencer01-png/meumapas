@@ -45,7 +45,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     })();
 
-    return () => subscription.unsubscribe();
+    // Proactively keep the cached session fresh so the auth-attacher
+    // middleware never sends an expired bearer token to server functions.
+    const refresh = () => {
+      getFreshSession().catch(() => {});
+    };
+    const interval = window.setInterval(refresh, 30_000);
+    const onFocus = () => refresh();
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") refresh();
+    };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibility);
+
+    return () => {
+      subscription.unsubscribe();
+      window.clearInterval(interval);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
   }, [router, qc]);
 
 
