@@ -431,6 +431,24 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
   drawHeading("Resumo", 20);
   drawParagraph(data.summary);
 
+  // Plano de 7 dias (único, ao final, baseado no resumo)
+  if (data.finalPlan) {
+    setChapter("Plano de 7 dias");
+    drawHeading("Plano de 7 dias", 20);
+    drawParagraph(
+      "Pequenos passos diários, em linguagem simples, baseados no resumo deste relatório.",
+      { italic: true, size: 11, color: MUTED },
+    );
+    const labelDays = (arr: string[]) =>
+      arr.slice(0, 7).map((it, i) => (/^dia\s+\d+:/i.test(it) ? it : `Dia ${i + 1}: ${it}`));
+    drawSubHeading("Melhorar", rgb(0.15, 0.4, 0.2));
+    drawBulletList(labelDays(data.finalPlan.improve));
+    drawSubHeading("Evitar", rgb(0.55, 0.15, 0.2));
+    drawBulletList(labelDays(data.finalPlan.avoid));
+    drawSubHeading("Seguir", rgb(0.65, 0.5, 0.1));
+    drawBulletList(labelDays(data.finalPlan.follow));
+  }
+
   // Signature line
   ensureSpace(60);
   cursor.y -= 18;
