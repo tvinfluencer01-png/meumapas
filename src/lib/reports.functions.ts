@@ -853,6 +853,23 @@ Regras:
       };
     }
 
+    // Build final 7-day plan based on the summary + recommendations (local, deterministic, fast)
+    const buildFinal7DayPlan = () => {
+      const expandTo7 = (seeds: string[], prefix: string): string[] => {
+        const cleaned = seeds.map((s) => cleanInlineText(s)).filter(Boolean);
+        const base = cleaned.length ? cleaned : [`${prefix} alinhado ao seu resumo.`];
+        return Array.from({ length: 7 }, (_, i) => {
+          const seed = base[i % base.length];
+          return `Dia ${i + 1}: ${seed}`;
+        });
+      };
+      return {
+        improve: expandTo7(ai.recommendations.improve, "Pratique uma melhoria"),
+        avoid: expandTo7(ai.recommendations.avoid, "Evite um padrão"),
+        follow: expandTo7(ai.recommendations.follow, "Siga um caminho"),
+      };
+    };
+
     const reportData: ReportData = {
       kind: data.kind,
       title: meta.title,
@@ -874,6 +891,7 @@ Regras:
         items: ai.suggestions.items,
       },
       summary: ai.summary,
+      finalPlan: buildFinal7DayPlan(),
       branding: brandingPayload,
     };
 
