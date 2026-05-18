@@ -770,13 +770,7 @@ Regras:
       base = normalizeBasePayload(null) as z.infer<typeof BaseAiOutput>;
     }
 
-    base.sectionBlueprints.forEach((_, index) => {
-      void yield {
-        type: "progress" as const,
-        progress: 44 + index * 10,
-        step: `Preparando capítulo ${index + 1} de 3...`,
-      };
-    });
+    yield { type: "progress" as const, progress: 44, step: "Escrevendo os 3 capítulos em paralelo..." };
 
     const sections = await Promise.all(
       base.sectionBlueprints.map(async (blueprint, index) => {
