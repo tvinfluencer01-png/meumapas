@@ -72,11 +72,9 @@ export function CreditCostBadge({
   const cost = entry?.amount ?? 0;
   const balance = data.balance;
   const insufficient = cost > 0 && balance < cost;
-  const hint = ACTION_HINTS[action];
-  const itemLabel = entry?.label || hint?.item || action;
+  const itemLabel = entry?.label || action;
   const itemDesc =
     entry?.description ||
-    hint?.what ||
     "Esta ação consome créditos da sua conta quando concluída.";
 
   const TooltipBody = (
