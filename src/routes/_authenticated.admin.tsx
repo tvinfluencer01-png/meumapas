@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { Shield, MessageSquare, Save, Send, CheckCircle2, AlertTriangle, Users, Search, ShieldOff, ShieldCheck, History, RefreshCw, Settings as SettingsIcon, Wallet, Coins } from "lucide-react";
 import { MercadoPagoForm } from "@/components/MercadoPagoForm";
 import { AdminCreditsManager } from "@/components/AdminCreditsManager";
+import { AdminCreditCosts } from "@/components/AdminCreditCosts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -102,6 +103,7 @@ function AdminPage() {
           <MercadoPagoForm />
         </TabsContent>
         <TabsContent value="credits" className="mt-0">
+          <AdminCreditCosts />
           <AdminCreditsManager />
         </TabsContent>
       </Tabs>
