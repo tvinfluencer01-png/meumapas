@@ -174,14 +174,17 @@ function MapaAstral() {
             Cálculo via Swiss Ephemeris (pure-JS) — preciso e gratuito.
           </p>
         </div>
-        <Button
-          onClick={handleGenerate}
-          disabled={loading || !birth || backendDown || health.isLoading}
-          className="bg-gold text-primary-foreground hover:bg-gold-glow"
-        >
-          {loading ? <Loader2 className="size-4 animate-spin mr-2" /> : <Wand2 className="size-4 mr-2" />}
-          {backendDown ? "Indisponível" : current ? "Recalcular" : "Gerar mapa"}
-        </Button>
+        <div className="flex flex-col items-end gap-2">
+          <Button
+            onClick={handleGenerate}
+            disabled={loading || !birth || backendDown || health.isLoading}
+            className="bg-gold text-primary-foreground hover:bg-gold-glow"
+          >
+            {loading ? <Loader2 className="size-4 animate-spin mr-2" /> : <Wand2 className="size-4 mr-2" />}
+            {backendDown ? "Indisponível" : current ? "Recalcular" : "Gerar mapa"}
+          </Button>
+          <CreditCostBadge action="astro_chart" label="Custo por geração" />
+        </div>
       </header>
 
       {retryInfo && (
