@@ -790,17 +790,9 @@ Regras:
         sectionBody = normalizeSectionPayload(null, blueprint) as z.infer<typeof SectionBodyOutput>;
       }
 
-      yield {
-        type: "progress" as const,
-        progress: 48 + index * 10,
-        step: `Montando plano do capítulo ${index + 1}...`,
-      };
-      const sectionPlan = createLocalSectionPlan(blueprint, sectionBody.body);
-
       sections.push({
         title: sectionBody.title,
         body: sectionBody.body,
-        plan: sectionPlan.plan,
       });
     }
 
