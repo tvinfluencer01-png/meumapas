@@ -57,17 +57,43 @@ function computeCabalistic(fullName: string | null | undefined) {
   };
 }
 
-const CAB_MEANINGS: Record<number, { title: string; essence: string; guidance: string }> = {
-  1: { title: "Aleph — O Iniciador", essence: "Energia divina criadora, unidade e liderança espiritual.", guidance: "Confie no impulso original; você é canal para começar algo novo." },
-  2: { title: "Bet — O Receptáculo", essence: "Dualidade, parceria sagrada e equilíbrio entre opostos.", guidance: "Cultive escuta e cooperação; o sagrado se manifesta no encontro." },
-  3: { title: "Guimel — A Manifestação", essence: "Verbo criador, expressão e fertilidade da palavra.", guidance: "Use a palavra com consciência: ela materializa realidades." },
-  4: { title: "Dalet — A Porta", essence: "Estrutura, lei e construção do templo interior.", guidance: "Discipline corpo e mente; bases sólidas abrem portas reais." },
-  5: { title: "Hé — O Sopro", essence: "Vida, liberdade e movimento do espírito sobre a matéria.", guidance: "Permita a mudança; o sopro divino renova o que precisa morrer." },
-  6: { title: "Vav — A Conexão", essence: "União do céu e da terra, amor responsável e serviço.", guidance: "Sirva com amor sem se anular; harmonia nasce do limite justo." },
-  7: { title: "Zain — A Espada", essence: "Discernimento, vitória interior e busca da verdade.", guidance: "Separe o essencial do supérfluo; o silêncio é seu mestre." },
-  8: { title: "Chet — O Sagrado", essence: "Transcendência, poder espiritual e abundância iluminada.", guidance: "Eleve seu propósito material a serviço de algo maior." },
-  9: { title: "Tet — A Luz Oculta", essence: "Número sagrado da plenitude divina; sabedoria que transcende a forma.", guidance: "Acolha o mistério: você canaliza uma vibração de serviço universal e compaixão." },
+const CAB_MEANINGS: Record<number, { title: string; essence: string; guidance: string; hebrewLetter: string; letterName: string; deepMeaning: string }> = {
+  1: { title: "Aleph — O Iniciador", hebrewLetter: "א", letterName: "Aleph", essence: "Energia divina criadora, unidade e liderança espiritual.", guidance: "Confie no impulso original; você é canal para começar algo novo.", deepMeaning: "Aleph é a primeira letra do alfabeto hebraico, silenciosa, representando o Sopro Divino antes da palavra. É a unidade absoluta (Echad), o ponto onde tudo começa. Quem vibra em 1 é pioneiro, traz fogo original, mas precisa cuidar do orgulho e da solidão do líder." },
+  2: { title: "Bet — O Receptáculo", hebrewLetter: "ב", letterName: "Bet", essence: "Dualidade, parceria sagrada e equilíbrio entre opostos.", guidance: "Cultive escuta e cooperação; o sagrado se manifesta no encontro.", deepMeaning: "Bet significa 'casa' (Bayit) — é o útero, o templo, o espaço que acolhe. Inicia a Torá (Bereshit). Vibrar em 2 é ser ponte entre mundos, mediador, mas exige aprender a habitar o próprio centro antes de servir aos outros." },
+  3: { title: "Guimel — A Manifestação", hebrewLetter: "ג", letterName: "Guimel", essence: "Verbo criador, expressão e fertilidade da palavra.", guidance: "Use a palavra com consciência: ela materializa realidades.", deepMeaning: "Guimel é o camelo (Gamal) — aquele que atravessa o deserto carregando água. Representa generosidade, movimento e a palavra que nutre. Em 3 vive o artista, o comunicador, o mestre — mas a palavra também fere quando desalinhada do coração." },
+  4: { title: "Dalet — A Porta", hebrewLetter: "ד", letterName: "Dalet", essence: "Estrutura, lei e construção do templo interior.", guidance: "Discipline corpo e mente; bases sólidas abrem portas reais.", deepMeaning: "Dalet é a porta (Delet) — o limiar entre o profano e o sagrado. Carrega humildade (do pobre que pede passagem). Em 4 vibra o construtor, o engenheiro da alma, alguém que materializa o invisível. Cuidado com o excesso de rigidez." },
+  5: { title: "Hé — O Sopro", hebrewLetter: "ה", letterName: "Hé", essence: "Vida, liberdade e movimento do espírito sobre a matéria.", guidance: "Permita a mudança; o sopro divino renova o que precisa morrer.", deepMeaning: "Hé é o sopro suave, presente no nome de Deus (YHVH) duas vezes. Representa a respiração divina que dá vida ao barro. Em 5 mora o viajante, o curioso, o que liberta — mas precisa aprender que liberdade verdadeira nasce do compromisso." },
+  6: { title: "Vav — A Conexão", hebrewLetter: "ו", letterName: "Vav", essence: "União do céu e da terra, amor responsável e serviço.", guidance: "Sirva com amor sem se anular; harmonia nasce do limite justo.", deepMeaning: "Vav é o gancho que conecta — visualmente uma linha vertical unindo o alto e o baixo. É a conjunção 'e' que une todas as coisas. Em 6 vive o curador, o pai/mãe espiritual, aquele que sustenta. Lembre-se: servir não é se anular." },
+  7: { title: "Zain — A Espada", hebrewLetter: "ז", letterName: "Zain", essence: "Discernimento, vitória interior e busca da verdade.", guidance: "Separe o essencial do supérfluo; o silêncio é seu mestre.", deepMeaning: "Zain é a espada/cetro — instrumento de discernimento e governo. Liga-se ao Shabat (sétimo dia), ao descanso sagrado. Em 7 vibra o místico, o pesquisador, o eremita. A solidão é seu templo, mas isolamento prolongado o afasta da missão." },
+  8: { title: "Chet — O Sagrado", hebrewLetter: "ח", letterName: "Chet", essence: "Transcendência, poder espiritual e abundância iluminada.", guidance: "Eleve seu propósito material a serviço de algo maior.", deepMeaning: "Chet representa a vida (Chai = 18 = 8+10), o sopro vital que transcende o material. É a oitava que renova a oitava anterior. Em 8 vive o executivo iluminado, o que prospera servindo. Riqueza sem propósito vira prisão; com propósito, vira templo." },
+  9: { title: "Tet — A Luz Oculta", hebrewLetter: "ט", letterName: "Tet", essence: "Número sagrado da plenitude divina; sabedoria que transcende a forma.", guidance: "Acolha o mistério: você canaliza uma vibração de serviço universal e compaixão.", deepMeaning: "Tet é o ventre, a luz escondida na matéria, o bem (Tov) que se revela após gestação. Na Cabala é o nono mês, a plenitude. Quem vibra em 9 é o humanitarista, o sábio anônimo. Sua missão é servir sem apego ao reconhecimento." },
 };
+
+// Alfabeto hebraico completo (22 letras) — para o relatório
+const HEBREW_ALPHABET: { letter: string; name: string; value: number; meaning: string }[] = [
+  { letter: "א", name: "Aleph", value: 1, meaning: "Boi / Sopro divino — unidade, início, mestre silencioso." },
+  { letter: "ב", name: "Bet", value: 2, meaning: "Casa — receptáculo, lar, dualidade sagrada." },
+  { letter: "ג", name: "Guimel", value: 3, meaning: "Camelo — generosidade, movimento, palavra que nutre." },
+  { letter: "ד", name: "Dalet", value: 4, meaning: "Porta — humildade, limiar, abertura." },
+  { letter: "ה", name: "Hé", value: 5, meaning: "Janela / Sopro — vida, revelação, presença divina." },
+  { letter: "ו", name: "Vav", value: 6, meaning: "Gancho — conexão, união entre céu e terra." },
+  { letter: "ז", name: "Zain", value: 7, meaning: "Espada — discernimento, descanso sagrado." },
+  { letter: "ח", name: "Chet", value: 8, meaning: "Cerca / Vida — transcendência, vitalidade." },
+  { letter: "ט", name: "Tet", value: 9, meaning: "Serpente / Ventre — luz oculta, bondade interior." },
+  { letter: "י", name: "Yod", value: 10, meaning: "Mão — semente divina, ponto criador." },
+  { letter: "כ", name: "Kaf", value: 20, meaning: "Palma da mão — potencial realizado, coroa." },
+  { letter: "ל", name: "Lamed", value: 30, meaning: "Aguilhão — aprendizado, ensino, ascensão." },
+  { letter: "מ", name: "Mem", value: 40, meaning: "Águas — sabedoria fluida, ventre cósmico." },
+  { letter: "נ", name: "Nun", value: 50, meaning: "Peixe — fé, continuidade, queda e ressurreição." },
+  { letter: "ס", name: "Samech", value: 60, meaning: "Apoio — sustentação divina, ciclo." },
+  { letter: "ע", name: "Ayin", value: 70, meaning: "Olho — visão profunda, percepção espiritual." },
+  { letter: "פ", name: "Pé", value: 80, meaning: "Boca — palavra falada, expressão." },
+  { letter: "צ", name: "Tsadê", value: 90, meaning: "Anzol — justiça, retidão do justo." },
+  { letter: "ק", name: "Qof", value: 100, meaning: "Nuca — santidade, ciclos, mistério." },
+  { letter: "ר", name: "Resh", value: 200, meaning: "Cabeça — princípio, liderança, pobreza espiritual." },
+  { letter: "ש", name: "Shin", value: 300, meaning: "Dente / Fogo — transformação, sopro divino, Shaddai." },
+  { letter: "ת", name: "Tav", value: 400, meaning: "Cruz / Selo — verdade, completude, marca." },
+];
 
 const CARDS = [
   { key: "destiny" as const, label: "Destino", icon: Sparkles, desc: "Vibração total do seu nome completo." },
