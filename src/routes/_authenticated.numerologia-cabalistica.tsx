@@ -483,7 +483,7 @@ function NumerologiaCabalisticaPage() {
         });
       }
 
-      blocks.push({ type: "h2", text: "VI. Práticas cabalísticas recomendadas" });
+      blocks.push({ type: "h2", text: "VII. Práticas cabalísticas recomendadas" });
       blocks.push({
         type: "list",
         items: [
