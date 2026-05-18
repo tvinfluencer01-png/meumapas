@@ -47,17 +47,26 @@ function AuthedLayout() {
   const [profileChecked, setProfileChecked] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [activeAddons, setActiveAddons] = useState<Set<string>>(new Set());
+  const pathname = router.state.location.pathname;
 
+  // Reset profile check only when the session actually changes (login/logout)
   useEffect(() => {
-    if (!loading || !user) {
-      setProfileChecked(false);
-    }
-  }, [loading, user]);
+    if (!user) setProfileChecked(false);
+  }, [user]);
 
-  // Lock body scroll when mobile drawer is open
+  // Close mobile drawer on route change, login/logout, or while auth is loading
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname, user, loading]);
+
+  // Lock body scroll when mobile drawer is open; always unlock on cleanup
   useEffect(() => {
     if (typeof document === "undefined") return;
-    document.body.style.overflow = open ? "hidden" : "";
+    if (open) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
     return () => { document.body.style.overflow = ""; };
   }, [open]);
 
@@ -85,8 +94,7 @@ function AuthedLayout() {
             .map((s) => s.addon_id),
         ));
 
-        const path = router.state.location.pathname;
-        if (profile && !profile.onboarding_completed && path !== "/onboarding") {
+        if (profile && !profile.onboarding_completed && pathname !== "/onboarding") {
           router.navigate({ to: "/onboarding" });
         }
       } finally {
