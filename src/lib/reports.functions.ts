@@ -151,8 +151,10 @@ const AiOutput = z.object({
 export const generateReport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({ kind: KIND }).parse(d))
-  .handler(async ({ data, context }) => {
+  .handler(async function* ({ data, context }) {
     const { supabase, userId } = context;
+    yield { type: "progress" as const, progress: 5, step: "Carregando seus dados cósmicos..." };
+
 
     // 1) Load user context
     const [{ data: birth }, { data: chart }, { data: settings }, { data: brandRow }, { data: brandingSub }] = await Promise.all([
@@ -187,6 +189,8 @@ export const generateReport = createServerFn({ method: "POST" })
 
     const num = computeNumerology(birth.full_name, birth.birth_date);
     const meta = REPORT_META[data.kind];
+    yield { type: "progress" as const, progress: 18, step: "Calculando numerologia e mapa astral..." };
+
 
     // Build context block for the AI
     type Planet = { name: string; sign: string; degree: number };
@@ -449,7 +453,9 @@ REGRAS DO JSON:
         : new Error("Falha temporaria na IA. Tente novamente.");
     }
 
+    yield { type: "progress" as const, progress: 28, step: "Consultando o Oráculo Cósmico..." };
     const { text } = await callWithRetry();
+    yield { type: "progress" as const, progress: 72, step: "Validando a leitura recebida..." };
 
     // Extract JSON (some models wrap in code fences or truncate)
     let jsonStr = text.trim();
@@ -568,9 +574,11 @@ REGRAS DO JSON:
       branding: brandingPayload,
     };
 
+    yield { type: "progress" as const, progress: 82, step: "Diagramando seu PDF cinematográfico..." };
     const pdfBytes = await buildReportPdf(reportData);
 
     // 5) Upload to storage (admin client; bucket is private)
+    yield { type: "progress" as const, progress: 92, step: "Salvando seu relatório..." };
     const path = `${userId}/${data.kind}-${Date.now()}.pdf`;
     const { error: upErr } = await supabaseAdmin.storage
       .from("reports")
@@ -601,13 +609,19 @@ REGRAS DO JSON:
       .from("reports")
       .createSignedUrl(path, 60 * 60);
 
-    return {
-      id: row?.id ?? null,
-      kind: data.kind,
-      title: meta.title,
-      storagePath: path,
-      signedUrl: signed?.signedUrl ?? null,
+    yield {
+      type: "done" as const,
+      progress: 100,
+      step: "Pronto!",
+      result: {
+        id: row?.id ?? null,
+        kind: data.kind,
+        title: meta.title,
+        storagePath: path,
+        signedUrl: signed?.signedUrl ?? null,
+      },
     };
+    return;
     } catch (err) {
       // Auto-refund on failure so user does not lose credits for a broken PDF.
       if (charged) {

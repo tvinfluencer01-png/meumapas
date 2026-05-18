@@ -124,21 +124,28 @@ function RelatoriosPage() {
       showLoader({
         title: `Gerando ${title}`,
         subtitle: "Oraculo em ação",
-        messages: [
-          "Lendo seu mapa astral e numerologia...",
-          "Consultando o Oráculo Cósmico...",
-          "Tecendo capítulos personalizados...",
-          "Compondo análise e recomendações...",
-          "Diagramando seu PDF cinematográfico...",
-        ],
+        messages: ["Iniciando a leitura cósmica..."],
+        progress: 0,
+        step: "Iniciando a leitura cósmica...",
       });
-      return await generate({ data: { kind } });
+      const stream = await generate({ data: { kind } });
+      let result: { signedUrl: string | null; title: string; id: string | null } | null = null;
+      for await (const evt of stream) {
+        if (evt.type === "progress") {
+          updateLoader({ progress: evt.progress, step: evt.step });
+        } else if (evt.type === "done") {
+          updateLoader({ progress: evt.progress, step: evt.step });
+          result = evt.result;
+        }
+      }
+      if (!result) throw new Error("Geração interrompida.");
+      return result;
     },
     onSuccess: async (res, kind) => {
       qc.invalidateQueries({ queryKey: ["reports", user?.id] });
       if (res.signedUrl) {
         try {
-          updateLoader({ messages: ["Preparando download do PDF..."] });
+          updateLoader({ step: "Preparando download do PDF...", progress: 100 });
           await downloadFromUrl(res.signedUrl, `${res.title || kind}.pdf`);
           toast.success("Relatorio pronto. Download iniciado.");
         } catch {
