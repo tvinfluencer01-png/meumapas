@@ -284,18 +284,22 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
 
   let isFirstHeading = true;
   function drawHeading(text: string, size = 20) {
-    if (!isFirstHeading) {
+    const headingLines = wrap(safe(text), serifBold, size, CONTENT_W).filter((l) => l !== "");
+    const neededHeight = 10 + headingLines.length * (size + 4) + 2 + 18 + size * 1.4 * 3; // titulo + 3 linhas de conteudo
+    // So vai para nova pagina se nao for o primeiro titulo E nao houver
+    // espaco suficiente. Evita desperdicar paginas para cada secao.
+    if (!isFirstHeading && cursor.y - neededHeight < MARGIN) {
       cursor = newPage(pdf, cursor.pageNumber + 1);
+    } else if (!isFirstHeading) {
+      cursor.y -= 16; // respiro antes do proximo titulo, sem trocar de pagina
     }
     isFirstHeading = false;
-    cursor.y -= 10;
-    // Quebra titulos longos em multiplas linhas
-    const headingLines = wrap(safe(text), serifBold, size, CONTENT_W).filter((l) => l !== "");
+    cursor.y -= 6;
     for (const line of headingLines) {
       cursor.page.drawText(line, {
         x: MARGIN, y: cursor.y - size, size, font: serifBold, color: NIGHT,
       });
-      cursor.y -= size + 4;
+      cursor.y -= size + 3;
     }
     cursor.y -= 2;
     cursor.page.drawLine({
@@ -303,8 +307,9 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
       end: { x: MARGIN + 48, y: cursor.y },
       color: GOLD, thickness: 1.2,
     });
-    cursor.y -= 18;
+    cursor.y -= 12;
   }
+
 
   // Quebra silábica simples (PT-BR friendly): retorna posições de corte
   // válidas dentro da palavra, deixando pelo menos 2 chars de cada lado.
@@ -329,7 +334,7 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
     const font = opts?.italic ? serifItalic : serif;
     const color = opts?.color ?? INK;
     const justify = opts?.justify ?? true;
-    const lineHeight = size * 1.55;
+    const lineHeight = size * 1.38;
     const spaceW = font.widthOfTextAtSize(" ", size);
     const paragraphs = safe(text).split(/\n+/);
 
@@ -404,18 +409,17 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
       }
       if (current.length) lines.push(current);
 
-      // Controle de orfas/viuvas:
-      // - se restam <2 linhas de espaco nesta pagina e o paragrafo tem >=2 linhas,
-      //   move o paragrafo inteiro para a proxima pagina (evita orfa no rodape).
-      // - se o paragrafo nao cabe inteiro e sobraria apenas 1 linha para a proxima
-      //   pagina (viuva), antecipa a quebra para levar 2 linhas juntas.
+      // Controle de orfas/viuvas (relaxado para nao desperdicar paginas):
+      // - so move o paragrafo todo se nao houver espaco nem para 1 linha.
+      // - se sobraria 1 unica linha para a proxima pagina (viuva) e o
+      //   paragrafo tem >=3 linhas, antecipa a quebra para levar 2 juntas.
       const linesAvailable = Math.max(0, Math.floor((cursor.y - MARGIN) / lineHeight));
-      let breakAt = lines.length; // indice da linha que inicia a nova pagina
-      if (lines.length >= 2 && linesAvailable < 2) {
+      let breakAt = lines.length;
+      if (linesAvailable < 1 && lines.length >= 1) {
         cursor = newPage(pdf, cursor.pageNumber + 1);
         breakAt = lines.length;
-      } else if (lines.length > linesAvailable && lines.length - linesAvailable === 1 && linesAvailable >= 2) {
-        breakAt = linesAvailable - 1; // deixa 2 linhas para a proxima pagina
+      } else if (lines.length > linesAvailable && lines.length - linesAvailable === 1 && linesAvailable >= 3) {
+        breakAt = linesAvailable - 1;
       } else if (lines.length > linesAvailable) {
         breakAt = linesAvailable;
       }
@@ -423,10 +427,9 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
       for (let li = 0; li < lines.length; li++) {
         if (li === breakAt) {
           cursor = newPage(pdf, cursor.pageNumber + 1);
-          // recalcula proxima quebra caso ainda nao caiba
           const rem = lines.length - li;
           const avail = Math.max(0, Math.floor((cursor.y - MARGIN) / lineHeight));
-          if (rem > avail) breakAt = li + (rem - avail === 1 && avail >= 2 ? avail - 1 : avail);
+          if (rem > avail) breakAt = li + (rem - avail === 1 && avail >= 3 ? avail - 1 : avail);
           else breakAt = lines.length;
         }
         const lineWords = lines[li];
@@ -447,10 +450,11 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
         }
         cursor.y -= lineHeight;
       }
-      // Espaco entre paragrafos: suprime se acabamos de virar a pagina
-      if (cursor.y < PAGE_H - MARGIN - 4) cursor.y -= 4;
+      // Espaco curto entre paragrafos; suprime se acabamos de virar a pagina
+      if (cursor.y < PAGE_H - MARGIN - 2) cursor.y -= 2;
     }
   }
+
 
 
 
