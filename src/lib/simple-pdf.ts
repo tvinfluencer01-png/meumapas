@@ -1,0 +1,232 @@
+/**
+ * Pequeno helper de PDF para módulos mais leves (Tarot, Meditação Cabalística).
+ * Gera um PDF A4 vertical com capa, blocos e texto corrido.
+ *
+ * Para os relatórios premium (personalidade, amor, carreira, espiritual) use
+ * `buildReportPdf` em src/lib/reports-pdf.ts — esta versão é simplificada.
+ */
+import { PDFDocument, StandardFonts, rgb, PageSizes, type PDFFont, type PDFPage } from "pdf-lib";
+
+export type SimplePdfBlock =
+  | { type: "h2"; text: string }
+  | { type: "p"; text: string }
+  | { type: "quote"; text: string }
+  | { type: "list"; items: string[] }
+  | { type: "kv"; rows: { k: string; v: string }[] };
+
+export type SimplePdfData = {
+  brand: string; // ex: "Cosmic AI"
+  eyebrow: string; // ex: "Tarot · Cruz Celta"
+  title: string;
+  subtitle?: string;
+  consultantName?: string;
+  meta?: string[]; // linhas curtas (data, pergunta, etc.)
+  blocks: SimplePdfBlock[];
+  accentHex?: string; // ex: "#d4af37"
+};
+
+function hexToRgb(hex: string) {
+  const h = hex.replace("#", "");
+  const r = parseInt(h.slice(0, 2), 16) / 255;
+  const g = parseInt(h.slice(2, 4), 16) / 255;
+  const b = parseInt(h.slice(4, 6), 16) / 255;
+  return rgb(r, g, b);
+}
+
+// Sanitiza para WinAnsi (StandardFonts não suporta Unicode amplo).
+function sanitize(s: string): string {
+  return s
+    .replace(/[\u2018\u2019\u2032]/g, "'")
+    .replace(/[\u201C\u201D\u2033]/g, '"')
+    .replace(/[\u2013\u2014]/g, "-")
+    .replace(/\u2026/g, "...")
+    .replace(/\u00b7/g, "·")
+    // remove glyphs fora do WinAnsi básico
+    .replace(/[^\x00-\xff]/g, "?");
+}
+
+function wrap(text: string, font: PDFFont, size: number, maxWidth: number): string[] {
+  const out: string[] = [];
+  const paragraphs = text.split(/\n+/);
+  for (const para of paragraphs) {
+    const words = para.split(/\s+/);
+    let line = "";
+    for (const w of words) {
+      const test = line ? `${line} ${w}` : w;
+      if (font.widthOfTextAtSize(test, size) > maxWidth) {
+        if (line) out.push(line);
+        line = w;
+      } else {
+        line = test;
+      }
+    }
+    if (line) out.push(line);
+    out.push(""); // espaço entre parágrafos
+  }
+  if (out.at(-1) === "") out.pop();
+  return out;
+}
+
+export async function buildSimplePdf(data: SimplePdfData): Promise<Uint8Array> {
+  const doc = await PDFDocument.create();
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+  const fontBold = await doc.embedFont(StandardFonts.HelveticaBold);
+  const fontItalic = await doc.embedFont(StandardFonts.HelveticaOblique);
+  const accent = hexToRgb(data.accentHex ?? "#d4af37");
+  const ink = rgb(0.07, 0.08, 0.12);
+  const muted = rgb(0.45, 0.45, 0.5);
+
+  const [W, H] = PageSizes.A4;
+  const margin = 56;
+  const contentW = W - margin * 2;
+
+  let page: PDFPage = doc.addPage([W, H]);
+  let y = H - margin;
+
+  const drawHeader = (p: PDFPage) => {
+    p.drawRectangle({ x: 0, y: H - 18, width: W, height: 18, color: accent });
+    p.drawText(sanitize(data.brand), {
+      x: margin, y: H - 13, size: 9, font: fontBold, color: rgb(1, 1, 1),
+    });
+  };
+  const drawFooter = (p: PDFPage, n: number, total: number) => {
+    p.drawText(sanitize(`${data.brand} · pág. ${n}/${total}`), {
+      x: margin, y: 22, size: 8, font, color: muted,
+    });
+  };
+
+  drawHeader(page);
+  y = H - margin - 20;
+
+  // Eyebrow
+  page.drawText(sanitize(data.eyebrow.toUpperCase()), {
+    x: margin, y, size: 9, font: fontBold, color: accent,
+  });
+  y -= 22;
+
+  // Title
+  const titleLines = wrap(data.title, fontBold, 26, contentW);
+  for (const ln of titleLines) {
+    if (!ln) { y -= 8; continue; }
+    page.drawText(sanitize(ln), { x: margin, y, size: 26, font: fontBold, color: ink });
+    y -= 30;
+  }
+
+  if (data.subtitle) {
+    const subLines = wrap(data.subtitle, fontItalic, 13, contentW);
+    for (const ln of subLines) {
+      if (!ln) { y -= 4; continue; }
+      page.drawText(sanitize(ln), { x: margin, y, size: 13, font: fontItalic, color: muted });
+      y -= 16;
+    }
+  }
+
+  y -= 6;
+  page.drawLine({
+    start: { x: margin, y }, end: { x: margin + 80, y },
+    thickness: 1.5, color: accent,
+  });
+  y -= 18;
+
+  if (data.consultantName) {
+    page.drawText(sanitize(`Para: ${data.consultantName}`), {
+      x: margin, y, size: 11, font: fontBold, color: ink,
+    });
+    y -= 16;
+  }
+  for (const m of data.meta ?? []) {
+    page.drawText(sanitize(m), { x: margin, y, size: 10, font, color: muted });
+    y -= 14;
+  }
+  y -= 10;
+
+  const ensureSpace = (need: number) => {
+    if (y - need < margin + 30) {
+      page = doc.addPage([W, H]);
+      drawHeader(page);
+      y = H - margin - 10;
+    }
+  };
+
+  for (const block of data.blocks) {
+    if (block.type === "h2") {
+      ensureSpace(40);
+      y -= 10;
+      page.drawText(sanitize(block.text), {
+        x: margin, y, size: 14, font: fontBold, color: accent,
+      });
+      y -= 8;
+      page.drawLine({
+        start: { x: margin, y }, end: { x: margin + contentW, y },
+        thickness: 0.5, color: accent,
+      });
+      y -= 14;
+    } else if (block.type === "p") {
+      const lines = wrap(block.text, font, 11, contentW);
+      for (const ln of lines) {
+        ensureSpace(16);
+        if (!ln) { y -= 6; continue; }
+        page.drawText(sanitize(ln), { x: margin, y, size: 11, font, color: ink });
+        y -= 15;
+      }
+      y -= 4;
+    } else if (block.type === "quote") {
+      const lines = wrap(block.text, fontItalic, 11, contentW - 16);
+      for (const ln of lines) {
+        ensureSpace(16);
+        page.drawLine({
+          start: { x: margin, y: y + 11 }, end: { x: margin, y: y - 2 },
+          thickness: 2, color: accent,
+        });
+        page.drawText(sanitize(ln), {
+          x: margin + 12, y, size: 11, font: fontItalic, color: muted,
+        });
+        y -= 15;
+      }
+      y -= 4;
+    } else if (block.type === "list") {
+      for (const item of block.items) {
+        const lines = wrap(item, font, 11, contentW - 14);
+        let first = true;
+        for (const ln of lines) {
+          ensureSpace(16);
+          if (first) {
+            page.drawText("•", {
+              x: margin, y, size: 12, font: fontBold, color: accent,
+            });
+            first = false;
+          }
+          page.drawText(sanitize(ln), {
+            x: margin + 14, y, size: 11, font, color: ink,
+          });
+          y -= 15;
+        }
+      }
+      y -= 4;
+    } else if (block.type === "kv") {
+      const labelW = 110;
+      for (const r of block.rows) {
+        ensureSpace(18);
+        page.drawText(sanitize(r.k), {
+          x: margin, y, size: 10, font: fontBold, color: muted,
+        });
+        const lines = wrap(r.v, font, 11, contentW - labelW);
+        for (let i = 0; i < lines.length; i++) {
+          ensureSpace(16);
+          if (i > 0) y -= 0;
+          page.drawText(sanitize(lines[i]), {
+            x: margin + labelW, y, size: 11, font, color: ink,
+          });
+          if (i < lines.length - 1) y -= 14;
+        }
+        y -= 18;
+      }
+    }
+  }
+
+  // Render footers with total page count
+  const pages = doc.getPages();
+  pages.forEach((p, idx) => drawFooter(p, idx + 1, pages.length));
+
+  return await doc.save();
+}
