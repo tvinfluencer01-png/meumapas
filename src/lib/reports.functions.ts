@@ -196,15 +196,21 @@ export const generateReport = createServerFn({ method: "POST" })
 
     let astroBlock = "(Mapa astral ainda nao calculado)";
     if (planets.length) {
-      astroBlock = planets
-        .map((p) => `- ${p.name}: ${p.sign} ${p.degree.toFixed(1)}°`)
+      const priorityPlanets = ["Sol", "Lua", "Mercurio", "Venus", "Marte", "Jupiter", "Saturno"];
+      const compactPlanets = priorityPlanets
+        .map((name) => planets.find((p) => p.name === name))
+        .filter((p): p is Planet => Boolean(p));
+
+      astroBlock = (compactPlanets.length ? compactPlanets : planets.slice(0, 7))
+        .map((p) => `- ${p.name}: ${p.sign}`)
         .join("\n");
+
       if (aspects.length) {
         astroBlock +=
           "\n\nAspectos principais:\n" +
           aspects
-            .slice(0, 10)
-            .map((a) => `- ${a.a} ${a.aspect} ${a.b} (orbe ${a.orb}°)`)
+            .slice(0, 6)
+            .map((a) => `- ${a.a} ${a.aspect} ${a.b}`)
             .join("\n");
       }
     }
@@ -236,7 +242,7 @@ export const generateReport = createServerFn({ method: "POST" })
     const customModel = (settings?.custom_ai_model as string | null) ?? null;
 
     let model: ReturnType<ReturnType<typeof createLovableAiGatewayProvider>>;
-    let modelName = customModel ?? "google/gemini-3.1-flash-lite-preview";
+    let modelName = customModel ?? "google/gemini-2.5-flash-lite";
     if (provider === "openai" && customKey) {
       modelName = customModel ?? "gpt-4o-mini";
       model = createOpenAIProvider(customKey)(modelName);
@@ -244,7 +250,7 @@ export const generateReport = createServerFn({ method: "POST" })
       modelName = customModel ?? "claude-3-5-sonnet-20241022";
       model = createAnthropicProvider(customKey)(modelName);
     } else if (provider === "gemini" && customKey) {
-      modelName = customModel ?? "gemini-2.0-flash";
+      modelName = customModel ?? "gemini-2.5-flash";
       model = createGeminiProvider(customKey)(modelName);
     } else {
       const key = process.env.LOVABLE_API_KEY;
@@ -294,7 +300,7 @@ REGRA DE LINGUAGEM SIMPLES (obrigatoria):
 - NUNCA deixe um termo tecnico sem traducao parentetica, mesmo que ja tenha sido explicado antes — repita a explicacao curta sempre que reaparecer.
 - Frases curtas. Evite jargao espiritual hermetico. Nada de "vibracao quantica", "campo aurico" sem explicar.
 - Cite planetas, signos, aspectos e numeros REAIS recebidos, mas sempre TRADUZA o significado pratico para a vida da pessoa.
-- Cada secao deve ter no minimo 3 paragrafos densos, mas com frases claras e diretas.
+- Cada secao deve ter 2 ou 3 paragrafos objetivos, com frases claras e diretas.
 - Tom acolhedor, sabio, levemente literario, NUNCA academico ou opaco.
 - Nunca prometa eventos certos nem faca diagnostico clinico.
 - NAO use markdown nem emojis. Apenas texto corrido com paragrafos separados por linhas em branco.
@@ -326,11 +332,11 @@ ${astroBlock}
 
 Responda APENAS com um JSON valido (sem markdown, sem cercas de codigo) no formato:
 {
-  "intro": "texto longo, 4 a 6 paragrafos separados por \\n\\n, em LINGUAGEM SIMPLES, explicando cada termo tecnico que aparecer",
+  "intro": "texto em 2 ou 3 paragrafos separados por \\n\\n, em LINGUAGEM SIMPLES, explicando cada termo tecnico que aparecer",
   "sections": [
     {
       "title": "Titulo curto",
-      "body": "3 a 5 paragrafos longos separados por \\n\\n, sempre traduzindo termos tecnicos para palavras do dia a dia",
+      "body": "2 ou 3 paragrafos claros separados por \\n\\n, sempre traduzindo termos tecnicos para palavras do dia a dia",
       "plan": {
         "improve": ["Dia 1: acao concreta...", "Dia 2: ...", "Dia 3: ...", "Dia 4: ...", "Dia 5: ...", "Dia 6: ...", "Dia 7: ..."],
         "avoid":   ["Dia 1: o que nao fazer...", "Dia 2: ...", "Dia 3: ...", "Dia 4: ...", "Dia 5: ...", "Dia 6: ...", "Dia 7: ..."],
@@ -338,7 +344,7 @@ Responda APENAS com um JSON valido (sem markdown, sem cercas de codigo) no forma
       }
     }
   ],
-  "closing": "2 a 3 paragrafos finais",
+  "closing": "1 ou 2 paragrafos finais",
   "swot": {
     "strengths": ["forca 1 personalizada", "..."],
     "weaknesses": ["fraqueza 1 personalizada", "..."],
@@ -353,10 +359,10 @@ Responda APENAS com um JSON valido (sem markdown, sem cercas de codigo) no forma
   "suggestions": {
     "intro": "1 frase contextualizando a lista para ${firstName}",
     "items": [
-      { "name": "Nome curto e direto da sugestao", "why": "1 a 2 frases simples explicando POR QUE essa sugestao combina com o mapa/numerologia de ${firstName}, citando signo, planeta, aspecto ou numero e traduzindo o termo." }
+      { "name": "Nome curto e direto da sugestao", "why": "1 frase simples explicando POR QUE essa sugestao combina com o mapa/numerologia de ${firstName}, citando signo, planeta, aspecto ou numero e traduzindo o termo." }
     ]
   },
-  "summary": "Resumo final em 2 paragrafos densos, em linguagem simples"
+  "summary": "Resumo final em 1 paragrafo forte, em linguagem simples"
 }
 
 REGRAS DO JSON:
