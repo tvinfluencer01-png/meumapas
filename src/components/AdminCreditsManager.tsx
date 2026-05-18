@@ -132,10 +132,25 @@ function CreditsDialog({
   const qc = useQueryClient();
   const getFn = useServerFn(adminGetUserCredits);
   const adjustFn = useServerFn(adminAdjustCredits);
+  const historyFn = useServerFn(adminListCreditHistory);
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["admin-credits", userId],
     queryFn: () => getFn({ data: { user_id: userId } }),
+  });
+
+  const [filters, setFilters] = useHistoryFiltersState();
+
+  const {
+    data: history,
+    isLoading: historyLoading,
+    refetch: refetchHistory,
+  } = useQuery({
+    queryKey: ["admin-credit-history", userId, filters],
+    queryFn: () =>
+      historyFn({
+        data: { user_id: userId, ...toIsoRange(filters), limit: 200 },
+      }),
   });
 
   const [amount, setAmount] = useState<string>("");
