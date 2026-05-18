@@ -30,7 +30,6 @@ const NAV: NavItem[] = [
   { to: "/oraculo", label: "Oráculo IA", icon: MessageCircle },
   { to: "/relatorios", label: "Relatórios", icon: ScrollText },
   { to: "/addons", label: "Add-ons", icon: Coins },
-  { to: "/configuracoes", label: "Configurações", icon: Settings },
 ];
 
 const ADDON_MENU: Record<string, { label: string; to: string; icon: typeof LayoutDashboard }> = {
