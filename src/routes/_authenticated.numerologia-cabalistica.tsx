@@ -147,7 +147,97 @@ function NumerologiaCabalisticaPage() {
           ? "Soma das vogais — o que move seu interior sagrado, seus desejos mais profundos."
           : "Soma das consoantes — a imagem que o mundo capta de você, sua aura externa.";
 
+      // Dicas direcionais personalizadas por número de Destino (1-9)
+      const ACTION_TIPS: Record<number, { focus: string; do: string[]; avoid: string[]; mantra: string }> = {
+        1: {
+          focus: "Liderar com originalidade e iniciar ciclos novos.",
+          do: ["Inicie aquele projeto que vem adiando — você é o motor.", "Tome decisões sozinho quando necessário; confie no impulso pioneiro.", "Cultive disciplina física: caminhe, respire, ancore a energia."],
+          avoid: ["Esperar consenso para agir.", "Orgulho que isola; lembre que liderança é serviço."],
+          mantra: "Eu sou o início. O Eterno age através de mim.",
+        },
+        2: {
+          focus: "Construir parcerias sagradas e mediar opostos.",
+          do: ["Invista em uma relação-chave: escute mais do que fala.", "Trabalhe em dupla ou em conselhos; sua força nasce do encontro.", "Crie rotinas de pausa para se reconectar consigo antes de servir."],
+          avoid: ["Anular-se para agradar.", "Decidir sob pressão emocional do outro."],
+          mantra: "Sou ponte entre mundos, e habito meu próprio centro.",
+        },
+        3: {
+          focus: "Expressar, criar e comunicar com o coração.",
+          do: ["Escreva, cante, fale em público — sua palavra cura.", "Compartilhe sua arte mesmo sem se sentir 'pronto'.", "Filtre o que diz: cada palavra materializa realidades."],
+          avoid: ["Dispersar energia em muitos projetos sem terminar nenhum.", "Crítica destrutiva (sua ou alheia)."],
+          mantra: "Minha palavra é semente. Falo do coração e colho luz.",
+        },
+        4: {
+          focus: "Construir bases sólidas e disciplinar corpo e mente.",
+          do: ["Crie uma rotina diária inegociável (corpo, estudo, oração).", "Estruture finanças, agenda e ambiente — ordem externa cria paz interna.", "Termine projetos pendentes antes de iniciar novos."],
+          avoid: ["Rigidez que sufoca o sagrado.", "Trabalho excessivo sem descanso."],
+          mantra: "Sou construtor do templo. Cada tijolo é oração.",
+        },
+        5: {
+          focus: "Movimento, liberdade consciente e renovação.",
+          do: ["Permita mudanças: viaje, mude de cidade, experimente o novo.", "Escolha um compromisso essencial e honre-o — liberdade nasce do foco.", "Pratique respiração consciente (pranayama, meditação do sopro)."],
+          avoid: ["Fugir das emoções por meio de excessos (comida, sexo, álcool, telas).", "Quebrar todos os vínculos em nome de uma 'liberdade' ilusória."],
+          mantra: "Sou o sopro divino. Mudo, fluo e permaneço fiel à essência.",
+        },
+        6: {
+          focus: "Amar com responsabilidade e servir com limites.",
+          do: ["Cuide de quem ama — mas estabeleça limites claros.", "Crie beleza no seu lar: arte, plantas, harmonia visual.", "Procure mediação ou cura quando há conflito familiar."],
+          avoid: ["Carregar o peso emocional de todos ao redor.", "Sacrifício que vira ressentimento."],
+          mantra: "Amo de pé. Sirvo sem me anular.",
+        },
+        7: {
+          focus: "Buscar a verdade e cultivar o silêncio místico.",
+          do: ["Reserve tempo diário de silêncio, leitura sagrada ou meditação.", "Estude profundamente um único caminho espiritual.", "Confie em sua intuição mais do que em opiniões alheias."],
+          avoid: ["Isolamento prolongado que vira fuga do mundo.", "Excesso de análise que paralisa a ação."],
+          mantra: "No silêncio, o Eterno me fala. Discerno e ajo.",
+        },
+        8: {
+          focus: "Prosperar materialmente a serviço do propósito espiritual.",
+          do: ["Assuma cargos de liderança e responsabilidade financeira.", "Vincule sua prosperidade a uma causa maior (tzedacá, dízimo, mecenato).", "Cuide do corpo: o 8 exige vitalidade para sustentar o poder."],
+          avoid: ["Apego ao status, ganância, poder sem ética.", "Confundir valor pessoal com saldo bancário."],
+          mantra: "Recebo abundância para distribuir luz. Prospero servindo.",
+        },
+        9: {
+          focus: "Servir à humanidade com compaixão e sabedoria universal.",
+          do: ["Engaje-se em causas humanitárias, ensino ou cura.", "Pratique o desapego: o 9 finaliza ciclos para abrir o novo.", "Cultive a arte, a beleza e o perdão como práticas espirituais."],
+          avoid: ["Martirização ou expectativa de reconhecimento.", "Apego ao passado ou a relações que já cumpriram seu ciclo."],
+          mantra: "Sou luz oculta servindo o todo. Solto o que foi, abençoo o que vem.",
+        },
+      };
+
+      const dn = typeof nums.destiny === "number" ? nums.destiny : null;
+      const sn = typeof nums.soul === "number" ? nums.soul : null;
+      const ino = typeof nums.impression === "number" ? nums.impression : null;
+      const dMean = dn ? CAB_MEANINGS[dn] : null;
+      const sMean = sn ? CAB_MEANINGS[sn] : null;
+      const iMean = ino ? CAB_MEANINGS[ino] : null;
+      const tips = dn ? ACTION_TIPS[dn] : null;
+
       const blocks: SimplePdfBlock[] = [
+        // ───── Resumo executivo no topo ─────
+        { type: "h2", text: "Resumo executivo" },
+        {
+          type: "p",
+          text:
+            `Olá, ${fullName}. Seu nome carrega três vibrações cabalísticas centrais: ` +
+            `Destino ${dn ?? "—"}${dMean ? ` (${dMean.letterName} ${dMean.hebrewLetter})` : ""}, ` +
+            `Alma ${sn ?? "—"}${sMean ? ` (${sMean.letterName})` : ""} e ` +
+            `Impressão ${ino ?? "—"}${iMean ? ` (${iMean.letterName})` : ""}. ` +
+            (tips ? `Seu foco existencial é: ${tips.focus} ` : "") +
+            "Use as próximas páginas como bússola — leia o capítulo da tradição para contextualizar, " +
+            "vá direto à análise prática se quiser as dicas, e volte à síntese sempre que precisar reencontrar o rumo.",
+        },
+        {
+          type: "kv",
+          rows: [
+            { k: "Destino", v: `${dn ?? "—"} — ${dMean?.title ?? "não calculado"}` },
+            { k: "Alma", v: `${sn ?? "—"} — ${sMean?.title ?? "não calculado"}` },
+            { k: "Impressão", v: `${ino ?? "—"} — ${iMean?.title ?? "não calculado"}` },
+            ...(tips ? [{ k: "Foco do ciclo", v: tips.focus }] : []),
+            ...(tips ? [{ k: "Mantra-guia", v: tips.mantra }] : []),
+          ],
+        },
+
         { type: "h2", text: "I. A tradição cabalística" },
         {
           type: "p",
