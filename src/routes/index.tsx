@@ -59,7 +59,7 @@ function LandingPage() {
 function Nav() {
   return (
     <nav className="fixed top-0 z-50 w-full border-b border-border bg-background/70 backdrop-blur-xl">
-      <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6">
+      <div className="mx-auto flex h-16 sm:h-20 max-w-7xl items-center justify-between px-4 sm:px-6">
         <Link to="/" className="flex items-center gap-2">
           <span className="size-2 rounded-full bg-gold shadow-[0_0_12px_var(--gold)]" />
           <span className="font-serif text-2xl uppercase tracking-[0.3em] text-gold">
@@ -83,13 +83,13 @@ function Nav() {
 /* ---------------- HERO ---------------- */
 function Hero() {
   return (
-    <section className="relative overflow-hidden px-6 pb-20 pt-44 nebula-bg">
+    <section className="relative overflow-hidden px-4 pb-16 pt-28 sm:px-6 sm:pb-20 md:pt-44 nebula-bg">
       <Starfield count={120} />
       <div className="relative z-10 mx-auto max-w-5xl text-center">
         <span className="mb-8 block text-xs uppercase tracking-[0.5em] text-gold/70">
           A interseção entre sabedoria ancestral e inteligência artificial
         </span>
-        <h1 className="mb-8 font-serif text-5xl italic leading-[1.05] md:text-7xl lg:text-8xl">
+        <h1 className="mb-8 font-serif text-4xl italic leading-[1.05] sm:text-5xl md:text-7xl lg:text-8xl">
           Decifre seu <span className="shimmer-text">mapa celestial</span>
         </h1>
         <p className="mx-auto mb-12 max-w-2xl text-balance text-lg font-light leading-relaxed text-muted-foreground md:text-xl">
@@ -872,7 +872,7 @@ function WhatsAppFloat() {
     <a
       href="#"
       aria-label="Falar no WhatsApp"
-      className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full border border-gold/30 bg-background/90 px-5 py-3 text-xs uppercase tracking-[0.2em] text-gold backdrop-blur-md transition-all hover:bg-gold hover:text-primary-foreground"
+      className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 flex items-center gap-2 rounded-full border border-gold/30 bg-background/90 px-4 py-2.5 sm:px-5 sm:py-3 text-[10px] sm:text-xs uppercase tracking-[0.2em] text-gold backdrop-blur-md transition-all hover:bg-gold hover:text-primary-foreground pb-[max(0.625rem,env(safe-area-inset-bottom))] sm:pb-3"
     >
       <span className="size-2 animate-pulse rounded-full bg-emerald-400" />
       WhatsApp
@@ -1003,7 +1003,7 @@ function ChatbotFloat() {
     <Link
       to="/auth"
       aria-label="Abrir oráculo IA"
-      className="group fixed bottom-24 right-6 z-50 flex items-center gap-3 rounded-full border border-gold/40 bg-background/90 px-5 py-3 text-xs uppercase tracking-[0.2em] text-gold backdrop-blur-md transition-all hover:bg-gold hover:text-primary-foreground"
+      className="group fixed bottom-20 right-4 sm:bottom-24 sm:right-6 z-50 flex items-center gap-2 sm:gap-3 rounded-full border border-gold/40 bg-background/90 px-4 py-2.5 sm:px-5 sm:py-3 text-[10px] sm:text-xs uppercase tracking-[0.2em] text-gold backdrop-blur-md transition-all hover:bg-gold hover:text-primary-foreground"
     >
       <span className="relative flex size-2">
         <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-gold opacity-75" />
