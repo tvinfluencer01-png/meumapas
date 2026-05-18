@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { computeNumerology, numLabel, numTitle } from "@/lib/numerology";
+import { computeNumerology, NUMBER_MEANINGS, numLabel, numTitle } from "@/lib/numerology";
 import { Sparkles, Sun, Moon, Star, Heart, Flame, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EnergyCalendar } from "@/components/EnergyCalendar";
