@@ -399,8 +399,45 @@ function NumerologiaCabalisticaPage() {
           `harmonizam no serviço.`,
       });
 
+      // ───── Nome em hebraico + letras para meditação ─────
+      const trans = transliterateName(fullName);
+      blocks.push({ type: "h2", text: "V. Seu nome em hebraico e letras para meditação" });
+      blocks.push({
+        type: "p",
+        text:
+          "Abaixo, seu nome completo transliterado para o alfabeto hebraico (Otiyot), seguindo a correspondência " +
+          "fonética usada pela cabala ocidental. A leitura é da direita para a esquerda, como manda a tradição. " +
+          "Esta não é a grafia oficial em hebraico — é uma ferramenta vibracional para meditação e contemplação " +
+          "das letras que compõem o som do seu nome.",
+      });
+      blocks.push({
+        type: "hebrew-name",
+        latinName: fullName,
+        hebrewWords: trans.words,
+        caption: "Leia da direita para a esquerda. Cada letra carrega uma vibração — contemple a forma antes do som.",
+      });
+      blocks.push({ type: "h3", text: "Letras do seu nome — guia de meditação" });
+      blocks.push({
+        type: "p",
+        text:
+          "As letras a seguir aparecem no seu nome em hebraico. Medite uma letra por dia: visualize-a desenhada " +
+          "em ouro sobre fundo violeta, pronuncie seu nome três vezes, e permaneça em silêncio por alguns minutos " +
+          "absorvendo sua qualidade. Em poucos dias você terá percorrido a essência vibracional do seu nome.",
+      });
+      trans.uniqueLetters.forEach((heb) => {
+        const info = HEBREW_ALPHABET.find((l) => l.letter === heb);
+        if (!info) return;
+        blocks.push({
+          type: "hebrew-row",
+          letter: info.letter,
+          name: info.name,
+          value: info.value,
+          meaning: `${info.meaning} Meditação: contemple a forma da letra ${info.name} por 5 minutos, respirando seu som em silêncio.`,
+        });
+      });
+
       // ───── Análise prática e direção personalizada ─────
-      blocks.push({ type: "h2", text: "V. Análise prática — o que fazer com isto" });
+      blocks.push({ type: "h2", text: "VI. Análise prática — o que fazer com isto" });
       if (tips) {
         blocks.push({
           type: "p",
