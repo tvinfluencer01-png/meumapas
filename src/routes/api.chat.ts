@@ -38,10 +38,10 @@ async function buildContext(userId: string, accessToken: string) {
 
     const num = computeNumerology(birth.full_name, birth.birth_date);
     context += `\n## Numerologia\n`;
-    context += `- Caminho de Vida: ${num.life_path} (${NUMBER_MEANINGS[num.life_path]?.title})\n`;
-    context += `- Destino/Expressão: ${num.destiny} (${NUMBER_MEANINGS[num.destiny]?.title})\n`;
-    context += `- Alma: ${num.soul_urge} (${NUMBER_MEANINGS[num.soul_urge]?.title})\n`;
-    context += `- Personalidade: ${num.personality} (${NUMBER_MEANINGS[num.personality]?.title})\n`;
+    context += `- Caminho de Vida: ${numLabel(num.life_path)} (${numTitle(num.life_path)})\n`;
+    context += `- Destino/Expressão: ${numLabel(num.destiny)} (${numTitle(num.destiny)})\n`;
+    context += `- Alma: ${numLabel(num.soul_urge)} (${numTitle(num.soul_urge)})\n`;
+    context += `- Personalidade: ${numLabel(num.personality)} (${numTitle(num.personality)})\n`;
   }
 
   if (chart) {
