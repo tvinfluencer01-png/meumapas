@@ -10,6 +10,7 @@ import { showLoader, hideLoader, updateLoader, confirmDialog } from "@/component
 import {
   FileText, Download, Sparkles, Heart, Briefcase, Flame, Loader2, Trash2, ScrollText,
 } from "lucide-react";
+import { CreditCostBadge } from "@/components/CreditCostBadge";
 
 export const Route = createFileRoute("/_authenticated/relatorios")({
   component: RelatoriosPage,
@@ -188,16 +189,19 @@ function RelatoriosPage() {
                   <h3 className="font-serif text-xl text-stardust">{c.title}</h3>
                 </div>
                 <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{c.desc}</p>
-                <div className="mt-5 inline-flex items-center gap-2 text-xs uppercase tracking-widest text-gold">
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="size-3.5 animate-spin" /> Gerando PDF...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="size-3.5" /> Gerar relatorio
-                    </>
-                  )}
+                <div className="mt-5 flex items-center justify-between gap-2">
+                  <div className="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-gold">
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="size-3.5 animate-spin" /> Gerando PDF...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="size-3.5" /> Gerar relatorio
+                      </>
+                    )}
+                  </div>
+                  <CreditCostBadge action={`report_${c.kind}`} showBalance={false} />
                 </div>
               </div>
             </button>
