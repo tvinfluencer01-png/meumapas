@@ -1,9 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { formatBirthDateBR } from "@/lib/numerology";
-import { Hash, Heart, Eye, Sparkles, TreePine } from "lucide-react";
+import { Hash, Heart, Eye, Sparkles, TreePine, Download, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { buildSimplePdf, type SimplePdfBlock } from "@/lib/simple-pdf";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/numerologia-cabalistica")({
   component: NumerologiaCabalisticaPage,
