@@ -108,10 +108,22 @@ const SIGNS_LABEL: Record<string, string> = {
   "Sagitário":"Sagitario","Capricórnio":"Capricornio","Aquário":"Aquario","Peixes":"Peixes",
 };
 
+const SectionPlanSchema = z.object({
+  improve: z.array(z.string().min(3)).length(7),
+  avoid: z.array(z.string().min(3)).length(7),
+  follow: z.array(z.string().min(3)).length(7),
+});
+
 const AiOutput = z.object({
   intro: z.string().min(200),
   sections: z
-    .array(z.object({ title: z.string().min(2), body: z.string().min(200) }))
+    .array(
+      z.object({
+        title: z.string().min(2),
+        body: z.string().min(200),
+        plan: SectionPlanSchema,
+      }),
+    )
     .min(4)
     .max(8),
   closing: z.string().min(120),
