@@ -194,7 +194,7 @@ function AddonsPage() {
               active={activeSubIds.has(sub.id)}
               loading={checkoutMut.isPending && pendingId === sub.id}
               disabled={checkoutMut.isPending}
-              onBuy={() => handleBuy("subscription", sub.id)}
+              onBuy={() => setDialogSub(sub)}
             />
           ))}
         </div>
