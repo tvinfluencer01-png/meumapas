@@ -29,7 +29,6 @@ import {
   adminUpsertCreditPackage,
   adminDeleteCreditPackage,
 } from "@/lib/credits.functions";
-import type { CreditTx } from "@/components/CreditHistoryTable";
 
 type Pkg = {
   id: string;
@@ -144,7 +143,7 @@ export function AdminCreditPackages() {
                 </tr>
               </thead>
               <tbody>
-                {data.packages.map((p: Pkg | CreditTx | any) => (
+                {data.packages.map((p: Pkg) => (
                   <tr key={p.id} className="border-t border-border">
                     <td className="px-3 py-2">
                       <div className="font-medium">{p.name}</div>
