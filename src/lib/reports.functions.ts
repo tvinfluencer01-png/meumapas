@@ -393,9 +393,9 @@ REGRAS DO JSON:
             : [modelName]
     ).filter((m, i, arr) => arr.indexOf(m) === i);
 
-    const REQUEST_BUDGET_MS = 32_000;
-    const PER_ATTEMPT_TIMEOUT_MS = 14_000;
-    const MIN_REMAINING_BUDGET_MS = 5_000;
+    const REQUEST_BUDGET_MS = 55_000;
+    const PER_ATTEMPT_TIMEOUT_MS = 45_000;
+    const MIN_REMAINING_BUDGET_MS = 8_000;
 
     async function callWithRetry() {
       let lastErr: unknown;
