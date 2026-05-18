@@ -259,8 +259,39 @@ export const generateReport = createServerFn({ method: "POST" })
 Escreva textos profundos, calorosos e PESSOAIS, mas SEMPRE em LINGUAGEM SIMPLES E ACESSIVEL.
 Imagine que voce conversa com um amigo querido que nunca estudou astrologia nem numerologia.
 
+DICIONARIO DE TERMOS TECNICOS (use para traduzir, NAO copie literal — adapte ao contexto da frase, mantendo curto entre parenteses):
+- Sol: essencia, identidade central, "quem voce e por dentro".
+- Lua: emocoes, necessidades intimas, "como seu coracao se sente seguro".
+- Ascendente: mascara social, "como o mundo te ve a primeira vista".
+- Mercurio: comunicacao e raciocinio, "como sua mente fala e pensa".
+- Venus: amor, prazer e estetica, "o que te encanta e como voce ama".
+- Marte: acao, desejo, energia, "como voce luta e vai atras das coisas".
+- Jupiter: expansao, sorte, fe, "o que faz sua vida crescer".
+- Saturno: limites, disciplina, tempo, "as licoes duras que te amadurecem".
+- Urano: rupturas e originalidade, "o que te tira da rotina de surpresa".
+- Netuno: sonhos, intuicao, ilusao, "a parte sensivel e meio nebulosa".
+- Plutao: transformacao profunda, "a forca que te faz renascer".
+- Casa (1 a 12): area da vida onde algo acontece, "o palco do tema".
+- Conjuncao: dois planetas juntos, "energias que se fundem".
+- Trigono: harmonia entre dois planetas, "fluxo natural, dom".
+- Sextil: oportunidade leve, "boa quando voce se mexe".
+- Quadratura: tensao entre dois planetas, "um atrito que pede acao".
+- Oposicao: dois polos puxando, "equilibrio que precisa ser construido".
+- Retrogrado: planeta com energia voltada pra dentro, "tempo de revisao".
+- Caminho de Vida: numero do proposito, "missao principal da sua vida".
+- Numero do Destino: tarefa exterior, "papel que voce veio cumprir no mundo".
+- Numero da Alma (Motivacao): desejo profundo, "o que move seu coracao".
+- Numero da Personalidade: imagem externa, "como os outros te percebem".
+- Numero do Aniversario: dom natural, "talento que ja nasce com voce".
+- Numeros mestres (11, 22, 33): alta voltagem espiritual, "potencial grande que pede maturidade".
+- Signo de Fogo: impulso, coragem, "energia que acende".
+- Signo de Terra: praticidade, corpo, "energia que constroi".
+- Signo de Ar: ideias, conexao, "energia que comunica".
+- Signo de Agua: emocao, intuicao, "energia que sente".
+
 REGRA DE LINGUAGEM SIMPLES (obrigatoria):
-- Sempre que citar um termo tecnico (signo, planeta, casa, aspecto, conjuncao, quadratura, sextil, trigono, retrogrado, Caminho de Vida, Destino, Alma, Personalidade, mestre 11/22), EXPLIQUE em seguida com palavras do dia a dia, entre travessoes ou parenteses (ex: "Sol em Escorpiao - ou seja, a sua essencia mais profunda funciona como um detetive emocional"; "Caminho de Vida 7 - o numero que mostra que voce veio para investigar e entender a vida").
+- SEMPRE que citar QUALQUER termo do dicionario acima (ou similar: aspecto, gematria, nodos, parte da fortuna, etc.), inclua na MESMA frase uma traducao CURTA entre parenteses (max 10 palavras) baseada no dicionario, adaptada ao contexto. Ex: "Sol em Escorpiao (sua essencia mais profunda funciona como um detetive emocional)"; "Caminho de Vida 7 (a missao de investigar e entender a vida)".
+- NUNCA deixe um termo tecnico sem traducao parentetica, mesmo que ja tenha sido explicado antes — repita a explicacao curta sempre que reaparecer.
 - Frases curtas. Evite jargao espiritual hermetico. Nada de "vibracao quantica", "campo aurico" sem explicar.
 - Cite planetas, signos, aspectos e numeros REAIS recebidos, mas sempre TRADUZA o significado pratico para a vida da pessoa.
 - Cada secao deve ter no minimo 3 paragrafos densos, mas com frases claras e diretas.
@@ -277,7 +308,7 @@ REGRA DO PLANO DE 7 DIAS (obrigatoria):
 - Cada secao TERMINA com um plano de 7 dias com 3 listas: melhorar (improve), evitar (avoid), seguir (follow).
 - Cada lista tem EXATAMENTE 7 itens, um para cada dia da semana (Dia 1 a Dia 7).
 - Itens curtos, concretos, acionaveis, em linguagem simples (ex: "Escrever 3 gratidoes ao acordar", "Evitar conversa dificil antes do cafe", "Caminhar 20 min ao sol").
-- Cada plano deve ser ESPECIFICO ao tema da secao E ancorado em algo do mapa/numerologia do consulente (cite no item quando fizer sentido, ex: "Como sua Lua em Cancer pede colo, almoce com a familia").
+- Cada plano deve ser ESPECIFICO ao tema da secao E ancorado em algo do mapa/numerologia do consulente (cite no item quando fizer sentido, com a traducao curta entre parenteses, ex: "Como sua Lua em Cancer (coracao que pede colo) pede acolhimento, almoce com a familia").
 - NAO repita os mesmos itens entre secoes.`;
 
     const prompt = `Gere um RELATORIO PREMIUM do tipo "${meta.title}" focado em ${meta.focus}
