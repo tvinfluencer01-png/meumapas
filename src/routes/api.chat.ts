@@ -90,6 +90,22 @@ export const Route = createFileRoute("/api/chat")({
           const { messages } = (await request.json()) as ChatBody;
           if (!Array.isArray(messages)) return new Response("Messages required", { status: 400 });
 
+          // Charge 1 credit per user message, unless Oracle Premium subscription is active
+          const { hasUnlimitedAccess, consumeCredits } = await import("@/lib/credits.functions");
+          const unlimited = await hasUnlimitedAccess(userId, "oracle_message");
+          if (!unlimited) {
+            const ok = await consumeCredits(userId, "oracle_message", "Oráculo IA");
+            if (!ok) {
+              return new Response(
+                JSON.stringify({
+                  error:
+                    "Saldo insuficiente para consultar o Oráculo. Compre créditos ou assine o Oráculo Premium em /addons.",
+                }),
+                { status: 402, headers: { "Content-Type": "application/json" } },
+              );
+            }
+          }
+
           const { context, settings } = await buildContext(userId, token);
 
           // Choose provider

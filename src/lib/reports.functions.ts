@@ -11,6 +11,7 @@ import {
 } from "@/lib/ai-gateway";
 import { computeNumerology, NUMBER_MEANINGS, formatBirthDateBR, numLabel, numTitle } from "@/lib/numerology";
 import { buildReportPdf, type ReportData } from "@/lib/reports-pdf";
+import { consumeCredits, hasUnlimitedAccess, CREDIT_COSTS, type CreditAction } from "@/lib/credits.functions";
 
 const KIND = z.enum(["personality", "love", "career", "spiritual"]);
 
@@ -108,6 +109,19 @@ export const generateReport = createServerFn({ method: "POST" })
 
     if (!birth) {
       throw new Error("Complete seus dados de nascimento antes de gerar relatorios.");
+    }
+
+    // Charge credits unless user has unlimited reports subscription
+    const action: CreditAction = `report_${data.kind}` as CreditAction;
+    const unlimited = await hasUnlimitedAccess(userId, action);
+    if (!unlimited) {
+      const cost = CREDIT_COSTS[action];
+      const charged = await consumeCredits(userId, action, `Relatório ${data.kind}`);
+      if (!charged) {
+        throw new Error(
+          `Saldo insuficiente. Este relatório custa ${cost} créditos. Compre mais em /addons.`,
+        );
+      }
     }
 
     const num = computeNumerology(birth.full_name, birth.birth_date);
