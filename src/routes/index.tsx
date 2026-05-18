@@ -89,7 +89,7 @@ function Hero() {
         <span className="mb-8 block text-xs uppercase tracking-[0.5em] text-gold/70">
           A interseção entre sabedoria ancestral e inteligência artificial
         </span>
-        <h1 className="mb-8 font-serif text-5xl italic leading-[1.05] md:text-7xl lg:text-8xl">
+        <h1 className="mb-8 font-serif text-4xl italic leading-[1.05] sm:text-5xl md:text-7xl lg:text-8xl">
           Decifre seu <span className="shimmer-text">mapa celestial</span>
         </h1>
         <p className="mx-auto mb-12 max-w-2xl text-balance text-lg font-light leading-relaxed text-muted-foreground md:text-xl">
