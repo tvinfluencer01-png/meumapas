@@ -285,117 +285,27 @@ export const generateReport = createServerFn({ method: "POST" })
     // 3) Generate humanized structured content
     const firstName = String(birth.full_name).trim().split(/\s+/)[0] ?? "";
 
-    const system = `Voce e o **Oraculo Cosmico**, escritor espiritual premium em portugues do Brasil.
-Escreva textos profundos, calorosos e PESSOAIS, mas SEMPRE em LINGUAGEM SIMPLES E ACESSIVEL.
-Imagine que voce conversa com um amigo querido que nunca estudou astrologia nem numerologia.
+    const system = `Voce e o Oraculo Cosmico, um escritor espiritual premium em portugues do Brasil.
+Escreva com profundidade, calor humano e linguagem simples.
+Sempre traduza termos tecnicos na mesma frase, entre parenteses, com no maximo 10 palavras.
+Frases curtas. Sem markdown. Sem emojis. Sem prometer eventos certos. Sem diagnostico clinico.`;
 
-DICIONARIO DE TERMOS TECNICOS (use para traduzir, NAO copie literal — adapte ao contexto da frase, mantendo curto entre parenteses):
-- Sol: essencia, identidade central, "quem voce e por dentro".
-- Lua: emocoes, necessidades intimas, "como seu coracao se sente seguro".
-- Ascendente: mascara social, "como o mundo te ve a primeira vista".
-- Mercurio: comunicacao e raciocinio, "como sua mente fala e pensa".
-- Venus: amor, prazer e estetica, "o que te encanta e como voce ama".
-- Marte: acao, desejo, energia, "como voce luta e vai atras das coisas".
-- Jupiter: expansao, sorte, fe, "o que faz sua vida crescer".
-- Saturno: limites, disciplina, tempo, "as licoes duras que te amadurecem".
-- Urano: rupturas e originalidade, "o que te tira da rotina de surpresa".
-- Netuno: sonhos, intuicao, ilusao, "a parte sensivel e meio nebulosa".
-- Plutao: transformacao profunda, "a forca que te faz renascer".
-- Casa (1 a 12): area da vida onde algo acontece, "o palco do tema".
-- Conjuncao: dois planetas juntos, "energias que se fundem".
-- Trigono: harmonia entre dois planetas, "fluxo natural, dom".
-- Sextil: oportunidade leve, "boa quando voce se mexe".
-- Quadratura: tensao entre dois planetas, "um atrito que pede acao".
-- Oposicao: dois polos puxando, "equilibrio que precisa ser construido".
-- Retrogrado: planeta com energia voltada pra dentro, "tempo de revisao".
-- Caminho de Vida: numero do proposito, "missao principal da sua vida".
-- Numero do Destino: tarefa exterior, "papel que voce veio cumprir no mundo".
-- Numero da Alma (Motivacao): desejo profundo, "o que move seu coracao".
-- Numero da Personalidade: imagem externa, "como os outros te percebem".
-- Numero do Aniversario: dom natural, "talento que ja nasce com voce".
-- Numeros mestres (11, 22, 33): alta voltagem espiritual, "potencial grande que pede maturidade".
-- Signo de Fogo: impulso, coragem, "energia que acende".
-- Signo de Terra: praticidade, corpo, "energia que constroi".
-- Signo de Ar: ideias, conexao, "energia que comunica".
-- Signo de Agua: emocao, intuicao, "energia que sente".
+    const reportContext = `Relatorio: ${meta.title}
+Foco: ${meta.focus}
 
-REGRA DE LINGUAGEM SIMPLES (obrigatoria):
-- SEMPRE que citar QUALQUER termo do dicionario acima (ou similar: aspecto, gematria, nodos, parte da fortuna, etc.), inclua na MESMA frase uma traducao CURTA entre parenteses (max 10 palavras) baseada no dicionario, adaptada ao contexto. Ex: "Sol em Escorpiao (sua essencia mais profunda funciona como um detetive emocional)"; "Caminho de Vida 7 (a missao de investigar e entender a vida)".
-- NUNCA deixe um termo tecnico sem traducao parentetica, mesmo que ja tenha sido explicado antes — repita a explicacao curta sempre que reaparecer.
-- Frases curtas. Evite jargao espiritual hermetico. Nada de "vibracao quantica", "campo aurico" sem explicar.
-- Cite planetas, signos, aspectos e numeros REAIS recebidos, mas sempre TRADUZA o significado pratico para a vida da pessoa.
-- Cada secao deve ter 2 ou 3 paragrafos objetivos, com frases claras e diretas.
-- Tom acolhedor, sabio, levemente literario, NUNCA academico ou opaco.
-- Nunca prometa eventos certos nem faca diagnostico clinico.
-- NAO use markdown nem emojis. Apenas texto corrido com paragrafos separados por linhas em branco.
+Consulente:
+- Nome completo (usar so 1x na intro): ${birth.full_name}
+- Primeiro nome (usar depois): ${firstName}
+- Nascimento: ${birth.birth_date}${birth.birth_time ? ` ${birth.birth_time}` : ""}
+- Local: ${birth.city ?? ""}${birth.country ? ", " + birth.country : ""}
 
-REGRA DE NOMENCLATURA (obrigatoria):
-- Use o NOME COMPLETO do consulente ("${birth.full_name}") UMA UNICA VEZ, na primeira mencao (idealmente na intro).
-- Em TODAS as mencoes seguintes use APENAS o primeiro nome ("${firstName}").
-- Nunca repita o nome completo. Nunca use sobrenomes isolados.
+Numerologia:
+${numBlock}
 
-REGRA DO PLANO DE 7 DIAS (obrigatoria):
-- Cada secao TERMINA com um plano de 7 dias com 3 listas: melhorar (improve), evitar (avoid), seguir (follow).
-- Cada lista tem EXATAMENTE 7 itens, um para cada dia da semana (Dia 1 a Dia 7).
-- Itens curtos, concretos, acionaveis, em linguagem simples (ex: "Escrever 3 gratidoes ao acordar", "Evitar conversa dificil antes do cafe", "Caminhar 20 min ao sol").
-- Cada plano deve ser ESPECIFICO ao tema da secao E ancorado em algo do mapa/numerologia do consulente (cite no item quando fizer sentido, com a traducao curta entre parenteses, ex: "Como sua Lua em Cancer (coracao que pede colo) pede acolhimento, almoce com a familia").
-- NAO repita os mesmos itens entre secoes.`;
+Mapa astral:
+${astroBlock}`;
 
-    const prompt = `Gere um RELATORIO PREMIUM do tipo "${meta.title}" focado em ${meta.focus}
-
-Dados do consulente:
-Nome completo (usar apenas 1x, na primeira mencao): ${birth.full_name}
-Primeiro nome (usar em todas as mencoes seguintes): ${firstName}
-Nascimento: ${birth.birth_date}${birth.birth_time ? ` ${birth.birth_time}` : ""}
-Local: ${birth.city ?? ""}${birth.country ? ", " + birth.country : ""}
-
-Numerologia: ${numBlock}
-
-Mapa Astral:
-${astroBlock}
-
-Responda APENAS com um JSON valido (sem markdown, sem cercas de codigo) no formato:
-{
-  "intro": "texto em 2 ou 3 paragrafos separados por \\n\\n, em LINGUAGEM SIMPLES, explicando cada termo tecnico que aparecer",
-  "sections": [
-    {
-      "title": "Titulo curto",
-      "body": "2 ou 3 paragrafos claros separados por \\n\\n, sempre traduzindo termos tecnicos para palavras do dia a dia",
-      "plan": {
-        "improve": ["Dia 1: acao concreta...", "Dia 2: ...", "Dia 3: ...", "Dia 4: ...", "Dia 5: ...", "Dia 6: ...", "Dia 7: ..."],
-        "avoid":   ["Dia 1: o que nao fazer...", "Dia 2: ...", "Dia 3: ...", "Dia 4: ...", "Dia 5: ...", "Dia 6: ...", "Dia 7: ..."],
-        "follow":  ["Dia 1: pratica a cultivar...", "Dia 2: ...", "Dia 3: ...", "Dia 4: ...", "Dia 5: ...", "Dia 6: ...", "Dia 7: ..."]
-      }
-    }
-  ],
-  "closing": "1 ou 2 paragrafos finais",
-  "swot": {
-    "strengths": ["forca 1 personalizada", "..."],
-    "weaknesses": ["fraqueza 1 personalizada", "..."],
-    "opportunities": ["oportunidade 1 personalizada", "..."],
-    "threats": ["ameaca/risco 1 personalizado", "..."]
-  },
-  "recommendations": {
-    "improve": ["o que ${firstName} deve MELHORAR (frase curta e acionavel)", "..."],
-    "avoid":   ["o que ${firstName} deve EVITAR (frase curta e acionavel)", "..."],
-    "follow":  ["o que ${firstName} deve SEGUIR / cultivar (frase curta e acionavel)", "..."]
-  },
-  "suggestions": {
-    "intro": "1 frase contextualizando a lista para ${firstName}",
-    "items": [
-      { "name": "Nome curto e direto da sugestao", "why": "1 frase simples explicando POR QUE essa sugestao combina com o mapa/numerologia de ${firstName}, citando signo, planeta, aspecto ou numero e traduzindo o termo." }
-    ]
-  },
-  "summary": "Resumo final em 1 paragrafo forte, em linguagem simples"
-}
-
-REGRAS DO JSON:
-- "sections" deve ter EXATAMENTE 3 itens (mais densos e focados).
-- Cada "sections[i].plan" e OBRIGATORIO e cada uma das listas improve/avoid/follow precisa ter EXATAMENTE 7 itens (um por dia), iniciando com "Dia 1:", "Dia 2:", ... "Dia 7:". Itens curtos (max 15 palavras).
-- SWOT e recommendations: 3 itens cada, especificos ao mapa e numerologia.
-- "suggestions.items": EXATAMENTE 5 itens. Tema das sugestoes: ${meta.suggestionGuide}`;
-
-    // Robust call: per-attempt timeout + retries + fallback model on persistent upstream timeouts.
+    // Robust call: per-attempt timeout + fallback model on persistent upstream timeouts.
     const isLovable = provider === "lovable" || !(["openai", "anthropic", "gemini"].includes(provider) && customKey);
     const fallbackModels = (
       provider === "openai" && customKey
@@ -407,112 +317,209 @@ REGRAS DO JSON:
             : [modelName]
     ).filter((m, i, arr) => arr.indexOf(m) === i);
 
-    const REQUEST_BUDGET_MS = 55_000;
-    const PER_ATTEMPT_TIMEOUT_MS = 45_000;
-    const MIN_REMAINING_BUDGET_MS = 8_000;
-
-    async function callWithRetry() {
+    async function callWithRetry({
+      prompt,
+      timeoutMs,
+      errorMessage,
+    }: {
+      prompt: string;
+      timeoutMs: number;
+      errorMessage: string;
+    }) {
       let lastErr: unknown;
-      const startedAt = Date.now();
       for (const candidate of fallbackModels) {
-        const remainingBudget = REQUEST_BUDGET_MS - (Date.now() - startedAt);
-        if (remainingBudget < MIN_REMAINING_BUDGET_MS) break;
-
         const candidateModel = candidate === modelName ? model : makeModel(candidate);
-        const attemptTimeout = Math.min(
-          PER_ATTEMPT_TIMEOUT_MS,
-          Math.max(4_000, remainingBudget - 1_500),
-        );
-
-        for (let attempt = 0; attempt < 1; attempt++) {
-          const ac = new AbortController();
-          const timer = setTimeout(() => ac.abort(), attemptTimeout);
-          try {
-            const res = await generateText({
-              model: candidateModel,
-              system,
-              prompt,
-              abortSignal: ac.signal,
-              
-              maxRetries: 0,
-            });
-            modelName = candidate;
-            model = candidateModel;
-            return res;
-          } catch (e) {
-            lastErr = e;
-            const msg = e instanceof Error ? e.message.toLowerCase() : String(e).toLowerCase();
-            const retriable =
-              msg.includes("timeout") ||
-              msg.includes("aborted") ||
-              msg.includes("upstream") ||
-              msg.includes("502") ||
-              msg.includes("503") ||
-              msg.includes("504") ||
-              msg.includes("econnreset") ||
-              msg.includes("network");
-            console.error(`[reports] AI attempt failed (model=${candidate}, attempt=${attempt})`, msg);
-            if (!retriable) throw e;
-          } finally {
-            clearTimeout(timer);
-          }
+        const ac = new AbortController();
+        const timer = setTimeout(() => ac.abort(), timeoutMs);
+        try {
+          const res = await generateText({
+            model: candidateModel,
+            system,
+            prompt,
+            abortSignal: ac.signal,
+            maxRetries: 0,
+          });
+          modelName = candidate;
+          model = candidateModel;
+          return res.text;
+        } catch (e) {
+          lastErr = e;
+          const msg = e instanceof Error ? e.message.toLowerCase() : String(e).toLowerCase();
+          const retriable =
+            msg.includes("timeout") ||
+            msg.includes("aborted") ||
+            msg.includes("upstream") ||
+            msg.includes("502") ||
+            msg.includes("503") ||
+            msg.includes("504") ||
+            msg.includes("econnreset") ||
+            msg.includes("network");
+          console.error(`[reports] AI attempt failed (model=${candidate})`, msg);
+          if (!retriable) throw e;
+        } finally {
+          clearTimeout(timer);
         }
       }
+
       throw lastErr instanceof Error
-        ? new Error("A geração demorou além do limite. Tente novamente; agora o relatório usa um modo mais rápido.")
+        ? new Error(errorMessage)
         : new Error("Falha temporaria na IA. Tente novamente.");
     }
 
-    yield { type: "progress" as const, progress: 28, step: "Consultando o Oráculo Cósmico..." };
-    const { text } = await callWithRetry();
-    yield { type: "progress" as const, progress: 72, step: "Validando a leitura recebida..." };
-
-    // Extract JSON (some models wrap in code fences or truncate)
-    let jsonStr = text.trim();
-    const fence = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
-    if (fence) jsonStr = fence[1].trim();
-    const firstBrace = jsonStr.indexOf("{");
-    if (firstBrace > 0) jsonStr = jsonStr.slice(firstBrace);
-    const lastBrace = jsonStr.lastIndexOf("}");
-    if (lastBrace >= 0 && lastBrace < jsonStr.length - 1) jsonStr = jsonStr.slice(0, lastBrace + 1);
-    jsonStr = jsonStr.replace(/[\u0000-\u001F]/g, " ");
+    function extractJsonText(text: string) {
+      let jsonStr = text.trim();
+      const fence = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
+      if (fence) jsonStr = fence[1].trim();
+      const firstBrace = jsonStr.indexOf("{");
+      if (firstBrace > 0) jsonStr = jsonStr.slice(firstBrace);
+      const lastBrace = jsonStr.lastIndexOf("}");
+      if (lastBrace >= 0 && lastBrace < jsonStr.length - 1) jsonStr = jsonStr.slice(0, lastBrace + 1);
+      return jsonStr.replace(/[\u0000-\u001F]/g, " ");
+    }
 
     function tryRepairJson(s: string): string {
-      // strip trailing commas
       let r = s.replace(/,\s*([}\]])/g, "$1");
-      // if response was truncated mid-string, close it
       const quotes = (r.match(/"/g) || []).length;
       if (quotes % 2 === 1) r += '"';
-      // close unbalanced brackets/braces
       const opens = (r.match(/\{/g) || []).length;
       const closes = (r.match(/\}/g) || []).length;
       const opensB = (r.match(/\[/g) || []).length;
       const closesB = (r.match(/\]/g) || []).length;
-      // remove dangling trailing comma after repair
       r = r.replace(/,\s*$/, "");
       r += "]".repeat(Math.max(0, opensB - closesB));
       r += "}".repeat(Math.max(0, opens - closes));
       return r;
     }
 
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(jsonStr);
-    } catch {
+    function parseJsonWithSchema<T>(text: string, schema: z.ZodType<T>, label: string): T {
+      const jsonStr = extractJsonText(text);
+      let parsed: unknown;
       try {
-        parsed = JSON.parse(tryRepairJson(jsonStr));
+        parsed = JSON.parse(jsonStr);
+      } catch {
+        try {
+          parsed = JSON.parse(tryRepairJson(jsonStr));
+        } catch (e) {
+          console.error(`[reports] JSON parse failed (${label})`, e, "len=", text.length, "tail=", text.slice(-300));
+          throw new Error("A IA devolveu um formato invalido. Tente novamente.");
+        }
+      }
+
+      try {
+        return schema.parse(parsed);
       } catch (e) {
-        console.error("[reports] JSON parse failed", e, "len=", text.length, "tail=", text.slice(-300));
+        console.error(`[reports] schema validation failed (${label})`, e);
         throw new Error("A IA devolveu um formato invalido. Tente novamente.");
       }
     }
-    let ai: z.infer<typeof AiOutput>;
-    try {
-      ai = AiOutput.parse(parsed);
-    } catch (e) {
-      console.error("[reports] schema validation failed", e);
-      throw new Error("A IA devolveu um formato invalido. Tente novamente.");
+
+    const basePrompt = `${reportContext}
+
+Monte apenas a ESTRUTURA BASE do relatório e responda APENAS com JSON valido neste formato:
+{
+  "intro": "2 paragrafos em linguagem simples",
+  "sectionBlueprints": [
+    { "title": "Titulo 1", "focus": "Qual o foco pratico desta secao" },
+    { "title": "Titulo 2", "focus": "Qual o foco pratico desta secao" },
+    { "title": "Titulo 3", "focus": "Qual o foco pratico desta secao" }
+  ],
+  "closing": "1 ou 2 paragrafos finais",
+  "swot": {
+    "strengths": ["...", "...", "..."],
+    "weaknesses": ["...", "...", "..."],
+    "opportunities": ["...", "...", "..."],
+    "threats": ["...", "...", "..."]
+  },
+  "recommendations": {
+    "improve": ["...", "...", "..."],
+    "avoid": ["...", "...", "..."],
+    "follow": ["...", "...", "..."]
+  },
+  "suggestions": {
+    "intro": "1 frase curta para ${firstName}",
+    "items": [
+      { "name": "Sugestao 1", "why": "Por que combina com o mapa e numerologia" },
+      { "name": "Sugestao 2", "why": "..." },
+      { "name": "Sugestao 3", "why": "..." },
+      { "name": "Sugestao 4", "why": "..." },
+      { "name": "Sugestao 5", "why": "..." }
+    ]
+  },
+  "summary": "Resumo final forte e simples"
+}
+
+Regras:
+- sectionBlueprints precisa ter EXATAMENTE 3 itens, com temas diferentes e complementares.
+- SWOT e recommendations devem ter EXATAMENTE 3 itens por lista.
+- suggestions.items deve ter EXATAMENTE 5 itens.
+- Tema das sugestoes: ${meta.suggestionGuide}
+- Use o nome completo apenas 1x na intro. Depois, use apenas ${firstName}.`;
+
+    const makeSectionPrompt = (
+      blueprint: z.infer<typeof BaseAiOutput>["sectionBlueprints"][number],
+      index: number,
+      blueprints: z.infer<typeof BaseAiOutput>["sectionBlueprints"],
+    ) => `${reportContext}
+
+Escreva apenas a secao ${index + 1} de 3 do relatório.
+Titulo da secao: ${blueprint.title}
+Foco da secao: ${blueprint.focus}
+Outras secoes para evitar repeticao: ${blueprints
+      .filter((_, currentIndex) => currentIndex !== index)
+      .map((item) => item.title)
+      .join(", ")}
+
+Responda APENAS com JSON valido neste formato:
+{
+  "title": "${blueprint.title}",
+  "body": "2 ou 3 paragrafos claros, humanos e especificos para ${firstName}",
+  "plan": {
+    "improve": ["Dia 1: ...", "Dia 2: ...", "Dia 3: ...", "Dia 4: ...", "Dia 5: ...", "Dia 6: ...", "Dia 7: ..."],
+    "avoid": ["Dia 1: ...", "Dia 2: ...", "Dia 3: ...", "Dia 4: ...", "Dia 5: ...", "Dia 6: ...", "Dia 7: ..."],
+    "follow": ["Dia 1: ...", "Dia 2: ...", "Dia 3: ...", "Dia 4: ...", "Dia 5: ...", "Dia 6: ...", "Dia 7: ..."]
+  }
+}
+
+Regras:
+- O body precisa ser especifico ao tema e ancorado no mapa/numerologia.
+- Cada lista do plano deve ter EXATAMENTE 7 itens, de Dia 1 a Dia 7.
+- Cada item deve ser curto, concreto e acionavel.
+- Nao repita itens das outras secoes.
+- Nao use o nome completo. Use apenas ${firstName}.`;
+
+    yield { type: "progress" as const, progress: 28, step: "Montando a estrutura do relatório..." };
+    const baseText = await callWithRetry({
+      prompt: basePrompt,
+      timeoutMs: 16_000,
+      errorMessage: "A geração demorou além do limite. Tente novamente; agora o relatório usa um modo mais rápido.",
+    });
+    const base = parseJsonWithSchema(baseText, BaseAiOutput, "base");
+
+    const sections: z.infer<typeof SectionOutput>[] = [];
+    for (const [index, blueprint] of base.sectionBlueprints.entries()) {
+      yield {
+        type: "progress" as const,
+        progress: 44 + index * 10,
+        step: `Escrevendo capítulo ${index + 1} de 3...`,
+      };
+      const sectionText = await callWithRetry({
+        prompt: makeSectionPrompt(blueprint, index, base.sectionBlueprints),
+        timeoutMs: 10_000,
+        errorMessage: "A geração demorou além do limite. Tente novamente; agora o relatório usa um modo mais rápido.",
+      });
+      sections.push(parseJsonWithSchema(sectionText, SectionOutput, `section-${index + 1}`));
     }
+
+    yield { type: "progress" as const, progress: 72, step: "Validando a leitura recebida..." };
+    const ai = AiOutput.parse({
+      intro: base.intro,
+      sections,
+      closing: base.closing,
+      swot: base.swot,
+      recommendations: base.recommendations,
+      suggestions: base.suggestions,
+      summary: base.summary,
+    });
 
     // 4) Build PDF
     // Load branding logo bytes (if add-on enabled, kind is enabled, and a logo is configured)
