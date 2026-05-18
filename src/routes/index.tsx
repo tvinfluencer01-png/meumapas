@@ -83,7 +83,7 @@ function Nav() {
 /* ---------------- HERO ---------------- */
 function Hero() {
   return (
-    <section className="relative overflow-hidden px-6 pb-20 pt-44 nebula-bg">
+    <section className="relative overflow-hidden px-4 pb-16 pt-28 sm:px-6 sm:pb-20 md:pt-44 nebula-bg">
       <Starfield count={120} />
       <div className="relative z-10 mx-auto max-w-5xl text-center">
         <span className="mb-8 block text-xs uppercase tracking-[0.5em] text-gold/70">
