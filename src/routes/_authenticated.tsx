@@ -54,6 +54,13 @@ function AuthedLayout() {
     }
   }, [loading, user]);
 
+  // Lock body scroll when mobile drawer is open
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    document.body.style.overflow = open ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [open]);
+
   useEffect(() => {
     if (!loading && !user) {
       router.navigate({ to: "/auth", replace: true });
