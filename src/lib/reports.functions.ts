@@ -418,6 +418,57 @@ ${astroBlock}`;
       return r;
     }
 
+    function normalizePlanList(value: unknown) {
+      const arr = Array.isArray(value) ? value : [];
+      return arr
+        .map((item, index) => {
+          const text = String(item ?? "").replace(/\s+/g, " ").trim();
+          const fallback = `Dia ${index + 1}: Aja com clareza e constância.`;
+          if (!text) return fallback;
+          return /^dia\s+\d+:/i.test(text) ? text : `Dia ${index + 1}: ${text}`;
+        })
+        .filter(Boolean)
+        .slice(0, 7);
+    }
+
+    function normalizeSectionPayload(parsed: unknown) {
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return parsed;
+      const record = parsed as Record<string, unknown>;
+
+      if (record.plan && typeof record.plan === "object" && !Array.isArray(record.plan)) {
+        const plan = record.plan as Record<string, unknown>;
+        const normalizedPlan = {
+          improve: normalizePlanList(plan.improve),
+          avoid: normalizePlanList(plan.avoid),
+          follow: normalizePlanList(plan.follow),
+        };
+
+        const fillToSeven = (items: string[], seed: string) => {
+          const next = [...items];
+          while (next.length < 7) {
+            next.push(`Dia ${next.length + 1}: ${seed}`);
+          }
+          return next;
+        };
+
+        record.plan = {
+          improve: fillToSeven(normalizedPlan.improve, "Fortaleça o que gera prosperidade com calma."),
+          avoid: fillToSeven(normalizedPlan.avoid, "Evite impulsos que drenam sua energia financeira."),
+          follow: fillToSeven(normalizedPlan.follow, "Siga o que traz estabilidade e visão de longo prazo."),
+        };
+      }
+
+      if (typeof record.body === "string") {
+        record.body = record.body.replace(/\s+/g, " ").trim();
+      }
+
+      if (typeof record.title === "string") {
+        record.title = record.title.replace(/\s+/g, " ").trim();
+      }
+
+      return record;
+    }
+
     function parseJsonWithSchema<T>(text: string, schema: z.ZodType<T>, label: string): T {
       const jsonStr = extractJsonText(text);
       let parsed: unknown;
@@ -430,6 +481,10 @@ ${astroBlock}`;
           console.error(`[reports] JSON parse failed (${label})`, e, "len=", text.length, "tail=", text.slice(-300));
           throw new Error("A IA devolveu um formato invalido. Tente novamente.");
         }
+      }
+
+      if (label.startsWith("section-")) {
+        parsed = normalizeSectionPayload(parsed);
       }
 
       try {
