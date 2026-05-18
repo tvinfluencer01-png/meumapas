@@ -552,12 +552,30 @@ Regras:
         progress: 44 + index * 10,
         step: `Escrevendo capítulo ${index + 1} de 3...`,
       };
-      const sectionText = await callWithRetry({
-        prompt: makeSectionPrompt(blueprint, index, base.sectionBlueprints),
-        timeoutMs: 10_000,
+      const sectionBodyText = await callWithRetry({
+        prompt: makeSectionBodyPrompt(blueprint, index, base.sectionBlueprints),
+        timeoutMs: 7_500,
         errorMessage: "A geração demorou além do limite. Tente novamente; agora o relatório usa um modo mais rápido.",
       });
-      sections.push(parseJsonWithSchema(sectionText, SectionOutput, `section-${index + 1}`));
+      const sectionBody = parseJsonWithSchema(sectionBodyText, SectionBodyOutput, `section-body-${index + 1}`);
+
+      yield {
+        type: "progress" as const,
+        progress: 48 + index * 10,
+        step: `Montando plano do capítulo ${index + 1}...`,
+      };
+      const sectionPlanText = await callWithRetry({
+        prompt: makeSectionPlanPrompt(blueprint, sectionBody.body),
+        timeoutMs: 6_000,
+        errorMessage: "A geração demorou além do limite. Tente novamente; agora o relatório usa um modo mais rápido.",
+      });
+      const sectionPlan = parseJsonWithSchema(sectionPlanText, SectionPlanOutput, `section-plan-${index + 1}`);
+
+      sections.push({
+        title: sectionBody.title,
+        body: sectionBody.body,
+        plan: sectionPlan.plan,
+      });
     }
 
     yield { type: "progress" as const, progress: 72, step: "Validando a leitura recebida..." };
