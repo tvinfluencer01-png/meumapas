@@ -112,18 +112,18 @@ function NumerologySynthesis({ nums }: { nums: ReturnType<typeof computeNumerolo
             <Sparkles className="size-3.5" /> Síntese prática
           </div>
           <p className="mt-3 text-stardust font-serif text-lg leading-relaxed">
-            Seu Caminho de Vida <span className="text-gold">{nums.life_path} — {lp?.title}</span>{" "}
+            Seu Caminho de Vida <span className="text-gold">{numLabel(nums.life_path)} — {lp?.title ?? "—"}</span>{" "}
             te coloca para realizar o Destino{" "}
-            <span className="text-gold">{nums.destiny} — {ds?.title}</span>. Abaixo, o que isso
+            <span className="text-gold">{numLabel(nums.destiny)} — {ds?.title ?? "—"}</span>. Abaixo, o que isso
             significa na prática: o que esperar, o que fazer agora e o que evitar.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {[
-            { label: `Caminho de Vida ${nums.life_path}`, g: gLp, hint: "O cenário da sua jornada" },
-            { label: `Destino ${nums.destiny}`, g: gDs, hint: "O que você veio realizar" },
-            { label: `Alma ${nums.soul_urge}`, g: gSu, hint: "O que te move por dentro" },
+            { label: `Caminho de Vida ${numLabel(nums.life_path)}`, g: gLp, hint: "O cenário da sua jornada" },
+            { label: `Destino ${numLabel(nums.destiny)}`, g: gDs, hint: "O que você veio realizar" },
+            { label: `Alma ${numLabel(nums.soul_urge)}`, g: gSu, hint: "O que te move por dentro" },
           ].filter((x) => x.g).map((x) => (
             <div key={x.label} className="rounded-xl border border-gold/20 bg-background/30 p-4 space-y-2">
               <div className="text-xs uppercase tracking-widest text-gold">{x.label}</div>
