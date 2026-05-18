@@ -49,8 +49,34 @@ function AuthedLayout() {
   const [profileChecked, setProfileChecked] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [activeAddons, setActiveAddons] = useState<Set<string>>(new Set());
+  const [profileOpen, setProfileOpen] = useState(false);
 
-  useEffect(() => {
+  // Saldo de créditos + pico histórico para calcular a barra
+  const { data: credits } = useQuery({
+    queryKey: ["sidebar-credits", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const [{ data: bal }, { data: peak }] = await Promise.all([
+        supabase.from("user_credits").select("balance").eq("user_id", user!.id).maybeSingle(),
+        supabase
+          .from("credit_transactions")
+          .select("balance_after")
+          .eq("user_id", user!.id)
+          .order("balance_after", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+      ]);
+      return {
+        balance: bal?.balance ?? 0,
+        peak: Math.max(peak?.balance_after ?? 0, bal?.balance ?? 0, 5),
+      };
+    },
+    refetchOnWindowFocus: false,
+  });
+
+  const balance = credits?.balance ?? 0;
+  const peak = credits?.peak ?? 5;
+  const pct = Math.max(0, Math.min(100, (balance / peak) * 100));
     if (!loading || !user) {
       setProfileChecked(false);
     }
