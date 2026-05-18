@@ -107,9 +107,23 @@ function NumerologiaCabalisticaPage() {
         )}
       </header>
 
-      {!nums && (
+      {isLoading && (
         <div className="glass-card rounded-2xl p-12 text-center text-muted-foreground">
-          Adicione seu nome completo nos dados de nascimento para revelar a vibração cabalística.
+          Carregando seus dados…
+        </div>
+      )}
+
+      {!isLoading && error && (
+        <div className="glass-card rounded-2xl p-12 text-center text-destructive">
+          Não foi possível carregar seus dados. Tente novamente.
+        </div>
+      )}
+
+      {!isLoading && !error && !nums && (
+        <div className="glass-card rounded-2xl p-12 text-center text-muted-foreground">
+          {birth
+            ? "Seu cadastro está sem o nome completo. Atualize em Configurações para revelar a vibração cabalística."
+            : "Adicione seus dados de nascimento (com nome completo) para revelar a vibração cabalística."}
         </div>
       )}
 
