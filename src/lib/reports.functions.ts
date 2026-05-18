@@ -665,12 +665,18 @@ Regras:
         progress: 48 + index * 10,
         step: `Montando plano do capítulo ${index + 1}...`,
       };
-      const sectionPlanText = await callWithRetry({
-        prompt: makeSectionPlanPrompt(blueprint, sectionBody.body),
-        timeoutMs: 6_000,
-        errorMessage: "A geração demorou além do limite. Tente novamente; agora o relatório usa um modo mais rápido.",
-      });
-      const sectionPlan = parseJsonWithSchema(sectionPlanText, SectionPlanOutput, `section-plan-${index + 1}`);
+      let sectionPlan: z.infer<typeof SectionPlanOutput>;
+      try {
+        const sectionPlanText = await callWithRetry({
+          prompt: makeSectionPlanPrompt(blueprint, sectionBody.body),
+          timeoutMs: 4_500,
+          errorMessage: "A geração demorou além do limite. Tente novamente; agora o relatório usa um modo mais rápido.",
+        });
+        sectionPlan = parseJsonWithSchema(sectionPlanText, SectionPlanOutput, `section-plan-${index + 1}`);
+      } catch (planError) {
+        console.error(`[reports] plan fallback used (section=${index + 1})`, planError);
+        sectionPlan = createLocalSectionPlan(blueprint, sectionBody.body);
+      }
 
       sections.push({
         title: sectionBody.title,
