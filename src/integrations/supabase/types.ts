@@ -327,6 +327,42 @@ export type Database = {
         }
         Relationships: []
       }
+      kabbalah_meditations: {
+        Row: {
+          ai_model: string | null
+          created_at: string
+          duration_min: number
+          id: string
+          intention: string | null
+          script: string
+          sefirah: string
+          storage_path: string | null
+          user_id: string
+        }
+        Insert: {
+          ai_model?: string | null
+          created_at?: string
+          duration_min?: number
+          id?: string
+          intention?: string | null
+          script: string
+          sefirah: string
+          storage_path?: string | null
+          user_id: string
+        }
+        Update: {
+          ai_model?: string | null
+          created_at?: string
+          duration_min?: number
+          id?: string
+          intention?: string | null
+          script?: string
+          sefirah?: string
+          storage_path?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       mercado_pago_settings: {
         Row: {
           access_token: string | null
@@ -669,6 +705,42 @@ export type Database = {
           role?: Database["public"]["Enums"]["app_role"]
           target_email?: string | null
           target_user_id?: string
+        }
+        Relationships: []
+      }
+      tarot_readings: {
+        Row: {
+          ai_model: string | null
+          cards: Json
+          created_at: string
+          id: string
+          interpretation: string
+          question: string | null
+          spread: string
+          storage_path: string | null
+          user_id: string
+        }
+        Insert: {
+          ai_model?: string | null
+          cards?: Json
+          created_at?: string
+          id?: string
+          interpretation: string
+          question?: string | null
+          spread: string
+          storage_path?: string | null
+          user_id: string
+        }
+        Update: {
+          ai_model?: string | null
+          cards?: Json
+          created_at?: string
+          id?: string
+          interpretation?: string
+          question?: string | null
+          spread?: string
+          storage_path?: string | null
+          user_id?: string
         }
         Relationships: []
       }
