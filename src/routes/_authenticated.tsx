@@ -155,7 +155,7 @@ function AuthedLayout() {
                     <Icon className="size-4 shrink-0" />
                     <span className="flex-1 truncate">{entry.label}</span>
                     {isActive && (
-                      <span className="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-green-600 text-white">
+                      <span className="text-[8px] font-semibold uppercase leading-none px-1 py-0.5 rounded bg-green-600 text-white">
                         Ativo
                       </span>
                     )}
