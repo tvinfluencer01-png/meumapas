@@ -188,6 +188,47 @@ function CreditsDialog({
     mut.mutate(sign);
   }
 
+  const refundFn = useServerFn(adminRefundCredits);
+  const refundMut = useMutation({
+    mutationFn: (vars: { tx_id: string; action: string; amount: number; reason: string }) =>
+      refundFn({
+        data: {
+          user_id: userId,
+          action: vars.action,
+          amount: vars.amount,
+          reason: vars.reason,
+          original_tx_id: vars.tx_id,
+        },
+      }),
+    onSuccess: (res) => {
+      toast.success(`Estorno realizado: +${res.amount} créditos`);
+      refetch();
+      refetchHistory();
+      qc.invalidateQueries({ queryKey: ["addons-overview"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  function handleRefund(tx: {
+    id: string;
+    amount: number;
+    kind: string;
+    action?: string | null;
+  }) {
+    const action = tx.action || tx.kind;
+    const reason = window.prompt(
+      `Motivo do estorno desta cobrança (${action})?`,
+      "Falha na geração / cancelamento",
+    );
+    if (!reason || !reason.trim()) return;
+    refundMut.mutate({
+      tx_id: tx.id,
+      action,
+      amount: Math.abs(tx.amount),
+      reason: reason.trim(),
+    });
+  }
+
   return (
     <>
       <DialogHeader>
