@@ -10,6 +10,7 @@ import {
   RefreshCw,
   AlertTriangle,
   CalendarClock,
+  History,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,6 +34,13 @@ import {
   type CreditPackage,
   type SubscriptionAddon,
 } from "@/lib/addons.catalog";
+import { listMyCreditHistory } from "@/lib/credits.functions";
+import {
+  CreditHistoryFilters,
+  CreditHistoryTable,
+  toIsoRange,
+  useHistoryFiltersState,
+} from "@/components/CreditHistoryTable";
 
 export const Route = createFileRoute("/_authenticated/addons")({
   head: () => ({
