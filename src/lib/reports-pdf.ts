@@ -284,17 +284,20 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
 
   let isFirstHeading = true;
   function drawHeading(text: string, size = 20) {
-    // Regra: todo titulo de capitulo inicia em uma nova pagina limpa,
-    // sem repetir o titulo do capitulo no topo (evita duplicidade).
     if (!isFirstHeading) {
       cursor = newPage(pdf, cursor.pageNumber + 1);
     }
     isFirstHeading = false;
     cursor.y -= 10;
-    cursor.page.drawText(safe(text), {
-      x: MARGIN, y: cursor.y - size, size, font: serifBold, color: NIGHT,
-    });
-    cursor.y -= size + 6;
+    // Quebra titulos longos em multiplas linhas
+    const headingLines = wrap(safe(text), serifBold, size, CONTENT_W).filter((l) => l !== "");
+    for (const line of headingLines) {
+      cursor.page.drawText(line, {
+        x: MARGIN, y: cursor.y - size, size, font: serifBold, color: NIGHT,
+      });
+      cursor.y -= size + 4;
+    }
+    cursor.y -= 2;
     cursor.page.drawLine({
       start: { x: MARGIN, y: cursor.y },
       end: { x: MARGIN + 48, y: cursor.y },
@@ -303,22 +306,66 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
     cursor.y -= 18;
   }
 
-  function drawParagraph(text: string, opts?: { italic?: boolean; size?: number; color?: ReturnType<typeof rgb> }) {
+  function drawParagraph(text: string, opts?: { italic?: boolean; size?: number; color?: ReturnType<typeof rgb>; justify?: boolean }) {
     const size = opts?.size ?? 11;
     const font = opts?.italic ? serifItalic : serif;
     const color = opts?.color ?? INK;
-    const lines = wrap(safe(text), font, size, CONTENT_W);
+    const justify = opts?.justify ?? true;
     const lineHeight = size * 1.55;
-    for (const line of lines) {
-      ensureSpace(lineHeight);
-      if (line) {
-        cursor.page.drawText(line, {
-          x: MARGIN, y: cursor.y - size, size, font, color,
-        });
+    const spaceW = font.widthOfTextAtSize(" ", size);
+    const paragraphs = safe(text).split(/\n+/);
+
+    for (const paraRaw of paragraphs) {
+      const para = paraRaw.trim();
+      if (!para) {
+        cursor.y -= lineHeight * 0.5;
+        continue;
       }
-      cursor.y -= lineHeight;
+      const words = para.split(/\s+/);
+      const lines: string[][] = [];
+      let current: string[] = [];
+      let currentWidth = 0;
+      for (const w of words) {
+        const wWidth = font.widthOfTextAtSize(w, size);
+        if (current.length === 0) {
+          current = [w];
+          currentWidth = wWidth;
+        } else {
+          const tentative = currentWidth + spaceW + wWidth;
+          if (tentative > CONTENT_W) {
+            lines.push(current);
+            current = [w];
+            currentWidth = wWidth;
+          } else {
+            current.push(w);
+            currentWidth = tentative;
+          }
+        }
+      }
+      if (current.length) lines.push(current);
+
+      for (let li = 0; li < lines.length; li++) {
+        const lineWords = lines[li];
+        const isLast = li === lines.length - 1;
+        ensureSpace(lineHeight);
+        if (justify && !isLast && lineWords.length > 1) {
+          const wordsWidth = lineWords.reduce((s, w) => s + font.widthOfTextAtSize(w, size), 0);
+          const gaps = lineWords.length - 1;
+          const gap = Math.min((CONTENT_W - wordsWidth) / gaps, spaceW * 4);
+          let x = MARGIN;
+          for (const w of lineWords) {
+            cursor.page.drawText(w, { x, y: cursor.y - size, size, font, color });
+            x += font.widthOfTextAtSize(w, size) + gap;
+          }
+        } else {
+          cursor.page.drawText(lineWords.join(" "), {
+            x: MARGIN, y: cursor.y - size, size, font, color,
+          });
+        }
+        cursor.y -= lineHeight;
+      }
+      cursor.y -= 4;
     }
-    cursor.y -= 4;
   }
 
   function drawBulletList(items: string[]) {
