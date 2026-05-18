@@ -18,6 +18,7 @@ import { Route as AuthenticatedRelatoriosRouteImport } from './routes/_authentic
 import { Route as AuthenticatedOraculoRouteImport } from './routes/_authenticated.oraculo'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated.onboarding'
 import { Route as AuthenticatedNumerologiaRouteImport } from './routes/_authenticated.numerologia'
+import { Route as AuthenticatedMeditacaoRouteImport } from './routes/_authenticated.meditacao'
 import { Route as AuthenticatedMapaAstralRouteImport } from './routes/_authenticated.mapa-astral'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated.dashboard'
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated.configuracoes'
@@ -70,6 +71,11 @@ const AuthenticatedNumerologiaRoute =
     path: '/numerologia',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedMeditacaoRoute = AuthenticatedMeditacaoRouteImport.update({
+  id: '/meditacao',
+  path: '/meditacao',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedMapaAstralRoute = AuthenticatedMapaAstralRouteImport.update({
   id: '/mapa-astral',
   path: '/mapa-astral',
@@ -110,6 +116,7 @@ export interface FileRoutesByFullPath {
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/mapa-astral': typeof AuthenticatedMapaAstralRoute
+  '/meditacao': typeof AuthenticatedMeditacaoRoute
   '/numerologia': typeof AuthenticatedNumerologiaRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/oraculo': typeof AuthenticatedOraculoRoute
@@ -126,6 +133,7 @@ export interface FileRoutesByTo {
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/mapa-astral': typeof AuthenticatedMapaAstralRoute
+  '/meditacao': typeof AuthenticatedMeditacaoRoute
   '/numerologia': typeof AuthenticatedNumerologiaRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/oraculo': typeof AuthenticatedOraculoRoute
@@ -144,6 +152,7 @@ export interface FileRoutesById {
   '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/mapa-astral': typeof AuthenticatedMapaAstralRoute
+  '/_authenticated/meditacao': typeof AuthenticatedMeditacaoRoute
   '/_authenticated/numerologia': typeof AuthenticatedNumerologiaRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/oraculo': typeof AuthenticatedOraculoRoute
@@ -162,6 +171,7 @@ export interface FileRouteTypes {
     | '/configuracoes'
     | '/dashboard'
     | '/mapa-astral'
+    | '/meditacao'
     | '/numerologia'
     | '/onboarding'
     | '/oraculo'
@@ -178,6 +188,7 @@ export interface FileRouteTypes {
     | '/configuracoes'
     | '/dashboard'
     | '/mapa-astral'
+    | '/meditacao'
     | '/numerologia'
     | '/onboarding'
     | '/oraculo'
@@ -195,6 +206,7 @@ export interface FileRouteTypes {
     | '/_authenticated/configuracoes'
     | '/_authenticated/dashboard'
     | '/_authenticated/mapa-astral'
+    | '/_authenticated/meditacao'
     | '/_authenticated/numerologia'
     | '/_authenticated/onboarding'
     | '/_authenticated/oraculo'
@@ -276,6 +288,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedNumerologiaRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/meditacao': {
+      id: '/_authenticated/meditacao'
+      path: '/meditacao'
+      fullPath: '/meditacao'
+      preLoaderRoute: typeof AuthenticatedMeditacaoRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/mapa-astral': {
       id: '/_authenticated/mapa-astral'
       path: '/mapa-astral'
@@ -338,6 +357,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedMapaAstralRoute: typeof AuthenticatedMapaAstralRoute
+  AuthenticatedMeditacaoRoute: typeof AuthenticatedMeditacaoRoute
   AuthenticatedNumerologiaRoute: typeof AuthenticatedNumerologiaRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedOraculoRoute: typeof AuthenticatedOraculoRoute
@@ -351,6 +371,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedMapaAstralRoute: AuthenticatedMapaAstralRoute,
+  AuthenticatedMeditacaoRoute: AuthenticatedMeditacaoRoute,
   AuthenticatedNumerologiaRoute: AuthenticatedNumerologiaRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedOraculoRoute: AuthenticatedOraculoRoute,
