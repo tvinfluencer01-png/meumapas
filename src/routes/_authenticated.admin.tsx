@@ -224,7 +224,7 @@ function UsersAdmin() {
         ) : !data?.users.length ? (
           <div className="text-muted-foreground text-sm">Nenhum usuário encontrado.</div>
         ) : (
-          <div className="rounded-md border border-border overflow-x-auto">
+          <div className="rounded-md border border-border overflow-hidden">
             <table className="w-full text-sm">
               <thead className="bg-secondary/40 text-left">
                 <tr>
@@ -806,7 +806,7 @@ function RoleAuditLog() {
         ) : !data?.entries.length ? (
           <div className="text-muted-foreground text-sm">Nenhuma alteração registrada ainda.</div>
         ) : (
-          <div className="rounded-md border border-border overflow-x-auto">
+          <div className="rounded-md border border-border overflow-hidden">
             <table className="w-full text-sm">
               <thead className="bg-secondary/40 text-left">
                 <tr>

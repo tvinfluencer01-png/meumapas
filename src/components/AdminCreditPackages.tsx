@@ -131,7 +131,7 @@ export function AdminCreditPackages() {
             Nenhum pacote cadastrado ainda.
           </div>
         ) : (
-          <div className="rounded-md border border-border overflow-x-auto">
+          <div className="rounded-md border border-border overflow-hidden">
             <table className="w-full text-sm">
               <thead className="bg-secondary/40 text-left">
                 <tr>

@@ -47,28 +47,12 @@ function AuthedLayout() {
   const [profileChecked, setProfileChecked] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [activeAddons, setActiveAddons] = useState<Set<string>>(new Set());
-  const pathname = router.state.location.pathname;
 
-  // Reset profile check only when the session actually changes (login/logout)
   useEffect(() => {
-    if (!user) setProfileChecked(false);
-  }, [user]);
-
-  // Close mobile drawer on route change, login/logout, or while auth is loading
-  useEffect(() => {
-    setOpen(false);
-  }, [pathname, user, loading]);
-
-  // Lock body scroll when mobile drawer is open; always unlock on cleanup
-  useEffect(() => {
-    if (typeof document === "undefined") return;
-    if (open) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
+    if (!loading || !user) {
+      setProfileChecked(false);
     }
-    return () => { document.body.style.overflow = ""; };
-  }, [open]);
+  }, [loading, user]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -79,27 +63,23 @@ function AuthedLayout() {
   useEffect(() => {
     if (loading || !user) return;
     (async () => {
-      try {
-        const [{ data: profile }, { data: role }, { data: subs }] = await Promise.all([
-          supabase.from("profiles").select("onboarding_completed").eq("id", user.id).maybeSingle(),
-          supabase.from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle(),
-          supabase.from("user_subscriptions").select("addon_id, status, current_period_end").eq("user_id", user.id).eq("status", "active"),
-        ]);
-
-        setIsAdmin(!!role);
-        const now = Date.now();
-        setActiveAddons(new Set(
-          (subs ?? [])
-            .filter((s) => !s.current_period_end || new Date(s.current_period_end).getTime() > now)
-            .map((s) => s.addon_id),
-        ));
-
-        if (profile && !profile.onboarding_completed && pathname !== "/onboarding") {
-          router.navigate({ to: "/onboarding" });
-        }
-      } finally {
-        setProfileChecked(true);
+      const [{ data: profile }, { data: role }, { data: subs }] = await Promise.all([
+        supabase.from("profiles").select("onboarding_completed").eq("id", user.id).maybeSingle(),
+        supabase.from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle(),
+        supabase.from("user_subscriptions").select("addon_id, status, current_period_end").eq("user_id", user.id).eq("status", "active"),
+      ]);
+      setIsAdmin(!!role);
+      const now = Date.now();
+      setActiveAddons(new Set(
+        (subs ?? [])
+          .filter((s) => !s.current_period_end || new Date(s.current_period_end).getTime() > now)
+          .map((s) => s.addon_id),
+      ));
+      const path = router.state.location.pathname;
+      if (profile && !profile.onboarding_completed && path !== "/onboarding") {
+        router.navigate({ to: "/onboarding" });
       }
+      setProfileChecked(true);
     })();
   }, [loading, user, router]);
 
@@ -108,7 +88,7 @@ function AuthedLayout() {
     router.navigate({ to: "/" });
   }
 
-  if (loading || !user) {
+  if (loading || !user || !profileChecked) {
     return (
       <div className="min-h-screen grid place-items-center bg-background">
         <Sparkles className="size-8 text-gold animate-pulse" />
@@ -117,51 +97,32 @@ function AuthedLayout() {
   }
 
   return (
-    <div className="relative isolate min-h-screen bg-background text-foreground [overflow-x:clip]">
+    <div className="relative min-h-screen bg-background text-foreground">
       <Starfield count={60} className="fixed" />
 
       {/* Mobile top bar */}
-      <header className="lg:hidden fixed inset-x-0 top-0 z-50 flex min-h-16 items-center justify-between border-b border-border bg-background/95 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-xl">
+      <header className="lg:hidden sticky top-0 z-30 flex items-center justify-between border-b border-border bg-background/80 backdrop-blur px-4 py-3">
         <Link to="/dashboard" className="flex items-center gap-2">
           <Sparkles className="size-5 text-gold" />
           <span className="font-serif text-lg shimmer-text">Cosmic AI</span>
         </Link>
-        <Button variant="ghost" size="icon" aria-label="Abrir menu" onClick={() => setOpen(!open)}>
+        <Button variant="ghost" size="icon" onClick={() => setOpen(!open)}>
           {open ? <X className="size-5" /> : <Menu className="size-5" />}
         </Button>
       </header>
 
-      {/* Mobile backdrop */}
-      {open && (
-        <div
-          onClick={() => setOpen(false)}
-          className="lg:hidden fixed inset-0 z-40 bg-background/70 backdrop-blur-sm"
-        />
-      )}
-
-      <div className="relative z-0 flex">
+      <div className="relative z-10 flex">
         {/* Sidebar */}
-        <aside
-          className={`${open ? "flex" : "hidden"} lg:flex flex-col fixed lg:sticky top-0 z-50 lg:z-auto h-[100dvh] w-[85%] max-w-xs lg:w-64 border-r border-border bg-background/95 backdrop-blur-xl`}
-        >
-          <div className="hidden lg:flex items-center gap-2 px-6 py-6 border-b border-border shrink-0">
+        <aside className={`${open ? "block" : "hidden"} lg:block fixed lg:sticky inset-0 lg:inset-auto lg:top-0 z-20 lg:z-auto h-screen w-full lg:w-64 border-r border-border bg-background/90 backdrop-blur-xl`}>
+          <div className="hidden lg:flex items-center gap-2 px-6 py-6 border-b border-border">
             <Sparkles className="size-6 text-gold" />
             <span className="font-serif text-xl shimmer-text">Cosmic AI</span>
           </div>
-          <div className="lg:hidden flex items-center justify-between px-4 py-3 border-b border-border shrink-0 pt-[max(0.75rem,env(safe-area-inset-top))]">
-            <div className="flex items-center gap-2">
-              <Sparkles className="size-5 text-gold" />
-              <span className="font-serif text-lg shimmer-text">Cosmic AI</span>
-            </div>
-            <Button variant="ghost" size="icon" aria-label="Fechar menu" onClick={() => setOpen(false)}>
-              <X className="size-5" />
-            </Button>
-          </div>
-          <nav className="p-4 space-y-1 overflow-y-auto flex-1 overscroll-contain">
+          <nav className="p-4 space-y-1">
             {NAV.filter((item) => !item.addonId || activeAddons.has(item.addonId)).map((item) => (
               <Link
                 key={item.to} to={item.to} onClick={() => setOpen(false)}
-                className="flex items-center gap-3 px-3 py-3 lg:py-2.5 rounded-lg text-sm text-muted-foreground hover:text-gold hover:bg-secondary/40 transition-colors"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-gold hover:bg-secondary/40 transition-colors"
                 activeProps={{ className: "bg-secondary text-gold border border-gold/20" }}
               >
                 <item.icon className="size-4" /> {item.label}
@@ -170,7 +131,7 @@ function AuthedLayout() {
             {isAdmin && (
               <Link
                 to="/admin" onClick={() => setOpen(false)}
-                className="flex items-center gap-3 px-3 py-3 lg:py-2.5 rounded-lg text-sm text-muted-foreground hover:text-gold hover:bg-secondary/40 transition-colors"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-gold hover:bg-secondary/40 transition-colors"
                 activeProps={{ className: "bg-secondary text-gold border border-gold/20" }}
               >
                 <Shield className="size-4" /> Admin
@@ -188,7 +149,7 @@ function AuthedLayout() {
                     key={id}
                     to={entry.to}
                     onClick={() => setOpen(false)}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-gold hover:bg-secondary/40 transition-colors"
+                    className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-gold hover:bg-secondary/40 transition-colors"
                     activeProps={{ className: "bg-secondary text-gold border border-gold/20" }}
                   >
                     <Icon className="size-4 shrink-0" />
@@ -203,7 +164,7 @@ function AuthedLayout() {
               })}
             </div>
           </nav>
-          <div className="p-4 border-t border-border shrink-0 pb-[max(1rem,env(safe-area-inset-bottom))]">
+          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border">
             <div className="text-xs text-muted-foreground truncate mb-2">{user?.email}</div>
             <Button onClick={handleSignOut} variant="ghost" size="sm" className="w-full justify-start text-muted-foreground hover:text-destructive">
               <LogOut className="size-4 mr-2" /> Sair
@@ -211,15 +172,9 @@ function AuthedLayout() {
           </div>
         </aside>
 
-        <main className="flex-1 min-w-0 min-h-screen pt-[calc(4.25rem+env(safe-area-inset-top))] lg:pt-0 lg:pl-0">
-          <div className="p-3 sm:p-4 lg:p-8 max-w-7xl mx-auto pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-            {profileChecked ? (
-              <Outlet />
-            ) : (
-              <div className="min-h-[60vh] grid place-items-center">
-                <Sparkles className="size-8 text-gold animate-pulse" />
-              </div>
-            )}
+        <main className="flex-1 min-h-screen lg:pl-0">
+          <div className="p-4 lg:p-8 max-w-7xl mx-auto">
+            <Outlet />
           </div>
         </main>
       </div>
