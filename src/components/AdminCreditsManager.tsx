@@ -322,6 +322,59 @@ function CreditsDialog({
 
       <div className="border-t border-border pt-3 space-y-3">
         <div className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+          <Package className="size-3" /> Aplicar pacote de créditos
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2 items-end">
+          <div>
+            <Label className="text-xs">Pacote</Label>
+            <Select value={packageId} onValueChange={setPackageId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione um pacote…" />
+              </SelectTrigger>
+              <SelectContent>
+                {(pkgData?.packages ?? [])
+                  .filter((p) => p.active)
+                  .map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name} — +{p.credits} créd. ·{" "}
+                      {(p.price_cents / 100).toLocaleString("pt-BR", {
+                        style: "currency",
+                        currency: p.currency || "BRL",
+                      })}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs">Observação (opcional)</Label>
+            <Input
+              value={packageNote}
+              onChange={(e) => setPackageNote(e.target.value)}
+              placeholder="Ex: pago via Pix, recibo #123"
+              maxLength={240}
+            />
+          </div>
+          <Button
+            onClick={() => {
+              if (!packageId) return toast.error("Selecione um pacote.");
+              applyMut.mutate();
+            }}
+            disabled={applyMut.isPending || !packageId}
+          >
+            <Package className="size-4 mr-1" />
+            {applyMut.isPending ? "Lançando…" : "Lançar saldo"}
+          </Button>
+        </div>
+        {!pkgData?.packages.length && (
+          <p className="text-xs text-muted-foreground">
+            Nenhum pacote cadastrado. Crie pacotes na seção &quot;Pacotes de créditos&quot;.
+          </p>
+        )}
+      </div>
+
+      <div className="border-t border-border pt-3 space-y-3">
+        <div className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1">
           <History className="size-3" /> Histórico detalhado
         </div>
         <CreditHistoryFilters
