@@ -284,18 +284,22 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
 
   let isFirstHeading = true;
   function drawHeading(text: string, size = 20) {
-    if (!isFirstHeading) {
+    const headingLines = wrap(safe(text), serifBold, size, CONTENT_W).filter((l) => l !== "");
+    const neededHeight = 10 + headingLines.length * (size + 4) + 2 + 18 + size * 1.4 * 3; // titulo + 3 linhas de conteudo
+    // So vai para nova pagina se nao for o primeiro titulo E nao houver
+    // espaco suficiente. Evita desperdicar paginas para cada secao.
+    if (!isFirstHeading && cursor.y - neededHeight < MARGIN) {
       cursor = newPage(pdf, cursor.pageNumber + 1);
+    } else if (!isFirstHeading) {
+      cursor.y -= 16; // respiro antes do proximo titulo, sem trocar de pagina
     }
     isFirstHeading = false;
-    cursor.y -= 10;
-    // Quebra titulos longos em multiplas linhas
-    const headingLines = wrap(safe(text), serifBold, size, CONTENT_W).filter((l) => l !== "");
+    cursor.y -= 6;
     for (const line of headingLines) {
       cursor.page.drawText(line, {
         x: MARGIN, y: cursor.y - size, size, font: serifBold, color: NIGHT,
       });
-      cursor.y -= size + 4;
+      cursor.y -= size + 3;
     }
     cursor.y -= 2;
     cursor.page.drawLine({
@@ -303,8 +307,9 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
       end: { x: MARGIN + 48, y: cursor.y },
       color: GOLD, thickness: 1.2,
     });
-    cursor.y -= 18;
+    cursor.y -= 12;
   }
+
 
   // Quebra silábica simples (PT-BR friendly): retorna posições de corte
   // válidas dentro da palavra, deixando pelo menos 2 chars de cada lado.
