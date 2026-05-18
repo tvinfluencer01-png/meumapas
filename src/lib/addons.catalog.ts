@@ -112,6 +112,54 @@ export const SUBSCRIPTION_ADDONS: SubscriptionAddon[] = [
       "Exportação em PDF",
     ],
   },
+  {
+    id: "sub_unlimited_finance",
+    name: "Questões Financeiras Ilimitado",
+    price_cents: 2990,
+    description: "Relatórios ilimitados de Questões Financeiras baseados no seu mapa e numerologia.",
+    features: [
+      "Análise SWOT financeira personalizada",
+      "Plano de 7 dias (melhorar/evitar/seguir)",
+      "Sugestões práticas com justificativa astrológica",
+      "Exportação em PDF",
+    ],
+  },
+  {
+    id: "sub_unlimited_family",
+    name: "Vida Familiar Ilimitado",
+    price_cents: 2990,
+    description: "Relatórios ilimitados de Vida Familiar baseados no seu mapa e numerologia.",
+    features: [
+      "Dinâmicas familiares aprofundadas",
+      "Plano de 7 dias para harmonia em casa",
+      "Sugestões personalizadas por signo e numerologia",
+      "Exportação em PDF",
+    ],
+  },
+  {
+    id: "sub_unlimited_health",
+    name: "Saúde Ilimitado",
+    price_cents: 2990,
+    description: "Relatórios ilimitados de Saúde baseados no seu mapa e numerologia.",
+    features: [
+      "Tendências de bem-estar do mapa astral",
+      "Plano de 7 dias com hábitos saudáveis",
+      "Sugestões integrativas com justificativa astrológica",
+      "Exportação em PDF",
+    ],
+  },
+  {
+    id: "sub_unlimited_friendships",
+    name: "Amizades Ilimitado",
+    price_cents: 2990,
+    description: "Relatórios ilimitados de Amizades baseados no seu mapa e numerologia.",
+    features: [
+      "Estilo de vínculo e compatibilidades",
+      "Plano de 7 dias para cultivar relações",
+      "Sugestões com base em planetas e números",
+      "Exportação em PDF",
+    ],
+  },
 ];
 
 export function formatBRL(cents: number) {
