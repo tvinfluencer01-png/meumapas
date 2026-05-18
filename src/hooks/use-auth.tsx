@@ -25,17 +25,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const qc = useQueryClient();
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, s) => {
       setSession(s);
       router.invalidate();
       qc.invalidateQueries();
+      if (event === "SIGNED_OUT" || (!s && event !== "INITIAL_SESSION")) {
+        router.navigate({ to: "/auth", replace: true });
+      }
     });
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
+
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      let current = data.session;
+      // Proactively refresh if the access token is expired or about to expire
+      const exp = current?.expires_at ?? 0;
+      const nowSec = Math.floor(Date.now() / 1000);
+      if (current && exp - nowSec < 60) {
+        const { data: refreshed, error } = await supabase.auth.refreshSession();
+        if (error) {
+          await supabase.auth.signOut();
+          current = null;
+        } else {
+          current = refreshed.session;
+        }
+      }
+      setSession(current);
       setLoading(false);
-    });
+    })();
+
     return () => subscription.unsubscribe();
   }, [router, qc]);
+
 
   return (
     <Ctx.Provider
