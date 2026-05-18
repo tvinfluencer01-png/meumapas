@@ -30,7 +30,7 @@ export async function consumeCredits(
     _user_id: userId,
     _amount: amount,
     _kind: action,
-    _reference: reference ?? null,
+    _reference: reference,
   });
   if (error) {
     console.error("[credits] consume error", error);
@@ -105,7 +105,12 @@ async function assertAdmin(userId: string) {
 
 const AdjustSchema = z.object({
   user_id: z.string().uuid(),
-  amount: z.number().int().refine((n) => n !== 0, "Valor não pode ser zero").min(-10000).max(10000),
+  amount: z
+    .number()
+    .int()
+    .min(-10000)
+    .max(10000)
+    .refine((n) => n !== 0, "Valor não pode ser zero"),
   reason: z.string().trim().min(1, "Informe um motivo").max(240),
 });
 
@@ -114,15 +119,17 @@ export const adminAdjustCredits = createServerFn({ method: "POST" })
   .inputValidator((d) => AdjustSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
-    const kind = data.amount > 0 ? "admin_grant" : "admin_revoke";
+    const amount: number = data.amount;
+    const kind = amount > 0 ? "admin_grant" : "admin_revoke";
+    const reference: string = `[admin:${context.userId}] ${data.reason}`;
     const { data: newBalance, error } = await supabaseAdmin.rpc("adjust_credits", {
       _user_id: data.user_id,
-      _amount: data.amount,
+      _amount: amount,
       _kind: kind,
-      _reference: `[admin:${context.userId}] ${data.reason}`,
+      _reference: reference,
     });
     if (error) throw new Error(error.message);
-    return { balance: newBalance as number };
+    return { balance: (newBalance as number) ?? 0 };
   });
 
 export const adminGetUserCredits = createServerFn({ method: "POST" })
