@@ -105,6 +105,7 @@ function AdminPage() {
         </TabsContent>
         <TabsContent value="credits" className="mt-0 space-y-6">
           <AdminCreditCosts />
+          <AdminCreditPackages />
           <AdminCreditsManager />
         </TabsContent>
       </Tabs>
