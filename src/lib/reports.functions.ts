@@ -769,7 +769,10 @@ Regras:
       timeoutMs: 16_000,
       errorMessage: "A geração demorou além do limite. Tente novamente; agora o relatório usa um modo mais rápido.",
     });
-    const base = parseJsonWithSchema(baseText, BaseAiOutput, "base");
+    const base = parseJsonWithSchema(baseText, BaseAiOutput, "base", {
+      normalize: normalizeBasePayload,
+      fallback: normalizeBasePayload(null) as z.infer<typeof BaseAiOutput>,
+    });
 
     const sections: z.infer<typeof SectionOutput>[] = [];
     for (const [index, blueprint] of base.sectionBlueprints.entries()) {
@@ -783,7 +786,10 @@ Regras:
         timeoutMs: 7_500,
         errorMessage: "A geração demorou além do limite. Tente novamente; agora o relatório usa um modo mais rápido.",
       });
-      const sectionBody = parseJsonWithSchema(sectionBodyText, SectionBodyOutput, `section-body-${index + 1}`);
+      const sectionBody = parseJsonWithSchema(sectionBodyText, SectionBodyOutput, `section-body-${index + 1}`, {
+        normalize: (parsed) => normalizeSectionPayload(parsed, blueprint),
+        fallback: normalizeSectionPayload(null, blueprint) as z.infer<typeof SectionBodyOutput>,
+      });
 
       yield {
         type: "progress" as const,
