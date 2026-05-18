@@ -16,7 +16,8 @@ export type SimplePdfBlock =
   | { type: "list"; items: string[] }
   | { type: "kv"; rows: { k: string; v: string }[] }
   | { type: "hebrew-hero"; letter: string; name: string; transliteration: string; meaning: string }
-  | { type: "hebrew-row"; letter: string; name: string; value: number | string; meaning: string };
+  | { type: "hebrew-row"; letter: string; name: string; value: number | string; meaning: string }
+  | { type: "hebrew-name"; latinName: string; hebrewWords: string[]; caption?: string };
 
 export type SimplePdfData = {
   brand: string; // ex: "Cosmic AI"
@@ -241,6 +242,53 @@ export async function buildSimplePdf(data: SimplePdfData): Promise<Uint8Array> {
         my -= 12;
       }
       y -= Math.max(22, mLines.length * 12 + 4);
+    } else if (block.type === "hebrew-name") {
+      // Bloco com o nome do consulente transliterado em hebraico (RTL)
+      ensureSpace(110);
+      const boxH = 100;
+      page.drawRectangle({
+        x: margin, y: y - boxH, width: contentW, height: boxH,
+        color: rgb(0.98, 0.96, 0.88), borderColor: accent, borderWidth: 1,
+      });
+      page.drawText(sanitize("SEU NOME EM HEBRAICO"), {
+        x: margin + 14, y: y - 18, size: 10, font: fontBold, color: accent,
+      });
+      page.drawText(sanitize(block.latinName), {
+        x: margin + 14, y: y - 34, size: 12, font: fontBold, color: ink,
+      });
+      // Linha das palavras em hebraico — desenhamos da direita para a esquerda
+      if (fontHebrew) {
+        const hSize = 30;
+        const gap = 18;
+        // Inverte cada palavra para leitura visual RTL ao desenhar LTR
+        const reversedWords = block.hebrewWords.map((w) => w.split("").reverse().join(""));
+        // Mede largura total
+        const widths = reversedWords.map((w) => fontHebrew!.widthOfTextAtSize(w, hSize));
+        const totalW = widths.reduce((a, b) => a + b, 0) + gap * Math.max(0, reversedWords.length - 1);
+        // Começa pelo lado direito; ordem visual: palavras na mesma ordem do nome latino,
+        // mas dispostas da direita para a esquerda.
+        let xCursor = margin + contentW - 16 - (contentW - 28 - totalW) / 2;
+        // Mais simples: centralizar bloco e desenhar palavras invertendo ordem
+        let drawX = margin + (contentW - totalW) / 2;
+        for (let i = 0; i < reversedWords.length; i++) {
+          page.drawText(reversedWords[i], {
+            x: drawX, y: y - 78, size: hSize, font: fontHebrew, color: accent,
+          });
+          drawX += widths[i] + gap;
+        }
+        void xCursor;
+      } else {
+        page.drawText(sanitize("(fonte hebraica indisponível)"), {
+          x: margin + 14, y: y - 70, size: 11, font: fontItalic, color: muted,
+        });
+      }
+      if (block.caption) {
+        const cLines = wrap(block.caption, fontItalic, 9, contentW - 28);
+        page.drawText(sanitize(cLines[0] ?? ""), {
+          x: margin + 14, y: y - boxH + 10, size: 9, font: fontItalic, color: muted,
+        });
+      }
+      y -= boxH + 12;
     } else if (block.type === "p") {
       const lines = wrap(block.text, font, 11, contentW);
       for (const ln of lines) {

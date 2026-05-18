@@ -95,6 +95,49 @@ const HEBREW_ALPHABET: { letter: string; name: string; value: number; meaning: s
   { letter: "ת", name: "Tav", value: 400, meaning: "Cruz / Selo — verdade, completude, marca." },
 ];
 
+// Transliteração Latim → Hebraico (aproximação fonética usada na cabala ocidental).
+// Cada letra latina é mapeada para uma letra hebraica; X vira duas letras (קס).
+const LATIN_TO_HEBREW: Record<string, string> = {
+  A: "א", B: "ב", C: "כ", D: "ד", E: "ע", F: "פ", G: "ג", H: "ה",
+  I: "י", J: "י", K: "כ", L: "ל", M: "מ", N: "נ", O: "ו", P: "פ",
+  Q: "ק", R: "ר", S: "ס", T: "ת", U: "ו", V: "ו", W: "ו", X: "קס",
+  Y: "י", Z: "ז",
+};
+// Formas finais (sofit) — aplicadas à última letra de cada palavra.
+const FINAL_FORM: Record<string, string> = {
+  "כ": "ך", "מ": "ם", "נ": "ן", "פ": "ף", "צ": "ץ",
+};
+
+function transliterateWord(latinWord: string): string {
+  const clean = stripDiacritics(latinWord).replace(/[^A-Z]/g, "");
+  let heb = "";
+  for (const ch of clean) heb += LATIN_TO_HEBREW[ch] ?? "";
+  // Aplica forma final na última letra (se existir variante sofit)
+  if (heb.length > 0) {
+    const last = heb[heb.length - 1];
+    if (FINAL_FORM[last]) heb = heb.slice(0, -1) + FINAL_FORM[last];
+  }
+  return heb;
+}
+
+function transliterateName(fullName: string): { words: string[]; latinWords: string[]; uniqueLetters: string[] } {
+  const latinWords = fullName.trim().split(/\s+/).filter(Boolean);
+  const words = latinWords.map(transliterateWord);
+  const seen = new Set<string>();
+  const uniqueLetters: string[] = [];
+  for (const w of words) {
+    for (const ch of w) {
+      // Normaliza forma final para a base ao listar letras únicas para meditação
+      const base = Object.entries(FINAL_FORM).find(([, f]) => f === ch)?.[0] ?? ch;
+      if (!seen.has(base)) {
+        seen.add(base);
+        uniqueLetters.push(base);
+      }
+    }
+  }
+  return { words, latinWords, uniqueLetters };
+}
+
 const CARDS = [
   { key: "destiny" as const, label: "Destino", icon: Sparkles, desc: "Vibração total do seu nome completo." },
   { key: "soul" as const, label: "Alma (Vogais)", icon: Heart, desc: "O que move seu interior sagrado." },
@@ -356,8 +399,45 @@ function NumerologiaCabalisticaPage() {
           `harmonizam no serviço.`,
       });
 
+      // ───── Nome em hebraico + letras para meditação ─────
+      const trans = transliterateName(fullName);
+      blocks.push({ type: "h2", text: "V. Seu nome em hebraico e letras para meditação" });
+      blocks.push({
+        type: "p",
+        text:
+          "Abaixo, seu nome completo transliterado para o alfabeto hebraico (Otiyot), seguindo a correspondência " +
+          "fonética usada pela cabala ocidental. A leitura é da direita para a esquerda, como manda a tradição. " +
+          "Esta não é a grafia oficial em hebraico — é uma ferramenta vibracional para meditação e contemplação " +
+          "das letras que compõem o som do seu nome.",
+      });
+      blocks.push({
+        type: "hebrew-name",
+        latinName: fullName,
+        hebrewWords: trans.words,
+        caption: "Leia da direita para a esquerda. Cada letra carrega uma vibração — contemple a forma antes do som.",
+      });
+      blocks.push({ type: "h3", text: "Letras do seu nome — guia de meditação" });
+      blocks.push({
+        type: "p",
+        text:
+          "As letras a seguir aparecem no seu nome em hebraico. Medite uma letra por dia: visualize-a desenhada " +
+          "em ouro sobre fundo violeta, pronuncie seu nome três vezes, e permaneça em silêncio por alguns minutos " +
+          "absorvendo sua qualidade. Em poucos dias você terá percorrido a essência vibracional do seu nome.",
+      });
+      trans.uniqueLetters.forEach((heb) => {
+        const info = HEBREW_ALPHABET.find((l) => l.letter === heb);
+        if (!info) return;
+        blocks.push({
+          type: "hebrew-row",
+          letter: info.letter,
+          name: info.name,
+          value: info.value,
+          meaning: `${info.meaning} Meditação: contemple a forma da letra ${info.name} por 5 minutos, respirando seu som em silêncio.`,
+        });
+      });
+
       // ───── Análise prática e direção personalizada ─────
-      blocks.push({ type: "h2", text: "V. Análise prática — o que fazer com isto" });
+      blocks.push({ type: "h2", text: "VI. Análise prática — o que fazer com isto" });
       if (tips) {
         blocks.push({
           type: "p",
@@ -403,7 +483,7 @@ function NumerologiaCabalisticaPage() {
         });
       }
 
-      blocks.push({ type: "h2", text: "VI. Práticas cabalísticas recomendadas" });
+      blocks.push({ type: "h2", text: "VII. Práticas cabalísticas recomendadas" });
       blocks.push({
         type: "list",
         items: [
@@ -417,7 +497,7 @@ function NumerologiaCabalisticaPage() {
         ],
       });
 
-      blocks.push({ type: "h2", text: "VII. Considerações finais" });
+      blocks.push({ type: "h2", text: "VIII. Considerações finais" });
       blocks.push({
         type: "p",
         text:
@@ -555,6 +635,50 @@ function NumerologiaCabalisticaPage() {
               })}
             </div>
           </div>
+
+          {(() => {
+            const trans = transliterateName(fullName);
+            if (!trans.words.length) return null;
+            return (
+              <div className="glass-card rounded-2xl p-6">
+                <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground">
+                  <TreePine className="size-3.5 text-gold" /> Seu nome em hebraico
+                </div>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Transliteração fonética para meditação. Leia da direita para a esquerda.
+                </p>
+                <div
+                  className="font-serif text-5xl md:text-6xl text-gold text-center mt-4 leading-tight"
+                  lang="he"
+                  dir="rtl"
+                >
+                  {trans.words.join(" ")}
+                </div>
+                <p className="text-xs text-muted-foreground text-center mt-2 italic">{fullName}</p>
+
+                <div className="mt-6">
+                  <div className="text-xs uppercase tracking-widest text-gold mb-3">
+                    Letras para meditação
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                    {trans.uniqueLetters.map((heb) => {
+                      const info = HEBREW_ALPHABET.find((l) => l.letter === heb);
+                      if (!info) return null;
+                      return (
+                        <div key={heb} className="rounded-lg border border-gold/15 bg-background/30 p-3 flex items-center gap-3">
+                          <div className="font-serif text-3xl text-gold leading-none" lang="he" dir="rtl">{info.letter}</div>
+                          <div className="min-w-0">
+                            <div className="text-stardust font-medium">{info.name}</div>
+                            <div className="text-xs text-muted-foreground truncate">{info.meaning.split("—")[0].trim()}</div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
 
           <div className="glass-card rounded-2xl p-6">
             <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground">
