@@ -109,7 +109,7 @@ export function CosmicLoaderOverlay() {
             <div className="absolute inset-0 rounded-full border border-gold/30 animate-slow-spin" />
             <div className="absolute inset-2 rounded-full border border-gold/20 animate-spin" style={{ animationDuration: "8s" }} />
             <div className="absolute inset-0 grid place-items-center">
-              <Logo sizeClassName="size-20" animation="pulse" />
+              <Logo sizeClassName="size-20" animation="spin" />
             </div>
             <span className="absolute -top-1 left-1/2 size-2 -translate-x-1/2 rounded-full bg-gold animate-twinkle" />
             <span className="absolute top-1/2 -right-1 size-2 -translate-y-1/2 rounded-full bg-stardust animate-twinkle" style={{ animationDelay: "1s" }} />
