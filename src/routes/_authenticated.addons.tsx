@@ -46,6 +46,7 @@ import { listMyCreditHistory } from "@/lib/credits.functions";
 import {
   CreditHistoryFilters,
   CreditHistoryTable,
+  type CreditTx,
   toIsoRange,
   useHistoryFiltersState,
 } from "@/components/CreditHistoryTable";
@@ -285,7 +286,7 @@ function MyCreditHistorySection() {
       <CreditHistoryFilters
         value={filters}
         onChange={setFilters}
-        actions={(data?.transactions ?? []).map((t) => t.action || t.kind)}
+        actions={(data?.transactions ?? []).map((t: CreditTx) => t.action || t.kind)}
       />
       <CreditHistoryTable
         transactions={data?.transactions ?? []}
