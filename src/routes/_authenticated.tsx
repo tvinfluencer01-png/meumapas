@@ -104,7 +104,7 @@ function AuthedLayout() {
   }
 
   return (
-    <div className="relative min-h-screen bg-background text-foreground overflow-x-hidden">
+    <div className="relative min-h-screen bg-background text-foreground [overflow-x:clip]">
       <Starfield count={60} className="fixed" />
 
       {/* Mobile top bar */}
