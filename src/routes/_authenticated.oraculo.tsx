@@ -158,10 +158,13 @@ function OraculoPage() {
               {isLoading ? <Square className="size-4" fill="currentColor" /> : <Send className="size-4" />}
             </button>
           </div>
-          <p className="mt-2 text-[10px] text-muted-foreground flex items-center gap-1.5">
-            <Sparkles className="size-3 text-gold" />
-            O Oráculo usa seu mapa e numerologia como contexto. Não substitui apoio profissional.
-          </p>
+          <div className="mt-2 flex items-center justify-between gap-3 flex-wrap">
+            <p className="text-[10px] text-muted-foreground flex items-center gap-1.5">
+              <Sparkles className="size-3 text-gold" />
+              O Oráculo usa seu mapa e numerologia como contexto. Não substitui apoio profissional.
+            </p>
+            <CreditCostBadge action="oracle_message" label="Por pergunta" />
+          </div>
         </form>
       </div>
     </div>
