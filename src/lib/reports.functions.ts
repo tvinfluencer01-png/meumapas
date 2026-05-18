@@ -302,7 +302,7 @@ A lista "suggestions.items" deve ter entre 6 e 8 itens, cada um com "name" curto
         birth.birth_time ? ` as ${String(birth.birth_time).slice(0, 5)}` : ""
       }${birth.city ? ` - ${birth.city}` : ""}`,
       signLine: signLine || "Mapa em construcao",
-      numerologyLine: `Caminho ${num.life_path} - Destino ${num.destiny} - Alma ${num.soul_urge}`,
+      numerologyLine: `Caminho ${numLabel(num.life_path)} - Destino ${numLabel(num.destiny)} - Alma ${numLabel(num.soul_urge)}`,
       intro: ai.intro,
       sections: ai.sections,
       closing: ai.closing,
