@@ -65,6 +65,23 @@ const PAGE_W = PageSizes.A4[0];
 const PAGE_H = PageSizes.A4[1];
 const CONTENT_W = PAGE_W - MARGIN * 2;
 
+type PdfFontRef = import("pdf-lib").PDFFont;
+const TEXT_WIDTH_CACHE = new WeakMap<PdfFontRef, Map<string, number>>();
+
+function measureText(font: PdfFontRef, size: number, text: string): number {
+  let cache = TEXT_WIDTH_CACHE.get(font);
+  if (!cache) {
+    cache = new Map<string, number>();
+    TEXT_WIDTH_CACHE.set(font, cache);
+  }
+  const key = `${size}:${text}`;
+  const cached = cache.get(key);
+  if (cached != null) return cached;
+  const width = font.widthOfTextAtSize(text, size);
+  cache.set(key, width);
+  return width;
+}
+
 // Strip characters WinAnsi (used by Standard fonts) cannot encode.
 function safe(text: string): string {
   return text
@@ -77,7 +94,7 @@ function safe(text: string): string {
     .replace(/[^\x09\x0A\x0D\x20-\x7E\u00A1-\u017F]/g, "");
 }
 
-function wrap(text: string, font: import("pdf-lib").PDFFont, size: number, maxWidth: number): string[] {
+function wrap(text: string, font: PdfFontRef, size: number, maxWidth: number): string[] {
   const out: string[] = [];
   const paragraphs = text.split(/\n+/);
   for (const para of paragraphs) {
@@ -85,7 +102,7 @@ function wrap(text: string, font: import("pdf-lib").PDFFont, size: number, maxWi
     let line = "";
     for (const w of words) {
       const candidate = line ? line + " " + w : w;
-      if (font.widthOfTextAtSize(candidate, size) > maxWidth) {
+      if (measureText(font, size, candidate) > maxWidth) {
         if (line) out.push(line);
         line = w;
       } else {
@@ -283,12 +300,12 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
   void drawChapterTitleAt;
 
   let isFirstHeading = true;
-  function drawHeading(text: string, size = 20) {
+  function drawHeading(text: string, size = 20, opts?: { startOnNewPage?: boolean }) {
     const headingLines = wrap(safe(text), serifBold, size, CONTENT_W).filter((l) => l !== "");
     const neededHeight = 10 + headingLines.length * (size + 4) + 2 + 18 + size * 1.4 * 3; // titulo + 3 linhas de conteudo
-    // So vai para nova pagina se nao for o primeiro titulo E nao houver
-    // espaco suficiente. Evita desperdicar paginas para cada secao.
-    if (!isFirstHeading && cursor.y - neededHeight < MARGIN) {
+    if (!isFirstHeading && opts?.startOnNewPage) {
+      cursor = newPage(pdf, cursor.pageNumber + 1);
+    } else if (!isFirstHeading && cursor.y - neededHeight < MARGIN) {
       cursor = newPage(pdf, cursor.pageNumber + 1);
     } else if (!isFirstHeading) {
       cursor.y -= 16; // respiro antes do proximo titulo, sem trocar de pagina
@@ -335,7 +352,7 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
     const color = opts?.color ?? INK;
     const justify = opts?.justify ?? true;
     const lineHeight = size * 1.38;
-    const spaceW = font.widthOfTextAtSize(" ", size);
+    const spaceW = measureText(font, size, " ");
     const paragraphs = safe(text).split(/\n+/);
 
     // Tenta dividir uma palavra em (prefixo + "-", restante) de modo que o
@@ -347,7 +364,7 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
       for (let i = points.length - 1; i >= 0; i--) {
         const p = points[i];
         const head = word.slice(0, p) + "-";
-        if (font.widthOfTextAtSize(head, size) <= availableWidth) {
+        if (measureText(font, size, head) <= availableWidth) {
           return [head, word.slice(p)];
         }
       }
@@ -367,14 +384,14 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
 
       while (queue.length > 0) {
         const w = queue.shift()!;
-        const wWidth = font.widthOfTextAtSize(w, size);
+        const wWidth = measureText(font, size, w);
         if (current.length === 0) {
           // Palavra única; se for maior que a linha inteira, força hifenização
           if (wWidth > CONTENT_W) {
             const split = tryHyphenate(w, CONTENT_W);
             if (split) {
               current = [split[0]];
-              currentWidth = font.widthOfTextAtSize(split[0], size);
+              currentWidth = measureText(font, size, split[0]);
               queue.unshift(split[1]);
               lines.push(current);
               current = [];
@@ -435,13 +452,13 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
         const lineWords = lines[li];
         const isLast = li === lines.length - 1;
         if (justify && !isLast && lineWords.length > 1) {
-          const wordsWidth = lineWords.reduce((s, w) => s + font.widthOfTextAtSize(w, size), 0);
+          const wordsWidth = lineWords.reduce((s, w) => s + measureText(font, size, w), 0);
           const gaps = lineWords.length - 1;
           const gap = Math.min((CONTENT_W - wordsWidth) / gaps, spaceW * 4);
           let x = MARGIN;
           for (const w of lineWords) {
             cursor.page.drawText(w, { x, y: cursor.y - size, size, font, color });
-            x += font.widthOfTextAtSize(w, size) + gap;
+            x += measureText(font, size, w) + gap;
           }
         } else {
           cursor.page.drawText(lineWords.join(" "), {
@@ -495,18 +512,18 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
   // Sections
   for (const section of data.sections) {
     setChapter(section.title);
-    drawHeading(section.title, 18);
+    drawHeading(section.title, 18, { startOnNewPage: true });
     drawParagraph(section.body);
   }
 
   // Closing
   setChapter("Selo final");
-  drawHeading("Selo final", 18);
+  drawHeading("Selo final", 18, { startOnNewPage: true });
   drawParagraph(data.closing, { italic: true, color: rgb(0.3, 0.25, 0.2) });
 
   // Analise
   setChapter("Analise");
-  drawHeading("Analise", 20);
+  drawHeading("Analise", 20, { startOnNewPage: true });
   drawParagraph(
     "Sintese das forcas, fraquezas, oportunidades e ameacas reveladas pelo seu mapa.",
     { italic: true, size: 11, color: MUTED },
@@ -522,7 +539,7 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
 
   // Recomendacoes
   setChapter("Recomendacoes finais");
-  drawHeading("Recomendacoes finais", 20);
+  drawHeading("Recomendacoes finais", 20, { startOnNewPage: true });
   drawSubHeading("O que MELHORAR", rgb(0.15, 0.4, 0.2));
   drawBulletList(data.recommendations.improve);
   drawSubHeading("O que EVITAR", rgb(0.55, 0.15, 0.2));
@@ -533,7 +550,7 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
   // Sugestoes (personalizadas por tema)
   if (data.suggestions?.items?.length) {
     setChapter(data.suggestions.heading);
-    drawHeading(data.suggestions.heading, 20);
+    drawHeading(data.suggestions.heading, 20, { startOnNewPage: true });
     if (data.suggestions.intro) {
       drawParagraph(data.suggestions.intro, { italic: true, size: 11, color: MUTED });
     }
@@ -566,13 +583,13 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
 
   // Resumo
   setChapter("Resumo");
-  drawHeading("Resumo", 20);
+  drawHeading("Resumo", 20, { startOnNewPage: true });
   drawParagraph(data.summary);
 
   // Plano de 7 dias (único, ao final, baseado no resumo)
   if (data.finalPlan) {
     setChapter("Plano de 7 dias");
-    drawHeading("Plano de 7 dias", 20);
+    drawHeading("Plano de 7 dias", 20, { startOnNewPage: true });
     drawParagraph(
       "Pequenos passos diários, em linguagem simples, baseados no resumo deste relatório.",
       { italic: true, size: 11, color: MUTED },
