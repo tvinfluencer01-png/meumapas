@@ -492,6 +492,29 @@ ${astroBlock}`;
       return record;
     }
 
+    function createLocalSectionPlan(
+      blueprint: z.infer<typeof BaseAiOutput>["sectionBlueprints"][number],
+      sectionBody: string,
+    ) {
+      const cleanBody = sectionBody.replace(/\s+/g, " ").trim();
+      const shortBody = cleanBody.slice(0, 220);
+      const makeItems = (prefix: string, seed: string) =>
+        Array.from({ length: 7 }, (_, index) => `Dia ${index + 1}: ${prefix} ${seed}`.trim());
+
+      const focusSeed = blueprint.focus.replace(/[.;:]+$/g, "").slice(0, 90);
+      const bodySeed = shortBody
+        ? `apoiado no que surgiu em "${shortBody}${cleanBody.length > 220 ? "..." : ""}"`
+        : `seguindo o foco em ${focusSeed}`;
+
+      return {
+        plan: {
+          improve: makeItems("Fortaleça uma ação prática", bodySeed),
+          avoid: makeItems("Evite excessos e decisões impulsivas", `para proteger ${focusSeed}`),
+          follow: makeItems("Mantenha constância no que já funciona", `e aprofunde ${focusSeed}`),
+        },
+      };
+    }
+
     function parseJsonWithSchema<T>(text: string, schema: z.ZodType<T>, label: string): T {
       const jsonStr = extractJsonText(text);
       let parsed: unknown;
