@@ -161,7 +161,7 @@ function TarotPage() {
         <div className="flex flex-wrap items-center gap-3">
           <Button
             onClick={() => genMut.mutate()}
-            disabled={genMut.isPending}
+            disabled={genMut.isPending || insufficient || overview.isLoading}
             className="bg-gradient-to-r from-gold to-amber-400 text-background hover:opacity-90"
           >
             {genMut.isPending ? (
@@ -171,8 +171,28 @@ function TarotPage() {
             )}
             Sortear cartas e revelar leitura
           </Button>
-          <CreditCostBadge action={COST_BY_SPREAD[spread]} />
+          <CreditCostBadge action={costAction} />
         </div>
+        {insufficient && (
+          <div className="rounded-xl border border-amber-400/40 bg-amber-400/10 p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+            <AlertTriangle className="size-5 text-amber-400 shrink-0" />
+            <div className="flex-1 text-sm">
+              <p className="font-medium text-amber-200">
+                Créditos insuficientes para esta leitura.
+              </p>
+              <p className="text-muted-foreground">
+                Você tem <span className="font-mono">{balance}</span> e precisa de{" "}
+                <span className="font-mono">{cost}</span> créditos para{" "}
+                {SPREADS[spread].label}.
+              </p>
+            </div>
+            <Button asChild size="sm" className="bg-gold text-background hover:opacity-90">
+              <Link to="/addons">
+                <ShoppingCart className="size-4 mr-2" /> Comprar créditos
+              </Link>
+            </Button>
+          </div>
+        )}
       </section>
 
       {/* Result */}
