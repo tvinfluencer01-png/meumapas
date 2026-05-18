@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Coins, Search, Plus, Minus, History } from "lucide-react";
+import { Coins, Search, Plus, Minus, History, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,12 +19,21 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { listAdminUsers } from "@/lib/admin.functions";
 import {
   adminAdjustCredits,
+  adminApplyCreditPackage,
   adminGetUserCredits,
   adminListCreditHistory,
+  adminListCreditPackages,
   adminRefundCredits,
 } from "@/lib/credits.functions";
 import {
