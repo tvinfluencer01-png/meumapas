@@ -1,8 +1,10 @@
 import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { Coins, AlertTriangle } from "lucide-react";
 import { getMyCreditsOverview } from "@/lib/credits.functions";
+import { CREDITS_CHANGED_EVENT } from "@/lib/credits-events";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -29,11 +31,22 @@ export function CreditCostBadge({
   freeText = "Gratuito",
 }: Props) {
   const overviewFn = useServerFn(getMyCreditsOverview);
+  const qc = useQueryClient();
   const { data, isLoading } = useQuery({
     queryKey: ["my-credits-overview"],
     queryFn: () => overviewFn(),
     staleTime: 30_000,
+    refetchOnWindowFocus: true,
   });
+
+  // Recarrega imediatamente quando qualquer ação dispara o evento global
+  // (consumo, estorno, ajuste manual, compra de pacote, etc.).
+  useEffect(() => {
+    const handler = () =>
+      qc.invalidateQueries({ queryKey: ["my-credits-overview"] });
+    window.addEventListener(CREDITS_CHANGED_EVENT, handler);
+    return () => window.removeEventListener(CREDITS_CHANGED_EVENT, handler);
+  }, [qc]);
 
   if (isLoading || !data) {
     return (
