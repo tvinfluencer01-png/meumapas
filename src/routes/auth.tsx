@@ -2,7 +2,8 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Sparkles, Mail, Lock, User as UserIcon, ArrowLeft, Loader2, ShieldCheck } from "lucide-react";
+import { Mail, Lock, User as UserIcon, ArrowLeft, Loader2, ShieldCheck } from "lucide-react";
+import { Logo } from "@/components/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/hooks/use-auth";
@@ -162,8 +163,8 @@ function AuthPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-md animate-fade-in">
           <div className="glass-card rounded-2xl px-8 py-10 gold-glow flex flex-col items-center gap-5 max-w-sm mx-4 text-center">
             <div className="relative">
-              <Sparkles className="size-10 text-gold animate-pulse" />
-              <Loader2 className="absolute -inset-3 size-16 text-gold/40 animate-spin" />
+              <Logo sizeClassName="size-14" animation="pulse" />
+              <Loader2 className="absolute -inset-3 size-20 text-gold/40 animate-spin" />
             </div>
             <div className="space-y-1">
               <p className="font-serif text-lg shimmer-text">
@@ -197,7 +198,7 @@ function AuthPage() {
       <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-12">
         <div className="w-full max-w-md glass-card rounded-2xl p-8 gold-glow">
           <div className="flex flex-col items-center text-center">
-            <Sparkles className="size-8 text-gold mb-3" />
+            <Logo sizeClassName="size-16" animation="float" className="mb-3" />
             <h1 className="font-serif text-3xl shimmer-text">Cosmic AI</h1>
             <p className="mt-2 text-sm text-muted-foreground">
               {mode === "signin" ? "Reconecte-se à sua jornada." : "Comece sua jornada cósmica."}

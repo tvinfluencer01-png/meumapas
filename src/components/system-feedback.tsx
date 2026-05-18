@@ -1,5 +1,6 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { Sparkles, Loader2, AlertTriangle } from "lucide-react";
+import { Loader2, AlertTriangle } from "lucide-react";
+import { Logo } from "@/components/Logo";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -103,12 +104,12 @@ export function CosmicLoaderOverlay() {
       <div className="glass-card gold-glow rounded-3xl px-8 py-10 max-w-md w-[90%] text-center relative overflow-hidden">
         <div className="absolute inset-0 nebula-bg opacity-60 pointer-events-none" />
         <div className="relative">
-          {/* Orbit animation */}
-          <div className="relative mx-auto size-24 mb-6">
+          {/* Orbit animation around the brand logo */}
+          <div className="relative mx-auto size-28 mb-6">
             <div className="absolute inset-0 rounded-full border border-gold/30 animate-slow-spin" />
             <div className="absolute inset-2 rounded-full border border-gold/20 animate-spin" style={{ animationDuration: "8s" }} />
             <div className="absolute inset-0 grid place-items-center">
-              <Sparkles className="size-9 text-gold animate-twinkle" />
+              <Logo sizeClassName="size-20" animation="pulse" />
             </div>
             <span className="absolute -top-1 left-1/2 size-2 -translate-x-1/2 rounded-full bg-gold animate-twinkle" />
             <span className="absolute top-1/2 -right-1 size-2 -translate-y-1/2 rounded-full bg-stardust animate-twinkle" style={{ animationDelay: "1s" }} />
