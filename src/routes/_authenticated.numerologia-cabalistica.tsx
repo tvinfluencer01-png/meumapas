@@ -417,7 +417,7 @@ function NumerologiaCabalisticaPage() {
         ],
       });
 
-      blocks.push({ type: "h2", text: "VI. Considerações finais" });
+      blocks.push({ type: "h2", text: "VII. Considerações finais" });
       blocks.push({
         type: "p",
         text:
