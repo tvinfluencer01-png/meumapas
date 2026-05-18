@@ -43,6 +43,17 @@ function TarotPage() {
   const exportFn = useServerFn(exportTarotPdf);
   const listFn = useServerFn(listTarotReadings);
   const deleteFn = useServerFn(deleteTarotReading);
+  const overviewFn = useServerFn(getMyCreditsOverview);
+
+  const overview = useQuery({
+    queryKey: ["my-credits-overview"],
+    queryFn: () => overviewFn(),
+  });
+
+  const balance = overview.data?.balance ?? 0;
+  const costAction = COST_BY_SPREAD[spread];
+  const cost = overview.data?.costs?.[costAction]?.amount ?? 0;
+  const insufficient = !overview.isLoading && cost > 0 && balance < cost;
 
   const history = useQuery({
     queryKey: ["tarot-readings"],
@@ -50,8 +61,14 @@ function TarotPage() {
   });
 
   const genMut = useMutation({
-    mutationFn: () =>
-      generateFn({ data: { spread, question: question.trim() || null } }),
+    mutationFn: () => {
+      if (insufficient) {
+        throw new Error(
+          `Créditos insuficientes. Você tem ${balance} e precisa de ${cost}.`,
+        );
+      }
+      return generateFn({ data: { spread, question: question.trim() || null } });
+    },
     onSuccess: (res) => {
       setCurrent(res);
       toast.success("Leitura revelada.");
