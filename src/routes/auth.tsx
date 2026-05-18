@@ -73,6 +73,8 @@ function AuthPage() {
 
   async function handleEmail(e: React.FormEvent) {
     e.preventDefault();
+    setStatusMode(mode);
+    setStatusStep(0);
     setSubmitting(true);
     try {
       if (mode === "signup") {
