@@ -404,10 +404,33 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
       }
       if (current.length) lines.push(current);
 
+      // Controle de orfas/viuvas:
+      // - se restam <2 linhas de espaco nesta pagina e o paragrafo tem >=2 linhas,
+      //   move o paragrafo inteiro para a proxima pagina (evita orfa no rodape).
+      // - se o paragrafo nao cabe inteiro e sobraria apenas 1 linha para a proxima
+      //   pagina (viuva), antecipa a quebra para levar 2 linhas juntas.
+      const linesAvailable = Math.max(0, Math.floor((cursor.y - MARGIN) / lineHeight));
+      let breakAt = lines.length; // indice da linha que inicia a nova pagina
+      if (lines.length >= 2 && linesAvailable < 2) {
+        cursor = newPage(pdf, cursor.pageNumber + 1);
+        breakAt = lines.length;
+      } else if (lines.length > linesAvailable && lines.length - linesAvailable === 1 && linesAvailable >= 2) {
+        breakAt = linesAvailable - 1; // deixa 2 linhas para a proxima pagina
+      } else if (lines.length > linesAvailable) {
+        breakAt = linesAvailable;
+      }
+
       for (let li = 0; li < lines.length; li++) {
+        if (li === breakAt) {
+          cursor = newPage(pdf, cursor.pageNumber + 1);
+          // recalcula proxima quebra caso ainda nao caiba
+          const rem = lines.length - li;
+          const avail = Math.max(0, Math.floor((cursor.y - MARGIN) / lineHeight));
+          if (rem > avail) breakAt = li + (rem - avail === 1 && avail >= 2 ? avail - 1 : avail);
+          else breakAt = lines.length;
+        }
         const lineWords = lines[li];
         const isLast = li === lines.length - 1;
-        ensureSpace(lineHeight);
         if (justify && !isLast && lineWords.length > 1) {
           const wordsWidth = lineWords.reduce((s, w) => s + font.widthOfTextAtSize(w, size), 0);
           const gaps = lineWords.length - 1;
@@ -424,9 +447,11 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
         }
         cursor.y -= lineHeight;
       }
-      cursor.y -= 4;
+      // Espaco entre paragrafos: suprime se acabamos de virar a pagina
+      if (cursor.y < PAGE_H - MARGIN - 4) cursor.y -= 4;
     }
   }
+
 
 
 
