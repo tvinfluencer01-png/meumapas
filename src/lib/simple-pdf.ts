@@ -6,13 +6,17 @@
  * `buildReportPdf` em src/lib/reports-pdf.ts — esta versão é simplificada.
  */
 import { PDFDocument, StandardFonts, rgb, PageSizes, type PDFFont, type PDFPage } from "pdf-lib";
+import fontkit from "@pdf-lib/fontkit";
 
 export type SimplePdfBlock =
   | { type: "h2"; text: string }
+  | { type: "h3"; text: string }
   | { type: "p"; text: string }
   | { type: "quote"; text: string }
   | { type: "list"; items: string[] }
-  | { type: "kv"; rows: { k: string; v: string }[] };
+  | { type: "kv"; rows: { k: string; v: string }[] }
+  | { type: "hebrew-hero"; letter: string; name: string; transliteration: string; meaning: string }
+  | { type: "hebrew-row"; letter: string; name: string; value: number | string; meaning: string };
 
 export type SimplePdfData = {
   brand: string; // ex: "Cosmic AI"
