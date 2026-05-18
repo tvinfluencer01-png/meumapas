@@ -189,6 +189,8 @@ export const generateReport = createServerFn({ method: "POST" })
 
     const num = computeNumerology(birth.full_name, birth.birth_date);
     const meta = REPORT_META[data.kind];
+    yield { type: "progress" as const, progress: 18, step: "Calculando numerologia e mapa astral..." };
+
 
     // Build context block for the AI
     type Planet = { name: string; sign: string; degree: number };
