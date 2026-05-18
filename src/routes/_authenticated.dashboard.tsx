@@ -106,7 +106,7 @@ function Dashboard() {
       <FavoritesSummary />
 
       {/* CTAs */}
-      <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <section className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
         <ActionCard
           to="/mapa-astral" title="Gerar Mapa Astral"
           desc="Veja planetas, casas, aspectos e ascendente — calculados com precisão astronômica."
@@ -131,25 +131,25 @@ function Dashboard() {
 
 function StatCard({ icon: Icon, label, value, hint }: any) {
   return (
-    <div className="glass-card rounded-xl p-5">
-      <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground">
+    <div className="glass-card rounded-xl p-4 sm:p-5">
+      <div className="flex items-center gap-2 text-[11px] sm:text-xs uppercase tracking-widest text-muted-foreground">
         <Icon className="size-3.5 text-gold" /> {label}
       </div>
-      <div className="font-serif text-3xl text-stardust mt-2">{value}</div>
-      {hint && <div className="text-xs text-muted-foreground mt-1">{hint}</div>}
+      <div className="font-serif text-2xl sm:text-3xl text-stardust mt-2">{value}</div>
+      {hint && <div className="text-xs sm:text-sm text-muted-foreground mt-1">{hint}</div>}
     </div>
   );
 }
 
 function ActionCard({ to, title, desc, icon: Icon }: any) {
   return (
-    <Link to={to} className="group glass-card rounded-2xl p-6 hover:gold-glow transition-all">
+    <Link to={to} className="group glass-card rounded-2xl p-5 sm:p-6 hover:gold-glow transition-all">
       <div className="flex items-start justify-between">
-        <Icon className="size-7 text-gold" />
+        <Icon className="size-6 sm:size-7 text-gold" />
         <ChevronRight className="size-5 text-muted-foreground group-hover:text-gold transition-colors" />
       </div>
-      <h3 className="font-serif text-xl text-stardust mt-4">{title}</h3>
-      <p className="text-sm text-muted-foreground mt-2">{desc}</p>
+      <h3 className="font-serif text-lg sm:text-xl text-stardust mt-3 sm:mt-4">{title}</h3>
+      <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{desc}</p>
     </Link>
   );
 }
