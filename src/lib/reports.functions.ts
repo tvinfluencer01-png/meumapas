@@ -389,7 +389,7 @@ REGRAS DO JSON:
         : provider === "gemini" && customKey
           ? [modelName, "gemini-2.5-flash", "gemini-2.0-flash"]
           : isLovable && lovableKey
-            ? [modelName, "google/gemini-2.5-flash-lite", "google/gemini-2.5-flash"]
+            ? [modelName, "google/gemini-2.5-flash", "google/gemini-2.5-flash-lite"]
             : [modelName]
     ).filter((m, i, arr) => arr.indexOf(m) === i);
 
