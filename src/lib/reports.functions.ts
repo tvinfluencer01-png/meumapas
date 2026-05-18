@@ -108,10 +108,22 @@ const SIGNS_LABEL: Record<string, string> = {
   "Sagitário":"Sagitario","Capricórnio":"Capricornio","Aquário":"Aquario","Peixes":"Peixes",
 };
 
+const SectionPlanSchema = z.object({
+  improve: z.array(z.string().min(3)).length(7),
+  avoid: z.array(z.string().min(3)).length(7),
+  follow: z.array(z.string().min(3)).length(7),
+});
+
 const AiOutput = z.object({
   intro: z.string().min(200),
   sections: z
-    .array(z.object({ title: z.string().min(2), body: z.string().min(200) }))
+    .array(
+      z.object({
+        title: z.string().min(2),
+        body: z.string().min(200),
+        plan: SectionPlanSchema,
+      }),
+    )
     .min(4)
     .max(8),
   closing: z.string().min(120),
@@ -244,16 +256,29 @@ export const generateReport = createServerFn({ method: "POST" })
     const firstName = String(birth.full_name).trim().split(/\s+/)[0] ?? "";
 
     const system = `Voce e o **Oraculo Cosmico**, escritor espiritual premium em portugues do Brasil.
-Escreva textos longos, profundos, poeticos, calorosos, especificos e PESSOAIS.
-Cite planetas, signos, aspectos e numeros REAIS recebidos. Nunca fale em termos genericos.
-Cada secao deve ter no minimo 3 paragrafos densos. Tom acolhedor, sabio, levemente literario.
-Nunca prometa eventos certos nem faca diagnostico clinico.
-NAO use markdown nem emojis. Use somente texto corrido com paragrafos separados por linhas em branco.
+Escreva textos profundos, calorosos e PESSOAIS, mas SEMPRE em LINGUAGEM SIMPLES E ACESSIVEL.
+Imagine que voce conversa com um amigo querido que nunca estudou astrologia nem numerologia.
+
+REGRA DE LINGUAGEM SIMPLES (obrigatoria):
+- Sempre que citar um termo tecnico (signo, planeta, casa, aspecto, conjuncao, quadratura, sextil, trigono, retrogrado, Caminho de Vida, Destino, Alma, Personalidade, mestre 11/22), EXPLIQUE em seguida com palavras do dia a dia, entre travessoes ou parenteses (ex: "Sol em Escorpiao - ou seja, a sua essencia mais profunda funciona como um detetive emocional"; "Caminho de Vida 7 - o numero que mostra que voce veio para investigar e entender a vida").
+- Frases curtas. Evite jargao espiritual hermetico. Nada de "vibracao quantica", "campo aurico" sem explicar.
+- Cite planetas, signos, aspectos e numeros REAIS recebidos, mas sempre TRADUZA o significado pratico para a vida da pessoa.
+- Cada secao deve ter no minimo 3 paragrafos densos, mas com frases claras e diretas.
+- Tom acolhedor, sabio, levemente literario, NUNCA academico ou opaco.
+- Nunca prometa eventos certos nem faca diagnostico clinico.
+- NAO use markdown nem emojis. Apenas texto corrido com paragrafos separados por linhas em branco.
 
 REGRA DE NOMENCLATURA (obrigatoria):
-- Use o NOME COMPLETO do consulente ("${birth.full_name}") UMA UNICA VEZ, na primeira mencao do relatorio (idealmente na intro, como saudacao ou abertura solene).
-- Em TODAS as mencoes seguintes ao longo de todo o relatorio (intro, sections e closing), use APENAS o primeiro nome ("${firstName}") para criar intimidade e calor.
-- Nunca repita o nome completo depois da primeira mencao. Nunca use sobrenomes isolados.`;
+- Use o NOME COMPLETO do consulente ("${birth.full_name}") UMA UNICA VEZ, na primeira mencao (idealmente na intro).
+- Em TODAS as mencoes seguintes use APENAS o primeiro nome ("${firstName}").
+- Nunca repita o nome completo. Nunca use sobrenomes isolados.
+
+REGRA DO PLANO DE 7 DIAS (obrigatoria):
+- Cada secao TERMINA com um plano de 7 dias com 3 listas: melhorar (improve), evitar (avoid), seguir (follow).
+- Cada lista tem EXATAMENTE 7 itens, um para cada dia da semana (Dia 1 a Dia 7).
+- Itens curtos, concretos, acionaveis, em linguagem simples (ex: "Escrever 3 gratidoes ao acordar", "Evitar conversa dificil antes do cafe", "Caminhar 20 min ao sol").
+- Cada plano deve ser ESPECIFICO ao tema da secao E ancorado em algo do mapa/numerologia do consulente (cite no item quando fizer sentido, ex: "Como sua Lua em Cancer pede colo, almoce com a familia").
+- NAO repita os mesmos itens entre secoes.`;
 
     const prompt = `Gere um RELATORIO PREMIUM do tipo "${meta.title}" focado em ${meta.focus}
 
@@ -270,8 +295,18 @@ ${astroBlock}
 
 Responda APENAS com um JSON valido (sem markdown, sem cercas de codigo) no formato:
 {
-  "intro": "texto longo, 4 a 6 paragrafos separados por \\n\\n",
-  "sections": [{"title": "Titulo curto", "body": "3 a 5 paragrafos longos separados por \\n\\n"}],
+  "intro": "texto longo, 4 a 6 paragrafos separados por \\n\\n, em LINGUAGEM SIMPLES, explicando cada termo tecnico que aparecer",
+  "sections": [
+    {
+      "title": "Titulo curto",
+      "body": "3 a 5 paragrafos longos separados por \\n\\n, sempre traduzindo termos tecnicos para palavras do dia a dia",
+      "plan": {
+        "improve": ["Dia 1: acao concreta...", "Dia 2: ...", "Dia 3: ...", "Dia 4: ...", "Dia 5: ...", "Dia 6: ...", "Dia 7: ..."],
+        "avoid":   ["Dia 1: o que nao fazer...", "Dia 2: ...", "Dia 3: ...", "Dia 4: ...", "Dia 5: ...", "Dia 6: ...", "Dia 7: ..."],
+        "follow":  ["Dia 1: pratica a cultivar...", "Dia 2: ...", "Dia 3: ...", "Dia 4: ...", "Dia 5: ...", "Dia 6: ...", "Dia 7: ..."]
+      }
+    }
+  ],
   "closing": "2 a 3 paragrafos finais",
   "swot": {
     "strengths": ["forca 1 personalizada", "..."],
@@ -281,19 +316,23 @@ Responda APENAS com um JSON valido (sem markdown, sem cercas de codigo) no forma
   },
   "recommendations": {
     "improve": ["o que ${firstName} deve MELHORAR (frase curta e acionavel)", "..."],
-    "avoid": ["o que ${firstName} deve EVITAR (frase curta e acionavel)", "..."],
-    "follow": ["o que ${firstName} deve SEGUIR / cultivar (frase curta e acionavel)", "..."]
+    "avoid":   ["o que ${firstName} deve EVITAR (frase curta e acionavel)", "..."],
+    "follow":  ["o que ${firstName} deve SEGUIR / cultivar (frase curta e acionavel)", "..."]
   },
   "suggestions": {
     "intro": "1 frase contextualizando a lista para ${firstName}",
     "items": [
-      { "name": "Nome curto e direto da sugestao", "why": "1 a 2 frases explicando POR QUE essa sugestao combina com o mapa/numerologia de ${firstName}, citando signo, planeta, aspecto ou numero especifico." }
+      { "name": "Nome curto e direto da sugestao", "why": "1 a 2 frases simples explicando POR QUE essa sugestao combina com o mapa/numerologia de ${firstName}, citando signo, planeta, aspecto ou numero e traduzindo o termo." }
     ]
   },
-  "summary": "Resumo final em 2 paragrafos densos, integrando o que foi dito"
+  "summary": "Resumo final em 2 paragrafos densos, em linguagem simples"
 }
-A lista "sections" deve ter entre 5 e 6 itens. Cada item de SWOT e recommendations deve ter de 3 a 5 itens, especificos ao mapa e numerologia do consulente.
-A lista "suggestions.items" deve ter entre 6 e 8 itens, cada um com "name" curto e "why" explicando a conexao com o mapa real desta pessoa. Tema das sugestoes: ${meta.suggestionGuide}`;
+
+REGRAS DO JSON:
+- "sections" deve ter entre 5 e 6 itens.
+- Cada "sections[i].plan" e OBRIGATORIO e cada uma das listas improve/avoid/follow precisa ter EXATAMENTE 7 itens (um por dia), iniciando com "Dia 1:", "Dia 2:", ... "Dia 7:".
+- SWOT e recommendations: de 3 a 5 itens cada, especificos ao mapa e numerologia.
+- "suggestions.items": entre 6 e 8 itens. Tema das sugestoes: ${meta.suggestionGuide}`;
 
     const { text } = await generateText({ model, system, prompt });
 
