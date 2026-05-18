@@ -74,6 +74,7 @@ function AddonsPage() {
   });
 
   const [pendingId, setPendingId] = useState<string | null>(null);
+  const [dialogSub, setDialogSub] = useState<SubscriptionAddon | null>(null);
 
   // React to MP back_urls (?status=success|pending|failure)
   useEffect(() => {
