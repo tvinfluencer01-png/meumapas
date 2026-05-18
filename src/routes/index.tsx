@@ -1003,7 +1003,7 @@ function ChatbotFloat() {
     <Link
       to="/auth"
       aria-label="Abrir oráculo IA"
-      className="group fixed bottom-24 right-6 z-50 flex items-center gap-3 rounded-full border border-gold/40 bg-background/90 px-5 py-3 text-xs uppercase tracking-[0.2em] text-gold backdrop-blur-md transition-all hover:bg-gold hover:text-primary-foreground"
+      className="group fixed bottom-20 right-4 sm:bottom-24 sm:right-6 z-50 flex items-center gap-2 sm:gap-3 rounded-full border border-gold/40 bg-background/90 px-4 py-2.5 sm:px-5 sm:py-3 text-[10px] sm:text-xs uppercase tracking-[0.2em] text-gold backdrop-blur-md transition-all hover:bg-gold hover:text-primary-foreground"
     >
       <span className="relative flex size-2">
         <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-gold opacity-75" />
