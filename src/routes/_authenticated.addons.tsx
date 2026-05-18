@@ -188,7 +188,39 @@ function AddonsPage() {
           ))}
         </div>
       </section>
+
+      <MyCreditHistorySection />
     </div>
+  );
+}
+
+function MyCreditHistorySection() {
+  const historyFn = useServerFn(listMyCreditHistory);
+  const [filters, setFilters] = useHistoryFiltersState();
+  const { data, isLoading } = useQuery({
+    queryKey: ["my-credit-history", filters],
+    queryFn: () => historyFn({ data: { ...toIsoRange(filters), limit: 200 } }),
+  });
+  return (
+    <section className="space-y-3">
+      <div className="flex items-center gap-2">
+        <History className="size-4 text-gold" />
+        <h2 className="text-xl font-serif">Histórico de cobranças</h2>
+      </div>
+      <p className="text-sm text-muted-foreground">
+        Veja todas as movimentações de créditos: oráculo, relatórios em PDF, tarot,
+        mapa astral e ajustes manuais, com saldo antes e depois de cada operação.
+      </p>
+      <CreditHistoryFilters
+        value={filters}
+        onChange={setFilters}
+        actions={(data?.transactions ?? []).map((t) => t.action || t.kind)}
+      />
+      <CreditHistoryTable
+        transactions={data?.transactions ?? []}
+        loading={isLoading}
+      />
+    </section>
   );
 }
 
