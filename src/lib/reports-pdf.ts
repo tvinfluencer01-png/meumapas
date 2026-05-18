@@ -359,21 +359,6 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
     setChapter(section.title);
     drawHeading(section.title, 18);
     drawParagraph(section.body);
-    if (section.plan) {
-      drawSubHeading("Plano de 7 dias para esta área", GOLD);
-      drawParagraph(
-        "Pequenos passos diários, em linguagem simples, baseados no seu mapa e numerologia.",
-        { italic: true, size: 10, color: MUTED },
-      );
-      const labelDays = (arr: string[]) =>
-        arr.slice(0, 7).map((it, i) => `Dia ${i + 1}: ${it}`);
-      drawSubHeading("Melhorar", rgb(0.15, 0.4, 0.2));
-      drawBulletList(labelDays(section.plan.improve));
-      drawSubHeading("Evitar", rgb(0.55, 0.15, 0.2));
-      drawBulletList(labelDays(section.plan.avoid));
-      drawSubHeading("Seguir", rgb(0.65, 0.5, 0.1));
-      drawBulletList(labelDays(section.plan.follow));
-    }
   }
 
   // Closing
