@@ -86,10 +86,10 @@ function Dashboard() {
       <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatCard icon={Sun} label="Sol em" value={sunSign ?? "—"}
           hint="Sua identidade essencial" />
-        <StatCard icon={Star} label="Caminho de vida" value={num?.life_path?.toString() ?? "—"}
-          hint={num ? NUMBER_MEANINGS[num.life_path]?.title : "—"} />
-        <StatCard icon={Heart} label="Alma (desejo)" value={num?.soul_urge?.toString() ?? "—"}
-          hint={num ? NUMBER_MEANINGS[num.soul_urge]?.title : "—"} />
+        <StatCard icon={Star} label="Caminho de vida" value={numLabel(num?.life_path)}
+          hint={numTitle(num?.life_path)} />
+        <StatCard icon={Heart} label="Alma (desejo)" value={numLabel(num?.soul_urge)}
+          hint={numTitle(num?.soul_urge)} />
       </section>
 
       {/* AI Insights — aplica resumo prático ao agora */}
