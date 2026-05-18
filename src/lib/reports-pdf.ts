@@ -306,6 +306,24 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
     cursor.y -= 18;
   }
 
+  // Quebra silábica simples (PT-BR friendly): retorna posições de corte
+  // válidas dentro da palavra, deixando pelo menos 2 chars de cada lado.
+  function hyphenPoints(word: string): number[] {
+    const pts: number[] = [];
+    const vowels = /[aeiouáéíóúâêôãõàüy]/i;
+    for (let i = 2; i < word.length - 2; i++) {
+      const a = word[i - 1];
+      const b = word[i];
+      const aV = vowels.test(a);
+      const bV = vowels.test(b);
+      // V-C: vogal seguida de consoante -> corte antes da consoante
+      if (aV && !bV) pts.push(i);
+      // C-C diferentes: corte entre consoantes
+      else if (!aV && !bV && a.toLowerCase() !== b.toLowerCase()) pts.push(i);
+    }
+    return pts;
+  }
+
   function drawParagraph(text: string, opts?: { italic?: boolean; size?: number; color?: ReturnType<typeof rgb>; justify?: boolean }) {
     const size = opts?.size ?? 11;
     const font = opts?.italic ? serifItalic : serif;
@@ -315,27 +333,69 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
     const spaceW = font.widthOfTextAtSize(" ", size);
     const paragraphs = safe(text).split(/\n+/);
 
+    // Tenta dividir uma palavra em (prefixo + "-", restante) de modo que o
+    // prefixo caiba em `availableWidth`. Devolve null se não houver corte viável.
+    function tryHyphenate(word: string, availableWidth: number): [string, string] | null {
+      if (word.length < 6) return null;
+      const points = hyphenPoints(word);
+      // Procura do maior corte que ainda caiba
+      for (let i = points.length - 1; i >= 0; i--) {
+        const p = points[i];
+        const head = word.slice(0, p) + "-";
+        if (font.widthOfTextAtSize(head, size) <= availableWidth) {
+          return [head, word.slice(p)];
+        }
+      }
+      return null;
+    }
+
     for (const paraRaw of paragraphs) {
       const para = paraRaw.trim();
       if (!para) {
         cursor.y -= lineHeight * 0.5;
         continue;
       }
-      const words = para.split(/\s+/);
+      const queue = para.split(/\s+/);
       const lines: string[][] = [];
       let current: string[] = [];
       let currentWidth = 0;
-      for (const w of words) {
+
+      while (queue.length > 0) {
+        const w = queue.shift()!;
         const wWidth = font.widthOfTextAtSize(w, size);
         if (current.length === 0) {
+          // Palavra única; se for maior que a linha inteira, força hifenização
+          if (wWidth > CONTENT_W) {
+            const split = tryHyphenate(w, CONTENT_W);
+            if (split) {
+              current = [split[0]];
+              currentWidth = font.widthOfTextAtSize(split[0], size);
+              queue.unshift(split[1]);
+              lines.push(current);
+              current = [];
+              currentWidth = 0;
+              continue;
+            }
+          }
           current = [w];
           currentWidth = wWidth;
         } else {
           const tentative = currentWidth + spaceW + wWidth;
           if (tentative > CONTENT_W) {
-            lines.push(current);
-            current = [w];
-            currentWidth = wWidth;
+            // Tenta hifenizar para encaixar parte da palavra nesta linha
+            const remaining = CONTENT_W - currentWidth - spaceW;
+            const split = tryHyphenate(w, remaining);
+            if (split) {
+              current.push(split[0]);
+              lines.push(current);
+              current = [];
+              currentWidth = 0;
+              queue.unshift(split[1]);
+            } else {
+              lines.push(current);
+              current = [w];
+              currentWidth = wWidth;
+            }
           } else {
             current.push(w);
             currentWidth = tentative;
@@ -367,6 +427,8 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
       cursor.y -= 4;
     }
   }
+
+
 
   function drawBulletList(items: string[]) {
     const size = 11;
