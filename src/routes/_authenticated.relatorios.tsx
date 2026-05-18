@@ -5,6 +5,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { generateReport, getReportUrl, deleteReport } from "@/lib/reports.functions";
+import { emitCreditsChanged } from "@/lib/credits-events";
 import { toast } from "sonner";
 import { showLoader, hideLoader, updateLoader, confirmDialog } from "@/components/system-feedback";
 import {
@@ -120,6 +121,8 @@ function RelatoriosPage() {
     onSettled: () => {
       setLoadingKind(null);
       hideLoader();
+      // Atualiza saldo/custos imediatamente após sucesso, erro ou estorno automático
+      emitCreditsChanged();
     },
   });
 

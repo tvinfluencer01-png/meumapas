@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Sparkles, Send, MessageCircle, Loader2, Stars, Square } from "lucide-react";
 import { CreditCostBadge } from "@/components/CreditCostBadge";
+import { emitCreditsChanged } from "@/lib/credits-events";
 
 export const Route = createFileRoute("/_authenticated/oraculo")({
   component: OraculoPage,
@@ -55,6 +56,11 @@ function OraculoPage() {
   useEffect(() => {
     if (!isLoading) inputRef.current?.focus();
   }, [isLoading]);
+
+  // Após cada resposta concluída (ou erro), recarrega saldo/custos.
+  useEffect(() => {
+    if (status === "ready" || status === "error") emitCreditsChanged();
+  }, [status]);
 
   async function handleSubmit(e?: React.FormEvent) {
     e?.preventDefault();
