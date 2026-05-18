@@ -76,6 +76,30 @@ export const SUBSCRIPTION_ADDONS: SubscriptionAddon[] = [
       "Histórico completo",
     ],
   },
+  {
+    id: "sub_tarot_unlimited",
+    name: "Tarot Ilimitado",
+    price_cents: 3990,
+    description: "Tiragens ilimitadas de Tarot (1 e 3 cartas) sem consumir créditos.",
+    features: [
+      "Tiragens diárias ilimitadas",
+      "Spread de 3 cartas (Passado · Presente · Futuro)",
+      "Interpretações com IA",
+      "Exportação dos resultados em PDF",
+    ],
+  },
+  {
+    id: "sub_kabbalah_unlimited",
+    name: "Meditação Cabalística Ilimitada",
+    price_cents: 4490,
+    description: "Meditações guiadas pela Árvore da Vida sem limite mensal.",
+    features: [
+      "10 Sefirot disponíveis",
+      "Meditações personalizadas com IA",
+      "Frase-semente e prática diária",
+      "Exportação em PDF para imprimir",
+    ],
+  },
 ];
 
 export function formatBRL(cents: number) {
