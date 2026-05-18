@@ -104,11 +104,11 @@ function AuthedLayout() {
   }
 
   return (
-    <div className="relative min-h-screen bg-background text-foreground [overflow-x:clip]">
+    <div className="relative isolate min-h-screen bg-background text-foreground [overflow-x:clip]">
       <Starfield count={60} className="fixed" />
 
       {/* Mobile top bar */}
-      <header className="lg:hidden sticky top-0 z-30 flex items-center justify-between border-b border-border bg-background/90 backdrop-blur px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
+      <header className="lg:hidden fixed inset-x-0 top-0 z-50 flex min-h-16 items-center justify-between border-b border-border bg-background/95 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-xl">
         <Link to="/dashboard" className="flex items-center gap-2">
           <Sparkles className="size-5 text-gold" />
           <span className="font-serif text-lg shimmer-text">Cosmic AI</span>
@@ -122,14 +122,14 @@ function AuthedLayout() {
       {open && (
         <div
           onClick={() => setOpen(false)}
-          className="lg:hidden fixed inset-0 z-10 bg-background/70 backdrop-blur-sm"
+          className="lg:hidden fixed inset-0 z-40 bg-background/70 backdrop-blur-sm"
         />
       )}
 
       <div className="relative z-0 flex">
         {/* Sidebar */}
         <aside
-          className={`${open ? "flex" : "hidden"} lg:flex flex-col fixed lg:sticky top-0 z-20 lg:z-auto h-[100dvh] w-[85%] max-w-xs lg:w-64 border-r border-border bg-background/95 backdrop-blur-xl`}
+          className={`${open ? "flex" : "hidden"} lg:flex flex-col fixed lg:sticky top-0 z-50 lg:z-auto h-[100dvh] w-[85%] max-w-xs lg:w-64 border-r border-border bg-background/95 backdrop-blur-xl`}
         >
           <div className="hidden lg:flex items-center gap-2 px-6 py-6 border-b border-border shrink-0">
             <Sparkles className="size-6 text-gold" />
@@ -198,7 +198,7 @@ function AuthedLayout() {
           </div>
         </aside>
 
-        <main className="flex-1 min-w-0 min-h-screen lg:pl-0">
+        <main className="flex-1 min-w-0 min-h-screen pt-[calc(4.25rem+env(safe-area-inset-top))] lg:pt-0 lg:pl-0">
           <div className="p-3 sm:p-4 lg:p-8 max-w-7xl mx-auto pb-[max(0.75rem,env(safe-area-inset-bottom))]">
             <Outlet />
           </div>
