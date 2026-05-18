@@ -95,6 +95,49 @@ const HEBREW_ALPHABET: { letter: string; name: string; value: number; meaning: s
   { letter: "ת", name: "Tav", value: 400, meaning: "Cruz / Selo — verdade, completude, marca." },
 ];
 
+// Transliteração Latim → Hebraico (aproximação fonética usada na cabala ocidental).
+// Cada letra latina é mapeada para uma letra hebraica; X vira duas letras (קס).
+const LATIN_TO_HEBREW: Record<string, string> = {
+  A: "א", B: "ב", C: "כ", D: "ד", E: "ע", F: "פ", G: "ג", H: "ה",
+  I: "י", J: "י", K: "כ", L: "ל", M: "מ", N: "נ", O: "ו", P: "פ",
+  Q: "ק", R: "ר", S: "ס", T: "ת", U: "ו", V: "ו", W: "ו", X: "קס",
+  Y: "י", Z: "ז",
+};
+// Formas finais (sofit) — aplicadas à última letra de cada palavra.
+const FINAL_FORM: Record<string, string> = {
+  "כ": "ך", "מ": "ם", "נ": "ן", "פ": "ף", "צ": "ץ",
+};
+
+function transliterateWord(latinWord: string): string {
+  const clean = stripDiacritics(latinWord).replace(/[^A-Z]/g, "");
+  let heb = "";
+  for (const ch of clean) heb += LATIN_TO_HEBREW[ch] ?? "";
+  // Aplica forma final na última letra (se existir variante sofit)
+  if (heb.length > 0) {
+    const last = heb[heb.length - 1];
+    if (FINAL_FORM[last]) heb = heb.slice(0, -1) + FINAL_FORM[last];
+  }
+  return heb;
+}
+
+function transliterateName(fullName: string): { words: string[]; latinWords: string[]; uniqueLetters: string[] } {
+  const latinWords = fullName.trim().split(/\s+/).filter(Boolean);
+  const words = latinWords.map(transliterateWord);
+  const seen = new Set<string>();
+  const uniqueLetters: string[] = [];
+  for (const w of words) {
+    for (const ch of w) {
+      // Normaliza forma final para a base ao listar letras únicas para meditação
+      const base = Object.entries(FINAL_FORM).find(([, f]) => f === ch)?.[0] ?? ch;
+      if (!seen.has(base)) {
+        seen.add(base);
+        uniqueLetters.push(base);
+      }
+    }
+  }
+  return { words, latinWords, uniqueLetters };
+}
+
 const CARDS = [
   { key: "destiny" as const, label: "Destino", icon: Sparkles, desc: "Vibração total do seu nome completo." },
   { key: "soul" as const, label: "Alma (Vogais)", icon: Heart, desc: "O que move seu interior sagrado." },
