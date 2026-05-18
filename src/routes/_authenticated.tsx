@@ -120,7 +120,7 @@ function AuthedLayout() {
   if (loading || !user || !profileChecked) {
     return (
       <div className="min-h-screen grid place-items-center bg-background">
-        <Logo sizeClassName="size-24" animation="pulse" />
+        <Logo sizeClassName="size-24" animation="loading" />
       </div>
     );
   }
