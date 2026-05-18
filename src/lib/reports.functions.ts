@@ -623,9 +623,10 @@ ${astroBlock}`;
 
     function normalizeSectionPayload(parsed: unknown, blueprint?: z.infer<typeof BaseAiOutput>["sectionBlueprints"][number]) {
       const fallbackTitle = cleanInlineText(blueprint?.title) || "Capítulo";
-      const fallbackBody = cleanInlineText(blueprint?.focus)
-        ? `${firstName}, esta parte do relatório aprofunda ${cleanInlineText(blueprint?.focus)} com base no seu mapa e na sua numerologia. O objetivo é transformar símbolos em percepção prática, para que você reconheça padrões, ajuste escolhas e avance com mais consciência no próximo ciclo.`
-        : `${firstName}, esta parte do relatório aprofunda a leitura do seu mapa e da sua numerologia com linguagem prática e humana. A intenção é te oferecer clareza, direção e consciência para agir com mais coerência.`;
+      const focusText = cleanInlineText(blueprint?.focus);
+      const fallbackBody = focusText
+        ? `${firstName}, esta parte do relatório aprofunda ${focusText} a partir do seu mapa astral e da sua numerologia. O objetivo é traduzir os símbolos em percepção viva, para que você reconheça padrões reais, identifique tensões antigas e entenda o convite que esse momento está fazendo. Aqui não se trata de receita pronta, e sim de espelho: enxergar com mais nitidez como você se move nessa área da vida. Existem forças latentes no seu mapa que ainda pedem espaço para se manifestarem de forma madura, sem dramatização e sem fuga. Ao mesmo tempo, certas feridas tendem a aparecer como ruído ou repetição, e merecem ser olhadas com paciência. O próximo ciclo te convida a transformar consciência em prática constante, com escolhas mais coerentes ao que você é em essência.`
+        : `${firstName}, esta parte do relatório aprofunda a leitura do seu mapa e da sua numerologia com linguagem prática e humana. A intenção é te oferecer clareza sobre os padrões que se repetem, as forças que pedem espaço e as feridas que ainda buscam cura. Cada parágrafo aqui foi pensado como um espelho que devolve direção. Use esta seção como um guia de campo: leia devagar, sinta o que ressoa, anote o que provoca. O essencial não é concordar com tudo, é reconhecer onde a sua vida está pedindo um novo gesto. O próximo ciclo te chama para escolhas mais coerentes e maduras.`;
 
       if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
         return {
