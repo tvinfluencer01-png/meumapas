@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Starfield } from "@/components/Starfield";
 import {
-  Sparkles, LayoutDashboard, CircleDot, Hash, MessageCircle, LogOut, Menu, X, ScrollText, Shield, Settings, Coins, Wand2,
+  Sparkles, LayoutDashboard, CircleDot, Hash, MessageCircle, LogOut, Menu, X, ScrollText, Shield, Settings, Coins, Wand2, TreePine,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -12,16 +12,24 @@ export const Route = createFileRoute("/_authenticated")({
   component: AuthedLayout,
 });
 
-const NAV = [
+type NavItem = {
+  to: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  addonId?: string;
+};
+
+const NAV: NavItem[] = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/mapa-astral", label: "Mapa Astral", icon: CircleDot },
   { to: "/numerologia", label: "Numerologia", icon: Hash },
   { to: "/oraculo", label: "Oráculo IA", icon: MessageCircle },
   { to: "/tarot", label: "Tarot", icon: Wand2 },
+  { to: "/meditacao", label: "Meditação Cabalística", icon: TreePine, addonId: "sub_kabbalah_unlimited" },
   { to: "/relatorios", label: "Relatórios", icon: ScrollText },
   { to: "/addons", label: "Add-ons", icon: Coins },
   { to: "/configuracoes", label: "Configurações", icon: Settings },
-] as const;
+];
 
 function AuthedLayout() {
   const { signOut, user, loading } = useAuth();
