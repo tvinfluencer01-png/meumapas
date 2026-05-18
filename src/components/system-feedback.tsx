@@ -125,12 +125,26 @@ export function CosmicLoaderOverlay() {
 
           <div className="mt-5 min-h-[2.5rem] flex items-center justify-center">
             <p
-              key={idx}
+              key={state.step ?? idx}
               className="text-sm text-muted-foreground animate-in fade-in slide-in-from-bottom-1 duration-500"
             >
-              {state.messages[idx] ?? ""}
+              {state.step ?? state.messages[idx] ?? ""}
             </p>
           </div>
+
+          {typeof state.progress === "number" && (
+            <div className="mt-5">
+              <div className="h-1.5 w-full rounded-full bg-gold/10 overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-gold/70 via-gold to-gold-glow transition-[width] duration-500 ease-out"
+                  style={{ width: `${Math.min(100, Math.max(0, state.progress))}%` }}
+                />
+              </div>
+              <p className="mt-2 text-[10px] uppercase tracking-[0.3em] text-gold/70">
+                {Math.round(Math.min(100, Math.max(0, state.progress)))}%
+              </p>
+            </div>
+          )}
 
           <div className="mt-6 inline-flex items-center gap-2 text-xs uppercase tracking-widest text-gold/80">
             <Loader2 className="size-3.5 animate-spin" /> Aguarde um instante
