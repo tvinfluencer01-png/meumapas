@@ -26,7 +26,7 @@ const NAV: NavItem[] = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/mapa-astral", label: "Mapa Astral", icon: CircleDot },
   { to: "/numerologia", label: "Numerologia", icon: Hash },
-  { to: "/tarot", label: "Tarot", icon: Wand2 },
+  
   { to: "/oraculo", label: "Oráculo IA", icon: MessageCircle },
   { to: "/relatorios", label: "Relatórios", icon: ScrollText },
   { to: "/addons", label: "Add-ons", icon: Coins },
