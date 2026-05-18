@@ -159,7 +159,7 @@ const BaseAiOutput = z.object({
 
 const AiOutput = z.object({
   intro: z.string().min(120),
-  sections: z.array(SectionOutput).length(3),
+  sections: z.array(SectionBodyOutput).length(3),
   closing: z.string().min(80),
   swot: SwotSchema,
   recommendations: RecommendationsSchema,
