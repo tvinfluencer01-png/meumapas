@@ -70,23 +70,28 @@ function AuthedLayout() {
   useEffect(() => {
     if (loading || !user) return;
     (async () => {
-      const [{ data: profile }, { data: role }, { data: subs }] = await Promise.all([
-        supabase.from("profiles").select("onboarding_completed").eq("id", user.id).maybeSingle(),
-        supabase.from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle(),
-        supabase.from("user_subscriptions").select("addon_id, status, current_period_end").eq("user_id", user.id).eq("status", "active"),
-      ]);
-      setIsAdmin(!!role);
-      const now = Date.now();
-      setActiveAddons(new Set(
-        (subs ?? [])
-          .filter((s) => !s.current_period_end || new Date(s.current_period_end).getTime() > now)
-          .map((s) => s.addon_id),
-      ));
-      const path = router.state.location.pathname;
-      if (profile && !profile.onboarding_completed && path !== "/onboarding") {
-        router.navigate({ to: "/onboarding" });
+      try {
+        const [{ data: profile }, { data: role }, { data: subs }] = await Promise.all([
+          supabase.from("profiles").select("onboarding_completed").eq("id", user.id).maybeSingle(),
+          supabase.from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle(),
+          supabase.from("user_subscriptions").select("addon_id, status, current_period_end").eq("user_id", user.id).eq("status", "active"),
+        ]);
+
+        setIsAdmin(!!role);
+        const now = Date.now();
+        setActiveAddons(new Set(
+          (subs ?? [])
+            .filter((s) => !s.current_period_end || new Date(s.current_period_end).getTime() > now)
+            .map((s) => s.addon_id),
+        ));
+
+        const path = router.state.location.pathname;
+        if (profile && !profile.onboarding_completed && path !== "/onboarding") {
+          router.navigate({ to: "/onboarding" });
+        }
+      } finally {
+        setProfileChecked(true);
       }
-      setProfileChecked(true);
     })();
   }, [loading, user, router]);
 
@@ -95,7 +100,7 @@ function AuthedLayout() {
     router.navigate({ to: "/" });
   }
 
-  if (loading || !user || !profileChecked) {
+  if (loading || !user) {
     return (
       <div className="min-h-screen grid place-items-center bg-background">
         <Sparkles className="size-8 text-gold animate-pulse" />
@@ -200,7 +205,13 @@ function AuthedLayout() {
 
         <main className="flex-1 min-w-0 min-h-screen pt-[calc(4.25rem+env(safe-area-inset-top))] lg:pt-0 lg:pl-0">
           <div className="p-3 sm:p-4 lg:p-8 max-w-7xl mx-auto pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-            <Outlet />
+            {profileChecked ? (
+              <Outlet />
+            ) : (
+              <div className="min-h-[60vh] grid place-items-center">
+                <Sparkles className="size-8 text-gold animate-pulse" />
+              </div>
+            )}
           </div>
         </main>
       </div>
