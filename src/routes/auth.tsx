@@ -33,19 +33,48 @@ const signInSchema = z.object({
   password: z.string().min(1, "Informe a senha"),
 });
 
+const SIGNIN_STEPS = [
+  "Alinhando suas energias...",
+  "Consultando os astros...",
+  "Verificando sua identidade cósmica...",
+  "Abrindo o portal estelar...",
+];
+const SIGNUP_STEPS = [
+  "Tecendo sua assinatura cósmica...",
+  "Registrando sua entrada no universo...",
+  "Preparando sua jornada estelar...",
+  "Acendendo sua constelação...",
+];
+
 function AuthPage() {
   const nav = useNavigate();
   const { session, loading } = useAuth();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [submitting, setSubmitting] = useState(false);
+  const [statusStep, setStatusStep] = useState(0);
+  const [statusMode, setStatusMode] = useState<"signin" | "signup">("signin");
   const [form, setForm] = useState({ name: "", email: "", password: "" });
 
   useEffect(() => {
     if (!loading && session) nav({ to: "/dashboard" });
   }, [session, loading, nav]);
 
+  useEffect(() => {
+    if (!submitting) {
+      setStatusStep(0);
+      return;
+    }
+    const steps = statusMode === "signup" ? SIGNUP_STEPS : SIGNIN_STEPS;
+    const id = setInterval(() => {
+      setStatusStep((s) => (s + 1) % steps.length);
+    }, 1400);
+    return () => clearInterval(id);
+  }, [submitting, statusMode]);
+
   async function handleEmail(e: React.FormEvent) {
     e.preventDefault();
+    setStatusMode(mode);
+    setStatusStep(0);
     setSubmitting(true);
     try {
       if (mode === "signup") {
@@ -84,6 +113,8 @@ function AuthPage() {
   }
 
   async function handleGoogle() {
+    setStatusMode("signin");
+    setStatusStep(0);
     setSubmitting(true);
     try {
       const r = await lovable.auth.signInWithOAuth("google", {
@@ -98,6 +129,8 @@ function AuthPage() {
 
   const bootstrap = useServerFn(bootstrapSuperAdmin);
   async function handleSuperAdmin() {
+    setStatusMode("signin");
+    setStatusStep(0);
     setSubmitting(true);
     try {
       const creds = await bootstrap();
@@ -118,10 +151,41 @@ function AuthPage() {
     }
   }
 
+  const activeSteps = statusMode === "signup" ? SIGNUP_STEPS : SIGNIN_STEPS;
+
   return (
     <div className="relative min-h-screen overflow-hidden bg-background text-foreground">
       <Starfield count={120} />
       <div className="absolute inset-0 nebula-bg pointer-events-none" />
+
+      {submitting && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-md animate-fade-in">
+          <div className="glass-card rounded-2xl px-8 py-10 gold-glow flex flex-col items-center gap-5 max-w-sm mx-4 text-center">
+            <div className="relative">
+              <Sparkles className="size-10 text-gold animate-pulse" />
+              <Loader2 className="absolute -inset-3 size-16 text-gold/40 animate-spin" />
+            </div>
+            <div className="space-y-1">
+              <p className="font-serif text-lg shimmer-text">
+                {statusMode === "signup" ? "Criando sua conta" : "Entrando"}
+              </p>
+              <p key={statusStep} className="text-sm text-stardust animate-fade-in min-h-[1.25rem]">
+                {activeSteps[statusStep]}
+              </p>
+            </div>
+            <div className="flex gap-1.5">
+              {activeSteps.map((_, i) => (
+                <span
+                  key={i}
+                  className={`h-1.5 w-1.5 rounded-full transition-all ${
+                    i === statusStep ? "bg-gold w-4" : "bg-gold/30"
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       <Link
         to="/"
