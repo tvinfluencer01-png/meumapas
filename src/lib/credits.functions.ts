@@ -53,6 +53,53 @@ export async function consumeCredits(
 }
 
 /**
+ * Refund credits back to the user. Use when a charged action fails
+ * (e.g. PDF/map generation error, upstream timeout) or when the user
+ * cancels mid-flight. The transaction is recorded as `refund_<action>`
+ * with a reference containing the reason and the actor who triggered it.
+ *
+ * Returns the amount that was credited back. If `amount` is omitted,
+ * it defaults to the configured cost of the action.
+ */
+export async function refundCredits(
+  userId: string,
+  action: CreditAction,
+  opts: {
+    reason: string;
+    actorUserId?: string | null;
+    actorLabel?: string;
+    amount?: number;
+    originalReference?: string;
+  },
+): Promise<number> {
+  const amount =
+    typeof opts.amount === "number" ? opts.amount : await getCreditCost(action);
+  if (amount <= 0) return 0;
+  const actor =
+    opts.actorLabel ??
+    (opts.actorUserId ? `system[${opts.actorUserId}]` : "system");
+  const ref = [
+    `[refund:${action}]`,
+    `actor=${actor}`,
+    opts.originalReference ? `origin=${opts.originalReference}` : null,
+    `reason=${opts.reason}`,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const { data, error } = await supabaseAdmin.rpc("adjust_credits", {
+    _user_id: userId,
+    _amount: amount,
+    _kind: `refund_${action}`,
+    _reference: ref,
+  });
+  if (error) {
+    console.error("[credits] refund error", error);
+    throw new Error("Falha ao estornar créditos.");
+  }
+  return amount;
+}
+
+/**
  * Check if user has an active subscription that bypasses credit cost
  * for the given action.
  */
@@ -171,6 +218,64 @@ export const adminAdjustCredits = createServerFn({ method: "POST" })
     });
     if (error) throw new Error(error.message);
     return { balance: (newBalance as number) ?? 0 };
+  });
+
+const RefundSchema = z.object({
+  user_id: z.string().uuid(),
+  action: z
+    .string()
+    .trim()
+    .min(1)
+    .max(64)
+    .regex(/^[a-z0-9_]+$/i, "Ação inválida"),
+  amount: z.number().int().min(1).max(10000).optional(),
+  reason: z.string().trim().min(1, "Informe um motivo").max(240),
+  original_tx_id: z.string().uuid().optional().nullable(),
+});
+
+/** Admin-triggered manual refund. */
+export const adminRefundCredits = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => RefundSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+
+    const { data: actor } = await supabaseAdmin
+      .from("profiles")
+      .select("full_name")
+      .eq("id", context.userId)
+      .maybeSingle();
+    const actorLabel = `admin:${actor?.full_name ?? context.userId}`;
+
+    if (data.original_tx_id) {
+      const { data: orig } = await supabaseAdmin
+        .from("credit_transactions")
+        .select("id, amount")
+        .eq("id", data.original_tx_id)
+        .eq("user_id", data.user_id)
+        .maybeSingle();
+      if (!orig) throw new Error("Transação original não encontrada.");
+      if (orig.amount >= 0) throw new Error("Só é possível estornar débitos.");
+
+      const { data: existing } = await supabaseAdmin
+        .from("credit_transactions")
+        .select("id")
+        .eq("user_id", data.user_id)
+        .ilike("reference", `%origin=${data.original_tx_id}%`)
+        .limit(1)
+        .maybeSingle();
+      if (existing) throw new Error("Esta transação já foi estornada.");
+    }
+
+    const amount = await refundCredits(data.user_id, data.action, {
+      reason: data.reason,
+      actorUserId: context.userId,
+      actorLabel,
+      amount: data.amount,
+      originalReference: data.original_tx_id ?? undefined,
+    });
+
+    return { ok: true, amount };
   });
 
 export const adminGetUserCredits = createServerFn({ method: "POST" })

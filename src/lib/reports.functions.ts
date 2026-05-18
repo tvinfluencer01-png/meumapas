@@ -11,7 +11,7 @@ import {
 } from "@/lib/ai-gateway";
 import { computeNumerology, NUMBER_MEANINGS, formatBirthDateBR, numLabel, numTitle } from "@/lib/numerology";
 import { buildReportPdf, type ReportData } from "@/lib/reports-pdf";
-import { consumeCredits, hasUnlimitedAccess, getCreditCost, type CreditAction } from "@/lib/credits.functions";
+import { consumeCredits, hasUnlimitedAccess, getCreditCost, refundCredits, type CreditAction } from "@/lib/credits.functions";
 
 const KIND = z.enum(["personality", "love", "career", "spiritual"]);
 
@@ -114,15 +114,19 @@ export const generateReport = createServerFn({ method: "POST" })
     // Charge credits unless user has unlimited reports subscription
     const action: CreditAction = `report_${data.kind}` as CreditAction;
     const unlimited = await hasUnlimitedAccess(userId, action);
+    let charged = false;
     if (!unlimited) {
       const cost = await getCreditCost(action);
-      const charged = await consumeCredits(userId, action, `Relatório ${data.kind}`);
-      if (!charged) {
+      const ok = await consumeCredits(userId, action, `Relatório ${data.kind}`);
+      if (!ok) {
         throw new Error(
           `Saldo insuficiente. Este relatório custa ${cost} créditos. Compre mais em /addons.`,
         );
       }
+      charged = true;
     }
+
+    try {
 
     const num = computeNumerology(birth.full_name, birth.birth_date);
     const meta = REPORT_META[data.kind];
@@ -371,6 +375,24 @@ A lista "suggestions.items" deve ter entre 6 e 8 itens, cada um com "name" curto
       storagePath: path,
       signedUrl: signed?.signedUrl ?? null,
     };
+    } catch (err) {
+      // Auto-refund on failure so user does not lose credits for a broken PDF.
+      if (charged) {
+        try {
+          await refundCredits(userId, action, {
+            reason:
+              err instanceof Error
+                ? `Falha na geração do relatório: ${err.message}`.slice(0, 200)
+                : "Falha na geração do relatório",
+            actorLabel: "system:reports",
+            originalReference: `Relatório ${data.kind}`,
+          });
+        } catch (refundErr) {
+          console.error("[reports] auto-refund failed", refundErr);
+        }
+      }
+      throw err;
+    }
   });
 
 export const getReportUrl = createServerFn({ method: "POST" })
