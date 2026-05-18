@@ -54,11 +54,18 @@ function AuthedLayout() {
   useEffect(() => {
     if (loading || !user) return;
     (async () => {
-      const [{ data: profile }, { data: role }] = await Promise.all([
+      const [{ data: profile }, { data: role }, { data: subs }] = await Promise.all([
         supabase.from("profiles").select("onboarding_completed").eq("id", user.id).maybeSingle(),
         supabase.from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle(),
+        supabase.from("user_subscriptions").select("addon_id, status, current_period_end").eq("user_id", user.id).eq("status", "active"),
       ]);
       setIsAdmin(!!role);
+      const now = Date.now();
+      setActiveAddons(new Set(
+        (subs ?? [])
+          .filter((s) => !s.current_period_end || new Date(s.current_period_end).getTime() > now)
+          .map((s) => s.addon_id),
+      ));
       const path = router.state.location.pathname;
       if (profile && !profile.onboarding_completed && path !== "/onboarding") {
         router.navigate({ to: "/onboarding" });
