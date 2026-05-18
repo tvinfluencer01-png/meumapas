@@ -73,23 +73,33 @@ const CARDS = [
 
 function NumerologiaCabalisticaPage() {
   const { user } = useAuth();
-  const { data: birth, isLoading, error } = useQuery({
-    queryKey: ["birth", user?.id],
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["cab-name", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      // Tenta primeiro o registro primário; se não existir, pega o mais recente.
       const primary = await supabase.from("birth_data")
         .select("*").eq("user_id", user!.id).eq("is_primary", true).maybeSingle();
-      if (primary.data) return primary.data;
-      const fallback = await supabase.from("birth_data")
-        .select("*").eq("user_id", user!.id)
-        .order("created_at", { ascending: false }).limit(1).maybeSingle();
-      return fallback.data;
+      let birth = primary.data;
+      if (!birth) {
+        const fallback = await supabase.from("birth_data")
+          .select("*").eq("user_id", user!.id)
+          .order("created_at", { ascending: false }).limit(1).maybeSingle();
+        birth = fallback.data;
+      }
+      const profile = await supabase.from("profiles")
+        .select("full_name").eq("id", user!.id).maybeSingle();
+      return { birth, profile: profile.data };
     },
     staleTime: 60_000,
   });
 
-  const fullName = birth?.full_name?.trim() ?? "";
+  const birth = data?.birth;
+  const fullName =
+    (birth?.full_name?.trim?.() ||
+      data?.profile?.full_name?.trim?.() ||
+      (user?.user_metadata as any)?.full_name?.trim?.() ||
+      (user?.user_metadata as any)?.name?.trim?.() ||
+      "");
   const nums = fullName ? computeCabalistic(fullName) : null;
 
   return (
