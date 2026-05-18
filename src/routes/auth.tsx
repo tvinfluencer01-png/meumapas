@@ -163,7 +163,7 @@ function AuthPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-md animate-fade-in">
           <div className="glass-card rounded-2xl px-8 py-10 gold-glow flex flex-col items-center gap-5 max-w-sm mx-4 text-center">
             <div className="relative">
-              <Logo sizeClassName="size-20" animation="pulse" />
+              <Logo sizeClassName="size-20" animation="loading" />
               <Loader2 className="absolute -inset-3 size-[6.5rem] text-gold/40 animate-spin" />
             </div>
             <div className="space-y-1">

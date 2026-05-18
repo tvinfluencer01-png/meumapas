@@ -3,16 +3,15 @@ import { cn } from "@/lib/utils";
 
 interface LogoProps {
   className?: string;
-  /** Tailwind size class (e.g. "size-8"). Overridden by inline style if width/height passed. */
+  /** Tailwind size class (e.g. "size-8"). */
   sizeClassName?: string;
   /** Animation preset */
-  animation?: "spin" | "float" | "pulse" | "orbit" | "none";
+  animation?: "spin" | "float" | "pulse" | "orbit" | "loading" | "none";
   alt?: string;
 }
 
 /**
  * Cosmic AI brand logo — golden astrolabe on transparent background.
- * Use everywhere we previously used the Sparkles icon as identity.
  */
 export function Logo({
   className,
@@ -21,7 +20,7 @@ export function Logo({
   alt = "Cosmic AI",
 }: LogoProps) {
   const animationClass =
-    animation === "spin"
+    animation === "spin" || animation === "loading"
       ? "animate-logo-spin"
       : animation === "float"
       ? "animate-logo-float"
@@ -31,7 +30,7 @@ export function Logo({
       ? "animate-logo-orbit"
       : "";
 
-  return (
+  const img = (
     <img
       src={logoUrl}
       alt={alt}
@@ -40,10 +39,25 @@ export function Logo({
         "select-none object-contain drop-shadow-[0_0_18px_color-mix(in_oklab,var(--gold)_45%,transparent)]",
         sizeClassName,
         animationClass,
-        className,
+        animation !== "loading" && className,
       )}
     />
   );
+
+  if (animation === "loading") {
+    return (
+      <span
+        role="status"
+        aria-label="Carregando"
+        className={cn("relative inline-grid place-items-center", sizeClassName, className)}
+      >
+        <span aria-hidden className="logo-loading-ring" />
+        {img}
+      </span>
+    );
+  }
+
+  return img;
 }
 
 export default Logo;
