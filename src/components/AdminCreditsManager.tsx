@@ -25,6 +25,7 @@ import {
   adminAdjustCredits,
   adminGetUserCredits,
   adminListCreditHistory,
+  adminRefundCredits,
 } from "@/lib/credits.functions";
 import {
   CreditHistoryFilters,
