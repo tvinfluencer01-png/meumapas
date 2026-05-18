@@ -28,10 +28,11 @@ const VOWELS = new Set(["A", "E", "I", "O", "U"]);
 const stripDiacritics = (s: string) =>
   s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
 
-// Redução cabalística: sem números mestres, soma até 1–8 (o 9 não existe).
+// Redução cabalística: soma os dígitos até ficar entre 1 e 9.
+// O 9 é considerado sagrado — devolvemos como 9 e a UI trata como caso especial.
 const reduceCab = (n: number): number => {
-  while (n > 8) n = String(n).split("").reduce((a, b) => a + Number(b), 0);
-  return n === 0 ? 0 : n;
+  while (n > 9) n = String(n).split("").reduce((a, b) => a + Number(b), 0);
+  return n;
 };
 
 const sumLetters = (name: string, filter: (ch: string) => boolean) => {
