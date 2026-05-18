@@ -22,6 +22,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import {
   getAddonsOverview,
@@ -66,6 +74,7 @@ function AddonsPage() {
   });
 
   const [pendingId, setPendingId] = useState<string | null>(null);
+  const [dialogSub, setDialogSub] = useState<SubscriptionAddon | null>(null);
 
   // React to MP back_urls (?status=success|pending|failure)
   useEffect(() => {
@@ -185,13 +194,70 @@ function AddonsPage() {
               active={activeSubIds.has(sub.id)}
               loading={checkoutMut.isPending && pendingId === sub.id}
               disabled={checkoutMut.isPending}
-              onBuy={() => handleBuy("subscription", sub.id)}
+              onBuy={() => setDialogSub(sub)}
             />
           ))}
         </div>
       </section>
 
       <MyCreditHistorySection />
+
+      <Dialog open={!!dialogSub} onOpenChange={(o) => !o && setDialogSub(null)}>
+        <DialogContent>
+          {dialogSub && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="font-serif">{dialogSub.name}</DialogTitle>
+                <DialogDescription>{dialogSub.description}</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-3 py-2">
+                <div className="rounded-lg border bg-muted/30 p-4">
+                  <p className="text-3xl font-serif">
+                    {formatBRL(dialogSub.price_cents)}
+                    <span className="text-base text-muted-foreground font-sans">
+                      /mês
+                    </span>
+                  </p>
+                  <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                    <CalendarClock className="size-3" /> Cobrança recorrente mensal · cancele quando quiser
+                  </p>
+                </div>
+                <ul className="space-y-1.5 text-sm">
+                  {dialogSub.features.map((f) => (
+                    <li key={f} className="flex items-start gap-2">
+                      <Check className="size-4 text-emerald-500 shrink-0 mt-0.5" />
+                      <span>{f}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setDialogSub(null)}
+                  disabled={checkoutMut.isPending}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  className="gap-2"
+                  disabled={checkoutMut.isPending}
+                  onClick={() => {
+                    const id = dialogSub.id;
+                    setDialogSub(null);
+                    handleBuy("subscription", id);
+                  }}
+                >
+                  <ShoppingCart className="size-4" />
+                  {checkoutMut.isPending && pendingId === dialogSub.id
+                    ? "Redirecionando…"
+                    : "Comprar agora"}
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

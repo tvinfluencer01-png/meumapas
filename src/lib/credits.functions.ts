@@ -195,20 +195,30 @@ export async function hasUnlimitedAccess(
   userId: string,
   action: CreditAction,
 ): Promise<boolean> {
-  const addonId = action.startsWith("report_")
-    ? "sub_unlimited_reports"
-    : action === "oracle_message"
-      ? "sub_oracle_premium"
-      : null;
-  if (!addonId) return false;
+  // Map an action to one or more addon ids that grant unlimited access.
+  const perReportAddon: Record<string, string> = {
+    report_finance: "sub_unlimited_finance",
+    report_family: "sub_unlimited_family",
+    report_health: "sub_unlimited_health",
+    report_friendships: "sub_unlimited_friendships",
+  };
+  const addonIds: string[] = [];
+  if (action.startsWith("report_")) {
+    addonIds.push("sub_unlimited_reports");
+    const specific = perReportAddon[action];
+    if (specific) addonIds.push(specific);
+  } else if (action === "oracle_message") {
+    addonIds.push("sub_oracle_premium");
+  }
+  if (addonIds.length === 0) return false;
   const { data } = await supabaseAdmin
     .from("user_subscriptions")
-    .select("status")
+    .select("addon_id")
     .eq("user_id", userId)
-    .eq("addon_id", addonId)
+    .in("addon_id", addonIds)
     .eq("status", "active")
-    .maybeSingle();
-  return !!data;
+    .limit(1);
+  return !!(data && data.length > 0);
 }
 
 /** Get user's current balance (own). */
