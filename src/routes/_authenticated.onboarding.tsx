@@ -86,7 +86,7 @@ function OnboardingPage() {
   return (
     <div className="max-w-2xl mx-auto">
       <div className="text-center mb-8">
-        <Sparkles className="size-10 text-gold mx-auto mb-3" />
+        <Logo sizeClassName="size-20" animation="float" className="mx-auto mb-3" />
         <h1 className="font-serif text-4xl shimmer-text">O Universo precisa te conhecer</h1>
         <p className="mt-3 text-muted-foreground">
           Esses dados desenham seu mapa astral, sua numerologia e calibram a IA Oráculo.
