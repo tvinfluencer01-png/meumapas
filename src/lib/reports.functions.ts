@@ -360,7 +360,6 @@ ${astroBlock}`;
             }),
           ]);
           console.info(`[reports] AI stage done (model=${candidate}, elapsed=${Date.now() - startedAt}ms)`);
-          });
           modelName = candidate;
           model = candidateModel;
           return res.text;
