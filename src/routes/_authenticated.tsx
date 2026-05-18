@@ -94,8 +94,7 @@ function AuthedLayout() {
             .map((s) => s.addon_id),
         ));
 
-        const path = router.state.location.pathname;
-        if (profile && !profile.onboarding_completed && path !== "/onboarding") {
+        if (profile && !profile.onboarding_completed && pathname !== "/onboarding") {
           router.navigate({ to: "/onboarding" });
         }
       } finally {
