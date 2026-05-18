@@ -10,6 +10,7 @@ import { showLoader, hideLoader, updateLoader, confirmDialog } from "@/component
 import {
   FileText, Download, Sparkles, Heart, Briefcase, Flame, Loader2, Trash2, ScrollText,
 } from "lucide-react";
+import { CreditCostBadge } from "@/components/CreditCostBadge";
 
 export const Route = createFileRoute("/_authenticated/relatorios")({
   component: RelatoriosPage,
