@@ -113,12 +113,12 @@ function AuthedLayout() {
 
       <div className="relative z-10 flex">
         {/* Sidebar */}
-        <aside className={`${open ? "block" : "hidden"} lg:block fixed lg:sticky inset-0 lg:inset-auto lg:top-0 z-20 lg:z-auto h-screen w-full lg:w-64 border-r border-border bg-background/90 backdrop-blur-xl`}>
-          <div className="hidden lg:flex items-center gap-2 px-6 py-6 border-b border-border">
+        <aside className={`${open ? "flex" : "hidden"} lg:flex flex-col fixed lg:sticky inset-0 lg:inset-auto lg:top-0 z-20 lg:z-auto h-screen w-full lg:w-64 border-r border-border bg-background/90 backdrop-blur-xl`}>
+          <div className="hidden lg:flex items-center gap-2 px-6 py-6 border-b border-border shrink-0">
             <Sparkles className="size-6 text-gold" />
             <span className="font-serif text-xl shimmer-text">Cosmic AI</span>
           </div>
-          <nav className="p-4 space-y-1">
+          <nav className="flex-1 overflow-y-auto p-4 space-y-1">
             {NAV.filter((item) => !item.addonId || activeAddons.has(item.addonId)).map((item) => (
               <Link
                 key={item.to} to={item.to} onClick={() => setOpen(false)}
@@ -164,7 +164,7 @@ function AuthedLayout() {
               })}
             </div>
           </nav>
-          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border">
+          <div className="shrink-0 p-4 border-t border-border bg-background/90">
             <div className="text-xs text-muted-foreground truncate mb-2">{user?.email}</div>
             <Button onClick={handleSignOut} variant="ghost" size="sm" className="w-full justify-start text-muted-foreground hover:text-destructive">
               <LogOut className="size-4 mr-2" /> Sair
