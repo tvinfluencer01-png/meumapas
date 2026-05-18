@@ -375,6 +375,24 @@ A lista "suggestions.items" deve ter entre 6 e 8 itens, cada um com "name" curto
       storagePath: path,
       signedUrl: signed?.signedUrl ?? null,
     };
+    } catch (err) {
+      // Auto-refund on failure so user does not lose credits for a broken PDF.
+      if (charged) {
+        try {
+          await refundCredits(userId, action, {
+            reason:
+              err instanceof Error
+                ? `Falha na geração do relatório: ${err.message}`.slice(0, 200)
+                : "Falha na geração do relatório",
+            actorLabel: "system:reports",
+            originalReference: `Relatório ${data.kind}`,
+          });
+        } catch (refundErr) {
+          console.error("[reports] auto-refund failed", refundErr);
+        }
+      }
+      throw err;
+    }
   });
 
 export const getReportUrl = createServerFn({ method: "POST" })
