@@ -451,23 +451,52 @@ REGRAS DO JSON:
 
     const { text } = await callWithRetry();
 
-    // Extract JSON (some models wrap in code fences)
+    // Extract JSON (some models wrap in code fences or truncate)
     let jsonStr = text.trim();
     const fence = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
     if (fence) jsonStr = fence[1].trim();
     const firstBrace = jsonStr.indexOf("{");
+    if (firstBrace > 0) jsonStr = jsonStr.slice(firstBrace);
     const lastBrace = jsonStr.lastIndexOf("}");
-    if (firstBrace > 0 || lastBrace > 0) jsonStr = jsonStr.slice(firstBrace, lastBrace + 1);
+    if (lastBrace >= 0 && lastBrace < jsonStr.length - 1) jsonStr = jsonStr.slice(0, lastBrace + 1);
     jsonStr = jsonStr.replace(/[\u0000-\u001F]/g, " ");
+
+    function tryRepairJson(s: string): string {
+      // strip trailing commas
+      let r = s.replace(/,\s*([}\]])/g, "$1");
+      // if response was truncated mid-string, close it
+      const quotes = (r.match(/"/g) || []).length;
+      if (quotes % 2 === 1) r += '"';
+      // close unbalanced brackets/braces
+      const opens = (r.match(/\{/g) || []).length;
+      const closes = (r.match(/\}/g) || []).length;
+      const opensB = (r.match(/\[/g) || []).length;
+      const closesB = (r.match(/\]/g) || []).length;
+      // remove dangling trailing comma after repair
+      r = r.replace(/,\s*$/, "");
+      r += "]".repeat(Math.max(0, opensB - closesB));
+      r += "}".repeat(Math.max(0, opens - closes));
+      return r;
+    }
 
     let parsed: unknown;
     try {
       parsed = JSON.parse(jsonStr);
+    } catch {
+      try {
+        parsed = JSON.parse(tryRepairJson(jsonStr));
+      } catch (e) {
+        console.error("[reports] JSON parse failed", e, "len=", text.length, "tail=", text.slice(-300));
+        throw new Error("A IA devolveu um formato invalido. Tente novamente.");
+      }
+    }
+    let ai: z.infer<typeof AiOutput>;
+    try {
+      ai = AiOutput.parse(parsed);
     } catch (e) {
-      console.error("[reports] JSON parse failed", e, text.slice(0, 400));
+      console.error("[reports] schema validation failed", e);
       throw new Error("A IA devolveu um formato invalido. Tente novamente.");
     }
-    const ai = AiOutput.parse(parsed);
 
     // 4) Build PDF
     // Load branding logo bytes (if add-on enabled, kind is enabled, and a logo is configured)
