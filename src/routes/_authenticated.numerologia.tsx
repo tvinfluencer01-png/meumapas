@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { computeNumerology, NUMBER_MEANINGS, formatBirthDateBR } from "@/lib/numerology";
+import { computeNumerology, NUMBER_MEANINGS, formatBirthDateBR, numLabel } from "@/lib/numerology";
 import { Hash, Heart, Eye, User as UserIcon, Cake, Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/numerologia")({
@@ -53,17 +53,18 @@ function NumerologiaPage() {
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {CARDS.map((c) => {
-              const n = (nums as any)[c.key] as number;
-              const meaning = NUMBER_MEANINGS[n];
+              const n = (nums as Record<string, number | null>)[c.key];
+              const meaning = typeof n === "number" && n > 0 ? NUMBER_MEANINGS[n] : undefined;
+              const display = typeof n === "number" && n > 0 ? n : "—";
               return (
                 <div key={c.key} className="glass-card rounded-2xl p-6 hover:gold-glow transition-all">
                   <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground">
                     <c.icon className="size-3.5 text-gold" /> {c.label}
                   </div>
-                  <div className="font-serif text-6xl text-stardust mt-3 shimmer-text">{n}</div>
+                  <div className="font-serif text-6xl text-stardust mt-3 shimmer-text">{display}</div>
                   <div className="mt-3">
-                    <div className="font-serif text-lg text-gold">{meaning?.title}</div>
-                    <p className="text-sm text-muted-foreground mt-1">{meaning?.essence}</p>
+                    <div className="font-serif text-lg text-gold">{meaning?.title ?? "Informe seu nome completo"}</div>
+                    <p className="text-sm text-muted-foreground mt-1">{meaning?.essence ?? "Este campo depende do seu nome para ser calculado."}</p>
                   </div>
                   <p className="text-xs text-muted-foreground mt-3 italic">{c.desc}</p>
                 </div>
@@ -96,11 +97,11 @@ const GUIDANCE: Record<number, Guidance> = {
 };
 
 function NumerologySynthesis({ nums }: { nums: ReturnType<typeof computeNumerology> }) {
-  const lp = NUMBER_MEANINGS[nums.life_path];
-  const ds = NUMBER_MEANINGS[nums.destiny];
-  const gLp = GUIDANCE[nums.life_path];
-  const gDs = GUIDANCE[nums.destiny];
-  const gSu = GUIDANCE[nums.soul_urge];
+  const lp = nums.life_path ? NUMBER_MEANINGS[nums.life_path] : undefined;
+  const ds = nums.destiny ? NUMBER_MEANINGS[nums.destiny] : undefined;
+  const gLp = nums.life_path ? GUIDANCE[nums.life_path] : undefined;
+  const gDs = nums.destiny ? GUIDANCE[nums.destiny] : undefined;
+  const gSu = nums.soul_urge ? GUIDANCE[nums.soul_urge] : undefined;
 
   return (
     <div className="glass-card gold-glow rounded-2xl p-6 mt-6 relative overflow-hidden">
@@ -111,18 +112,18 @@ function NumerologySynthesis({ nums }: { nums: ReturnType<typeof computeNumerolo
             <Sparkles className="size-3.5" /> Síntese prática
           </div>
           <p className="mt-3 text-stardust font-serif text-lg leading-relaxed">
-            Seu Caminho de Vida <span className="text-gold">{nums.life_path} — {lp?.title}</span>{" "}
+            Seu Caminho de Vida <span className="text-gold">{numLabel(nums.life_path)} — {lp?.title ?? "—"}</span>{" "}
             te coloca para realizar o Destino{" "}
-            <span className="text-gold">{nums.destiny} — {ds?.title}</span>. Abaixo, o que isso
+            <span className="text-gold">{numLabel(nums.destiny)} — {ds?.title ?? "—"}</span>. Abaixo, o que isso
             significa na prática: o que esperar, o que fazer agora e o que evitar.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {[
-            { label: `Caminho de Vida ${nums.life_path}`, g: gLp, hint: "O cenário da sua jornada" },
-            { label: `Destino ${nums.destiny}`, g: gDs, hint: "O que você veio realizar" },
-            { label: `Alma ${nums.soul_urge}`, g: gSu, hint: "O que te move por dentro" },
+            { label: `Caminho de Vida ${numLabel(nums.life_path)}`, g: gLp, hint: "O cenário da sua jornada" },
+            { label: `Destino ${numLabel(nums.destiny)}`, g: gDs, hint: "O que você veio realizar" },
+            { label: `Alma ${numLabel(nums.soul_urge)}`, g: gSu, hint: "O que te move por dentro" },
           ].filter((x) => x.g).map((x) => (
             <div key={x.label} className="rounded-xl border border-gold/20 bg-background/30 p-4 space-y-2">
               <div className="text-xs uppercase tracking-widest text-gold">{x.label}</div>

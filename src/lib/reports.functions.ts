@@ -9,7 +9,7 @@ import {
   createAnthropicProvider,
   createGeminiProvider,
 } from "@/lib/ai-gateway";
-import { computeNumerology, NUMBER_MEANINGS, formatBirthDateBR } from "@/lib/numerology";
+import { computeNumerology, NUMBER_MEANINGS, formatBirthDateBR, numLabel, numTitle } from "@/lib/numerology";
 import { buildReportPdf, type ReportData } from "@/lib/reports-pdf";
 
 const KIND = z.enum(["personality", "love", "career", "spiritual"]);
@@ -135,10 +135,10 @@ export const generateReport = createServerFn({ method: "POST" })
     }
 
     const numBlock = [
-      `Caminho de Vida ${num.life_path} (${NUMBER_MEANINGS[num.life_path]?.title})`,
-      `Destino ${num.destiny} (${NUMBER_MEANINGS[num.destiny]?.title})`,
-      `Alma ${num.soul_urge} (${NUMBER_MEANINGS[num.soul_urge]?.title})`,
-      `Personalidade ${num.personality} (${NUMBER_MEANINGS[num.personality]?.title})`,
+      `Caminho de Vida ${numLabel(num.life_path)} (${numTitle(num.life_path)})`,
+      `Destino ${numLabel(num.destiny)} (${numTitle(num.destiny)})`,
+      `Alma ${numLabel(num.soul_urge)} (${numTitle(num.soul_urge)})`,
+      `Personalidade ${numLabel(num.personality)} (${numTitle(num.personality)})`,
     ].join(" | ");
 
     const sun = planets.find((p) => p.name === "Sol");
@@ -302,7 +302,7 @@ A lista "suggestions.items" deve ter entre 6 e 8 itens, cada um com "name" curto
         birth.birth_time ? ` as ${String(birth.birth_time).slice(0, 5)}` : ""
       }${birth.city ? ` - ${birth.city}` : ""}`,
       signLine: signLine || "Mapa em construcao",
-      numerologyLine: `Caminho ${num.life_path} - Destino ${num.destiny} - Alma ${num.soul_urge}`,
+      numerologyLine: `Caminho ${numLabel(num.life_path)} - Destino ${numLabel(num.destiny)} - Alma ${numLabel(num.soul_urge)}`,
       intro: ai.intro,
       sections: ai.sections,
       closing: ai.closing,

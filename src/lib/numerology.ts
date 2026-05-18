@@ -32,9 +32,15 @@ const sumLetters = (name: string, filter: (ch: string) => boolean) => {
   return total;
 };
 
+// Numerologia tradicional não usa o número 0: quando a soma de letras
+// resultar em 0 (nome ausente, vazio ou sem letras latinas após normalização),
+// o cálculo daquele campo é indefinido e deve aparecer como "—" na UI,
+// nunca como 0.
+const reduceName = (sum: number): number | null => (sum > 0 ? reduce(sum) : null);
+
 export function computeNumerology(fullName: string | null | undefined, birthDate: string | null | undefined) {
   // Defensive: birth_data columns may be null/empty.
-  const safeName = typeof fullName === "string" ? fullName : "";
+  const safeName = typeof fullName === "string" ? fullName.trim() : "";
   const safeDate = typeof birthDate === "string" && /^\d{4}-\d{2}-\d{2}/.test(birthDate)
     ? birthDate
     : "2000-01-01";
@@ -43,9 +49,9 @@ export function computeNumerology(fullName: string | null | undefined, birthDate
   const lifePath = reduce(reduce(y) + reduce(m) + reduce(d));
   const birthday = reduce(d);
 
-  const expression = reduce(sumLetters(safeName, () => true));
-  const soulUrge = reduce(sumLetters(safeName, (c) => VOWELS.has(c)));
-  const personality = reduce(sumLetters(safeName, (c) => !VOWELS.has(c)));
+  const expression = reduceName(sumLetters(safeName, () => true));
+  const soulUrge = reduceName(sumLetters(safeName, (c) => VOWELS.has(c)));
+  const personality = reduceName(sumLetters(safeName, (c) => !VOWELS.has(c)));
   const destiny = expression; // alias popular
 
   return {
@@ -85,3 +91,14 @@ export const NUMBER_MEANINGS: Record<number, { title: string; essence: string }>
   22: { title: "Mestre Construtor", essence: "Manifestação prática de visões elevadas." },
   33: { title: "Mestre Curador", essence: "Amor incondicional e serviço à humanidade." },
 };
+
+/** Helpers que lidam com campos numerológicos possivelmente indefinidos (sem nome). */
+export const numLabel = (n: number | null | undefined): string =>
+  typeof n === "number" && n > 0 ? String(n) : "—";
+
+export const numMeaning = (n: number | null | undefined) =>
+  typeof n === "number" && n > 0 ? NUMBER_MEANINGS[n] : undefined;
+
+export const numTitle = (n: number | null | undefined): string =>
+  numMeaning(n)?.title ?? "—";
+
