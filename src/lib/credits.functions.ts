@@ -3,17 +3,29 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-// Centralized credit cost per action
-export const CREDIT_COSTS = {
+// Fallback defaults — used only if DB row missing
+export const CREDIT_COSTS_DEFAULTS = {
   oracle_message: 1,
   report_personality: 5,
   report_love: 5,
   report_career: 5,
   report_spiritual: 5,
   tarot_reading: 2,
+  astro_chart: 3,
 } as const;
 
-export type CreditAction = keyof typeof CREDIT_COSTS;
+export type CreditAction = keyof typeof CREDIT_COSTS_DEFAULTS | string;
+
+/** Read configurable cost for an action from the credit_costs table. */
+export async function getCreditCost(action: string): Promise<number> {
+  const { data } = await supabaseAdmin
+    .from("credit_costs")
+    .select("amount")
+    .eq("action", action)
+    .maybeSingle();
+  if (data && typeof data.amount === "number") return data.amount;
+  return (CREDIT_COSTS_DEFAULTS as Record<string, number>)[action] ?? 0;
+}
 
 /**
  * Server-side helper: consume credits atomically. Returns true if charged,
@@ -25,7 +37,8 @@ export async function consumeCredits(
   action: CreditAction,
   reference?: string,
 ): Promise<boolean> {
-  const amount = CREDIT_COSTS[action];
+  const amount = await getCreditCost(action);
+  if (amount <= 0) return true; // free action
   const { data, error } = await supabaseAdmin.rpc("consume_credits", {
     _user_id: userId,
     _amount: amount,
