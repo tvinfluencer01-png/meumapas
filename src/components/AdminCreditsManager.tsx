@@ -24,7 +24,14 @@ import { listAdminUsers } from "@/lib/admin.functions";
 import {
   adminAdjustCredits,
   adminGetUserCredits,
+  adminListCreditHistory,
 } from "@/lib/credits.functions";
+import {
+  CreditHistoryFilters,
+  CreditHistoryTable,
+  toIsoRange,
+  useHistoryFiltersState,
+} from "@/components/CreditHistoryTable";
 
 export function AdminCreditsManager() {
   const listFn = useServerFn(listAdminUsers);
