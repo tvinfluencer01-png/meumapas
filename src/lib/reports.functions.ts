@@ -453,7 +453,9 @@ REGRAS DO JSON:
         : new Error("Falha temporaria na IA. Tente novamente.");
     }
 
+    yield { type: "progress" as const, progress: 28, step: "Consultando o Oráculo Cósmico..." };
     const { text } = await callWithRetry();
+    yield { type: "progress" as const, progress: 72, step: "Validando a leitura recebida..." };
 
     // Extract JSON (some models wrap in code fences or truncate)
     let jsonStr = text.trim();
