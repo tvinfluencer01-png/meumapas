@@ -241,22 +241,32 @@ export const generateReport = createServerFn({ method: "POST" })
     const customKey = settings?.custom_ai_key as string | null;
     const customModel = (settings?.custom_ai_model as string | null) ?? null;
 
-    let model: ReturnType<ReturnType<typeof createLovableAiGatewayProvider>>;
     let modelName = customModel ?? "google/gemini-2.5-flash-lite";
+    const lovableKey = process.env.LOVABLE_API_KEY;
+
+    const makeModel = (candidate: string): ReturnType<ReturnType<typeof createLovableAiGatewayProvider>> => {
+      if (provider === "openai" && customKey) {
+        return createOpenAIProvider(customKey)(candidate);
+      }
+      if (provider === "anthropic" && customKey) {
+        return createAnthropicProvider(customKey)(candidate);
+      }
+      if (provider === "gemini" && customKey) {
+        return createGeminiProvider(customKey)(candidate);
+      }
+      if (!lovableKey) throw new Error("LOVABLE_API_KEY ausente");
+      return createLovableAiGatewayProvider(lovableKey)(candidate);
+    };
+
     if (provider === "openai" && customKey) {
-      modelName = customModel ?? "gpt-4o-mini";
-      model = createOpenAIProvider(customKey)(modelName);
+      modelName = customModel ?? "gpt-5-mini";
     } else if (provider === "anthropic" && customKey) {
       modelName = customModel ?? "claude-3-5-sonnet-20241022";
-      model = createAnthropicProvider(customKey)(modelName);
     } else if (provider === "gemini" && customKey) {
       modelName = customModel ?? "gemini-2.5-flash";
-      model = createGeminiProvider(customKey)(modelName);
-    } else {
-      const key = process.env.LOVABLE_API_KEY;
-      if (!key) throw new Error("LOVABLE_API_KEY ausente");
-      model = createLovableAiGatewayProvider(key)(modelName);
     }
+
+    let model = makeModel(modelName);
 
     // 3) Generate humanized structured content
     const firstName = String(birth.full_name).trim().split(/\s+/)[0] ?? "";
@@ -373,33 +383,47 @@ REGRAS DO JSON:
 
     // Robust call: per-attempt timeout + retries + fallback model on persistent upstream timeouts.
     const isLovable = provider === "lovable" || !(["openai", "anthropic", "gemini"].includes(provider) && customKey);
-    const lovableKey = process.env.LOVABLE_API_KEY;
-    const fallbackModels = isLovable && lovableKey
-      ? [
-          modelName,
-          "google/gemini-2.5-flash-lite",
-          "google/gemini-2.5-flash",
-        ].filter((m, i, arr) => arr.indexOf(m) === i)
-      : [modelName];
+    const fallbackModels = (
+      provider === "openai" && customKey
+        ? [modelName, "gpt-5-mini", "gpt-5-nano"]
+        : provider === "gemini" && customKey
+          ? [modelName, "gemini-2.5-flash", "gemini-2.0-flash"]
+          : isLovable && lovableKey
+            ? [modelName, "google/gemini-2.5-flash-lite", "google/gemini-2.5-flash"]
+            : [modelName]
+    ).filter((m, i, arr) => arr.indexOf(m) === i);
+
+    const REQUEST_BUDGET_MS = 32_000;
+    const PER_ATTEMPT_TIMEOUT_MS = 14_000;
+    const MIN_REMAINING_BUDGET_MS = 5_000;
 
     async function callWithRetry() {
       let lastErr: unknown;
+      const startedAt = Date.now();
       for (const candidate of fallbackModels) {
-        const candidateModel = candidate === modelName
-          ? model
-          : (isLovable && lovableKey ? createLovableAiGatewayProvider(lovableKey)(candidate) : model);
-        for (let attempt = 0; attempt < 2; attempt++) {
+        const remainingBudget = REQUEST_BUDGET_MS - (Date.now() - startedAt);
+        if (remainingBudget < MIN_REMAINING_BUDGET_MS) break;
+
+        const candidateModel = candidate === modelName ? model : makeModel(candidate);
+        const attemptTimeout = Math.min(
+          PER_ATTEMPT_TIMEOUT_MS,
+          Math.max(4_000, remainingBudget - 1_500),
+        );
+
+        for (let attempt = 0; attempt < 1; attempt++) {
           const ac = new AbortController();
-          const timer = setTimeout(() => ac.abort(), 90_000);
+          const timer = setTimeout(() => ac.abort(), attemptTimeout);
           try {
             const res = await generateText({
               model: candidateModel,
               system,
               prompt,
               abortSignal: ac.signal,
+              maxOutputTokens: 3200,
               maxRetries: 0,
             });
             modelName = candidate;
+            model = candidateModel;
             return res;
           } catch (e) {
             lastErr = e;
@@ -421,7 +445,7 @@ REGRAS DO JSON:
         }
       }
       throw lastErr instanceof Error
-        ? new Error("A IA demorou demais para responder. Tente novamente em alguns instantes.")
+        ? new Error("A geração demorou além do limite. Tente novamente; agora o relatório usa um modo mais rápido.")
         : new Error("Falha temporaria na IA. Tente novamente.");
     }
 
@@ -434,6 +458,7 @@ REGRAS DO JSON:
     const firstBrace = jsonStr.indexOf("{");
     const lastBrace = jsonStr.lastIndexOf("}");
     if (firstBrace > 0 || lastBrace > 0) jsonStr = jsonStr.slice(firstBrace, lastBrace + 1);
+    jsonStr = jsonStr.replace(/[\u0000-\u001F]/g, " ");
 
     let parsed: unknown;
     try {
