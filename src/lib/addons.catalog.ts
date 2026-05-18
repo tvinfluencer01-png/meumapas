@@ -100,6 +100,18 @@ export const SUBSCRIPTION_ADDONS: SubscriptionAddon[] = [
       "Exportação em PDF para imprimir",
     ],
   },
+  {
+    id: "sub_kabbalistic_numerology",
+    name: "Numerologia Cabalística",
+    price_cents: 3490,
+    description: "Análise numerológica baseada na Cabala (Gematria) sem consumir créditos.",
+    features: [
+      "Cálculo de Caminho de Vida, Destino e Alma",
+      "Interpretações cabalísticas (Gematria)",
+      "Relatórios ilimitados",
+      "Exportação em PDF",
+    ],
+  },
 ];
 
 export function formatBRL(cents: number) {
