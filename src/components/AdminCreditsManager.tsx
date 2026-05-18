@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Coins, Search, Plus, Minus, History, Package } from "lucide-react";
+import { emitCreditsChanged } from "@/lib/credits-events";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -193,6 +194,7 @@ function CreditsDialog({
       refetch();
       refetchHistory();
       qc.invalidateQueries({ queryKey: ["addons-overview"] });
+      emitCreditsChanged();
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -217,6 +219,7 @@ function CreditsDialog({
       refetch();
       refetchHistory();
       qc.invalidateQueries({ queryKey: ["addons-overview"] });
+      emitCreditsChanged();
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -245,6 +248,7 @@ function CreditsDialog({
       refetch();
       refetchHistory();
       qc.invalidateQueries({ queryKey: ["addons-overview"] });
+      emitCreditsChanged();
     },
     onError: (e: Error) => toast.error(e.message),
   });
