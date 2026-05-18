@@ -159,7 +159,7 @@ const BaseAiOutput = z.object({
 
 const AiOutput = z.object({
   intro: z.string().min(120),
-  sections: z.array(SectionOutput).length(3),
+  sections: z.array(SectionBodyOutput).length(3),
   closing: z.string().min(80),
   swot: SwotSchema,
   recommendations: RecommendationsSchema,
@@ -767,7 +767,7 @@ Regras:
       base = normalizeBasePayload(null) as z.infer<typeof BaseAiOutput>;
     }
 
-    const sections: z.infer<typeof SectionOutput>[] = [];
+    const sections: z.infer<typeof SectionBodyOutput>[] = [];
     for (const [index, blueprint] of base.sectionBlueprints.entries()) {
       yield {
         type: "progress" as const,
@@ -790,17 +790,9 @@ Regras:
         sectionBody = normalizeSectionPayload(null, blueprint) as z.infer<typeof SectionBodyOutput>;
       }
 
-      yield {
-        type: "progress" as const,
-        progress: 48 + index * 10,
-        step: `Montando plano do capítulo ${index + 1}...`,
-      };
-      const sectionPlan = createLocalSectionPlan(blueprint, sectionBody.body);
-
       sections.push({
         title: sectionBody.title,
         body: sectionBody.body,
-        plan: sectionPlan.plan,
       });
     }
 
@@ -861,6 +853,23 @@ Regras:
       };
     }
 
+    // Build final 7-day plan based on the summary + recommendations (local, deterministic, fast)
+    const buildFinal7DayPlan = () => {
+      const expandTo7 = (seeds: string[], prefix: string): string[] => {
+        const cleaned = seeds.map((s) => cleanInlineText(s)).filter(Boolean);
+        const base = cleaned.length ? cleaned : [`${prefix} alinhado ao seu resumo.`];
+        return Array.from({ length: 7 }, (_, i) => {
+          const seed = base[i % base.length];
+          return `Dia ${i + 1}: ${seed}`;
+        });
+      };
+      return {
+        improve: expandTo7(ai.recommendations.improve, "Pratique uma melhoria"),
+        avoid: expandTo7(ai.recommendations.avoid, "Evite um padrão"),
+        follow: expandTo7(ai.recommendations.follow, "Siga um caminho"),
+      };
+    };
+
     const reportData: ReportData = {
       kind: data.kind,
       title: meta.title,
@@ -882,6 +891,7 @@ Regras:
         items: ai.suggestions.items,
       },
       summary: ai.summary,
+      finalPlan: buildFinal7DayPlan(),
       branding: brandingPayload,
     };
 
