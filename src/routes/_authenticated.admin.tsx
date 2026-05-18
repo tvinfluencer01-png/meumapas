@@ -102,7 +102,7 @@ function AdminPage() {
         <TabsContent value="mercadopago" className="mt-0">
           <MercadoPagoForm />
         </TabsContent>
-        <TabsContent value="credits" className="mt-0">
+        <TabsContent value="credits" className="mt-0 space-y-6">
           <AdminCreditCosts />
           <AdminCreditsManager />
         </TabsContent>
