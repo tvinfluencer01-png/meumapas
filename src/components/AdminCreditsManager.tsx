@@ -222,44 +222,19 @@ function CreditsDialog({
         </Button>
       </div>
 
-      <div className="border-t border-border pt-3">
-        <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1">
-          <History className="size-3" /> Últimas movimentações
+      <div className="border-t border-border pt-3 space-y-3">
+        <div className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+          <History className="size-3" /> Histórico detalhado
         </div>
-        <div className="max-h-64 overflow-auto space-y-1">
-          {(data?.transactions ?? []).length === 0 ? (
-            <div className="text-sm text-muted-foreground">Sem movimentações.</div>
-          ) : (
-            data!.transactions.map((t) => (
-              <div
-                key={t.id}
-                className="flex items-center justify-between text-xs py-1 border-b border-border/40 last:border-b-0"
-              >
-                <div className="flex flex-col">
-                  <span className="text-foreground">{t.kind}</span>
-                  {t.reference && (
-                    <span className="text-muted-foreground truncate max-w-[280px]">
-                      {t.reference}
-                    </span>
-                  )}
-                  <span className="text-muted-foreground">
-                    {new Date(t.created_at).toLocaleString("pt-BR")}
-                  </span>
-                </div>
-                <span
-                  className={
-                    t.amount > 0
-                      ? "font-mono text-emerald-500"
-                      : "font-mono text-destructive"
-                  }
-                >
-                  {t.amount > 0 ? "+" : ""}
-                  {t.amount}
-                </span>
-              </div>
-            ))
-          )}
-        </div>
+        <CreditHistoryFilters
+          value={filters}
+          onChange={setFilters}
+          actions={(history?.transactions ?? []).map((t) => t.action || t.kind)}
+        />
+        <CreditHistoryTable
+          transactions={history?.transactions ?? []}
+          loading={historyLoading}
+        />
       </div>
 
       <div className="flex justify-end">
