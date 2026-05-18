@@ -28,10 +28,11 @@ const VOWELS = new Set(["A", "E", "I", "O", "U"]);
 const stripDiacritics = (s: string) =>
   s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
 
-// Redução cabalística: sem números mestres, soma até 1–8 (o 9 não existe).
+// Redução cabalística: soma os dígitos até ficar entre 1 e 9.
+// O 9 é considerado sagrado — devolvemos como 9 e a UI trata como caso especial.
 const reduceCab = (n: number): number => {
-  while (n > 8) n = String(n).split("").reduce((a, b) => a + Number(b), 0);
-  return n === 0 ? 0 : n;
+  while (n > 9) n = String(n).split("").reduce((a, b) => a + Number(b), 0);
+  return n;
 };
 
 const sumLetters = (name: string, filter: (ch: string) => boolean) => {
@@ -61,6 +62,7 @@ const CAB_MEANINGS: Record<number, { title: string; essence: string; guidance: s
   6: { title: "Vav — A Conexão", essence: "União do céu e da terra, amor responsável e serviço.", guidance: "Sirva com amor sem se anular; harmonia nasce do limite justo." },
   7: { title: "Zain — A Espada", essence: "Discernimento, vitória interior e busca da verdade.", guidance: "Separe o essencial do supérfluo; o silêncio é seu mestre." },
   8: { title: "Chet — O Sagrado", essence: "Transcendência, poder espiritual e abundância iluminada.", guidance: "Eleve seu propósito material a serviço de algo maior." },
+  9: { title: "Tet — A Luz Oculta", essence: "Número sagrado da plenitude divina; sabedoria que transcende a forma.", guidance: "Acolha o mistério: você canaliza uma vibração de serviço universal e compaixão." },
 };
 
 const CARDS = [
