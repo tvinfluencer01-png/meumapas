@@ -151,8 +151,10 @@ const AiOutput = z.object({
 export const generateReport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({ kind: KIND }).parse(d))
-  .handler(async ({ data, context }) => {
+  .handler(async function* ({ data, context }) {
     const { supabase, userId } = context;
+    yield { type: "progress" as const, progress: 5, step: "Carregando seus dados cósmicos..." };
+
 
     // 1) Load user context
     const [{ data: birth }, { data: chart }, { data: settings }, { data: brandRow }, { data: brandingSub }] = await Promise.all([
