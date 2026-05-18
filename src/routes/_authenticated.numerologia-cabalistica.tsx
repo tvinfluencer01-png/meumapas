@@ -356,7 +356,54 @@ function NumerologiaCabalisticaPage() {
           `harmonizam no serviço.`,
       });
 
-      blocks.push({ type: "h2", text: "V. Práticas cabalísticas recomendadas" });
+      // ───── Análise prática e direção personalizada ─────
+      blocks.push({ type: "h2", text: "V. Análise prática — o que fazer com isto" });
+      if (tips) {
+        blocks.push({
+          type: "p",
+          text:
+            `Com base na sua vibração de Destino ${dn} (${dMean?.letterName}), seu foco para este ciclo é: ` +
+            `${tips.focus} A seguir, um plano direcional curto e aplicável.`,
+        });
+        blocks.push({ type: "h3", text: "Faça (ações que aceleram seu caminho)" });
+        blocks.push({ type: "list", items: tips.do });
+        blocks.push({ type: "h3", text: "Evite (armadilhas típicas do seu número)" });
+        blocks.push({ type: "list", items: tips.avoid });
+        blocks.push({ type: "h3", text: "Mantra-guia para o ciclo" });
+        blocks.push({ type: "quote", text: tips.mantra });
+
+        // Direção combinando Alma + Impressão
+        if (sn && ino) {
+          const gap = Math.abs(sn - ino);
+          const alignText =
+            gap <= 1
+              ? "Sua Alma e Impressão estão muito próximas — você se mostra ao mundo praticamente como se sente por dentro. Use esta coerência para liderar com autenticidade."
+              : gap <= 3
+              ? "Há uma diferença saudável entre Alma e Impressão. Cultive momentos íntimos para ouvir sua Alma e momentos públicos para honrar sua Impressão — ambas são reais."
+              : "Existe uma distância significativa entre Alma e Impressão. Esta é sua principal prática espiritual deste ciclo: integrar interior e exterior. Pergunte-se a cada decisão: 'isto vem da minha Alma ou da máscara?'.";
+          blocks.push({ type: "h3", text: "Direção sobre Alma × Impressão" });
+          blocks.push({ type: "p", text: alignText });
+        }
+
+        // Próximos 30 dias
+        blocks.push({ type: "h3", text: "Próximos 30 dias — passos concretos" });
+        blocks.push({
+          type: "list",
+          items: [
+            `Semana 1: escolha UMA ação da lista 'Faça' e execute diariamente.`,
+            `Semana 2: identifique UMA das 'Armadilhas' que mais se repete em você e crie um sinal de alerta interno.`,
+            `Semana 3: pratique o mantra-guia ao acordar e ao dormir — 3 minutos cada vez.`,
+            `Semana 4: revise o que mudou, anote sincronicidades e ajuste a direção para o próximo ciclo.`,
+          ],
+        });
+      } else {
+        blocks.push({
+          type: "p",
+          text: "Conclua seu nome completo no cadastro para receber a análise prática personalizada por número de Destino.",
+        });
+      }
+
+      blocks.push({ type: "h2", text: "VI. Práticas cabalísticas recomendadas" });
       blocks.push({
         type: "list",
         items: [
