@@ -114,38 +114,48 @@ const SectionPlanSchema = z.object({
   follow: z.array(z.string().min(3)).length(7),
 });
 
+const SwotSchema = z.object({
+  strengths: z.array(z.string().min(3)).length(3),
+  weaknesses: z.array(z.string().min(3)).length(3),
+  opportunities: z.array(z.string().min(3)).length(3),
+  threats: z.array(z.string().min(3)).length(3),
+});
+
+const RecommendationsSchema = z.object({
+  improve: z.array(z.string().min(3)).length(3),
+  avoid: z.array(z.string().min(3)).length(3),
+  follow: z.array(z.string().min(3)).length(3),
+});
+
+const SuggestionsSchema = z.object({
+  intro: z.string().optional(),
+  items: z.array(z.object({ name: z.string().min(2), why: z.string().min(20) })).length(5),
+});
+
+const SectionOutput = z.object({
+  title: z.string().min(2),
+  body: z.string().min(140),
+  plan: SectionPlanSchema,
+});
+
+const BaseAiOutput = z.object({
+  intro: z.string().min(120),
+  sectionBlueprints: z.array(z.object({ title: z.string().min(2), focus: z.string().min(30) })).length(3),
+  closing: z.string().min(80),
+  swot: SwotSchema,
+  recommendations: RecommendationsSchema,
+  suggestions: SuggestionsSchema,
+  summary: z.string().min(120),
+});
+
 const AiOutput = z.object({
-  intro: z.string().min(200),
-  sections: z
-    .array(
-      z.object({
-        title: z.string().min(2),
-        body: z.string().min(200),
-        plan: SectionPlanSchema.optional(),
-      }),
-    )
-    .min(3)
-    .max(8),
-  closing: z.string().min(120),
-  swot: z.object({
-    strengths: z.array(z.string().min(3)).min(3).max(6),
-    weaknesses: z.array(z.string().min(3)).min(3).max(6),
-    opportunities: z.array(z.string().min(3)).min(3).max(6),
-    threats: z.array(z.string().min(3)).min(3).max(6),
-  }),
-  recommendations: z.object({
-    improve: z.array(z.string().min(3)).min(3).max(6),
-    avoid: z.array(z.string().min(3)).min(3).max(6),
-    follow: z.array(z.string().min(3)).min(3).max(6),
-  }),
-  suggestions: z.object({
-    intro: z.string().optional(),
-    items: z
-      .array(z.object({ name: z.string().min(2), why: z.string().min(20) }))
-      .min(5)
-      .max(10),
-  }),
-  summary: z.string().min(200),
+  intro: z.string().min(120),
+  sections: z.array(SectionOutput).length(3),
+  closing: z.string().min(80),
+  swot: SwotSchema,
+  recommendations: RecommendationsSchema,
+  suggestions: SuggestionsSchema,
+  summary: z.string().min(120),
 });
 
 export const generateReport = createServerFn({ method: "POST" })
