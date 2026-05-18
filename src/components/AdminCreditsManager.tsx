@@ -174,6 +174,7 @@ function CreditsDialog({
       setAmount("");
       setReason("");
       refetch();
+      refetchHistory();
       qc.invalidateQueries({ queryKey: ["addons-overview"] });
     },
     onError: (e: Error) => toast.error(e.message),
