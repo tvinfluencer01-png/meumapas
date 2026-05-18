@@ -767,7 +767,7 @@ Regras:
       base = normalizeBasePayload(null) as z.infer<typeof BaseAiOutput>;
     }
 
-    const sections: z.infer<typeof SectionOutput>[] = [];
+    const sections: z.infer<typeof SectionBodyOutput>[] = [];
     for (const [index, blueprint] of base.sectionBlueprints.entries()) {
       yield {
         type: "progress" as const,
