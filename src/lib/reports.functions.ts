@@ -134,7 +134,7 @@ const SuggestionsSchema = z.object({
 
 const SectionBodyOutput = z.object({
   title: z.string().min(2),
-  body: z.string().min(120),
+  body: z.string().min(600),
 });
 
 const SectionPlanOutput = z.object({
@@ -143,28 +143,28 @@ const SectionPlanOutput = z.object({
 
 const SectionOutput = z.object({
   title: z.string().min(2),
-  body: z.string().min(120),
+  body: z.string().min(600),
   plan: SectionPlanSchema,
 });
 
 const BaseAiOutput = z.object({
-  intro: z.string().min(120),
+  intro: z.string().min(600),
   sectionBlueprints: z.array(z.object({ title: z.string().min(2), focus: z.string().min(30) })).length(3),
-  closing: z.string().min(80),
+  closing: z.string().min(200),
   swot: SwotSchema,
   recommendations: RecommendationsSchema,
   suggestions: SuggestionsSchema,
-  summary: z.string().min(120),
+  summary: z.string().min(300),
 });
 
 const AiOutput = z.object({
-  intro: z.string().min(120),
+  intro: z.string().min(600),
   sections: z.array(SectionBodyOutput).length(3),
-  closing: z.string().min(80),
+  closing: z.string().min(200),
   swot: SwotSchema,
   recommendations: RecommendationsSchema,
   suggestions: SuggestionsSchema,
-  summary: z.string().min(120),
+  summary: z.string().min(300),
 });
 
 export const generateReport = createServerFn({ method: "POST" })
@@ -511,9 +511,9 @@ ${astroBlock}`;
       ];
 
       return {
-        intro: `${firstName}, este relatório traduz seu mapa astral e sua numerologia para a área de ${meta.title.toLowerCase()}. A proposta aqui é revelar padrões, potenciais e tensões com linguagem clara e humana. Você receberá uma leitura simbólica, mas também prática, para transformar percepção em direção concreta.`,
+        intro: `${firstName}, este relatório nasce do encontro entre o seu mapa astral e a sua numerologia, e abre uma leitura profunda sobre ${meta.title.toLowerCase()}. A proposta aqui não é entregar respostas prontas, mas iluminar os fios simbólicos que sustentam a sua vida nessa área. Você vai reconhecer padrões antigos, dons que ainda não foram nomeados e tensões que pedem cuidado. Cada parágrafo foi pensado para te oferecer linguagem, espelho e direção. Esta abertura te convida a respirar e olhar para si com mais verdade, antes de mergulhar nos próximos capítulos. O que vem a seguir é uma travessia: símbolo virando consciência, e consciência virando escolha concreta.`,
         sectionBlueprints: blueprintDefaults,
-        closing: `${firstName}, seu mapa não é sentença: ele mostra tendências, forças e aprendizados. O essencial agora é usar essa clareza com presença, consistência e escolhas mais alinhadas ao que deseja construir.`,
+        closing: `${firstName}, seu mapa não é sentença: ele mostra tendências, forças e aprendizados. O essencial agora é usar essa clareza com presença, consistência e escolhas mais alinhadas ao que deseja construir. Permita que a leitura amadureça em silêncio, e volte a ela sempre que precisar reencontrar o seu eixo.`,
         swot: {
           strengths: normalizeStringList([], 3, () => "Sensibilidade para perceber padrões importantes."),
           weaknesses: normalizeStringList([], 3, () => "Tendência a oscilar entre impulso e excesso de análise."),
@@ -532,7 +532,7 @@ ${astroBlock}`;
             why: `Esta sugestão reforça ${meta.focus} de forma prática, ajudando ${firstName} a criar consistência, clareza e escolhas mais alinhadas ao próprio mapa e numerologia.`,
           })),
         },
-        summary: `${firstName}, a síntese da sua leitura mostra potenciais reais, pontos de atenção e caminhos de amadurecimento. Quando você honra seu ritmo, organiza a energia e faz escolhas conscientes, ${meta.title.toLowerCase()} tende a se tornar uma área de crescimento e não de desgaste.`,
+        summary: `${firstName}, a síntese da sua leitura mostra potenciais reais, pontos de atenção e caminhos de amadurecimento. Quando você honra seu ritmo, organiza a energia e faz escolhas conscientes, ${meta.title.toLowerCase()} tende a se tornar uma área de crescimento e não de desgaste. Volte a este resumo sempre que precisar reencontrar o eixo e lembrar do que já sabe sobre si.`,
       };
     }
 
@@ -623,9 +623,10 @@ ${astroBlock}`;
 
     function normalizeSectionPayload(parsed: unknown, blueprint?: z.infer<typeof BaseAiOutput>["sectionBlueprints"][number]) {
       const fallbackTitle = cleanInlineText(blueprint?.title) || "Capítulo";
-      const fallbackBody = cleanInlineText(blueprint?.focus)
-        ? `${firstName}, esta parte do relatório aprofunda ${cleanInlineText(blueprint?.focus)} com base no seu mapa e na sua numerologia. O objetivo é transformar símbolos em percepção prática, para que você reconheça padrões, ajuste escolhas e avance com mais consciência no próximo ciclo.`
-        : `${firstName}, esta parte do relatório aprofunda a leitura do seu mapa e da sua numerologia com linguagem prática e humana. A intenção é te oferecer clareza, direção e consciência para agir com mais coerência.`;
+      const focusText = cleanInlineText(blueprint?.focus);
+      const fallbackBody = focusText
+        ? `${firstName}, esta parte do relatório aprofunda ${focusText} a partir do seu mapa astral e da sua numerologia. O objetivo é traduzir os símbolos em percepção viva, para que você reconheça padrões reais, identifique tensões antigas e entenda o convite que esse momento está fazendo. Aqui não se trata de receita pronta, e sim de espelho: enxergar com mais nitidez como você se move nessa área da vida. Existem forças latentes no seu mapa que ainda pedem espaço para se manifestarem de forma madura, sem dramatização e sem fuga. Ao mesmo tempo, certas feridas tendem a aparecer como ruído ou repetição, e merecem ser olhadas com paciência. O próximo ciclo te convida a transformar consciência em prática constante, com escolhas mais coerentes ao que você é em essência.`
+        : `${firstName}, esta parte do relatório aprofunda a leitura do seu mapa e da sua numerologia com linguagem prática e humana. A intenção é te oferecer clareza sobre os padrões que se repetem, as forças que pedem espaço e as feridas que ainda buscam cura. Cada parágrafo aqui foi pensado como um espelho que devolve direção. Use esta seção como um guia de campo: leia devagar, sinta o que ressoa, anote o que provoca. O essencial não é concordar com tudo, é reconhecer onde a sua vida está pedindo um novo gesto. O próximo ciclo te chama para escolhas mais coerentes e maduras.`;
 
       if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
         return {
@@ -686,17 +687,17 @@ Assinatura astral: ${signLine || astroBlock}`;
 
     const basePrompt = `${reportContext}
 
-Monte apenas a ESTRUTURA BASE do relatório e responda APENAS com JSON valido neste formato:
+Monte apenas a ESTRUTURA BASE do relatório com PROFUNDIDADE REAL. Responda APENAS com JSON valido neste formato:
 {
-  "intro": "2 paragrafos em linguagem simples",
+  "intro": "ABERTURA cinematográfica de 4 a 5 parágrafos longos (mínimo 700 caracteres no total). Comece nomeando ${firstName} e situando o momento de vida com poesia sóbria. Conecte explicitamente Sol, Lua e Caminho de Vida ao tema do relatório. Mostre a tensão central que ${firstName} vive nessa área, o convite simbólico do mapa e o tom da jornada que esse PDF vai percorrer. Linguagem humana, viva, sem clichês esotéricos genéricos.",
   "sectionBlueprints": [
-    { "title": "Titulo 1", "focus": "Qual o foco pratico desta secao" },
-    { "title": "Titulo 2", "focus": "Qual o foco pratico desta secao" },
-    { "title": "Titulo 3", "focus": "Qual o foco pratico desta secao" }
+    { "title": "Titulo 1", "focus": "Foco aprofundado e específico desta seção (mínimo 60 caracteres)" },
+    { "title": "Titulo 2", "focus": "Foco aprofundado e específico desta seção (mínimo 60 caracteres)" },
+    { "title": "Titulo 3", "focus": "Foco aprofundado e específico desta seção (mínimo 60 caracteres)" }
   ],
-  "closing": "1 ou 2 paragrafos finais",
+  "closing": "ENCERRAMENTO de 2 a 3 parágrafos densos (mínimo 250 caracteres). Costure de volta o fio simbólico da abertura, reconheça a complexidade da jornada e entregue uma bênção concreta a ${firstName}.",
   "swot": {
-    "strengths": ["...", "...", "..."],
+    "strengths": ["frase específica e ancorada no mapa", "...", "..."],
     "weaknesses": ["...", "...", "..."],
     "opportunities": ["...", "...", "..."],
     "threats": ["...", "...", "..."]
@@ -709,22 +710,23 @@ Monte apenas a ESTRUTURA BASE do relatório e responda APENAS com JSON valido ne
   "suggestions": {
     "intro": "1 frase curta para ${firstName}",
     "items": [
-      { "name": "Sugestao 1", "why": "Por que combina com o mapa e numerologia" },
+      { "name": "Sugestao 1", "why": "Por que combina com o mapa e numerologia (mínimo 40 caracteres)" },
       { "name": "Sugestao 2", "why": "..." },
       { "name": "Sugestao 3", "why": "..." },
       { "name": "Sugestao 4", "why": "..." },
       { "name": "Sugestao 5", "why": "..." }
     ]
   },
-  "summary": "Resumo final forte e simples"
+  "summary": "SÍNTESE final densa de 2 parágrafos (mínimo 350 caracteres) que amarra os 3 capítulos, a SWOT e as recomendações em uma leitura única e memorável para ${firstName}."
 }
 
 Regras:
-- sectionBlueprints precisa ter EXATAMENTE 3 itens, com temas diferentes e complementares.
-- SWOT e recommendations devem ter EXATAMENTE 3 itens por lista.
+- sectionBlueprints precisa ter EXATAMENTE 3 itens, com temas diferentes e complementares, cada um digno de várias páginas.
+- SWOT e recommendations devem ter EXATAMENTE 3 itens por lista, frases específicas (não genéricas).
 - suggestions.items deve ter EXATAMENTE 5 itens.
 - Tema das sugestoes: ${meta.suggestionGuide}
-- Use o nome completo apenas 1x na intro. Depois, use apenas ${firstName}.`;
+- Use o nome completo apenas 1x na intro. Depois, use apenas ${firstName}.
+- Nada de respostas curtas, superficiais ou repetitivas. Profundidade é obrigatória.`;
 
     const makeSectionBodyPrompt = (
       blueprint: z.infer<typeof BaseAiOutput>["sectionBlueprints"][number],
@@ -732,7 +734,7 @@ Regras:
       blueprints: z.infer<typeof BaseAiOutput>["sectionBlueprints"],
     ) => `${compactSectionContext}
 
-Escreva apenas o TEXTO da secao ${index + 1} de 3 do relatório.
+Escreva apenas o TEXTO da secao ${index + 1} de 3 do relatório, com PROFUNDIDADE REAL.
 Titulo da secao: ${blueprint.title}
 Foco da secao: ${blueprint.focus}
 Outras secoes para evitar repeticao: ${blueprints
@@ -743,11 +745,12 @@ Outras secoes para evitar repeticao: ${blueprints
 Responda APENAS com JSON valido neste formato:
 {
   "title": "${blueprint.title}",
-  "body": "2 ou 3 paragrafos claros, humanos e especificos para ${firstName}"
+  "body": "5 a 6 parágrafos longos (mínimo 800 caracteres no total). Estruture assim: (1) abertura simbólica que conecta o tema ao mapa e numerologia de ${firstName}; (2) análise dos padrões e tensões reais que aparecem; (3) sombra/ferida específica desta área; (4) força latente que pode ser ativada; (5) direção prática e madura para o próximo ciclo. Use exemplos concretos e linguagem viva."
 }
 
 Regras:
-- O body precisa ser especifico ao tema e ancorado no mapa/numerologia.
+- O body precisa ser denso, específico ao tema e ancorado em planetas, signos ou números reais do mapa de ${firstName}.
+- Nada de frases genéricas ou repetitivas. Cada parágrafo entrega algo novo.
 - Nao use o nome completo. Use apenas ${firstName}.`;
 
     yield { type: "progress" as const, progress: 28, step: "Montando a estrutura do relatório..." };
@@ -755,7 +758,7 @@ Regras:
     try {
       const baseText = await callWithRetry({
         prompt: basePrompt,
-        timeoutMs: 16_000,
+        timeoutMs: 28_000,
         errorMessage: "A geração demorou além do limite. Tente novamente; agora o relatório usa um modo mais rápido.",
       });
       base = parseJsonWithSchema(baseText, BaseAiOutput, "base", {
@@ -778,7 +781,7 @@ Regras:
       try {
         const sectionBodyText = await callWithRetry({
           prompt: makeSectionBodyPrompt(blueprint, index, base.sectionBlueprints),
-          timeoutMs: 7_500,
+          timeoutMs: 18_000,
           errorMessage: "A geração demorou além do limite. Tente novamente; agora o relatório usa um modo mais rápido.",
         });
         sectionBody = parseJsonWithSchema(sectionBodyText, SectionBodyOutput, `section-body-${index + 1}`, {
