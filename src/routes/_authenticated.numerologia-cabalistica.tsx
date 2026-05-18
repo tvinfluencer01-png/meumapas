@@ -1,0 +1,179 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
+import { formatBirthDateBR } from "@/lib/numerology";
+import { Hash, Heart, Eye, Sparkles, TreePine } from "lucide-react";
+
+export const Route = createFileRoute("/_authenticated/numerologia-cabalistica")({
+  component: NumerologiaCabalisticaPage,
+  head: () => ({ meta: [{ title: "Numerologia Cabalística — Cosmic AI" }] }),
+});
+
+// Tabela cabalística (tradição hebraica adaptada ao alfabeto latino).
+// Não utiliza o número 9 (considerado sagrado).
+const CABALISTIC: Record<string, number> = {
+  A: 1, I: 1, J: 1, Q: 1, Y: 1,
+  B: 2, K: 2, R: 2,
+  C: 3, G: 3, L: 3, S: 3,
+  D: 4, M: 4, T: 4,
+  E: 5, H: 5, N: 5, X: 5,
+  U: 6, V: 6, W: 6,
+  O: 7, Z: 7,
+  F: 8, P: 8,
+};
+
+const VOWELS = new Set(["A", "E", "I", "O", "U"]);
+
+const stripDiacritics = (s: string) =>
+  s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+
+// Redução cabalística: sem números mestres, soma até 1–8 (o 9 não existe).
+const reduceCab = (n: number): number => {
+  while (n > 8) n = String(n).split("").reduce((a, b) => a + Number(b), 0);
+  return n === 0 ? 0 : n;
+};
+
+const sumLetters = (name: string, filter: (ch: string) => boolean) => {
+  const clean = stripDiacritics(name).replace(/[^A-Z]/g, "");
+  let total = 0;
+  for (const ch of clean) if (filter(ch) && CABALISTIC[ch]) total += CABALISTIC[ch];
+  return total;
+};
+
+const reduceName = (sum: number): number | null => (sum > 0 ? reduceCab(sum) : null);
+
+function computeCabalistic(fullName: string | null | undefined) {
+  const safe = typeof fullName === "string" ? fullName.trim() : "";
+  return {
+    destiny: reduceName(sumLetters(safe, () => true)),         // nome completo
+    soul: reduceName(sumLetters(safe, (c) => VOWELS.has(c))),  // vogais
+    impression: reduceName(sumLetters(safe, (c) => !VOWELS.has(c))), // consoantes
+  };
+}
+
+const CAB_MEANINGS: Record<number, { title: string; essence: string; guidance: string }> = {
+  1: { title: "Aleph — O Iniciador", essence: "Energia divina criadora, unidade e liderança espiritual.", guidance: "Confie no impulso original; você é canal para começar algo novo." },
+  2: { title: "Bet — O Receptáculo", essence: "Dualidade, parceria sagrada e equilíbrio entre opostos.", guidance: "Cultive escuta e cooperação; o sagrado se manifesta no encontro." },
+  3: { title: "Guimel — A Manifestação", essence: "Verbo criador, expressão e fertilidade da palavra.", guidance: "Use a palavra com consciência: ela materializa realidades." },
+  4: { title: "Dalet — A Porta", essence: "Estrutura, lei e construção do templo interior.", guidance: "Discipline corpo e mente; bases sólidas abrem portas reais." },
+  5: { title: "Hé — O Sopro", essence: "Vida, liberdade e movimento do espírito sobre a matéria.", guidance: "Permita a mudança; o sopro divino renova o que precisa morrer." },
+  6: { title: "Vav — A Conexão", essence: "União do céu e da terra, amor responsável e serviço.", guidance: "Sirva com amor sem se anular; harmonia nasce do limite justo." },
+  7: { title: "Zain — A Espada", essence: "Discernimento, vitória interior e busca da verdade.", guidance: "Separe o essencial do supérfluo; o silêncio é seu mestre." },
+  8: { title: "Chet — O Sagrado", essence: "Transcendência, poder espiritual e abundância iluminada.", guidance: "Eleve seu propósito material a serviço de algo maior." },
+};
+
+const CARDS = [
+  { key: "destiny" as const, label: "Destino", icon: Sparkles, desc: "Vibração total do seu nome completo." },
+  { key: "soul" as const, label: "Alma (Vogais)", icon: Heart, desc: "O que move seu interior sagrado." },
+  { key: "impression" as const, label: "Impressão (Consoantes)", icon: Eye, desc: "A imagem que o mundo capta de você." },
+];
+
+function NumerologiaCabalisticaPage() {
+  const { user } = useAuth();
+  const { data: birth } = useQuery({
+    queryKey: ["birth", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data } = await supabase.from("birth_data")
+        .select("*").eq("user_id", user!.id).eq("is_primary", true).maybeSingle();
+      return data;
+    },
+  });
+
+  const nums = birth ? computeCabalistic(birth.full_name) : null;
+
+  return (
+    <div className="space-y-8">
+      <header>
+        <p className="text-xs uppercase tracking-[0.3em] text-gold flex items-center gap-2">
+          <TreePine className="size-3.5" /> Numerologia Cabalística
+        </p>
+        <h1 className="font-serif text-3xl lg:text-5xl mt-2 shimmer-text">A vibração hebraica do seu nome</h1>
+        <p className="mt-3 text-muted-foreground max-w-3xl">
+          Diferente da pitagórica, a numerologia cabalística trabalha apenas com o nome (não com a data de nascimento)
+          e utiliza uma tabela inspirada no alfabeto hebraico, reduzindo os valores entre 1 e 8 — o número 9 é
+          considerado sagrado e não entra no resultado final.
+        </p>
+        {birth && (
+          <p className="mt-2 text-muted-foreground">{birth.full_name}{birth.birth_date ? ` — nascido em ${formatBirthDateBR(birth.birth_date)}` : ""}</p>
+        )}
+      </header>
+
+      {!nums && (
+        <div className="glass-card rounded-2xl p-12 text-center text-muted-foreground">
+          Adicione seu nome completo nos dados de nascimento para revelar a vibração cabalística.
+        </div>
+      )}
+
+      {nums && (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {CARDS.map((c) => {
+              const n = nums[c.key];
+              const meaning = typeof n === "number" && n > 0 ? CAB_MEANINGS[n] : undefined;
+              const display = typeof n === "number" && n > 0 ? n : "—";
+              return (
+                <div key={c.key} className="glass-card rounded-2xl p-6 hover:gold-glow transition-all">
+                  <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground">
+                    <c.icon className="size-3.5 text-gold" /> {c.label}
+                  </div>
+                  <div className="font-serif text-6xl text-stardust mt-3 shimmer-text">{display}</div>
+                  <div className="mt-3">
+                    <div className="font-serif text-lg text-gold">{meaning?.title ?? "—"}</div>
+                    <p className="text-sm text-muted-foreground mt-1">{meaning?.essence ?? "Informe seu nome completo."}</p>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-3 italic">{c.desc}</p>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="glass-card gold-glow rounded-2xl p-6 relative overflow-hidden">
+            <div className="absolute inset-0 nebula-bg opacity-50 pointer-events-none" />
+            <div className="relative space-y-4">
+              <div className="flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-gold">
+                <Sparkles className="size-3.5" /> Orientação cabalística
+              </div>
+              {(["destiny", "soul", "impression"] as const).map((k) => {
+                const n = nums[k];
+                const m = typeof n === "number" && n > 0 ? CAB_MEANINGS[n] : undefined;
+                if (!m) return null;
+                const label = k === "destiny" ? "Destino" : k === "soul" ? "Alma" : "Impressão";
+                return (
+                  <div key={k} className="rounded-xl border border-gold/20 bg-background/30 p-4">
+                    <div className="text-xs uppercase tracking-widest text-gold">{label} {n} — {m.title}</div>
+                    <p className="text-sm text-stardust/90 mt-2">{m.guidance}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="glass-card rounded-2xl p-6">
+            <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground">
+              <Hash className="size-3.5 text-gold" /> Tabela cabalística usada
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4 text-sm">
+              {Object.entries({
+                "1": "A, I, J, Q, Y",
+                "2": "B, K, R",
+                "3": "C, G, L, S",
+                "4": "D, M, T",
+                "5": "E, H, N, X",
+                "6": "U, V, W",
+                "7": "O, Z",
+                "8": "F, P",
+              }).map(([n, letters]) => (
+                <div key={n} className="rounded-lg border border-gold/15 bg-background/30 p-3">
+                  <div className="font-serif text-2xl text-gold">{n}</div>
+                  <div className="text-stardust/80">{letters}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}

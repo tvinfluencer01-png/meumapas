@@ -17,6 +17,7 @@ import { Route as AuthenticatedTarotRouteImport } from './routes/_authenticated.
 import { Route as AuthenticatedRelatoriosRouteImport } from './routes/_authenticated.relatorios'
 import { Route as AuthenticatedOraculoRouteImport } from './routes/_authenticated.oraculo'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated.onboarding'
+import { Route as AuthenticatedNumerologiaCabalisticaRouteImport } from './routes/_authenticated.numerologia-cabalistica'
 import { Route as AuthenticatedNumerologiaRouteImport } from './routes/_authenticated.numerologia'
 import { Route as AuthenticatedMeditacaoRouteImport } from './routes/_authenticated.meditacao'
 import { Route as AuthenticatedMapaAstralRouteImport } from './routes/_authenticated.mapa-astral'
@@ -65,6 +66,12 @@ const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
   path: '/onboarding',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedNumerologiaCabalisticaRoute =
+  AuthenticatedNumerologiaCabalisticaRouteImport.update({
+    id: '/numerologia-cabalistica',
+    path: '/numerologia-cabalistica',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedNumerologiaRoute =
   AuthenticatedNumerologiaRouteImport.update({
     id: '/numerologia',
@@ -118,6 +125,7 @@ export interface FileRoutesByFullPath {
   '/mapa-astral': typeof AuthenticatedMapaAstralRoute
   '/meditacao': typeof AuthenticatedMeditacaoRoute
   '/numerologia': typeof AuthenticatedNumerologiaRoute
+  '/numerologia-cabalistica': typeof AuthenticatedNumerologiaCabalisticaRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/oraculo': typeof AuthenticatedOraculoRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
@@ -135,6 +143,7 @@ export interface FileRoutesByTo {
   '/mapa-astral': typeof AuthenticatedMapaAstralRoute
   '/meditacao': typeof AuthenticatedMeditacaoRoute
   '/numerologia': typeof AuthenticatedNumerologiaRoute
+  '/numerologia-cabalistica': typeof AuthenticatedNumerologiaCabalisticaRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/oraculo': typeof AuthenticatedOraculoRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
@@ -154,6 +163,7 @@ export interface FileRoutesById {
   '/_authenticated/mapa-astral': typeof AuthenticatedMapaAstralRoute
   '/_authenticated/meditacao': typeof AuthenticatedMeditacaoRoute
   '/_authenticated/numerologia': typeof AuthenticatedNumerologiaRoute
+  '/_authenticated/numerologia-cabalistica': typeof AuthenticatedNumerologiaCabalisticaRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/oraculo': typeof AuthenticatedOraculoRoute
   '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
@@ -173,6 +183,7 @@ export interface FileRouteTypes {
     | '/mapa-astral'
     | '/meditacao'
     | '/numerologia'
+    | '/numerologia-cabalistica'
     | '/onboarding'
     | '/oraculo'
     | '/relatorios'
@@ -190,6 +201,7 @@ export interface FileRouteTypes {
     | '/mapa-astral'
     | '/meditacao'
     | '/numerologia'
+    | '/numerologia-cabalistica'
     | '/onboarding'
     | '/oraculo'
     | '/relatorios'
@@ -208,6 +220,7 @@ export interface FileRouteTypes {
     | '/_authenticated/mapa-astral'
     | '/_authenticated/meditacao'
     | '/_authenticated/numerologia'
+    | '/_authenticated/numerologia-cabalistica'
     | '/_authenticated/onboarding'
     | '/_authenticated/oraculo'
     | '/_authenticated/relatorios'
@@ -279,6 +292,13 @@ declare module '@tanstack/react-router' {
       path: '/onboarding'
       fullPath: '/onboarding'
       preLoaderRoute: typeof AuthenticatedOnboardingRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/numerologia-cabalistica': {
+      id: '/_authenticated/numerologia-cabalistica'
+      path: '/numerologia-cabalistica'
+      fullPath: '/numerologia-cabalistica'
+      preLoaderRoute: typeof AuthenticatedNumerologiaCabalisticaRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/numerologia': {
@@ -359,6 +379,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedMapaAstralRoute: typeof AuthenticatedMapaAstralRoute
   AuthenticatedMeditacaoRoute: typeof AuthenticatedMeditacaoRoute
   AuthenticatedNumerologiaRoute: typeof AuthenticatedNumerologiaRoute
+  AuthenticatedNumerologiaCabalisticaRoute: typeof AuthenticatedNumerologiaCabalisticaRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedOraculoRoute: typeof AuthenticatedOraculoRoute
   AuthenticatedRelatoriosRoute: typeof AuthenticatedRelatoriosRoute
@@ -373,6 +394,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedMapaAstralRoute: AuthenticatedMapaAstralRoute,
   AuthenticatedMeditacaoRoute: AuthenticatedMeditacaoRoute,
   AuthenticatedNumerologiaRoute: AuthenticatedNumerologiaRoute,
+  AuthenticatedNumerologiaCabalisticaRoute:
+    AuthenticatedNumerologiaCabalisticaRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedOraculoRoute: AuthenticatedOraculoRoute,
   AuthenticatedRelatoriosRoute: AuthenticatedRelatoriosRoute,
@@ -392,3 +415,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
