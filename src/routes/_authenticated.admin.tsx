@@ -2,9 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { Shield, MessageSquare, Save, Send, CheckCircle2, AlertTriangle, Users, Search, ShieldOff, ShieldCheck, History, RefreshCw, Settings as SettingsIcon, Wallet, Coins } from "lucide-react";
+import { Shield, MessageSquare, Save, Send, CheckCircle2, AlertTriangle, Users, Search, ShieldOff, ShieldCheck, History, RefreshCw, Settings as SettingsIcon, Wallet, Coins, MoreHorizontal, UserCog, KeyRound, Package, Trash2, Coins as CoinsIcon } from "lucide-react";
 import { MercadoPagoForm } from "@/components/MercadoPagoForm";
-import { AdminCreditsManager } from "@/components/AdminCreditsManager";
+import { AdminCreditsManager, CreditsDialog } from "@/components/AdminCreditsManager";
 import { AdminCreditCosts } from "@/components/AdminCreditCosts";
 import { AdminCreditPackages } from "@/components/AdminCreditPackages";
 import { Button } from "@/components/ui/button";
@@ -13,9 +13,19 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { SettingsForm } from "@/components/SettingsForm";
 import { toast } from "sonner";
 import { confirmDialog } from "@/components/system-feedback";
+import { SUBSCRIPTION_ADDONS } from "@/lib/addons.catalog";
 import {
   checkIsAdmin,
   getTwilioSettings,
@@ -25,6 +35,11 @@ import {
   listAdminUsers,
   setUserAdmin,
   listRoleAuditLog,
+  adminUpdateUser,
+  adminSetUserPassword,
+  adminDeleteUser,
+  adminListUserSubscriptions,
+  adminSetUserSubscription,
 } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -113,19 +128,32 @@ function AdminPage() {
   );
 }
 
+type AdminUserRow = {
+  id: string;
+  email: string;
+  full_name: string;
+  created_at: string | null | undefined;
+  is_admin: boolean;
+};
+
+type DialogKind = "edit" | "password" | "credits" | "plans" | null;
+
 function UsersAdmin() {
   const qc = useQueryClient();
   const listFn = useServerFn(listAdminUsers);
   const setFn = useServerFn(setUserAdmin);
+  const deleteFn = useServerFn(adminDeleteUser);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [active, setActive] = useState<AdminUserRow | null>(null);
+  const [dialog, setDialog] = useState<DialogKind>(null);
 
   const { data, isLoading, isFetching } = useQuery({
     queryKey: ["admin-users", search, page],
     queryFn: () => listFn({ data: { search, page } }),
   });
 
-  const mut = useMutation({
+  const roleMut = useMutation({
     mutationFn: (vars: { user_id: string; is_admin: boolean }) =>
       setFn({ data: vars }),
     onSuccess: (_r, vars) => {
@@ -136,6 +164,24 @@ function UsersAdmin() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const deleteMut = useMutation({
+    mutationFn: (user_id: string) => deleteFn({ data: { user_id } }),
+    onSuccess: () => {
+      toast.success("Usuário excluído.");
+      qc.invalidateQueries({ queryKey: ["admin-users"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  function open(kind: Exclude<DialogKind, null>, u: AdminUserRow) {
+    setActive(u);
+    setDialog(kind);
+  }
+  function close() {
+    setDialog(null);
+    setActive(null);
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -143,7 +189,7 @@ function UsersAdmin() {
           <Users className="size-5 text-gold" /> Usuários e permissões
         </CardTitle>
         <CardDescription>
-          Promova ou remova o acesso de administrador. Mostra até 50 usuários por página.
+          Edite usuários, gerencie créditos, planos e permissões. Mostra até 50 por página.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -208,31 +254,65 @@ function UsersAdmin() {
                       )}
                     </td>
                     <td className="px-3 py-2 text-right">
-                      {u.is_admin ? (
-                        <Button
-                          size="sm" variant="outline"
-                          disabled={mut.isPending}
-                          onClick={async () => {
-                            const ok = await confirmDialog({
-                              title: "Remover acesso de admin?",
-                              description: `O usuário ${u.email} perderá os privilégios de Super Admin.`,
-                              confirmText: "Remover admin",
-                              destructive: true,
-                            });
-                            if (ok) mut.mutate({ user_id: u.id, is_admin: false });
-                          }}
-                        >
-                          <ShieldOff className="size-3 mr-1" /> Remover admin
-                        </Button>
-                      ) : (
-                        <Button
-                          size="sm"
-                          disabled={mut.isPending}
-                          onClick={() => mut.mutate({ user_id: u.id, is_admin: true })}
-                        >
-                          <ShieldCheck className="size-3 mr-1" /> Promover
-                        </Button>
-                      )}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" aria-label="Ações">
+                            <MoreHorizontal className="size-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-56">
+                          <DropdownMenuLabel>Gerenciar usuário</DropdownMenuLabel>
+                          <DropdownMenuItem onClick={() => open("edit", u)}>
+                            <UserCog className="size-4 mr-2" /> Editar usuário
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => open("password", u)}>
+                            <KeyRound className="size-4 mr-2" /> Mudar senha
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => open("credits", u)}>
+                            <CoinsIcon className="size-4 mr-2" /> Adicionar / remover créditos
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => open("plans", u)}>
+                            <Package className="size-4 mr-2" /> Mudar plano / Add-ons
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          {u.is_admin ? (
+                            <DropdownMenuItem
+                              onClick={async () => {
+                                const ok = await confirmDialog({
+                                  title: "Remover acesso de admin?",
+                                  description: `${u.email} perderá privilégios de Super Admin.`,
+                                  confirmText: "Remover admin",
+                                  destructive: true,
+                                });
+                                if (ok) roleMut.mutate({ user_id: u.id, is_admin: false });
+                              }}
+                            >
+                              <ShieldOff className="size-4 mr-2" /> Remover admin
+                            </DropdownMenuItem>
+                          ) : (
+                            <DropdownMenuItem
+                              onClick={() => roleMut.mutate({ user_id: u.id, is_admin: true })}
+                            >
+                              <ShieldCheck className="size-4 mr-2" /> Promover a admin
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onClick={async () => {
+                              const ok = await confirmDialog({
+                                title: "Excluir usuário?",
+                                description: `Esta ação remove permanentemente ${u.email} e todos os dados associados.`,
+                                confirmText: "Excluir definitivamente",
+                                destructive: true,
+                              });
+                              if (ok) deleteMut.mutate(u.id);
+                            }}
+                          >
+                            <Trash2 className="size-4 mr-2" /> Excluir usuário
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </td>
                   </tr>
                 ))}
@@ -241,7 +321,239 @@ function UsersAdmin() {
           </div>
         )}
       </CardContent>
+
+      <Dialog open={dialog === "edit"} onOpenChange={(o) => !o && close()}>
+        <DialogContent>
+          {active && <EditUserDialog user={active} onDone={close} />}
+        </DialogContent>
+      </Dialog>
+      <Dialog open={dialog === "password"} onOpenChange={(o) => !o && close()}>
+        <DialogContent>
+          {active && <PasswordDialog user={active} onDone={close} />}
+        </DialogContent>
+      </Dialog>
+      <Dialog open={dialog === "credits"} onOpenChange={(o) => !o && close()}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          {active && (
+            <CreditsDialog
+              userId={active.id}
+              userLabel={active.full_name || active.email}
+              onDone={close}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+      <Dialog open={dialog === "plans"} onOpenChange={(o) => !o && close()}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          {active && <PlansDialog user={active} onDone={close} />}
+        </DialogContent>
+      </Dialog>
     </Card>
+  );
+}
+
+function EditUserDialog({ user, onDone }: { user: AdminUserRow; onDone: () => void }) {
+  const qc = useQueryClient();
+  const updateFn = useServerFn(adminUpdateUser);
+  const [fullName, setFullName] = useState(user.full_name);
+  const [email, setEmail] = useState(user.email);
+
+  const mut = useMutation({
+    mutationFn: () =>
+      updateFn({
+        data: {
+          user_id: user.id,
+          full_name: fullName.trim(),
+          email: email.trim() !== user.email ? email.trim() : undefined,
+        },
+      }),
+    onSuccess: () => {
+      toast.success("Usuário atualizado.");
+      qc.invalidateQueries({ queryKey: ["admin-users"] });
+      onDone();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle className="flex items-center gap-2">
+          <UserCog className="size-5 text-gold" /> Editar usuário
+        </DialogTitle>
+        <DialogDescription>Atualize o nome e o e-mail de login.</DialogDescription>
+      </DialogHeader>
+      <div className="space-y-3">
+        <div>
+          <Label htmlFor="fn">Nome completo</Label>
+          <Input id="fn" value={fullName} onChange={(e) => setFullName(e.target.value)} maxLength={120} />
+        </div>
+        <div>
+          <Label htmlFor="em">E-mail</Label>
+          <Input id="em" type="email" value={email} onChange={(e) => setEmail(e.target.value)} maxLength={200} />
+        </div>
+      </div>
+      <DialogFooter>
+        <Button variant="ghost" onClick={onDone}>Cancelar</Button>
+        <Button onClick={() => mut.mutate()} disabled={mut.isPending}>
+          <Save className="size-4 mr-1" /> {mut.isPending ? "Salvando…" : "Salvar"}
+        </Button>
+      </DialogFooter>
+    </>
+  );
+}
+
+function PasswordDialog({ user, onDone }: { user: AdminUserRow; onDone: () => void }) {
+  const setPwdFn = useServerFn(adminSetUserPassword);
+  const [pwd, setPwd] = useState("");
+  const [confirmPwd, setConfirmPwd] = useState("");
+
+  const mut = useMutation({
+    mutationFn: () => setPwdFn({ data: { user_id: user.id, password: pwd } }),
+    onSuccess: () => {
+      toast.success("Senha atualizada.");
+      onDone();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  function submit() {
+    if (pwd.length < 8) return toast.error("Senha deve ter ao menos 8 caracteres.");
+    if (pwd !== confirmPwd) return toast.error("As senhas não coincidem.");
+    mut.mutate();
+  }
+
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle className="flex items-center gap-2">
+          <KeyRound className="size-5 text-gold" /> Mudar senha
+        </DialogTitle>
+        <DialogDescription>
+          Defina uma nova senha para <span className="font-mono">{user.email}</span>.
+        </DialogDescription>
+      </DialogHeader>
+      <div className="space-y-3">
+        <div>
+          <Label htmlFor="np">Nova senha</Label>
+          <Input id="np" type="password" value={pwd} onChange={(e) => setPwd(e.target.value)} autoComplete="new-password" />
+        </div>
+        <div>
+          <Label htmlFor="cp">Confirmar senha</Label>
+          <Input id="cp" type="password" value={confirmPwd} onChange={(e) => setConfirmPwd(e.target.value)} autoComplete="new-password" />
+        </div>
+      </div>
+      <DialogFooter>
+        <Button variant="ghost" onClick={onDone}>Cancelar</Button>
+        <Button onClick={submit} disabled={mut.isPending}>
+          <Save className="size-4 mr-1" /> {mut.isPending ? "Salvando…" : "Definir nova senha"}
+        </Button>
+      </DialogFooter>
+    </>
+  );
+}
+
+function PlansDialog({ user, onDone }: { user: AdminUserRow; onDone: () => void }) {
+  const qc = useQueryClient();
+  const listFn = useServerFn(adminListUserSubscriptions);
+  const setFn = useServerFn(adminSetUserSubscription);
+
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ["admin-user-subs", user.id],
+    queryFn: () => listFn({ data: { user_id: user.id } }),
+  });
+
+  const mut = useMutation({
+    mutationFn: (vars: { addon_id: string; active: boolean; days?: number }) =>
+      setFn({ data: { user_id: user.id, ...vars } }),
+    onSuccess: () => {
+      toast.success("Plano atualizado.");
+      refetch();
+      qc.invalidateQueries({ queryKey: ["addons-overview"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const activeByAddon = new Map(
+    (data?.subscriptions ?? [])
+      .filter((s) => s.status === "active")
+      .map((s) => [s.addon_id, s] as const),
+  );
+
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle className="flex items-center gap-2">
+          <Package className="size-5 text-gold" /> Planos & Add-ons
+        </DialogTitle>
+        <DialogDescription>
+          Habilite manualmente assinaturas para {user.email}. Padrão: 30 dias.
+        </DialogDescription>
+      </DialogHeader>
+
+      {isLoading ? (
+        <div className="text-sm text-muted-foreground">Carregando…</div>
+      ) : (
+        <div className="space-y-2">
+          {SUBSCRIPTION_ADDONS.map((addon) => {
+            const sub = activeByAddon.get(addon.id);
+            const isActive = !!sub;
+            return (
+              <div
+                key={addon.id}
+                className="flex items-start justify-between gap-3 rounded-md border border-border p-3"
+              >
+                <div className="min-w-0">
+                  <div className="font-medium text-sm">{addon.name}</div>
+                  <div className="text-xs text-muted-foreground line-clamp-2">
+                    {addon.description}
+                  </div>
+                  {isActive && sub?.current_period_end && (
+                    <div className="text-xs text-emerald-500 mt-1">
+                      Ativo até {new Date(sub.current_period_end).toLocaleDateString("pt-BR")}
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  {isActive ? (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={mut.isPending}
+                        onClick={() => mut.mutate({ addon_id: addon.id, active: true, days: 30 })}
+                      >
+                        +30 dias
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        disabled={mut.isPending}
+                        onClick={() => mut.mutate({ addon_id: addon.id, active: false })}
+                      >
+                        Desativar
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      size="sm"
+                      disabled={mut.isPending}
+                      onClick={() => mut.mutate({ addon_id: addon.id, active: true, days: 30 })}
+                    >
+                      Ativar 30 dias
+                    </Button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <DialogFooter>
+        <Button variant="ghost" onClick={onDone}>Fechar</Button>
+      </DialogFooter>
+    </>
   );
 }
 
