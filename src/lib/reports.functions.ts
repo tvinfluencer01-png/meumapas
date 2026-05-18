@@ -780,7 +780,7 @@ Regras:
       try {
         const sectionBodyText = await callWithRetry({
           prompt: makeSectionBodyPrompt(blueprint, index, base.sectionBlueprints),
-          timeoutMs: 7_500,
+          timeoutMs: 18_000,
           errorMessage: "A geração demorou além do limite. Tente novamente; agora o relatório usa um modo mais rápido.",
         });
         sectionBody = parseJsonWithSchema(sectionBodyText, SectionBodyOutput, `section-body-${index + 1}`, {
