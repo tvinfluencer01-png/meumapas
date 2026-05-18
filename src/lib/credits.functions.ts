@@ -186,7 +186,7 @@ export const adminGetUserCredits = createServerFn({ method: "POST" })
         .maybeSingle(),
       supabaseAdmin
         .from("credit_transactions")
-        .select("id, amount, kind, reference, created_at")
+        .select("id, amount, kind, action, reference, balance_before, balance_after, created_at")
         .eq("user_id", data.user_id)
         .order("created_at", { ascending: false })
         .limit(20),
@@ -196,6 +196,35 @@ export const adminGetUserCredits = createServerFn({ method: "POST" })
       updated_at: credits?.updated_at ?? null,
       transactions: txs ?? [],
     };
+  });
+
+const AdminHistorySchema = z.object({
+  user_id: z.string().uuid(),
+  action: z.string().trim().max(64).optional().nullable(),
+  from: z.string().datetime().optional().nullable(),
+  to: z.string().datetime().optional().nullable(),
+  limit: z.number().int().min(1).max(500).default(100),
+});
+
+export const adminListCreditHistory = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => AdminHistorySchema.parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    let q = supabaseAdmin
+      .from("credit_transactions")
+      .select(
+        "id, amount, kind, action, reference, balance_before, balance_after, created_at",
+      )
+      .eq("user_id", data.user_id)
+      .order("created_at", { ascending: false })
+      .limit(data.limit);
+    if (data.action) q = q.eq("action", data.action);
+    if (data.from) q = q.gte("created_at", data.from);
+    if (data.to) q = q.lte("created_at", data.to);
+    const { data: rows, error } = await q;
+    if (error) throw new Error(error.message);
+    return { transactions: rows ?? [] };
   });
 
 // =========== Credit cost configuration ===========
