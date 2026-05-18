@@ -218,18 +218,21 @@ export const getMyCreditsOverview = createServerFn({ method: "GET" })
         .select("action, amount, label, description"),
     ]);
     const map: Record<string, { amount: number; label: string; description: string | null }> = {};
+    // Seed do catálogo canônico (labels/descrições humanizadas)
+    for (const [action, def] of Object.entries(CREDIT_COST_CATALOG)) {
+      map[action] = {
+        amount: def.amount,
+        label: def.label,
+        description: def.description,
+      };
+    }
+    // Overrides do DB (admin pode editar valores e textos)
     for (const c of costs ?? []) {
       map[c.action] = {
         amount: c.amount,
-        label: c.label,
-        description: c.description ?? null,
+        label: c.label || map[c.action]?.label || c.action,
+        description: c.description ?? map[c.action]?.description ?? null,
       };
-    }
-    // Garante defaults para ações sem linha na tabela
-    for (const [action, amount] of Object.entries(CREDIT_COSTS_DEFAULTS)) {
-      if (!map[action]) {
-        map[action] = { amount, label: action, description: null };
-      }
     }
     return {
       balance: bal?.balance ?? 0,
