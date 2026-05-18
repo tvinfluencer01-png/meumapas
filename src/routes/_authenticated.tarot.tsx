@@ -242,6 +242,30 @@ function TarotPage() {
 
           <div className="flex flex-wrap items-center gap-3">
             <Button
+              onClick={() => {
+                setSpread("three");
+                setCurrent(null);
+                genMut.mutate();
+              }}
+              disabled={
+                genMut.isPending ||
+                overview.isLoading ||
+                (overview.data
+                  ? balance < (overview.data.costs?.["tarot_three"]?.amount ?? 0)
+                  : false)
+              }
+              className="bg-gradient-to-r from-gold to-amber-400 text-background hover:opacity-90"
+            >
+              {genMut.isPending ? (
+                <Loader2 className="size-4 mr-2 animate-spin" />
+              ) : (
+                <Wand2 className="size-4 mr-2" />
+              )}
+              Nova tiragem (passado · presente · futuro)
+            </Button>
+            <CreditCostBadge action="tarot_three" />
+
+            <Button
               variant="outline"
               onClick={() => pdfMut.mutate(current.id)}
               disabled={pdfMut.isPending}
