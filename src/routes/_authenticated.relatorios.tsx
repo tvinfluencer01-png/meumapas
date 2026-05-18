@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { showLoader, hideLoader, updateLoader, confirmDialog } from "@/components/system-feedback";
 import {
   FileText, Download, Sparkles, Heart, Briefcase, Flame, Loader2, Trash2, ScrollText,
+  Coins, Home, HeartPulse, Users,
 } from "lucide-react";
 import { CreditCostBadge } from "@/components/CreditCostBadge";
 
