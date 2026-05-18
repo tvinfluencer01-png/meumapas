@@ -131,7 +131,7 @@ export function AdminCreditsManager() {
   );
 }
 
-function CreditsDialog({
+export function CreditsDialog({
   userId,
   userLabel,
   onDone,
