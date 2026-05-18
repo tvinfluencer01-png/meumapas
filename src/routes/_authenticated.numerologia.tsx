@@ -36,7 +36,7 @@ function NumerologiaPage() {
   return (
     <div className="space-y-8">
       <header>
-        <p className="text-xs uppercase tracking-[0.3em] text-gold">Numerologia Cabalística</p>
+        <p className="text-xs uppercase tracking-[0.3em] text-gold">Numerologia Pitagórica</p>
         <h1 className="font-serif text-3xl lg:text-5xl mt-2 shimmer-text">Os números da sua alma</h1>
         {birth && (
           <p className="mt-2 text-muted-foreground">{birth.full_name} — nascido em {formatBirthDateBR(birth.birth_date)}</p>
