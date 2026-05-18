@@ -169,3 +169,64 @@ export const adminGetUserCredits = createServerFn({ method: "POST" })
       transactions: txs ?? [],
     };
   });
+
+// =========== Credit cost configuration ===========
+
+export const adminListCreditCosts = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.userId);
+    const { data, error } = await supabaseAdmin
+      .from("credit_costs")
+      .select("action, amount, label, description, updated_at")
+      .order("action", { ascending: true });
+    if (error) throw new Error(error.message);
+    return { costs: data ?? [] };
+  });
+
+const UpsertCostSchema = z.object({
+  action: z
+    .string()
+    .trim()
+    .min(1)
+    .max(64)
+    .regex(/^[a-z0-9_]+$/i, "Use apenas letras, números e underline"),
+  amount: z.number().int().min(0).max(10000),
+  label: z.string().trim().min(1).max(120),
+  description: z.string().trim().max(500).optional().nullable(),
+});
+
+export const adminUpsertCreditCost = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => UpsertCostSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    const { error } = await supabaseAdmin
+      .from("credit_costs")
+      .upsert(
+        {
+          action: data.action,
+          amount: data.amount,
+          label: data.label,
+          description: data.description ?? null,
+          updated_by: context.userId,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "action" },
+      );
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const adminDeleteCreditCost = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ action: z.string().min(1).max(64) }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    const { error } = await supabaseAdmin
+      .from("credit_costs")
+      .delete()
+      .eq("action", data.action);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
