@@ -317,9 +317,6 @@ ${numBlock}
 Mapa astral:
 ${astroBlock}`;
 
-    // Robust call: per-attempt timeout + fallback model on persistent upstream timeouts.
-    const skippedModels = new Set<string>();
-
     const getFallbackModels = () => {
       const candidates = (
         provider === "openai" && customKey
@@ -333,7 +330,7 @@ ${astroBlock}`;
                 : [modelName]
       ).filter((candidate, index, arr) => arr.indexOf(candidate) === index);
 
-      return candidates.filter((candidate) => !skippedModels.has(candidate));
+      return candidates;
     };
 
     async function callWithRetry({
@@ -394,16 +391,6 @@ ${astroBlock}`;
             `[reports] AI attempt failed (model=${candidate}, elapsed=${Date.now() - startedAt}ms)`,
             rawMessage,
           );
-          if (retriable) {
-            skippedModels.add(candidate);
-            if (candidate === modelName) {
-              const nextFastModel = fallbackModels.find((item) => item !== candidate && !skippedModels.has(item));
-              if (nextFastModel) {
-                modelName = nextFastModel;
-                model = makeModel(nextFastModel);
-              }
-            }
-          }
           if (!retriable) throw e;
         } finally {
           clearTimeout(timer);
@@ -764,15 +751,21 @@ Regras:
 - Nao use o nome completo. Use apenas ${firstName}.`;
 
     yield { type: "progress" as const, progress: 28, step: "Montando a estrutura do relatório..." };
-    const baseText = await callWithRetry({
-      prompt: basePrompt,
-      timeoutMs: 16_000,
-      errorMessage: "A geração demorou além do limite. Tente novamente; agora o relatório usa um modo mais rápido.",
-    });
-    const base = parseJsonWithSchema(baseText, BaseAiOutput, "base", {
-      normalize: normalizeBasePayload,
-      fallback: normalizeBasePayload(null) as z.infer<typeof BaseAiOutput>,
-    });
+    let base: z.infer<typeof BaseAiOutput>;
+    try {
+      const baseText = await callWithRetry({
+        prompt: basePrompt,
+        timeoutMs: 16_000,
+        errorMessage: "A geração demorou além do limite. Tente novamente; agora o relatório usa um modo mais rápido.",
+      });
+      base = parseJsonWithSchema(baseText, BaseAiOutput, "base", {
+        normalize: normalizeBasePayload,
+        fallback: normalizeBasePayload(null) as z.infer<typeof BaseAiOutput>,
+      });
+    } catch (error) {
+      console.error("[reports] base generation fallback", error);
+      base = normalizeBasePayload(null) as z.infer<typeof BaseAiOutput>;
+    }
 
     const sections: z.infer<typeof SectionOutput>[] = [];
     for (const [index, blueprint] of base.sectionBlueprints.entries()) {
@@ -781,15 +774,21 @@ Regras:
         progress: 44 + index * 10,
         step: `Escrevendo capítulo ${index + 1} de 3...`,
       };
-      const sectionBodyText = await callWithRetry({
-        prompt: makeSectionBodyPrompt(blueprint, index, base.sectionBlueprints),
-        timeoutMs: 7_500,
-        errorMessage: "A geração demorou além do limite. Tente novamente; agora o relatório usa um modo mais rápido.",
-      });
-      const sectionBody = parseJsonWithSchema(sectionBodyText, SectionBodyOutput, `section-body-${index + 1}`, {
-        normalize: (parsed) => normalizeSectionPayload(parsed, blueprint),
-        fallback: normalizeSectionPayload(null, blueprint) as z.infer<typeof SectionBodyOutput>,
-      });
+      let sectionBody: z.infer<typeof SectionBodyOutput>;
+      try {
+        const sectionBodyText = await callWithRetry({
+          prompt: makeSectionBodyPrompt(blueprint, index, base.sectionBlueprints),
+          timeoutMs: 7_500,
+          errorMessage: "A geração demorou além do limite. Tente novamente; agora o relatório usa um modo mais rápido.",
+        });
+        sectionBody = parseJsonWithSchema(sectionBodyText, SectionBodyOutput, `section-body-${index + 1}`, {
+          normalize: (parsed) => normalizeSectionPayload(parsed, blueprint),
+          fallback: normalizeSectionPayload(null, blueprint) as z.infer<typeof SectionBodyOutput>,
+        });
+      } catch (error) {
+        console.error(`[reports] section generation fallback (${index + 1})`, error);
+        sectionBody = normalizeSectionPayload(null, blueprint) as z.infer<typeof SectionBodyOutput>;
+      }
 
       yield {
         type: "progress" as const,
