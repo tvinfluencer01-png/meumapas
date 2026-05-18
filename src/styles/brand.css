@@ -123,4 +123,33 @@
 
   @keyframes slow-spin { to { transform: rotate(360deg); } }
   .animate-slow-spin { animation: slow-spin 60s linear infinite; }
+
+  /* ---------- Logo animations ---------- */
+  @keyframes logo-spin { to { transform: rotate(360deg); } }
+  .animate-logo-spin { animation: logo-spin 24s linear infinite; transform-origin: 50% 50%; }
+
+  @keyframes logo-float {
+    0%, 100% { transform: translateY(0) rotate(-2deg); }
+    50%      { transform: translateY(-6px) rotate(2deg); }
+  }
+  .animate-logo-float { animation: logo-float 6s ease-in-out infinite; }
+
+  @keyframes logo-pulse {
+    0%, 100% {
+      filter: drop-shadow(0 0 12px color-mix(in oklab, var(--gold) 35%, transparent));
+      transform: scale(1);
+    }
+    50% {
+      filter: drop-shadow(0 0 28px color-mix(in oklab, var(--gold) 70%, transparent));
+      transform: scale(1.04);
+    }
+  }
+  .animate-logo-pulse { animation: logo-pulse 3.2s ease-in-out infinite; }
+
+  @keyframes logo-orbit {
+    0%   { transform: rotate(0deg) translateY(-2px) rotate(0deg); }
+    50%  { transform: rotate(180deg) translateY(2px) rotate(-180deg); }
+    100% { transform: rotate(360deg) translateY(-2px) rotate(-360deg); }
+  }
+  .animate-logo-orbit { animation: logo-orbit 18s linear infinite; }
 }
