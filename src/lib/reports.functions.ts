@@ -574,9 +574,11 @@ REGRAS DO JSON:
       branding: brandingPayload,
     };
 
+    yield { type: "progress" as const, progress: 82, step: "Diagramando seu PDF cinematográfico..." };
     const pdfBytes = await buildReportPdf(reportData);
 
     // 5) Upload to storage (admin client; bucket is private)
+    yield { type: "progress" as const, progress: 92, step: "Salvando seu relatório..." };
     const path = `${userId}/${data.kind}-${Date.now()}.pdf`;
     const { error: upErr } = await supabaseAdmin.storage
       .from("reports")
@@ -607,13 +609,19 @@ REGRAS DO JSON:
       .from("reports")
       .createSignedUrl(path, 60 * 60);
 
-    return {
-      id: row?.id ?? null,
-      kind: data.kind,
-      title: meta.title,
-      storagePath: path,
-      signedUrl: signed?.signedUrl ?? null,
+    yield {
+      type: "done" as const,
+      progress: 100,
+      step: "Pronto!",
+      result: {
+        id: row?.id ?? null,
+        kind: data.kind,
+        title: meta.title,
+        storagePath: path,
+        signedUrl: signed?.signedUrl ?? null,
+      },
     };
+    return;
     } catch (err) {
       // Auto-refund on failure so user does not lose credits for a broken PDF.
       if (charged) {
