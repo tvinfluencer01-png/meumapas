@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { CreditCostBadge } from "@/components/CreditCostBadge";
 import { emitCreditsChanged } from "@/lib/credits-events";
 import { SPREADS, type SpreadId } from "@/lib/tarot.deck";
+import { useAuth } from "@/hooks/use-auth";
 import {
   generateTarotReading,
   exportTarotPdf,
@@ -32,6 +33,7 @@ const COST_BY_SPREAD: Record<SpreadId, string> = {
 };
 
 function TarotPage() {
+  const { user, loading: authLoading } = useAuth();
   const [spread, setSpread] = useState<SpreadId>("three");
   const [question, setQuestion] = useState("");
   const [current, setCurrent] = useState<Awaited<
@@ -48,6 +50,7 @@ function TarotPage() {
   const overview = useQuery({
     queryKey: ["my-credits-overview"],
     queryFn: () => overviewFn(),
+    enabled: !!user && !authLoading,
   });
 
   const balance = overview.data?.balance ?? 0;
@@ -58,6 +61,7 @@ function TarotPage() {
   const history = useQuery({
     queryKey: ["tarot-readings"],
     queryFn: () => listFn(),
+    enabled: !!user && !authLoading,
   });
 
   const genMut = useMutation({

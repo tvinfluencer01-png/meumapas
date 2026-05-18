@@ -49,6 +49,7 @@ import {
   toIsoRange,
   useHistoryFiltersState,
 } from "@/components/CreditHistoryTable";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/_authenticated/addons")({
   head: () => ({
@@ -65,12 +66,14 @@ export const Route = createFileRoute("/_authenticated/addons")({
 });
 
 function AddonsPage() {
+  const { user, loading: authLoading } = useAuth();
   const overviewFn = useServerFn(getAddonsOverview);
   const checkoutFn = useServerFn(createMercadoPagoCheckout);
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["addons-overview"],
     queryFn: () => overviewFn(),
+    enabled: !!user && !authLoading,
   });
 
   const [pendingId, setPendingId] = useState<string | null>(null);

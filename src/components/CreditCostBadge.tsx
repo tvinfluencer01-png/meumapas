@@ -12,6 +12,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/use-auth";
 
 type Props = {
   /** Ação a ser cobrada (ex: "oracle_message", "astro_chart", "report_love"). */
@@ -39,11 +40,13 @@ export function CreditCostBadge({
   showBalance = true,
   freeText = "Gratuito",
 }: Props) {
+  const { user, loading } = useAuth();
   const overviewFn = useServerFn(getMyCreditsOverview);
   const qc = useQueryClient();
   const { data, isLoading } = useQuery({
     queryKey: ["my-credits-overview"],
     queryFn: () => overviewFn(),
+    enabled: !!user && !loading,
     staleTime: 30_000,
     refetchOnWindowFocus: true,
   });
