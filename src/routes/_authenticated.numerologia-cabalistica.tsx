@@ -71,17 +71,24 @@ const CARDS = [
 
 function NumerologiaCabalisticaPage() {
   const { user } = useAuth();
-  const { data: birth } = useQuery({
+  const { data: birth, isLoading, error } = useQuery({
     queryKey: ["birth", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data } = await supabase.from("birth_data")
+      // Tenta primeiro o registro primário; se não existir, pega o mais recente.
+      const primary = await supabase.from("birth_data")
         .select("*").eq("user_id", user!.id).eq("is_primary", true).maybeSingle();
-      return data;
+      if (primary.data) return primary.data;
+      const fallback = await supabase.from("birth_data")
+        .select("*").eq("user_id", user!.id)
+        .order("created_at", { ascending: false }).limit(1).maybeSingle();
+      return fallback.data;
     },
+    staleTime: 60_000,
   });
 
-  const nums = birth ? computeCabalistic(birth.full_name) : null;
+  const fullName = birth?.full_name?.trim() ?? "";
+  const nums = fullName ? computeCabalistic(fullName) : null;
 
   return (
     <div className="space-y-8">
@@ -100,9 +107,23 @@ function NumerologiaCabalisticaPage() {
         )}
       </header>
 
-      {!nums && (
+      {isLoading && (
         <div className="glass-card rounded-2xl p-12 text-center text-muted-foreground">
-          Adicione seu nome completo nos dados de nascimento para revelar a vibração cabalística.
+          Carregando seus dados…
+        </div>
+      )}
+
+      {!isLoading && error && (
+        <div className="glass-card rounded-2xl p-12 text-center text-destructive">
+          Não foi possível carregar seus dados. Tente novamente.
+        </div>
+      )}
+
+      {!isLoading && !error && !nums && (
+        <div className="glass-card rounded-2xl p-12 text-center text-muted-foreground">
+          {birth
+            ? "Seu cadastro está sem o nome completo. Atualize em Configurações para revelar a vibração cabalística."
+            : "Adicione seus dados de nascimento (com nome completo) para revelar a vibração cabalística."}
         </div>
       )}
 
