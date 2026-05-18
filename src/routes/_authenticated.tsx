@@ -194,13 +194,38 @@ function AuthedLayout() {
               })}
             </div>
           </nav>
-          <div className="shrink-0 p-4 border-t border-border bg-background/90">
-            <div className="text-xs text-muted-foreground truncate mb-2">{user?.email}</div>
+          <div className="shrink-0 p-4 border-t border-border bg-background/90 space-y-3">
+            <button
+              type="button"
+              onClick={() => setProfileOpen(true)}
+              className="w-full flex items-center gap-3 rounded-lg p-2 hover:bg-secondary/40 transition-colors text-left group"
+              aria-label="Abrir configurações do perfil"
+            >
+              <span className="grid place-items-center size-9 rounded-full bg-gold/15 border border-gold/30 text-gold group-hover:bg-gold/25 transition-colors shrink-0">
+                <UserIcon className="size-4" />
+              </span>
+              <div className="flex-1 min-w-0">
+                <div className="text-xs text-stardust truncate">{user?.email}</div>
+                <div className="mt-1 flex items-center gap-2">
+                  <div className="flex-1 h-1.5 rounded-full bg-secondary overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-gold to-amber-300 transition-all"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                  <span className="text-[10px] tabular-nums text-gold font-medium shrink-0">
+                    {balance}
+                  </span>
+                </div>
+              </div>
+            </button>
             <Button onClick={handleSignOut} variant="ghost" size="sm" className="w-full justify-start text-muted-foreground hover:text-destructive">
               <LogOut className="size-4 mr-2" /> Sair
             </Button>
           </div>
         </aside>
+
+        <UserProfileDialog open={profileOpen} onOpenChange={setProfileOpen} />
 
         <main className="flex-1 min-h-screen lg:pl-0">
           <div className="p-4 lg:p-8 max-w-7xl mx-auto">
