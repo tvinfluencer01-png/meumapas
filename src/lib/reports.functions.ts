@@ -236,7 +236,7 @@ export const generateReport = createServerFn({ method: "POST" })
     const customModel = (settings?.custom_ai_model as string | null) ?? null;
 
     let model;
-    let modelName = customModel ?? "google/gemini-3-flash-preview";
+    let modelName = customModel ?? "google/gemini-3.1-flash-lite-preview";
     if (provider === "openai" && customKey) {
       modelName = customModel ?? "gpt-4o-mini";
       model = createOpenAIProvider(customKey)(modelName);
@@ -329,10 +329,10 @@ Responda APENAS com um JSON valido (sem markdown, sem cercas de codigo) no forma
 }
 
 REGRAS DO JSON:
-- "sections" deve ter entre 5 e 6 itens.
-- Cada "sections[i].plan" e OBRIGATORIO e cada uma das listas improve/avoid/follow precisa ter EXATAMENTE 7 itens (um por dia), iniciando com "Dia 1:", "Dia 2:", ... "Dia 7:".
-- SWOT e recommendations: de 3 a 5 itens cada, especificos ao mapa e numerologia.
-- "suggestions.items": entre 6 e 8 itens. Tema das sugestoes: ${meta.suggestionGuide}`;
+- "sections" deve ter EXATAMENTE 3 itens (mais densos e focados).
+- Cada "sections[i].plan" e OBRIGATORIO e cada uma das listas improve/avoid/follow precisa ter EXATAMENTE 7 itens (um por dia), iniciando com "Dia 1:", "Dia 2:", ... "Dia 7:". Itens curtos (max 15 palavras).
+- SWOT e recommendations: 3 itens cada, especificos ao mapa e numerologia.
+- "suggestions.items": EXATAMENTE 5 itens. Tema das sugestoes: ${meta.suggestionGuide}`;
 
     const { text } = await generateText({ model, system, prompt });
 
