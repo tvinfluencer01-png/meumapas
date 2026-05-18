@@ -54,6 +54,13 @@ function AuthedLayout() {
     }
   }, [loading, user]);
 
+  // Lock body scroll when mobile drawer is open
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    document.body.style.overflow = open ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [open]);
+
   useEffect(() => {
     if (!loading && !user) {
       router.navigate({ to: "/auth", replace: true });
@@ -97,32 +104,51 @@ function AuthedLayout() {
   }
 
   return (
-    <div className="relative min-h-screen bg-background text-foreground">
+    <div className="relative min-h-screen bg-background text-foreground overflow-x-hidden">
       <Starfield count={60} className="fixed" />
 
       {/* Mobile top bar */}
-      <header className="lg:hidden sticky top-0 z-30 flex items-center justify-between border-b border-border bg-background/80 backdrop-blur px-4 py-3">
+      <header className="lg:hidden sticky top-0 z-30 flex items-center justify-between border-b border-border bg-background/90 backdrop-blur px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
         <Link to="/dashboard" className="flex items-center gap-2">
           <Sparkles className="size-5 text-gold" />
           <span className="font-serif text-lg shimmer-text">Cosmic AI</span>
         </Link>
-        <Button variant="ghost" size="icon" onClick={() => setOpen(!open)}>
+        <Button variant="ghost" size="icon" aria-label="Abrir menu" onClick={() => setOpen(!open)}>
           {open ? <X className="size-5" /> : <Menu className="size-5" />}
         </Button>
       </header>
 
-      <div className="relative z-10 flex">
+      {/* Mobile backdrop */}
+      {open && (
+        <div
+          onClick={() => setOpen(false)}
+          className="lg:hidden fixed inset-0 z-10 bg-background/70 backdrop-blur-sm"
+        />
+      )}
+
+      <div className="relative z-0 flex">
         {/* Sidebar */}
-        <aside className={`${open ? "block" : "hidden"} lg:block fixed lg:sticky inset-0 lg:inset-auto lg:top-0 z-20 lg:z-auto h-screen w-full lg:w-64 border-r border-border bg-background/90 backdrop-blur-xl`}>
-          <div className="hidden lg:flex items-center gap-2 px-6 py-6 border-b border-border">
+        <aside
+          className={`${open ? "flex" : "hidden"} lg:flex flex-col fixed lg:sticky top-0 z-20 lg:z-auto h-[100dvh] w-[85%] max-w-xs lg:w-64 border-r border-border bg-background/95 backdrop-blur-xl`}
+        >
+          <div className="hidden lg:flex items-center gap-2 px-6 py-6 border-b border-border shrink-0">
             <Sparkles className="size-6 text-gold" />
             <span className="font-serif text-xl shimmer-text">Cosmic AI</span>
           </div>
-          <nav className="p-4 space-y-1">
+          <div className="lg:hidden flex items-center justify-between px-4 py-3 border-b border-border shrink-0 pt-[max(0.75rem,env(safe-area-inset-top))]">
+            <div className="flex items-center gap-2">
+              <Sparkles className="size-5 text-gold" />
+              <span className="font-serif text-lg shimmer-text">Cosmic AI</span>
+            </div>
+            <Button variant="ghost" size="icon" aria-label="Fechar menu" onClick={() => setOpen(false)}>
+              <X className="size-5" />
+            </Button>
+          </div>
+          <nav className="p-4 space-y-1 overflow-y-auto flex-1 overscroll-contain">
             {NAV.filter((item) => !item.addonId || activeAddons.has(item.addonId)).map((item) => (
               <Link
                 key={item.to} to={item.to} onClick={() => setOpen(false)}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-gold hover:bg-secondary/40 transition-colors"
+                className="flex items-center gap-3 px-3 py-3 lg:py-2.5 rounded-lg text-sm text-muted-foreground hover:text-gold hover:bg-secondary/40 transition-colors"
                 activeProps={{ className: "bg-secondary text-gold border border-gold/20" }}
               >
                 <item.icon className="size-4" /> {item.label}
@@ -131,7 +157,7 @@ function AuthedLayout() {
             {isAdmin && (
               <Link
                 to="/admin" onClick={() => setOpen(false)}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-gold hover:bg-secondary/40 transition-colors"
+                className="flex items-center gap-3 px-3 py-3 lg:py-2.5 rounded-lg text-sm text-muted-foreground hover:text-gold hover:bg-secondary/40 transition-colors"
                 activeProps={{ className: "bg-secondary text-gold border border-gold/20" }}
               >
                 <Shield className="size-4" /> Admin
@@ -149,7 +175,7 @@ function AuthedLayout() {
                     key={id}
                     to={entry.to}
                     onClick={() => setOpen(false)}
-                    className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-gold hover:bg-secondary/40 transition-colors"
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-gold hover:bg-secondary/40 transition-colors"
                     activeProps={{ className: "bg-secondary text-gold border border-gold/20" }}
                   >
                     <Icon className="size-4 shrink-0" />
@@ -164,7 +190,7 @@ function AuthedLayout() {
               })}
             </div>
           </nav>
-          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border">
+          <div className="p-4 border-t border-border shrink-0 pb-[max(1rem,env(safe-area-inset-bottom))]">
             <div className="text-xs text-muted-foreground truncate mb-2">{user?.email}</div>
             <Button onClick={handleSignOut} variant="ghost" size="sm" className="w-full justify-start text-muted-foreground hover:text-destructive">
               <LogOut className="size-4 mr-2" /> Sair
@@ -172,8 +198,8 @@ function AuthedLayout() {
           </div>
         </aside>
 
-        <main className="flex-1 min-h-screen lg:pl-0">
-          <div className="p-4 lg:p-8 max-w-7xl mx-auto">
+        <main className="flex-1 min-w-0 min-h-screen lg:pl-0">
+          <div className="p-3 sm:p-4 lg:p-8 max-w-7xl mx-auto pb-[max(0.75rem,env(safe-area-inset-bottom))]">
             <Outlet />
           </div>
         </main>
