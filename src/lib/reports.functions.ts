@@ -241,7 +241,7 @@ export const generateReport = createServerFn({ method: "POST" })
     const customKey = settings?.custom_ai_key as string | null;
     const customModel = (settings?.custom_ai_model as string | null) ?? null;
 
-    let modelName = customModel ?? "google/gemini-2.5-flash";
+    let modelName = customModel ?? "google/gemini-3-flash-preview";
     const lovableKey = process.env.LOVABLE_API_KEY;
 
     const makeModel = (candidate: string): ReturnType<ReturnType<typeof createLovableAiGatewayProvider>> => {
