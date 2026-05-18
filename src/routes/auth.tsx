@@ -101,8 +101,9 @@ function AuthPage() {
     setSubmitting(true);
     try {
       const creds = await bootstrap();
-      if (!creds?.email || !creds?.password) {
-        throw new Error("Credenciais de Super Admin indisponíveis. Verifique SUPER_ADMIN_EMAIL/SUPER_ADMIN_PASSWORD.");
+      if (!creds?.ok || !creds.email || !creds.password) {
+        toast.error(creds?.message ?? "Credenciais de Super Admin indisponíveis no momento.");
+        return;
       }
       const { error } = await supabase.auth.signInWithPassword({
         email: creds.email,
