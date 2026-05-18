@@ -122,7 +122,7 @@ function AuthedLayout() {
   if (loading || !user || !profileChecked) {
     return (
       <div className="min-h-screen grid place-items-center bg-background">
-        <Logo sizeClassName="size-16" animation="pulse" />
+        <Logo sizeClassName="size-24" animation="pulse" />
       </div>
     );
   }
@@ -133,8 +133,8 @@ function AuthedLayout() {
 
       {/* Mobile top bar */}
       <header className="lg:hidden sticky top-0 z-30 flex items-center justify-between border-b border-border bg-background/80 backdrop-blur px-4 py-3">
-        <Link to="/dashboard" className="flex items-center gap-2">
-          <Logo sizeClassName="size-7" animation="float" />
+        <Link to="/dashboard" className="flex items-center gap-2.5">
+          <Logo sizeClassName="size-10" animation="float" />
           <span className="font-serif text-lg shimmer-text">Cosmic AI</span>
         </Link>
         <Button variant="ghost" size="icon" onClick={() => setOpen(!open)}>
@@ -145,8 +145,8 @@ function AuthedLayout() {
       <div className="relative z-10 flex">
         {/* Sidebar */}
         <aside className={`${open ? "flex" : "hidden"} lg:flex flex-col fixed lg:sticky inset-0 lg:inset-auto lg:top-0 z-20 lg:z-auto h-screen w-full lg:w-64 border-r border-border bg-background/90 backdrop-blur-xl`}>
-          <div className="hidden lg:flex items-center gap-2 px-6 py-6 border-b border-border shrink-0">
-            <Logo sizeClassName="size-9" animation="float" />
+          <div className="hidden lg:flex items-center gap-2.5 px-6 py-6 border-b border-border shrink-0">
+            <Logo sizeClassName="size-12" animation="float" />
             <span className="font-serif text-xl shimmer-text">Cosmic AI</span>
           </div>
           <nav className="flex-1 overflow-y-auto p-4 space-y-1">

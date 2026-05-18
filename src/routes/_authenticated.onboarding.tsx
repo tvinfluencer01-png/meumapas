@@ -2,7 +2,8 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
-import { Sparkles, Calendar, Clock, MapPin, Globe, Loader2 } from "lucide-react";
+import { Calendar, Clock, MapPin, Globe, Loader2 } from "lucide-react";
+import { Logo } from "@/components/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -86,7 +87,7 @@ function OnboardingPage() {
   return (
     <div className="max-w-2xl mx-auto">
       <div className="text-center mb-8">
-        <Sparkles className="size-10 text-gold mx-auto mb-3" />
+        <Logo sizeClassName="size-20" animation="float" className="mx-auto mb-3" />
         <h1 className="font-serif text-4xl shimmer-text">O Universo precisa te conhecer</h1>
         <p className="mt-3 text-muted-foreground">
           Esses dados desenham seu mapa astral, sua numerologia e calibram a IA Oráculo.
