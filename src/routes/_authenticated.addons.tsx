@@ -355,10 +355,11 @@ function SubscriptionCard({
         </Badge>
       )}
       {active && (
-        <Badge className="absolute -top-2 right-4 bg-emerald-600 hover:bg-emerald-600">
+        <Badge className="absolute -top-2 right-4 bg-green-600 hover:bg-green-600 text-white text-[10px] font-semibold uppercase px-2 py-0.5 tracking-wide">
           Ativo
         </Badge>
       )}
+
       <CardHeader>
         <CardTitle className="font-serif">{sub.name}</CardTitle>
         <CardDescription>{sub.description}</CardDescription>
