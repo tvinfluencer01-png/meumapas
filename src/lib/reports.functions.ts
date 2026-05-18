@@ -132,9 +132,18 @@ const SuggestionsSchema = z.object({
   items: z.array(z.object({ name: z.string().min(2), why: z.string().min(20) })).length(5),
 });
 
+const SectionBodyOutput = z.object({
+  title: z.string().min(2),
+  body: z.string().min(120),
+});
+
+const SectionPlanOutput = z.object({
+  plan: SectionPlanSchema,
+});
+
 const SectionOutput = z.object({
   title: z.string().min(2),
-  body: z.string().min(140),
+  body: z.string().min(120),
   plan: SectionPlanSchema,
 });
 
@@ -330,22 +339,37 @@ ${astroBlock}`;
       for (const candidate of fallbackModels) {
         const candidateModel = candidate === modelName ? model : makeModel(candidate);
         const ac = new AbortController();
-        const timer = setTimeout(() => ac.abort(), timeoutMs);
+        let didTimeout = false;
+        const timer = setTimeout(() => {
+          didTimeout = true;
+          ac.abort();
+        }, timeoutMs);
+        const startedAt = Date.now();
         try {
-          const res = await generateText({
-            model: candidateModel,
-            system,
-            prompt,
-            abortSignal: ac.signal,
-            maxRetries: 0,
+          console.info(`[reports] AI stage start (model=${candidate}, timeout=${timeoutMs}ms)`);
+          const res = await Promise.race([
+            generateText({
+              model: candidateModel,
+              system,
+              prompt,
+              abortSignal: ac.signal,
+              maxRetries: 0,
+            }),
+            new Promise<never>((_, reject) => {
+              setTimeout(() => reject(new Error(`AI timeout after ${timeoutMs}ms`)), timeoutMs + 50);
+            }),
+          ]);
+          console.info(`[reports] AI stage done (model=${candidate}, elapsed=${Date.now() - startedAt}ms)`);
           });
           modelName = candidate;
           model = candidateModel;
           return res.text;
         } catch (e) {
           lastErr = e;
-          const msg = e instanceof Error ? e.message.toLowerCase() : String(e).toLowerCase();
+          const rawMessage = e instanceof Error ? e.message : String(e);
+          const msg = rawMessage.toLowerCase();
           const retriable =
+            didTimeout ||
             msg.includes("timeout") ||
             msg.includes("aborted") ||
             msg.includes("upstream") ||
@@ -354,10 +378,14 @@ ${astroBlock}`;
             msg.includes("504") ||
             msg.includes("econnreset") ||
             msg.includes("network");
-          console.error(`[reports] AI attempt failed (model=${candidate})`, msg);
+          console.error(
+            `[reports] AI attempt failed (model=${candidate}, elapsed=${Date.now() - startedAt}ms)`,
+            rawMessage,
+          );
           if (!retriable) throw e;
         } finally {
           clearTimeout(timer);
+          ac.abort();
         }
       }
 
@@ -413,6 +441,12 @@ ${astroBlock}`;
       }
     }
 
+    const compactSectionContext = `Relatorio: ${meta.title}
+Foco geral: ${meta.focus}
+Nome para tratamento: ${firstName}
+Numerologia: ${numBlock}
+Assinatura astral: ${signLine || astroBlock}`;
+
     const basePrompt = `${reportContext}
 
 Monte apenas a ESTRUTURA BASE do relatório e responda APENAS com JSON valido neste formato:
@@ -455,13 +489,13 @@ Regras:
 - Tema das sugestoes: ${meta.suggestionGuide}
 - Use o nome completo apenas 1x na intro. Depois, use apenas ${firstName}.`;
 
-    const makeSectionPrompt = (
+    const makeSectionBodyPrompt = (
       blueprint: z.infer<typeof BaseAiOutput>["sectionBlueprints"][number],
       index: number,
       blueprints: z.infer<typeof BaseAiOutput>["sectionBlueprints"],
-    ) => `${reportContext}
+    ) => `${compactSectionContext}
 
-Escreva apenas a secao ${index + 1} de 3 do relatório.
+Escreva apenas o TEXTO da secao ${index + 1} de 3 do relatório.
 Titulo da secao: ${blueprint.title}
 Foco da secao: ${blueprint.focus}
 Outras secoes para evitar repeticao: ${blueprints
@@ -472,7 +506,25 @@ Outras secoes para evitar repeticao: ${blueprints
 Responda APENAS com JSON valido neste formato:
 {
   "title": "${blueprint.title}",
-  "body": "2 ou 3 paragrafos claros, humanos e especificos para ${firstName}",
+  "body": "2 ou 3 paragrafos claros, humanos e especificos para ${firstName}"
+}
+
+Regras:
+- O body precisa ser especifico ao tema e ancorado no mapa/numerologia.
+- Nao use o nome completo. Use apenas ${firstName}.`;
+
+    const makeSectionPlanPrompt = (
+      blueprint: z.infer<typeof BaseAiOutput>["sectionBlueprints"][number],
+      sectionBody: string,
+    ) => `${compactSectionContext}
+
+Crie apenas o PLANO DE 7 DIAS da secao "${blueprint.title}".
+Foco da secao: ${blueprint.focus}
+Resumo da secao ja escrita:
+${sectionBody}
+
+Responda APENAS com JSON valido neste formato:
+{
   "plan": {
     "improve": ["Dia 1: ...", "Dia 2: ...", "Dia 3: ...", "Dia 4: ...", "Dia 5: ...", "Dia 6: ...", "Dia 7: ..."],
     "avoid": ["Dia 1: ...", "Dia 2: ...", "Dia 3: ...", "Dia 4: ...", "Dia 5: ...", "Dia 6: ...", "Dia 7: ..."],
@@ -481,11 +533,10 @@ Responda APENAS com JSON valido neste formato:
 }
 
 Regras:
-- O body precisa ser especifico ao tema e ancorado no mapa/numerologia.
-- Cada lista do plano deve ter EXATAMENTE 7 itens, de Dia 1 a Dia 7.
+- Cada lista deve ter EXATAMENTE 7 itens, de Dia 1 a Dia 7.
 - Cada item deve ser curto, concreto e acionavel.
-- Nao repita itens das outras secoes.
-- Nao use o nome completo. Use apenas ${firstName}.`;
+- O plano deve combinar com o texto da secao e com o mapa/numerologia.
+- Evite frases longas ou abstratas.`;
 
     yield { type: "progress" as const, progress: 28, step: "Montando a estrutura do relatório..." };
     const baseText = await callWithRetry({
