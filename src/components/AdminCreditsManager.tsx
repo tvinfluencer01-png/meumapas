@@ -143,10 +143,17 @@ function CreditsDialog({
   const getFn = useServerFn(adminGetUserCredits);
   const adjustFn = useServerFn(adminAdjustCredits);
   const historyFn = useServerFn(adminListCreditHistory);
+  const pkgListFn = useServerFn(adminListCreditPackages);
+  const applyPkgFn = useServerFn(adminApplyCreditPackage);
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["admin-credits", userId],
     queryFn: () => getFn({ data: { user_id: userId } }),
+  });
+
+  const { data: pkgData } = useQuery({
+    queryKey: ["admin-credit-packages"],
+    queryFn: () => pkgListFn(),
   });
 
   const [filters, setFilters] = useHistoryFiltersState();
