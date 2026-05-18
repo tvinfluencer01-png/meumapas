@@ -129,6 +129,8 @@ function AuthPage() {
 
   const bootstrap = useServerFn(bootstrapSuperAdmin);
   async function handleSuperAdmin() {
+    setStatusMode("signin");
+    setStatusStep(0);
     setSubmitting(true);
     try {
       const creds = await bootstrap();
