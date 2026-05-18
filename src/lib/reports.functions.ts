@@ -321,6 +321,10 @@ A lista "suggestions.items" deve ter entre 6 e 8 itens, cada um com "name" curto
       love: brandRow?.enabled_love ?? true,
       career: brandRow?.enabled_career ?? true,
       spiritual: brandRow?.enabled_spiritual ?? true,
+      finance: true,
+      family: true,
+      health: true,
+      friendships: true,
     };
     let brandingPayload: ReportData["branding"] = undefined;
     if (brandingAddonActive && brandRow?.enabled && kindEnabledMap[data.kind]) {
