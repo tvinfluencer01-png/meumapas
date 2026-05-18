@@ -1,6 +1,11 @@
 import { PDFDocument, StandardFonts, rgb, PageSizes } from "pdf-lib";
 
-export type ReportSection = { title: string; body: string };
+export type SectionPlan = {
+  improve: string[]; // 7 itens (um por dia)
+  avoid: string[];   // 7 itens
+  follow: string[];  // 7 itens
+};
+export type ReportSection = { title: string; body: string; plan?: SectionPlan };
 export type ReportSwot = {
   strengths: string[];
   weaknesses: string[];
