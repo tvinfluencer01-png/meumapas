@@ -50,6 +50,7 @@ export type ReportData = {
   recommendations: ReportRecommendations;
   suggestions: ReportSuggestions;
   summary: string;
+  finalPlan?: SectionPlan;
   branding?: ReportBranding;
 };
 
