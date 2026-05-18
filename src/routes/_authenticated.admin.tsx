@@ -6,6 +6,7 @@ import { Shield, MessageSquare, Save, Send, CheckCircle2, AlertTriangle, Users, 
 import { MercadoPagoForm } from "@/components/MercadoPagoForm";
 import { AdminCreditsManager } from "@/components/AdminCreditsManager";
 import { AdminCreditCosts } from "@/components/AdminCreditCosts";
+import { AdminCreditPackages } from "@/components/AdminCreditPackages";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -104,6 +105,7 @@ function AdminPage() {
         </TabsContent>
         <TabsContent value="credits" className="mt-0 space-y-6">
           <AdminCreditCosts />
+          <AdminCreditPackages />
           <AdminCreditsManager />
         </TabsContent>
       </Tabs>

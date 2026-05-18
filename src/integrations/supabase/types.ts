@@ -249,6 +249,48 @@ export type Database = {
         }
         Relationships: []
       }
+      credit_packages: {
+        Row: {
+          active: boolean
+          created_at: string
+          credits: number
+          currency: string
+          description: string | null
+          id: string
+          name: string
+          price_cents: number
+          sort_order: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          credits: number
+          currency?: string
+          description?: string | null
+          id?: string
+          name: string
+          price_cents?: number
+          sort_order?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          credits?: number
+          currency?: string
+          description?: string | null
+          id?: string
+          name?: string
+          price_cents?: number
+          sort_order?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       credit_transactions: {
         Row: {
           action: string | null

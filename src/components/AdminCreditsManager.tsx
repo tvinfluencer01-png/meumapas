@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Coins, Search, Plus, Minus, History } from "lucide-react";
+import { Coins, Search, Plus, Minus, History, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,12 +19,21 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { listAdminUsers } from "@/lib/admin.functions";
 import {
   adminAdjustCredits,
+  adminApplyCreditPackage,
   adminGetUserCredits,
   adminListCreditHistory,
+  adminListCreditPackages,
   adminRefundCredits,
 } from "@/lib/credits.functions";
 import {
@@ -134,10 +143,17 @@ function CreditsDialog({
   const getFn = useServerFn(adminGetUserCredits);
   const adjustFn = useServerFn(adminAdjustCredits);
   const historyFn = useServerFn(adminListCreditHistory);
+  const pkgListFn = useServerFn(adminListCreditPackages);
+  const applyPkgFn = useServerFn(adminApplyCreditPackage);
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["admin-credits", userId],
     queryFn: () => getFn({ data: { user_id: userId } }),
+  });
+
+  const { data: pkgData } = useQuery({
+    queryKey: ["admin-credit-packages"],
+    queryFn: () => pkgListFn(),
   });
 
   const [filters, setFilters] = useHistoryFiltersState();
@@ -156,6 +172,30 @@ function CreditsDialog({
 
   const [amount, setAmount] = useState<string>("");
   const [reason, setReason] = useState("");
+  const [packageId, setPackageId] = useState<string>("");
+  const [packageNote, setPackageNote] = useState("");
+
+  const applyMut = useMutation({
+    mutationFn: () =>
+      applyPkgFn({
+        data: {
+          user_id: userId,
+          package_id: packageId,
+          note: packageNote.trim() || null,
+        },
+      }),
+    onSuccess: (res) => {
+      toast.success(
+        `Pacote "${res.package_name}" aplicado: +${res.credits} créditos (saldo ${res.balance}).`,
+      );
+      setPackageId("");
+      setPackageNote("");
+      refetch();
+      refetchHistory();
+      qc.invalidateQueries({ queryKey: ["addons-overview"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   const mut = useMutation({
     mutationFn: (sign: 1 | -1) =>
@@ -278,6 +318,59 @@ function CreditsDialog({
         <Button onClick={() => submit(1)} disabled={mut.isPending}>
           <Plus className="size-4 mr-1" /> Adicionar
         </Button>
+      </div>
+
+      <div className="border-t border-border pt-3 space-y-3">
+        <div className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+          <Package className="size-3" /> Aplicar pacote de créditos
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2 items-end">
+          <div>
+            <Label className="text-xs">Pacote</Label>
+            <Select value={packageId} onValueChange={setPackageId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione um pacote…" />
+              </SelectTrigger>
+              <SelectContent>
+                {(pkgData?.packages ?? [])
+                  .filter((p) => p.active)
+                  .map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name} — +{p.credits} créd. ·{" "}
+                      {(p.price_cents / 100).toLocaleString("pt-BR", {
+                        style: "currency",
+                        currency: p.currency || "BRL",
+                      })}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs">Observação (opcional)</Label>
+            <Input
+              value={packageNote}
+              onChange={(e) => setPackageNote(e.target.value)}
+              placeholder="Ex: pago via Pix, recibo #123"
+              maxLength={240}
+            />
+          </div>
+          <Button
+            onClick={() => {
+              if (!packageId) return toast.error("Selecione um pacote.");
+              applyMut.mutate();
+            }}
+            disabled={applyMut.isPending || !packageId}
+          >
+            <Package className="size-4 mr-1" />
+            {applyMut.isPending ? "Lançando…" : "Lançar saldo"}
+          </Button>
+        </div>
+        {!pkgData?.packages.length && (
+          <p className="text-xs text-muted-foreground">
+            Nenhum pacote cadastrado. Crie pacotes na seção &quot;Pacotes de créditos&quot;.
+          </p>
+        )}
       </div>
 
       <div className="border-t border-border pt-3 space-y-3">
