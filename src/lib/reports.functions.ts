@@ -511,9 +511,9 @@ ${astroBlock}`;
       ];
 
       return {
-        intro: `${firstName}, este relatório traduz seu mapa astral e sua numerologia para a área de ${meta.title.toLowerCase()}. A proposta aqui é revelar padrões, potenciais e tensões com linguagem clara e humana. Você receberá uma leitura simbólica, mas também prática, para transformar percepção em direção concreta.`,
+        intro: `${firstName}, este relatório nasce do encontro entre o seu mapa astral e a sua numerologia, e abre uma leitura profunda sobre ${meta.title.toLowerCase()}. A proposta aqui não é entregar respostas prontas, mas iluminar os fios simbólicos que sustentam a sua vida nessa área. Você vai reconhecer padrões antigos, dons que ainda não foram nomeados e tensões que pedem cuidado. Cada parágrafo foi pensado para te oferecer linguagem, espelho e direção. Esta abertura te convida a respirar e olhar para si com mais verdade, antes de mergulhar nos próximos capítulos. O que vem a seguir é uma travessia: símbolo virando consciência, e consciência virando escolha concreta.`,
         sectionBlueprints: blueprintDefaults,
-        closing: `${firstName}, seu mapa não é sentença: ele mostra tendências, forças e aprendizados. O essencial agora é usar essa clareza com presença, consistência e escolhas mais alinhadas ao que deseja construir.`,
+        closing: `${firstName}, seu mapa não é sentença: ele mostra tendências, forças e aprendizados. O essencial agora é usar essa clareza com presença, consistência e escolhas mais alinhadas ao que deseja construir. Permita que a leitura amadureça em silêncio, e volte a ela sempre que precisar reencontrar o seu eixo.`,
         swot: {
           strengths: normalizeStringList([], 3, () => "Sensibilidade para perceber padrões importantes."),
           weaknesses: normalizeStringList([], 3, () => "Tendência a oscilar entre impulso e excesso de análise."),
@@ -532,7 +532,7 @@ ${astroBlock}`;
             why: `Esta sugestão reforça ${meta.focus} de forma prática, ajudando ${firstName} a criar consistência, clareza e escolhas mais alinhadas ao próprio mapa e numerologia.`,
           })),
         },
-        summary: `${firstName}, a síntese da sua leitura mostra potenciais reais, pontos de atenção e caminhos de amadurecimento. Quando você honra seu ritmo, organiza a energia e faz escolhas conscientes, ${meta.title.toLowerCase()} tende a se tornar uma área de crescimento e não de desgaste.`,
+        summary: `${firstName}, a síntese da sua leitura mostra potenciais reais, pontos de atenção e caminhos de amadurecimento. Quando você honra seu ritmo, organiza a energia e faz escolhas conscientes, ${meta.title.toLowerCase()} tende a se tornar uma área de crescimento e não de desgaste. Volte a este resumo sempre que precisar reencontrar o eixo e lembrar do que já sabe sobre si.`,
       };
     }
 
