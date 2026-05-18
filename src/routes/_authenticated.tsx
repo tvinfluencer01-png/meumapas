@@ -1,10 +1,12 @@
 import { createFileRoute, Outlet, Link, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Starfield } from "@/components/Starfield";
+import { UserProfileDialog } from "@/components/UserProfileDialog";
 import {
-  Sparkles, LayoutDashboard, CircleDot, Hash, MessageCircle, LogOut, Menu, X, ScrollText, Shield, Settings, Coins, Wand2, TreePine, Crown, Infinity as InfinityIcon, FileBadge,
+  Sparkles, LayoutDashboard, CircleDot, Hash, MessageCircle, LogOut, Menu, X, ScrollText, Shield, Settings, Coins, Wand2, TreePine, Crown, Infinity as InfinityIcon, FileBadge, User as UserIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -47,6 +49,34 @@ function AuthedLayout() {
   const [profileChecked, setProfileChecked] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [activeAddons, setActiveAddons] = useState<Set<string>>(new Set());
+  const [profileOpen, setProfileOpen] = useState(false);
+
+  // Saldo de créditos + pico histórico para calcular a barra
+  const { data: credits } = useQuery({
+    queryKey: ["sidebar-credits", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const [{ data: bal }, { data: peak }] = await Promise.all([
+        supabase.from("user_credits").select("balance").eq("user_id", user!.id).maybeSingle(),
+        supabase
+          .from("credit_transactions")
+          .select("balance_after")
+          .eq("user_id", user!.id)
+          .order("balance_after", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+      ]);
+      return {
+        balance: bal?.balance ?? 0,
+        peak: Math.max(peak?.balance_after ?? 0, bal?.balance ?? 0, 5),
+      };
+    },
+    refetchOnWindowFocus: false,
+  });
+
+  const balance = credits?.balance ?? 0;
+  const peak = credits?.peak ?? 5;
+  const pct = Math.max(0, Math.min(100, (balance / peak) * 100));
 
   useEffect(() => {
     if (!loading || !user) {
@@ -164,13 +194,38 @@ function AuthedLayout() {
               })}
             </div>
           </nav>
-          <div className="shrink-0 p-4 border-t border-border bg-background/90">
-            <div className="text-xs text-muted-foreground truncate mb-2">{user?.email}</div>
+          <div className="shrink-0 p-4 border-t border-border bg-background/90 space-y-3">
+            <button
+              type="button"
+              onClick={() => setProfileOpen(true)}
+              className="w-full flex items-center gap-3 rounded-lg p-2 hover:bg-secondary/40 transition-colors text-left group"
+              aria-label="Abrir configurações do perfil"
+            >
+              <span className="grid place-items-center size-9 rounded-full bg-gold/15 border border-gold/30 text-gold group-hover:bg-gold/25 transition-colors shrink-0">
+                <UserIcon className="size-4" />
+              </span>
+              <div className="flex-1 min-w-0">
+                <div className="text-xs text-stardust truncate">{user?.email}</div>
+                <div className="mt-1 flex items-center gap-2">
+                  <div className="flex-1 h-1.5 rounded-full bg-secondary overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-gold to-amber-300 transition-all"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                  <span className="text-[10px] tabular-nums text-gold font-medium shrink-0">
+                    {balance}
+                  </span>
+                </div>
+              </div>
+            </button>
             <Button onClick={handleSignOut} variant="ghost" size="sm" className="w-full justify-start text-muted-foreground hover:text-destructive">
               <LogOut className="size-4 mr-2" /> Sair
             </Button>
           </div>
         </aside>
+
+        <UserProfileDialog open={profileOpen} onOpenChange={setProfileOpen} />
 
         <main className="flex-1 min-h-screen lg:pl-0">
           <div className="p-4 lg:p-8 max-w-7xl mx-auto">
