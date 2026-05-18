@@ -1,78 +1,277 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { Sparkles, Wand2 } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
+import { Sparkles, Wand2, Loader2, FileDown, Trash2, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { CreditCostBadge } from "@/components/CreditCostBadge";
+import { emitCreditsChanged } from "@/lib/credits-events";
+import { SPREADS, type SpreadId } from "@/lib/tarot.deck";
+import {
+  generateTarotReading,
+  exportTarotPdf,
+  listTarotReadings,
+  deleteTarotReading,
+} from "@/lib/tarot.functions";
 
 export const Route = createFileRoute("/_authenticated/tarot")({
   component: TarotPage,
   head: () => ({ meta: [{ title: "Tarot — Cosmic AI" }] }),
 });
 
-const DECK = [
-  "O Mago", "A Sacerdotisa", "A Imperatriz", "O Imperador", "O Hierofante",
-  "Os Enamorados", "O Carro", "A Força", "O Eremita", "A Roda da Fortuna",
-  "A Justiça", "O Enforcado", "A Morte", "A Temperança", "O Diabo",
-  "A Torre", "A Estrela", "A Lua", "O Sol", "O Julgamento", "O Mundo", "O Louco",
-];
-
-function drawThree() {
-  const pool = [...DECK];
-  const out: string[] = [];
-  for (let i = 0; i < 3; i++) {
-    const idx = Math.floor(Math.random() * pool.length);
-    out.push(pool.splice(idx, 1)[0]);
-  }
-  return out;
-}
+const COST_BY_SPREAD: Record<SpreadId, string> = {
+  card_day: "tarot_card_day",
+  three: "tarot_three",
+  celtic: "tarot_celtic",
+};
 
 function TarotPage() {
-  const [cards, setCards] = useState<string[] | null>(null);
+  const [spread, setSpread] = useState<SpreadId>("three");
+  const [question, setQuestion] = useState("");
+  const [current, setCurrent] = useState<Awaited<
+    ReturnType<typeof generateTarotReading>
+  > | null>(null);
+
+  const qc = useQueryClient();
+  const generateFn = useServerFn(generateTarotReading);
+  const exportFn = useServerFn(exportTarotPdf);
+  const listFn = useServerFn(listTarotReadings);
+  const deleteFn = useServerFn(deleteTarotReading);
+
+  const history = useQuery({
+    queryKey: ["tarot-readings"],
+    queryFn: () => listFn(),
+  });
+
+  const genMut = useMutation({
+    mutationFn: () =>
+      generateFn({ data: { spread, question: question.trim() || null } }),
+    onSuccess: (res) => {
+      setCurrent(res);
+      toast.success("Leitura revelada.");
+      qc.invalidateQueries({ queryKey: ["tarot-readings"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+    onSettled: () => emitCreditsChanged(),
+  });
+
+  const pdfMut = useMutation({
+    mutationFn: (id: string) => exportFn({ data: { id } }),
+    onSuccess: (res) => {
+      if (res.signedUrl) {
+        window.open(res.signedUrl, "_blank");
+        toast.success(res.cached ? "PDF aberto." : "PDF gerado.");
+      }
+      qc.invalidateQueries({ queryKey: ["tarot-readings"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+    onSettled: () => emitCreditsChanged(),
+  });
+
+  const delMut = useMutation({
+    mutationFn: (id: string) => deleteFn({ data: { id } }),
+    onSuccess: () => {
+      toast.success("Leitura removida.");
+      qc.invalidateQueries({ queryKey: ["tarot-readings"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <header className="space-y-2">
-        <h1 className="font-serif text-3xl shimmer-text flex items-center gap-2">
-          <Sparkles className="size-6 text-gold" /> Tarot
+        <p className="text-xs uppercase tracking-[0.3em] text-gold">Oráculo</p>
+        <h1 className="font-serif text-3xl lg:text-5xl shimmer-text flex items-center gap-3">
+          <Sparkles className="size-7 text-gold" /> Tarot dos Arcanos
         </h1>
-        <p className="text-sm text-muted-foreground max-w-2xl">
-          Concentre-se em uma pergunta e revele três cartas: passado, presente e futuro.
-          Cada leitura consome créditos da sua conta.
+        <p className="text-muted-foreground max-w-2xl">
+          Sorteio dos 22 Arcanos Maiores com interpretação personalizada por IA.
+          Cada leitura é salva no seu histórico e pode ser exportada em PDF.
         </p>
       </header>
 
-      <section className="rounded-xl border border-border bg-card/50 backdrop-blur p-6 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div>
-            <h2 className="font-serif text-lg">Nova leitura — 3 cartas</h2>
-            <p className="text-xs text-muted-foreground">
-              Revise o custo e seu saldo antes de iniciar.
-            </p>
-          </div>
-          <CreditCostBadge action="tarot_reading" />
-        </div>
-
-        <Button
-          onClick={() => setCards(drawThree())}
-          className="bg-gradient-to-r from-gold to-amber-400 text-background hover:opacity-90"
-        >
-          <Wand2 className="size-4 mr-2" /> Iniciar leitura
-        </Button>
+      {/* Spread chooser */}
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {(Object.values(SPREADS)).map((s) => {
+          const active = spread === s.id;
+          return (
+            <button
+              key={s.id}
+              onClick={() => setSpread(s.id as SpreadId)}
+              className={`text-left rounded-xl border p-5 transition-colors ${
+                active
+                  ? "border-gold bg-gold/10"
+                  : "border-border bg-card/40 hover:border-gold/40"
+              }`}
+            >
+              <div className="text-xs uppercase tracking-wider text-muted-foreground">
+                {s.count} carta{s.count > 1 ? "s" : ""}
+              </div>
+              <div className="font-serif text-lg text-stardust mt-1">{s.label}</div>
+              <div className="text-xs text-muted-foreground mt-2 line-clamp-2">
+                {s.positions.join(" · ")}
+              </div>
+              <div className="mt-3">
+                <CreditCostBadge
+                  action={COST_BY_SPREAD[s.id as SpreadId]}
+                  showBalance={false}
+                />
+              </div>
+            </button>
+          );
+        })}
       </section>
 
-      {cards && (
-        <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {["Passado", "Presente", "Futuro"].map((pos, i) => (
-            <div
-              key={pos}
-              className="rounded-xl border border-gold/30 bg-secondary/40 p-5 text-center space-y-2"
+      {/* Question + draw */}
+      <section className="glass-card rounded-2xl p-5 lg:p-6 space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="q">Pergunta (opcional)</Label>
+          <Textarea
+            id="q"
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            placeholder="Ex: O que preciso compreender sobre meu próximo passo?"
+            rows={3}
+            maxLength={500}
+          />
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <Button
+            onClick={() => genMut.mutate()}
+            disabled={genMut.isPending}
+            className="bg-gradient-to-r from-gold to-amber-400 text-background hover:opacity-90"
+          >
+            {genMut.isPending ? (
+              <Loader2 className="size-4 mr-2 animate-spin" />
+            ) : (
+              <Wand2 className="size-4 mr-2" />
+            )}
+            Sortear cartas e revelar leitura
+          </Button>
+          <CreditCostBadge action={COST_BY_SPREAD[spread]} />
+        </div>
+      </section>
+
+      {/* Result */}
+      {current && (
+        <section className="space-y-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+            {current.cards.map((c, i) => (
+              <div
+                key={i}
+                className="rounded-xl border border-gold/30 bg-secondary/40 p-3 text-center"
+              >
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                  {c.position}
+                </div>
+                <div
+                  className={`font-serif text-base mt-1 text-gold ${
+                    c.reversed ? "rotate-180 inline-block" : ""
+                  }`}
+                  title={c.reversed ? "Invertida" : "Em pé"}
+                >
+                  {c.card.name}
+                </div>
+                {c.reversed && (
+                  <div className="text-[10px] text-amber-400 mt-1">invertida</div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <article className="prose prose-invert prose-sm max-w-none glass-card rounded-2xl p-5 lg:p-6">
+            <h2 className="font-serif text-gold">Visão geral</h2>
+            <p>{current.interpretation.summary}</p>
+            {current.interpretation.perCard.map((p, i) => (
+              <div key={i}>
+                <h3 className="font-serif text-gold">
+                  {p.position} — {p.card}
+                </h3>
+                <p>{p.reading}</p>
+              </div>
+            ))}
+            <h2 className="font-serif text-gold">Conselho</h2>
+            <p>{current.interpretation.advice}</p>
+            <blockquote className="border-l-2 border-gold pl-3 italic">
+              {current.interpretation.affirmation}
+            </blockquote>
+          </article>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <Button
+              variant="outline"
+              onClick={() => pdfMut.mutate(current.id)}
+              disabled={pdfMut.isPending}
             >
-              <div className="text-xs uppercase tracking-wider text-muted-foreground">{pos}</div>
-              <div className="font-serif text-xl text-gold">{cards[i]}</div>
-            </div>
-          ))}
+              {pdfMut.isPending ? (
+                <Loader2 className="size-4 mr-2 animate-spin" />
+              ) : (
+                <FileDown className="size-4 mr-2" />
+              )}
+              Exportar PDF
+            </Button>
+            <CreditCostBadge action="tarot_pdf" />
+          </div>
         </section>
       )}
+
+      {/* History */}
+      <section className="space-y-3">
+        <h2 className="font-serif text-xl text-stardust flex items-center gap-2">
+          <History className="size-5 text-gold" /> Suas leituras
+        </h2>
+        {history.isLoading ? (
+          <p className="text-sm text-muted-foreground">Carregando...</p>
+        ) : !history.data?.length ? (
+          <p className="text-sm text-muted-foreground">
+            Nenhuma leitura ainda. Faça sua primeira tiragem acima.
+          </p>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2">
+            {history.data.map((r) => (
+              <Card key={r.id} className="bg-card/40">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-serif text-gold">
+                    {SPREADS[r.spread as SpreadId]?.label ?? r.spread}
+                  </CardTitle>
+                  <CardDescription className="text-xs">
+                    {new Date(r.created_at).toLocaleString("pt-BR")}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {r.question && (
+                    <p className="text-xs text-muted-foreground italic line-clamp-2">
+                      “{r.question}”
+                    </p>
+                  )}
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => pdfMut.mutate(r.id)}
+                      disabled={pdfMut.isPending}
+                    >
+                      <FileDown className="size-3 mr-1" /> PDF
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => delMut.mutate(r.id)}
+                      disabled={delMut.isPending}
+                    >
+                      <Trash2 className="size-3 mr-1" /> Excluir
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   );
 }
