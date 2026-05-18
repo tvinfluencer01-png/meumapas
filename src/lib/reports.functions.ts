@@ -241,7 +241,7 @@ export const generateReport = createServerFn({ method: "POST" })
     const customKey = settings?.custom_ai_key as string | null;
     const customModel = (settings?.custom_ai_model as string | null) ?? null;
 
-    let modelName = customModel ?? "google/gemini-2.5-flash";
+    let modelName = customModel ?? "google/gemini-3-flash-preview";
     const lovableKey = process.env.LOVABLE_API_KEY;
 
     const makeModel = (candidate: string): ReturnType<ReturnType<typeof createLovableAiGatewayProvider>> => {
@@ -389,13 +389,13 @@ REGRAS DO JSON:
         : provider === "gemini" && customKey
           ? [modelName, "gemini-2.5-flash", "gemini-2.0-flash"]
           : isLovable && lovableKey
-            ? [modelName, "google/gemini-2.5-flash", "google/gemini-2.5-flash-lite"]
+            ? [modelName, "google/gemini-2.5-flash", "google/gemini-3.1-flash-lite-preview"]
             : [modelName]
     ).filter((m, i, arr) => arr.indexOf(m) === i);
 
-    const REQUEST_BUDGET_MS = 32_000;
-    const PER_ATTEMPT_TIMEOUT_MS = 14_000;
-    const MIN_REMAINING_BUDGET_MS = 5_000;
+    const REQUEST_BUDGET_MS = 55_000;
+    const PER_ATTEMPT_TIMEOUT_MS = 45_000;
+    const MIN_REMAINING_BUDGET_MS = 8_000;
 
     async function callWithRetry() {
       let lastErr: unknown;
