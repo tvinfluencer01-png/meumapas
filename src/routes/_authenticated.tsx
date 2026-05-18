@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Starfield } from "@/components/Starfield";
 import {
-  Sparkles, LayoutDashboard, CircleDot, Hash, MessageCircle, LogOut, Menu, X, ScrollText, Shield, Settings, Coins, Wand2, TreePine,
+  Sparkles, LayoutDashboard, CircleDot, Hash, MessageCircle, LogOut, Menu, X, ScrollText, Shield, Settings, Coins, Wand2, TreePine, Crown, Infinity as InfinityIcon, FileBadge,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -30,6 +30,15 @@ const NAV: NavItem[] = [
   { to: "/addons", label: "Add-ons", icon: Coins },
   { to: "/configuracoes", label: "Configurações", icon: Settings },
 ];
+
+const ADDON_MENU: Record<string, { label: string; to: string; icon: typeof LayoutDashboard }> = {
+  sub_branding_pdf: { label: "Branding PDF", to: "/configuracoes", icon: FileBadge },
+  sub_unlimited_reports: { label: "Relatórios Ilimitados", to: "/relatorios", icon: InfinityIcon },
+  sub_oracle_premium: { label: "Oráculo Premium", to: "/oraculo", icon: Crown },
+  sub_tarot_unlimited: { label: "Tarot Ilimitado", to: "/tarot", icon: Wand2 },
+  sub_kabbalah_unlimited: { label: "Meditação Ilimitada", to: "/meditacao", icon: TreePine },
+  sub_kabbalistic_numerology: { label: "Numerologia Cabalística", to: "/numerologia", icon: Hash },
+};
 
 function AuthedLayout() {
   const { signOut, user, loading } = useAuth();
@@ -127,6 +136,29 @@ function AuthedLayout() {
               >
                 <Shield className="size-4" /> Admin
               </Link>
+            )}
+            {activeAddons.size > 0 && (
+              <div className="pt-4 mt-2 border-t border-border/60">
+                <div className="px-3 pb-2 text-[10px] uppercase tracking-[0.2em] text-gold/70">
+                  Meus Add-ons
+                </div>
+                {Array.from(activeAddons).map((id) => {
+                  const entry = ADDON_MENU[id];
+                  if (!entry) return null;
+                  const Icon = entry.icon;
+                  return (
+                    <Link
+                      key={id}
+                      to={entry.to}
+                      onClick={() => setOpen(false)}
+                      className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-gold hover:bg-secondary/40 transition-colors"
+                      activeProps={{ className: "bg-secondary text-gold border border-gold/20" }}
+                    >
+                      <Icon className="size-4" /> {entry.label}
+                    </Link>
+                  );
+                })}
+              </div>
             )}
           </nav>
           <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border">
