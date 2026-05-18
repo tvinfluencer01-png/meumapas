@@ -235,7 +235,7 @@ export const generateReport = createServerFn({ method: "POST" })
     const customKey = settings?.custom_ai_key as string | null;
     const customModel = (settings?.custom_ai_model as string | null) ?? null;
 
-    let model;
+    let model: ReturnType<ReturnType<typeof createLovableAiGatewayProvider>>;
     let modelName = customModel ?? "google/gemini-3.1-flash-lite-preview";
     if (provider === "openai" && customKey) {
       modelName = customModel ?? "gpt-4o-mini";
@@ -365,7 +365,61 @@ REGRAS DO JSON:
 - SWOT e recommendations: 3 itens cada, especificos ao mapa e numerologia.
 - "suggestions.items": EXATAMENTE 5 itens. Tema das sugestoes: ${meta.suggestionGuide}`;
 
-    const { text } = await generateText({ model, system, prompt });
+    // Robust call: per-attempt timeout + retries + fallback model on persistent upstream timeouts.
+    const isLovable = provider === "lovable" || !(["openai", "anthropic", "gemini"].includes(provider) && customKey);
+    const lovableKey = process.env.LOVABLE_API_KEY;
+    const fallbackModels = isLovable && lovableKey
+      ? [
+          modelName,
+          "google/gemini-2.5-flash-lite",
+          "google/gemini-2.5-flash",
+        ].filter((m, i, arr) => arr.indexOf(m) === i)
+      : [modelName];
+
+    async function callWithRetry() {
+      let lastErr: unknown;
+      for (const candidate of fallbackModels) {
+        const candidateModel = candidate === modelName
+          ? model
+          : (isLovable && lovableKey ? createLovableAiGatewayProvider(lovableKey)(candidate) : model);
+        for (let attempt = 0; attempt < 2; attempt++) {
+          const ac = new AbortController();
+          const timer = setTimeout(() => ac.abort(), 90_000);
+          try {
+            const res = await generateText({
+              model: candidateModel,
+              system,
+              prompt,
+              abortSignal: ac.signal,
+              maxRetries: 0,
+            });
+            modelName = candidate;
+            return res;
+          } catch (e) {
+            lastErr = e;
+            const msg = e instanceof Error ? e.message.toLowerCase() : String(e).toLowerCase();
+            const retriable =
+              msg.includes("timeout") ||
+              msg.includes("aborted") ||
+              msg.includes("upstream") ||
+              msg.includes("502") ||
+              msg.includes("503") ||
+              msg.includes("504") ||
+              msg.includes("econnreset") ||
+              msg.includes("network");
+            console.error(`[reports] AI attempt failed (model=${candidate}, attempt=${attempt})`, msg);
+            if (!retriable) throw e;
+          } finally {
+            clearTimeout(timer);
+          }
+        }
+      }
+      throw lastErr instanceof Error
+        ? new Error("A IA demorou demais para responder. Tente novamente em alguns instantes.")
+        : new Error("Falha temporaria na IA. Tente novamente.");
+    }
+
+    const { text } = await callWithRetry();
 
     // Extract JSON (some models wrap in code fences)
     let jsonStr = text.trim();
