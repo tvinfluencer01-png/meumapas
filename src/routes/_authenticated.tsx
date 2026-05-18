@@ -137,29 +137,32 @@ function AuthedLayout() {
                 <Shield className="size-4" /> Admin
               </Link>
             )}
-            {activeAddons.size > 0 && (
-              <div className="pt-4 mt-2 border-t border-border/60">
-                <div className="px-3 pb-2 text-[10px] uppercase tracking-[0.2em] text-gold/70">
-                  Meus Add-ons
-                </div>
-                {Array.from(activeAddons).map((id) => {
-                  const entry = ADDON_MENU[id];
-                  if (!entry) return null;
-                  const Icon = entry.icon;
-                  return (
-                    <Link
-                      key={id}
-                      to={entry.to}
-                      onClick={() => setOpen(false)}
-                      className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-gold hover:bg-secondary/40 transition-colors"
-                      activeProps={{ className: "bg-secondary text-gold border border-gold/20" }}
-                    >
-                      <Icon className="size-4" /> {entry.label}
-                    </Link>
-                  );
-                })}
+            <div className="pt-4 mt-2 border-t border-border/60">
+              <div className="px-3 pb-2 text-[10px] uppercase tracking-[0.2em] text-gold/70">
+                Meus Add-ons
               </div>
-            )}
+              {Object.entries(ADDON_MENU).map(([id, entry]) => {
+                const Icon = entry.icon;
+                const isActive = activeAddons.has(id);
+                return (
+                  <Link
+                    key={id}
+                    to={entry.to}
+                    onClick={() => setOpen(false)}
+                    className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-gold hover:bg-secondary/40 transition-colors"
+                    activeProps={{ className: "bg-secondary text-gold border border-gold/20" }}
+                  >
+                    <Icon className="size-4 shrink-0" />
+                    <span className="flex-1 truncate">{entry.label}</span>
+                    {isActive && (
+                      <span className="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-green-600 text-white">
+                        Ativo
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
           </nav>
           <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border">
             <div className="text-xs text-muted-foreground truncate mb-2">{user?.email}</div>
