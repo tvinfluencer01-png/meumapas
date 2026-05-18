@@ -11,6 +11,7 @@ import { computeNatalChart, pingAstro } from "@/lib/astrology.functions";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { PLANET_MEANING, SIGN_MEANING, ASPECT_MEANING, SIGN_GUIDANCE } from "@/lib/astro-meanings";
+import { CreditCostBadge } from "@/components/CreditCostBadge";
 
 export const Route = createFileRoute("/_authenticated/mapa-astral")({
   component: MapaAstral,
