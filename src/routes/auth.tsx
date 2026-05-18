@@ -33,16 +33,43 @@ const signInSchema = z.object({
   password: z.string().min(1, "Informe a senha"),
 });
 
+const SIGNIN_STEPS = [
+  "Alinhando suas energias...",
+  "Consultando os astros...",
+  "Verificando sua identidade cósmica...",
+  "Abrindo o portal estelar...",
+];
+const SIGNUP_STEPS = [
+  "Tecendo sua assinatura cósmica...",
+  "Registrando sua entrada no universo...",
+  "Preparando sua jornada estelar...",
+  "Acendendo sua constelação...",
+];
+
 function AuthPage() {
   const nav = useNavigate();
   const { session, loading } = useAuth();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [submitting, setSubmitting] = useState(false);
+  const [statusStep, setStatusStep] = useState(0);
+  const [statusMode, setStatusMode] = useState<"signin" | "signup">("signin");
   const [form, setForm] = useState({ name: "", email: "", password: "" });
 
   useEffect(() => {
     if (!loading && session) nav({ to: "/dashboard" });
   }, [session, loading, nav]);
+
+  useEffect(() => {
+    if (!submitting) {
+      setStatusStep(0);
+      return;
+    }
+    const steps = statusMode === "signup" ? SIGNUP_STEPS : SIGNIN_STEPS;
+    const id = setInterval(() => {
+      setStatusStep((s) => (s + 1) % steps.length);
+    }, 1400);
+    return () => clearInterval(id);
+  }, [submitting, statusMode]);
 
   async function handleEmail(e: React.FormEvent) {
     e.preventDefault();
