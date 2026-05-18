@@ -172,6 +172,30 @@ function CreditsDialog({
 
   const [amount, setAmount] = useState<string>("");
   const [reason, setReason] = useState("");
+  const [packageId, setPackageId] = useState<string>("");
+  const [packageNote, setPackageNote] = useState("");
+
+  const applyMut = useMutation({
+    mutationFn: () =>
+      applyPkgFn({
+        data: {
+          user_id: userId,
+          package_id: packageId,
+          note: packageNote.trim() || null,
+        },
+      }),
+    onSuccess: (res) => {
+      toast.success(
+        `Pacote "${res.package_name}" aplicado: +${res.credits} créditos (saldo ${res.balance}).`,
+      );
+      setPackageId("");
+      setPackageNote("");
+      refetch();
+      refetchHistory();
+      qc.invalidateQueries({ queryKey: ["addons-overview"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   const mut = useMutation({
     mutationFn: (sign: 1 | -1) =>
