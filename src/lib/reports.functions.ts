@@ -13,7 +13,16 @@ import { computeNumerology, NUMBER_MEANINGS, formatBirthDateBR, numLabel, numTit
 import { buildReportPdf, type ReportData } from "@/lib/reports-pdf";
 import { consumeCredits, hasUnlimitedAccess, getCreditCost, refundCredits, type CreditAction } from "@/lib/credits.functions";
 
-const KIND = z.enum(["personality", "love", "career", "spiritual"]);
+const KIND = z.enum([
+  "personality",
+  "love",
+  "career",
+  "spiritual",
+  "finance",
+  "family",
+  "health",
+  "friendships",
+]);
 
 const REPORT_META: Record<
   z.infer<typeof KIND>,
