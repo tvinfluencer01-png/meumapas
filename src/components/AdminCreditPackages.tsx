@@ -143,7 +143,7 @@ export function AdminCreditPackages() {
                 </tr>
               </thead>
               <tbody>
-                {data.packages.map((p) => (
+                {data.packages.map((p: Pkg) => (
                   <tr key={p.id} className="border-t border-border">
                     <td className="px-3 py-2">
                       <div className="font-medium">{p.name}</div>

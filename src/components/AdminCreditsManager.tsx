@@ -40,6 +40,7 @@ import {
 import {
   CreditHistoryFilters,
   CreditHistoryTable,
+  type CreditTx,
   toIsoRange,
   useHistoryFiltersState,
 } from "@/components/CreditHistoryTable";
@@ -185,7 +186,7 @@ export function CreditsDialog({
           note: packageNote.trim() || null,
         },
       }),
-    onSuccess: (res) => {
+    onSuccess: (res: { package_name: string; credits: number; balance: number }) => {
       toast.success(
         `Pacote "${res.package_name}" aplicado: +${res.credits} créditos (saldo ${res.balance}).`,
       );
@@ -208,7 +209,7 @@ export function CreditsDialog({
           reason: reason.trim(),
         },
       }),
-    onSuccess: (res, sign) => {
+    onSuccess: (res: { balance: number }, sign) => {
       toast.success(
         sign > 0
           ? `Créditos adicionados. Novo saldo: ${res.balance}`
@@ -243,7 +244,7 @@ export function CreditsDialog({
           original_tx_id: vars.tx_id,
         },
       }),
-    onSuccess: (res) => {
+    onSuccess: (res: { amount: number }) => {
       toast.success(`Estorno realizado: +${res.amount} créditos`);
       refetch();
       refetchHistory();
@@ -337,8 +338,12 @@ export function CreditsDialog({
               </SelectTrigger>
               <SelectContent>
                 {(pkgData?.packages ?? [])
-                  .filter((p) => p.active)
-                  .map((p) => (
+                  .filter((p: {
+                    id: string; active: boolean; name: string; credits: number; price_cents: number; currency: string | null;
+                  }) => p.active)
+                  .map((p: {
+                    id: string; name: string; credits: number; price_cents: number; currency: string | null;
+                  }) => (
                     <SelectItem key={p.id} value={p.id}>
                       {p.name} — +{p.credits} créd. ·{" "}
                       {(p.price_cents / 100).toLocaleString("pt-BR", {
@@ -384,7 +389,7 @@ export function CreditsDialog({
         <CreditHistoryFilters
           value={filters}
           onChange={setFilters}
-          actions={(history?.transactions ?? []).map((t) => t.action || t.kind)}
+          actions={(history?.transactions ?? []).map((t: CreditTx) => t.action || t.kind)}
         />
         <CreditHistoryTable
           transactions={history?.transactions ?? []}
