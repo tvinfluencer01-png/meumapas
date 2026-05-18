@@ -37,7 +37,7 @@ const ADDON_MENU: Record<string, { label: string; to: string; icon: typeof Layou
   sub_oracle_premium: { label: "Oráculo Premium", to: "/oraculo", icon: Crown },
   sub_tarot_unlimited: { label: "Tarot Ilimitado", to: "/tarot", icon: Wand2 },
   sub_kabbalah_unlimited: { label: "Meditação Ilimitada", to: "/meditacao", icon: TreePine },
-  sub_kabbalistic_numerology: { label: "Numerologia Cabalística", to: "/numerologia", icon: Hash },
+  sub_kabbalistic_numerology: { label: "Numerologia Cabalística", to: "/numerologia-cabalistica", icon: Hash },
 };
 
 function AuthedLayout() {
