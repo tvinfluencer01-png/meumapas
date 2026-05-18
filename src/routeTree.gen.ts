@@ -13,6 +13,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiChatRouteImport } from './routes/api.chat'
+import { Route as AuthenticatedTarotRouteImport } from './routes/_authenticated.tarot'
 import { Route as AuthenticatedRelatoriosRouteImport } from './routes/_authenticated.relatorios'
 import { Route as AuthenticatedOraculoRouteImport } from './routes/_authenticated.oraculo'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated.onboarding'
@@ -42,6 +43,11 @@ const ApiChatRoute = ApiChatRouteImport.update({
   id: '/api/chat',
   path: '/api/chat',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedTarotRoute = AuthenticatedTarotRouteImport.update({
+  id: '/tarot',
+  path: '/tarot',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedRelatoriosRoute = AuthenticatedRelatoriosRouteImport.update({
   id: '/relatorios',
@@ -108,6 +114,7 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/oraculo': typeof AuthenticatedOraculoRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
+  '/tarot': typeof AuthenticatedTarotRoute
   '/api/chat': typeof ApiChatRoute
   '/admin/logs': typeof AuthenticatedAdminLogsRoute
 }
@@ -123,6 +130,7 @@ export interface FileRoutesByTo {
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/oraculo': typeof AuthenticatedOraculoRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
+  '/tarot': typeof AuthenticatedTarotRoute
   '/api/chat': typeof ApiChatRoute
   '/admin/logs': typeof AuthenticatedAdminLogsRoute
 }
@@ -140,6 +148,7 @@ export interface FileRoutesById {
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/oraculo': typeof AuthenticatedOraculoRoute
   '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
+  '/_authenticated/tarot': typeof AuthenticatedTarotRoute
   '/api/chat': typeof ApiChatRoute
   '/_authenticated/admin/logs': typeof AuthenticatedAdminLogsRoute
 }
@@ -157,6 +166,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/oraculo'
     | '/relatorios'
+    | '/tarot'
     | '/api/chat'
     | '/admin/logs'
   fileRoutesByTo: FileRoutesByTo
@@ -172,6 +182,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/oraculo'
     | '/relatorios'
+    | '/tarot'
     | '/api/chat'
     | '/admin/logs'
   id:
@@ -188,6 +199,7 @@ export interface FileRouteTypes {
     | '/_authenticated/onboarding'
     | '/_authenticated/oraculo'
     | '/_authenticated/relatorios'
+    | '/_authenticated/tarot'
     | '/api/chat'
     | '/_authenticated/admin/logs'
   fileRoutesById: FileRoutesById
@@ -228,6 +240,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/chat'
       preLoaderRoute: typeof ApiChatRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/tarot': {
+      id: '/_authenticated/tarot'
+      path: '/tarot'
+      fullPath: '/tarot'
+      preLoaderRoute: typeof AuthenticatedTarotRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/relatorios': {
       id: '/_authenticated/relatorios'
@@ -323,6 +342,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedOraculoRoute: typeof AuthenticatedOraculoRoute
   AuthenticatedRelatoriosRoute: typeof AuthenticatedRelatoriosRoute
+  AuthenticatedTarotRoute: typeof AuthenticatedTarotRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -335,6 +355,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedOraculoRoute: AuthenticatedOraculoRoute,
   AuthenticatedRelatoriosRoute: AuthenticatedRelatoriosRoute,
+  AuthenticatedTarotRoute: AuthenticatedTarotRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
