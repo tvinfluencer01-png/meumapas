@@ -11,7 +11,7 @@ import {
 } from "@/lib/ai-gateway";
 import { computeNumerology, NUMBER_MEANINGS, formatBirthDateBR, numLabel, numTitle } from "@/lib/numerology";
 import { buildReportPdf, type ReportData } from "@/lib/reports-pdf";
-import { consumeCredits, hasUnlimitedAccess, CREDIT_COSTS, type CreditAction } from "@/lib/credits.functions";
+import { consumeCredits, hasUnlimitedAccess, getCreditCost, type CreditAction } from "@/lib/credits.functions";
 
 const KIND = z.enum(["personality", "love", "career", "spiritual"]);
 
@@ -115,7 +115,7 @@ export const generateReport = createServerFn({ method: "POST" })
     const action: CreditAction = `report_${data.kind}` as CreditAction;
     const unlimited = await hasUnlimitedAccess(userId, action);
     if (!unlimited) {
-      const cost = CREDIT_COSTS[action];
+      const cost = await getCreditCost(action);
       const charged = await consumeCredits(userId, action, `Relatório ${data.kind}`);
       if (!charged) {
         throw new Error(

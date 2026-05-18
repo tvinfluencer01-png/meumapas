@@ -222,6 +222,33 @@ export type Database = {
         }
         Relationships: []
       }
+      credit_costs: {
+        Row: {
+          action: string
+          amount: number
+          description: string | null
+          label: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          action: string
+          amount: number
+          description?: string | null
+          label: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          action?: string
+          amount?: number
+          description?: string | null
+          label?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       credit_transactions: {
         Row: {
           amount: number
