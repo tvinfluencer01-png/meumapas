@@ -104,6 +104,24 @@
     background-color: color-mix(in oklab, var(--gold) 35%, transparent);
     color: var(--foreground);
   }
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+  /* Evitar zoom no iOS ao focar inputs (font-size mínimo 16px) */
+  @media (max-width: 640px) {
+    input,
+    textarea,
+    select {
+      font-size: 16px;
+    }
+  }
+  /* Melhor tap em touch */
+  button,
+  [role="button"],
+  a {
+    -webkit-tap-highlight-color: transparent;
+  }
 }
 
 /* Utilitários de marca (.font-serif, .glass-card, .shimmer-text, .gold-glow,
