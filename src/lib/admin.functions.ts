@@ -583,3 +583,144 @@ export const saveMercadoPagoSettings = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+// ===== User management (admin actions) =====
+
+export const adminUpdateUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({
+      user_id: z.string().uuid(),
+      full_name: z.string().trim().max(120).optional(),
+      email: z.string().trim().email().max(200).optional(),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+
+    const updates: { email?: string; user_metadata?: Record<string, unknown> } = {};
+    if (data.email) updates.email = data.email;
+    if (typeof data.full_name === "string") {
+      updates.user_metadata = { full_name: data.full_name };
+    }
+    if (Object.keys(updates).length) {
+      const { error } = await supabaseAdmin.auth.admin.updateUserById(
+        data.user_id,
+        updates,
+      );
+      if (error) throw new Error(error.message);
+    }
+    if (typeof data.full_name === "string") {
+      await supabaseAdmin
+        .from("profiles")
+        .update({ full_name: data.full_name })
+        .eq("id", data.user_id);
+    }
+    return { ok: true };
+  });
+
+export const adminSetUserPassword = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({
+      user_id: z.string().uuid(),
+      password: z.string().min(8, "Senha deve ter ao menos 8 caracteres").max(200),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(
+      data.user_id,
+      { password: data.password },
+    );
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const adminDeleteUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({ user_id: z.string().uuid() }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    if (data.user_id === context.userId) {
+      throw new Error("Você não pode excluir o próprio usuário.");
+    }
+    const { error } = await supabaseAdmin.auth.admin.deleteUser(data.user_id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const adminListUserSubscriptions = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({ user_id: z.string().uuid() }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    const { data: subs, error } = await supabaseAdmin
+      .from("user_subscriptions")
+      .select("id, addon_id, status, current_period_end, created_at, updated_at")
+      .eq("user_id", data.user_id)
+      .order("updated_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return { subscriptions: subs ?? [] };
+  });
+
+export const adminSetUserSubscription = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({
+      user_id: z.string().uuid(),
+      addon_id: z.string().trim().min(1).max(64),
+      active: z.boolean(),
+      days: z.number().int().min(1).max(3650).optional().default(30),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    if (data.active) {
+      const periodEnd = new Date(
+        Date.now() + (data.days ?? 30) * 86_400_000,
+      ).toISOString();
+      const { data: existing } = await supabaseAdmin
+        .from("user_subscriptions")
+        .select("id")
+        .eq("user_id", data.user_id)
+        .eq("addon_id", data.addon_id)
+        .maybeSingle();
+      if (existing) {
+        const { error } = await supabaseAdmin
+          .from("user_subscriptions")
+          .update({
+            status: "active",
+            current_period_end: periodEnd,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", existing.id);
+        if (error) throw new Error(error.message);
+      } else {
+        const { error } = await supabaseAdmin
+          .from("user_subscriptions")
+          .insert({
+            user_id: data.user_id,
+            addon_id: data.addon_id,
+            status: "active",
+            current_period_end: periodEnd,
+          });
+        if (error) throw new Error(error.message);
+      }
+    } else {
+      const { error } = await supabaseAdmin
+        .from("user_subscriptions")
+        .update({
+          status: "canceled",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("user_id", data.user_id)
+        .eq("addon_id", data.addon_id);
+      if (error) throw new Error(error.message);
+    }
+    return { ok: true };
+  });
