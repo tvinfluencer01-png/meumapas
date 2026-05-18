@@ -292,6 +292,7 @@ function CreditsDialog({
         <CreditHistoryTable
           transactions={history?.transactions ?? []}
           loading={historyLoading}
+          onRefund={handleRefund}
         />
       </div>
 
