@@ -3,18 +3,86 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-// Fallback defaults — used only if DB row missing
-export const CREDIT_COSTS_DEFAULTS = {
-  oracle_message: 1,
-  report_personality: 5,
-  report_love: 5,
-  report_career: 5,
-  report_spiritual: 5,
-  tarot_reading: 2,
-  astro_chart: 3,
-} as const;
+/**
+ * Canonical catalog of cobráveis actions.
+ * Single source of truth for label + description + default amount.
+ * The DB table `credit_costs` overrides amount/label/description if a row
+ * exists for the given action key (managed via Super Admin).
+ */
+export const CREDIT_COST_CATALOG = {
+  oracle_message: {
+    amount: 1,
+    label: "Mensagem do Oráculo (IA)",
+    description: "Cobrado por cada pergunta respondida no chat com a IA (não por caractere).",
+  },
+  astro_chart: {
+    amount: 3,
+    label: "Mapa Astral",
+    description: "Cálculo completo do mapa natal via Swiss Ephemeris.",
+  },
+  report_personality: {
+    amount: 5,
+    label: "Relatório PDF — Personalidade",
+    description: "Geração do PDF completo do Mapa da Personalidade.",
+  },
+  report_love: {
+    amount: 5,
+    label: "Relatório PDF — Amor & Relacionamentos",
+    description: "Geração do PDF completo de amor e relacionamentos.",
+  },
+  report_career: {
+    amount: 5,
+    label: "Relatório PDF — Carreira & Propósito",
+    description: "Geração do PDF completo de carreira e propósito.",
+  },
+  report_spiritual: {
+    amount: 5,
+    label: "Relatório PDF — Caminho Espiritual",
+    description: "Geração do PDF completo do caminho espiritual.",
+  },
+  tarot_reading: {
+    amount: 2,
+    label: "Leitura de Tarot",
+    description: "Tiragem de tarot interpretada por IA.",
+  },
+  tarot_card_day: {
+    amount: 1,
+    label: "Tarot — Carta do Dia",
+    description: "Sorteio e leitura curta de 1 carta.",
+  },
+  tarot_three: {
+    amount: 2,
+    label: "Tarot — 3 Cartas (Passado · Presente · Futuro)",
+    description: "Tiragem de 3 cartas com interpretação IA contextualizada.",
+  },
+  tarot_celtic: {
+    amount: 5,
+    label: "Tarot — Cruz Celta (10 cartas)",
+    description: "Leitura completa de 10 cartas com interpretação aprofundada.",
+  },
+  tarot_pdf: {
+    amount: 2,
+    label: "Tarot — PDF da leitura",
+    description: "Exporta a leitura realizada em PDF formatado.",
+  },
+  kabbalah_meditation: {
+    amount: 3,
+    label: "Meditação Cabalística",
+    description: "Sessão guiada personalizada baseada na Árvore da Vida.",
+  },
+  kabbalah_pdf: {
+    amount: 2,
+    label: "Meditação Cabalística — PDF",
+    description: "Exporta o roteiro da meditação em PDF.",
+  },
+} as const satisfies Record<string, { amount: number; label: string; description: string }>;
 
-export type CreditAction = keyof typeof CREDIT_COSTS_DEFAULTS | string;
+export type CreditAction = keyof typeof CREDIT_COST_CATALOG | string;
+
+/** Backward-compatible amount map (used em alguns lugares legados). */
+export const CREDIT_COSTS_DEFAULTS: Record<string, number> = Object.fromEntries(
+  Object.entries(CREDIT_COST_CATALOG).map(([k, v]) => [k, v.amount]),
+);
 
 /** Read configurable cost for an action from the credit_costs table. */
 export async function getCreditCost(action: string): Promise<number> {
@@ -150,18 +218,21 @@ export const getMyCreditsOverview = createServerFn({ method: "GET" })
         .select("action, amount, label, description"),
     ]);
     const map: Record<string, { amount: number; label: string; description: string | null }> = {};
+    // Seed do catálogo canônico (labels/descrições humanizadas)
+    for (const [action, def] of Object.entries(CREDIT_COST_CATALOG)) {
+      map[action] = {
+        amount: def.amount,
+        label: def.label,
+        description: def.description,
+      };
+    }
+    // Overrides do DB (admin pode editar valores e textos)
     for (const c of costs ?? []) {
       map[c.action] = {
         amount: c.amount,
-        label: c.label,
-        description: c.description ?? null,
+        label: c.label || map[c.action]?.label || c.action,
+        description: c.description ?? map[c.action]?.description ?? null,
       };
-    }
-    // Garante defaults para ações sem linha na tabela
-    for (const [action, amount] of Object.entries(CREDIT_COSTS_DEFAULTS)) {
-      if (!map[action]) {
-        map[action] = { amount, label: action, description: null };
-      }
     }
     return {
       balance: bal?.balance ?? 0,
