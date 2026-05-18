@@ -113,6 +113,8 @@ function AuthPage() {
   }
 
   async function handleGoogle() {
+    setStatusMode("signin");
+    setStatusStep(0);
     setSubmitting(true);
     try {
       const r = await lovable.auth.signInWithOAuth("google", {
