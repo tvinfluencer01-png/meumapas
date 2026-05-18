@@ -196,15 +196,21 @@ export const generateReport = createServerFn({ method: "POST" })
 
     let astroBlock = "(Mapa astral ainda nao calculado)";
     if (planets.length) {
-      astroBlock = planets
-        .map((p) => `- ${p.name}: ${p.sign} ${p.degree.toFixed(1)}°`)
+      const priorityPlanets = ["Sol", "Lua", "Mercurio", "Venus", "Marte", "Jupiter", "Saturno"];
+      const compactPlanets = priorityPlanets
+        .map((name) => planets.find((p) => p.name === name))
+        .filter((p): p is Planet => Boolean(p));
+
+      astroBlock = (compactPlanets.length ? compactPlanets : planets.slice(0, 7))
+        .map((p) => `- ${p.name}: ${p.sign}`)
         .join("\n");
+
       if (aspects.length) {
         astroBlock +=
           "\n\nAspectos principais:\n" +
           aspects
-            .slice(0, 10)
-            .map((a) => `- ${a.a} ${a.aspect} ${a.b} (orbe ${a.orb}°)`)
+            .slice(0, 6)
+            .map((a) => `- ${a.a} ${a.aspect} ${a.b}`)
             .join("\n");
       }
     }
@@ -235,22 +241,32 @@ export const generateReport = createServerFn({ method: "POST" })
     const customKey = settings?.custom_ai_key as string | null;
     const customModel = (settings?.custom_ai_model as string | null) ?? null;
 
-    let model: ReturnType<ReturnType<typeof createLovableAiGatewayProvider>>;
-    let modelName = customModel ?? "google/gemini-3.1-flash-lite-preview";
+    let modelName = customModel ?? "google/gemini-2.5-flash-lite";
+    const lovableKey = process.env.LOVABLE_API_KEY;
+
+    const makeModel = (candidate: string): ReturnType<ReturnType<typeof createLovableAiGatewayProvider>> => {
+      if (provider === "openai" && customKey) {
+        return createOpenAIProvider(customKey)(candidate);
+      }
+      if (provider === "anthropic" && customKey) {
+        return createAnthropicProvider(customKey)(candidate);
+      }
+      if (provider === "gemini" && customKey) {
+        return createGeminiProvider(customKey)(candidate);
+      }
+      if (!lovableKey) throw new Error("LOVABLE_API_KEY ausente");
+      return createLovableAiGatewayProvider(lovableKey)(candidate);
+    };
+
     if (provider === "openai" && customKey) {
-      modelName = customModel ?? "gpt-4o-mini";
-      model = createOpenAIProvider(customKey)(modelName);
+      modelName = customModel ?? "gpt-5-mini";
     } else if (provider === "anthropic" && customKey) {
       modelName = customModel ?? "claude-3-5-sonnet-20241022";
-      model = createAnthropicProvider(customKey)(modelName);
     } else if (provider === "gemini" && customKey) {
-      modelName = customModel ?? "gemini-2.0-flash";
-      model = createGeminiProvider(customKey)(modelName);
-    } else {
-      const key = process.env.LOVABLE_API_KEY;
-      if (!key) throw new Error("LOVABLE_API_KEY ausente");
-      model = createLovableAiGatewayProvider(key)(modelName);
+      modelName = customModel ?? "gemini-2.5-flash";
     }
+
+    let model = makeModel(modelName);
 
     // 3) Generate humanized structured content
     const firstName = String(birth.full_name).trim().split(/\s+/)[0] ?? "";
@@ -294,7 +310,7 @@ REGRA DE LINGUAGEM SIMPLES (obrigatoria):
 - NUNCA deixe um termo tecnico sem traducao parentetica, mesmo que ja tenha sido explicado antes — repita a explicacao curta sempre que reaparecer.
 - Frases curtas. Evite jargao espiritual hermetico. Nada de "vibracao quantica", "campo aurico" sem explicar.
 - Cite planetas, signos, aspectos e numeros REAIS recebidos, mas sempre TRADUZA o significado pratico para a vida da pessoa.
-- Cada secao deve ter no minimo 3 paragrafos densos, mas com frases claras e diretas.
+- Cada secao deve ter 2 ou 3 paragrafos objetivos, com frases claras e diretas.
 - Tom acolhedor, sabio, levemente literario, NUNCA academico ou opaco.
 - Nunca prometa eventos certos nem faca diagnostico clinico.
 - NAO use markdown nem emojis. Apenas texto corrido com paragrafos separados por linhas em branco.
@@ -326,11 +342,11 @@ ${astroBlock}
 
 Responda APENAS com um JSON valido (sem markdown, sem cercas de codigo) no formato:
 {
-  "intro": "texto longo, 4 a 6 paragrafos separados por \\n\\n, em LINGUAGEM SIMPLES, explicando cada termo tecnico que aparecer",
+  "intro": "texto em 2 ou 3 paragrafos separados por \\n\\n, em LINGUAGEM SIMPLES, explicando cada termo tecnico que aparecer",
   "sections": [
     {
       "title": "Titulo curto",
-      "body": "3 a 5 paragrafos longos separados por \\n\\n, sempre traduzindo termos tecnicos para palavras do dia a dia",
+      "body": "2 ou 3 paragrafos claros separados por \\n\\n, sempre traduzindo termos tecnicos para palavras do dia a dia",
       "plan": {
         "improve": ["Dia 1: acao concreta...", "Dia 2: ...", "Dia 3: ...", "Dia 4: ...", "Dia 5: ...", "Dia 6: ...", "Dia 7: ..."],
         "avoid":   ["Dia 1: o que nao fazer...", "Dia 2: ...", "Dia 3: ...", "Dia 4: ...", "Dia 5: ...", "Dia 6: ...", "Dia 7: ..."],
@@ -338,7 +354,7 @@ Responda APENAS com um JSON valido (sem markdown, sem cercas de codigo) no forma
       }
     }
   ],
-  "closing": "2 a 3 paragrafos finais",
+  "closing": "1 ou 2 paragrafos finais",
   "swot": {
     "strengths": ["forca 1 personalizada", "..."],
     "weaknesses": ["fraqueza 1 personalizada", "..."],
@@ -353,10 +369,10 @@ Responda APENAS com um JSON valido (sem markdown, sem cercas de codigo) no forma
   "suggestions": {
     "intro": "1 frase contextualizando a lista para ${firstName}",
     "items": [
-      { "name": "Nome curto e direto da sugestao", "why": "1 a 2 frases simples explicando POR QUE essa sugestao combina com o mapa/numerologia de ${firstName}, citando signo, planeta, aspecto ou numero e traduzindo o termo." }
+      { "name": "Nome curto e direto da sugestao", "why": "1 frase simples explicando POR QUE essa sugestao combina com o mapa/numerologia de ${firstName}, citando signo, planeta, aspecto ou numero e traduzindo o termo." }
     ]
   },
-  "summary": "Resumo final em 2 paragrafos densos, em linguagem simples"
+  "summary": "Resumo final em 1 paragrafo forte, em linguagem simples"
 }
 
 REGRAS DO JSON:
@@ -367,33 +383,47 @@ REGRAS DO JSON:
 
     // Robust call: per-attempt timeout + retries + fallback model on persistent upstream timeouts.
     const isLovable = provider === "lovable" || !(["openai", "anthropic", "gemini"].includes(provider) && customKey);
-    const lovableKey = process.env.LOVABLE_API_KEY;
-    const fallbackModels = isLovable && lovableKey
-      ? [
-          modelName,
-          "google/gemini-2.5-flash-lite",
-          "google/gemini-2.5-flash",
-        ].filter((m, i, arr) => arr.indexOf(m) === i)
-      : [modelName];
+    const fallbackModels = (
+      provider === "openai" && customKey
+        ? [modelName, "gpt-5-mini", "gpt-5-nano"]
+        : provider === "gemini" && customKey
+          ? [modelName, "gemini-2.5-flash", "gemini-2.0-flash"]
+          : isLovable && lovableKey
+            ? [modelName, "google/gemini-2.5-flash-lite", "google/gemini-2.5-flash"]
+            : [modelName]
+    ).filter((m, i, arr) => arr.indexOf(m) === i);
+
+    const REQUEST_BUDGET_MS = 32_000;
+    const PER_ATTEMPT_TIMEOUT_MS = 14_000;
+    const MIN_REMAINING_BUDGET_MS = 5_000;
 
     async function callWithRetry() {
       let lastErr: unknown;
+      const startedAt = Date.now();
       for (const candidate of fallbackModels) {
-        const candidateModel = candidate === modelName
-          ? model
-          : (isLovable && lovableKey ? createLovableAiGatewayProvider(lovableKey)(candidate) : model);
-        for (let attempt = 0; attempt < 2; attempt++) {
+        const remainingBudget = REQUEST_BUDGET_MS - (Date.now() - startedAt);
+        if (remainingBudget < MIN_REMAINING_BUDGET_MS) break;
+
+        const candidateModel = candidate === modelName ? model : makeModel(candidate);
+        const attemptTimeout = Math.min(
+          PER_ATTEMPT_TIMEOUT_MS,
+          Math.max(4_000, remainingBudget - 1_500),
+        );
+
+        for (let attempt = 0; attempt < 1; attempt++) {
           const ac = new AbortController();
-          const timer = setTimeout(() => ac.abort(), 90_000);
+          const timer = setTimeout(() => ac.abort(), attemptTimeout);
           try {
             const res = await generateText({
               model: candidateModel,
               system,
               prompt,
               abortSignal: ac.signal,
+              maxOutputTokens: 3200,
               maxRetries: 0,
             });
             modelName = candidate;
+            model = candidateModel;
             return res;
           } catch (e) {
             lastErr = e;
@@ -415,7 +445,7 @@ REGRAS DO JSON:
         }
       }
       throw lastErr instanceof Error
-        ? new Error("A IA demorou demais para responder. Tente novamente em alguns instantes.")
+        ? new Error("A geração demorou além do limite. Tente novamente; agora o relatório usa um modo mais rápido.")
         : new Error("Falha temporaria na IA. Tente novamente.");
     }
 
@@ -428,6 +458,7 @@ REGRAS DO JSON:
     const firstBrace = jsonStr.indexOf("{");
     const lastBrace = jsonStr.lastIndexOf("}");
     if (firstBrace > 0 || lastBrace > 0) jsonStr = jsonStr.slice(firstBrace, lastBrace + 1);
+    jsonStr = jsonStr.replace(/[\u0000-\u001F]/g, " ");
 
     let parsed: unknown;
     try {
