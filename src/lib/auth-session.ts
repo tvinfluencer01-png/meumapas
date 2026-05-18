@@ -2,6 +2,26 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Session } from "@supabase/supabase-js";
 
 const SESSION_REFRESH_BUFFER_SECONDS = 60;
+let refreshPromise: Promise<Session | null> | null = null;
+
+async function refreshStoredSession(): Promise<Session | null> {
+  if (!refreshPromise) {
+    refreshPromise = (async () => {
+      const { data: refreshed, error } = await supabase.auth.refreshSession();
+
+      if (error) {
+        await supabase.auth.signOut();
+        return null;
+      }
+
+      return refreshed.session;
+    })().finally(() => {
+      refreshPromise = null;
+    });
+  }
+
+  return refreshPromise;
+}
 
 export async function getFreshSession(): Promise<Session | null> {
   const { data } = await supabase.auth.getSession();
@@ -16,14 +36,7 @@ export async function getFreshSession(): Promise<Session | null> {
     return session;
   }
 
-  const { data: refreshed, error } = await supabase.auth.refreshSession();
-
-  if (error) {
-    await supabase.auth.signOut();
-    return null;
-  }
-
-  return refreshed.session;
+  return refreshStoredSession();
 }
 
 export async function getFreshAccessToken(): Promise<string | null> {
