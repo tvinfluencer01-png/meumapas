@@ -60,8 +60,8 @@ function Nav() {
   return (
     <nav className="fixed top-0 z-50 w-full border-b border-border bg-background/70 backdrop-blur-xl">
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6">
-        <Link to="/" className="flex items-center gap-2">
-          <span className="size-2 rounded-full bg-gold shadow-[0_0_12px_var(--gold)]" />
+        <Link to="/" className="flex items-center gap-3">
+          <Logo sizeClassName="size-9" animation="float" />
           <span className="font-serif text-2xl uppercase tracking-[0.3em] text-gold">
             Cosmic AI
           </span>
