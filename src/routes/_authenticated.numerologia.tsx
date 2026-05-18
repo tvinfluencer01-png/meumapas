@@ -53,17 +53,18 @@ function NumerologiaPage() {
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {CARDS.map((c) => {
-              const n = (nums as any)[c.key] as number;
-              const meaning = NUMBER_MEANINGS[n];
+              const n = (nums as Record<string, number | null>)[c.key];
+              const meaning = typeof n === "number" && n > 0 ? NUMBER_MEANINGS[n] : undefined;
+              const display = typeof n === "number" && n > 0 ? n : "—";
               return (
                 <div key={c.key} className="glass-card rounded-2xl p-6 hover:gold-glow transition-all">
                   <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground">
                     <c.icon className="size-3.5 text-gold" /> {c.label}
                   </div>
-                  <div className="font-serif text-6xl text-stardust mt-3 shimmer-text">{n}</div>
+                  <div className="font-serif text-6xl text-stardust mt-3 shimmer-text">{display}</div>
                   <div className="mt-3">
-                    <div className="font-serif text-lg text-gold">{meaning?.title}</div>
-                    <p className="text-sm text-muted-foreground mt-1">{meaning?.essence}</p>
+                    <div className="font-serif text-lg text-gold">{meaning?.title ?? "Informe seu nome completo"}</div>
+                    <p className="text-sm text-muted-foreground mt-1">{meaning?.essence ?? "Este campo depende do seu nome para ser calculado."}</p>
                   </div>
                   <p className="text-xs text-muted-foreground mt-3 italic">{c.desc}</p>
                 </div>
