@@ -70,23 +70,28 @@ function AuthedLayout() {
   useEffect(() => {
     if (loading || !user) return;
     (async () => {
-      const [{ data: profile }, { data: role }, { data: subs }] = await Promise.all([
-        supabase.from("profiles").select("onboarding_completed").eq("id", user.id).maybeSingle(),
-        supabase.from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle(),
-        supabase.from("user_subscriptions").select("addon_id, status, current_period_end").eq("user_id", user.id).eq("status", "active"),
-      ]);
-      setIsAdmin(!!role);
-      const now = Date.now();
-      setActiveAddons(new Set(
-        (subs ?? [])
-          .filter((s) => !s.current_period_end || new Date(s.current_period_end).getTime() > now)
-          .map((s) => s.addon_id),
-      ));
-      const path = router.state.location.pathname;
-      if (profile && !profile.onboarding_completed && path !== "/onboarding") {
-        router.navigate({ to: "/onboarding" });
+      try {
+        const [{ data: profile }, { data: role }, { data: subs }] = await Promise.all([
+          supabase.from("profiles").select("onboarding_completed").eq("id", user.id).maybeSingle(),
+          supabase.from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle(),
+          supabase.from("user_subscriptions").select("addon_id, status, current_period_end").eq("user_id", user.id).eq("status", "active"),
+        ]);
+
+        setIsAdmin(!!role);
+        const now = Date.now();
+        setActiveAddons(new Set(
+          (subs ?? [])
+            .filter((s) => !s.current_period_end || new Date(s.current_period_end).getTime() > now)
+            .map((s) => s.addon_id),
+        ));
+
+        const path = router.state.location.pathname;
+        if (profile && !profile.onboarding_completed && path !== "/onboarding") {
+          router.navigate({ to: "/onboarding" });
+        }
+      } finally {
+        setProfileChecked(true);
       }
-      setProfileChecked(true);
     })();
   }, [loading, user, router]);
 
@@ -95,7 +100,7 @@ function AuthedLayout() {
     router.navigate({ to: "/" });
   }
 
-  if (loading || !user || !profileChecked) {
+  if (loading || !user) {
     return (
       <div className="min-h-screen grid place-items-center bg-background">
         <Sparkles className="size-8 text-gold animate-pulse" />
@@ -104,11 +109,11 @@ function AuthedLayout() {
   }
 
   return (
-    <div className="relative min-h-screen bg-background text-foreground [overflow-x:clip]">
+    <div className="relative isolate min-h-screen bg-background text-foreground [overflow-x:clip]">
       <Starfield count={60} className="fixed" />
 
       {/* Mobile top bar */}
-      <header className="lg:hidden sticky top-0 z-30 flex items-center justify-between border-b border-border bg-background/90 backdrop-blur px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
+      <header className="lg:hidden fixed inset-x-0 top-0 z-50 flex min-h-16 items-center justify-between border-b border-border bg-background/95 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-xl">
         <Link to="/dashboard" className="flex items-center gap-2">
           <Sparkles className="size-5 text-gold" />
           <span className="font-serif text-lg shimmer-text">Cosmic AI</span>
@@ -122,14 +127,14 @@ function AuthedLayout() {
       {open && (
         <div
           onClick={() => setOpen(false)}
-          className="lg:hidden fixed inset-0 z-10 bg-background/70 backdrop-blur-sm"
+          className="lg:hidden fixed inset-0 z-40 bg-background/70 backdrop-blur-sm"
         />
       )}
 
       <div className="relative z-0 flex">
         {/* Sidebar */}
         <aside
-          className={`${open ? "flex" : "hidden"} lg:flex flex-col fixed lg:sticky top-0 z-20 lg:z-auto h-[100dvh] w-[85%] max-w-xs lg:w-64 border-r border-border bg-background/95 backdrop-blur-xl`}
+          className={`${open ? "flex" : "hidden"} lg:flex flex-col fixed lg:sticky top-0 z-50 lg:z-auto h-[100dvh] w-[85%] max-w-xs lg:w-64 border-r border-border bg-background/95 backdrop-blur-xl`}
         >
           <div className="hidden lg:flex items-center gap-2 px-6 py-6 border-b border-border shrink-0">
             <Sparkles className="size-6 text-gold" />
@@ -198,9 +203,15 @@ function AuthedLayout() {
           </div>
         </aside>
 
-        <main className="flex-1 min-w-0 min-h-screen lg:pl-0">
+        <main className="flex-1 min-w-0 min-h-screen pt-[calc(4.25rem+env(safe-area-inset-top))] lg:pt-0 lg:pl-0">
           <div className="p-3 sm:p-4 lg:p-8 max-w-7xl mx-auto pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-            <Outlet />
+            {profileChecked ? (
+              <Outlet />
+            ) : (
+              <div className="min-h-[60vh] grid place-items-center">
+                <Sparkles className="size-8 text-gold animate-pulse" />
+              </div>
+            )}
           </div>
         </main>
       </div>
