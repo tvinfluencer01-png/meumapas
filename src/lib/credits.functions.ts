@@ -135,6 +135,41 @@ export const getMyCredits = createServerFn({ method: "GET" })
     return { balance: data?.balance ?? 0, updated_at: data?.updated_at ?? null };
   });
 
+/** Saldo + tabela de custos configurados — para mostrar antes de cada ação. */
+export const getMyCreditsOverview = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const [{ data: bal }, { data: costs }] = await Promise.all([
+      supabaseAdmin
+        .from("user_credits")
+        .select("balance, updated_at")
+        .eq("user_id", context.userId)
+        .maybeSingle(),
+      supabaseAdmin
+        .from("credit_costs")
+        .select("action, amount, label, description"),
+    ]);
+    const map: Record<string, { amount: number; label: string; description: string | null }> = {};
+    for (const c of costs ?? []) {
+      map[c.action] = {
+        amount: c.amount,
+        label: c.label,
+        description: c.description ?? null,
+      };
+    }
+    // Garante defaults para ações sem linha na tabela
+    for (const [action, amount] of Object.entries(CREDIT_COSTS_DEFAULTS)) {
+      if (!map[action]) {
+        map[action] = { amount, label: action, description: null };
+      }
+    }
+    return {
+      balance: bal?.balance ?? 0,
+      updated_at: bal?.updated_at ?? null,
+      costs: map,
+    };
+  });
+
 /** Recent transactions (own). */
 export const listMyCreditTransactions = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
