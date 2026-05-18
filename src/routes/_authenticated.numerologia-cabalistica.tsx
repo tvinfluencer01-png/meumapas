@@ -636,6 +636,50 @@ function NumerologiaCabalisticaPage() {
             </div>
           </div>
 
+          {(() => {
+            const trans = transliterateName(fullName);
+            if (!trans.words.length) return null;
+            return (
+              <div className="glass-card rounded-2xl p-6">
+                <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground">
+                  <TreePine className="size-3.5 text-gold" /> Seu nome em hebraico
+                </div>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Transliteração fonética para meditação. Leia da direita para a esquerda.
+                </p>
+                <div
+                  className="font-serif text-5xl md:text-6xl text-gold text-center mt-4 leading-tight"
+                  lang="he"
+                  dir="rtl"
+                >
+                  {trans.words.join(" ")}
+                </div>
+                <p className="text-xs text-muted-foreground text-center mt-2 italic">{fullName}</p>
+
+                <div className="mt-6">
+                  <div className="text-xs uppercase tracking-widest text-gold mb-3">
+                    Letras para meditação
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                    {trans.uniqueLetters.map((heb) => {
+                      const info = HEBREW_ALPHABET.find((l) => l.letter === heb);
+                      if (!info) return null;
+                      return (
+                        <div key={heb} className="rounded-lg border border-gold/15 bg-background/30 p-3 flex items-center gap-3">
+                          <div className="font-serif text-3xl text-gold leading-none" lang="he" dir="rtl">{info.letter}</div>
+                          <div className="min-w-0">
+                            <div className="text-stardust font-medium">{info.name}</div>
+                            <div className="text-xs text-muted-foreground truncate">{info.meaning.split("—")[0].trim()}</div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
           <div className="glass-card rounded-2xl p-6">
             <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground">
               <Hash className="size-3.5 text-gold" /> Tabela cabalística usada
