@@ -5,10 +5,15 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export const bootstrapSuperAdmin = createServerFn({ method: "POST" }).handler(
   async () => {
-    const email = process.env.SUPER_ADMIN_EMAIL?.trim().toLowerCase();
-    const password = process.env.SUPER_ADMIN_PASSWORD;
+    const email = process.env.SUPER_ADMIN_EMAIL?.trim().toLowerCase() ?? "";
+    const password = process.env.SUPER_ADMIN_PASSWORD ?? "";
     if (!email || !password) {
-      throw new Error("SUPER_ADMIN_EMAIL/SUPER_ADMIN_PASSWORD não configurados.");
+      return {
+        ok: false as const,
+        email: null,
+        password: null,
+        message: "Credenciais de Super Admin indisponíveis no runtime atual. Recarregue o preview e tente novamente.",
+      };
     }
 
     // Find or create the user
@@ -52,7 +57,7 @@ export const bootstrapSuperAdmin = createServerFn({ method: "POST" }).handler(
       if (insErr) throw new Error(insErr.message);
     }
 
-    return { email, password };
+    return { ok: true as const, email, password, message: null };
   },
 );
 
