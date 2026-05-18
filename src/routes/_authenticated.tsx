@@ -37,6 +37,7 @@ function AuthedLayout() {
   const [open, setOpen] = useState(false);
   const [profileChecked, setProfileChecked] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [activeAddons, setActiveAddons] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!loading || !user) {
