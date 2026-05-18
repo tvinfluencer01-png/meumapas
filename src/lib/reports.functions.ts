@@ -263,6 +263,7 @@ export const generateReport = createServerFn({ method: "POST" })
     const provider = settings?.ai_provider ?? "lovable";
     const customKey = settings?.custom_ai_key as string | null;
     const customModel = (settings?.custom_ai_model as string | null) ?? null;
+    const isCustomProvider = ["openai", "anthropic", "gemini"].includes(provider) && !!customKey;
 
     let modelName = customModel ?? "google/gemini-3-flash-preview";
     const lovableKey = process.env.LOVABLE_API_KEY;
@@ -287,6 +288,8 @@ export const generateReport = createServerFn({ method: "POST" })
       modelName = customModel ?? "claude-3-5-sonnet-20241022";
     } else if (provider === "gemini" && customKey) {
       modelName = customModel ?? "gemini-2.5-flash";
+    } else {
+      modelName = customModel?.startsWith("google/") ? customModel : "google/gemini-2.5-flash";
     }
 
     let model = makeModel(modelName);
@@ -315,16 +318,23 @@ Mapa astral:
 ${astroBlock}`;
 
     // Robust call: per-attempt timeout + fallback model on persistent upstream timeouts.
-    const isLovable = provider === "lovable" || !(["openai", "anthropic", "gemini"].includes(provider) && customKey);
-    const fallbackModels = (
-      provider === "openai" && customKey
-        ? [modelName, "gpt-5-mini", "gpt-5-nano"]
-        : provider === "gemini" && customKey
-          ? [modelName, "gemini-2.5-flash", "gemini-2.0-flash"]
-          : isLovable && lovableKey
-            ? [modelName, "google/gemini-2.5-flash", "google/gemini-3.1-flash-lite-preview"]
-            : [modelName]
-    ).filter((m, i, arr) => arr.indexOf(m) === i);
+    const skippedModels = new Set<string>();
+
+    const getFallbackModels = () => {
+      const candidates = (
+        provider === "openai" && customKey
+          ? [modelName, "gpt-5-mini", "gpt-5-nano"]
+          : provider === "gemini" && customKey
+            ? [modelName, "gemini-2.5-flash", "gemini-2.0-flash"]
+            : provider === "anthropic" && customKey
+              ? [modelName, "claude-3-5-sonnet-20241022"]
+              : !isCustomProvider && lovableKey
+                ? [modelName, "google/gemini-3-flash-preview", "google/gemini-3.1-flash-lite-preview"]
+                : [modelName]
+      ).filter((candidate, index, arr) => arr.indexOf(candidate) === index);
+
+      return candidates.filter((candidate) => !skippedModels.has(candidate));
+    };
 
     async function callWithRetry({
       prompt,
@@ -336,6 +346,7 @@ ${astroBlock}`;
       errorMessage: string;
     }) {
       let lastErr: unknown;
+      const fallbackModels = getFallbackModels();
       for (const candidate of fallbackModels) {
         const candidateModel = candidate === modelName ? model : makeModel(candidate);
         const ac = new AbortController();
@@ -372,6 +383,8 @@ ${astroBlock}`;
             msg.includes("timeout") ||
             msg.includes("aborted") ||
             msg.includes("upstream") ||
+            msg.includes("unsupported parameter") ||
+            msg.includes("not supported with this model") ||
             msg.includes("502") ||
             msg.includes("503") ||
             msg.includes("504") ||
@@ -381,6 +394,16 @@ ${astroBlock}`;
             `[reports] AI attempt failed (model=${candidate}, elapsed=${Date.now() - startedAt}ms)`,
             rawMessage,
           );
+          if (retriable) {
+            skippedModels.add(candidate);
+            if (candidate === modelName) {
+              const nextFastModel = fallbackModels.find((item) => item !== candidate && !skippedModels.has(item));
+              if (nextFastModel) {
+                modelName = nextFastModel;
+                model = makeModel(nextFastModel);
+              }
+            }
+          }
           if (!retriable) throw e;
         } finally {
           clearTimeout(timer);
@@ -467,6 +490,29 @@ ${astroBlock}`;
       }
 
       return record;
+    }
+
+    function createLocalSectionPlan(
+      blueprint: z.infer<typeof BaseAiOutput>["sectionBlueprints"][number],
+      sectionBody: string,
+    ) {
+      const cleanBody = sectionBody.replace(/\s+/g, " ").trim();
+      const shortBody = cleanBody.slice(0, 220);
+      const makeItems = (prefix: string, seed: string) =>
+        Array.from({ length: 7 }, (_, index) => `Dia ${index + 1}: ${prefix} ${seed}`.trim());
+
+      const focusSeed = blueprint.focus.replace(/[.;:]+$/g, "").slice(0, 90);
+      const bodySeed = shortBody
+        ? `apoiado no que surgiu em "${shortBody}${cleanBody.length > 220 ? "..." : ""}"`
+        : `seguindo o foco em ${focusSeed}`;
+
+      return {
+        plan: {
+          improve: makeItems("Fortaleça uma ação prática", bodySeed),
+          avoid: makeItems("Evite excessos e decisões impulsivas", `para proteger ${focusSeed}`),
+          follow: makeItems("Mantenha constância no que já funciona", `e aprofunde ${focusSeed}`),
+        },
+      };
     }
 
     function parseJsonWithSchema<T>(text: string, schema: z.ZodType<T>, label: string): T {
@@ -567,31 +613,6 @@ Regras:
 - O body precisa ser especifico ao tema e ancorado no mapa/numerologia.
 - Nao use o nome completo. Use apenas ${firstName}.`;
 
-    const makeSectionPlanPrompt = (
-      blueprint: z.infer<typeof BaseAiOutput>["sectionBlueprints"][number],
-      sectionBody: string,
-    ) => `${compactSectionContext}
-
-Crie apenas o PLANO DE 7 DIAS da secao "${blueprint.title}".
-Foco da secao: ${blueprint.focus}
-Resumo da secao ja escrita:
-${sectionBody}
-
-Responda APENAS com JSON valido neste formato:
-{
-  "plan": {
-    "improve": ["Dia 1: ...", "Dia 2: ...", "Dia 3: ...", "Dia 4: ...", "Dia 5: ...", "Dia 6: ...", "Dia 7: ..."],
-    "avoid": ["Dia 1: ...", "Dia 2: ...", "Dia 3: ...", "Dia 4: ...", "Dia 5: ...", "Dia 6: ...", "Dia 7: ..."],
-    "follow": ["Dia 1: ...", "Dia 2: ...", "Dia 3: ...", "Dia 4: ...", "Dia 5: ...", "Dia 6: ...", "Dia 7: ..."]
-  }
-}
-
-Regras:
-- Cada lista deve ter EXATAMENTE 7 itens, de Dia 1 a Dia 7.
-- Cada item deve ser curto, concreto e acionavel.
-- O plano deve combinar com o texto da secao e com o mapa/numerologia.
-- Evite frases longas ou abstratas.`;
-
     yield { type: "progress" as const, progress: 28, step: "Montando a estrutura do relatório..." };
     const baseText = await callWithRetry({
       prompt: basePrompt,
@@ -619,12 +640,7 @@ Regras:
         progress: 48 + index * 10,
         step: `Montando plano do capítulo ${index + 1}...`,
       };
-      const sectionPlanText = await callWithRetry({
-        prompt: makeSectionPlanPrompt(blueprint, sectionBody.body),
-        timeoutMs: 6_000,
-        errorMessage: "A geração demorou além do limite. Tente novamente; agora o relatório usa um modo mais rápido.",
-      });
-      const sectionPlan = parseJsonWithSchema(sectionPlanText, SectionPlanOutput, `section-plan-${index + 1}`);
+      const sectionPlan = createLocalSectionPlan(blueprint, sectionBody.body);
 
       sections.push({
         title: sectionBody.title,
