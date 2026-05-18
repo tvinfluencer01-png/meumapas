@@ -392,3 +392,143 @@ export const adminDeleteCreditCost = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+// =========== Credit packages (compra avulsa) ===========
+
+export const listCreditPackages = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const { data, error } = await supabaseAdmin
+      .from("credit_packages")
+      .select("id, name, description, credits, price_cents, currency, active, sort_order, updated_at")
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true });
+    if (error) throw new Error(error.message);
+    return { packages: data ?? [] };
+  });
+
+export const adminListCreditPackages = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.userId);
+    const { data, error } = await supabaseAdmin
+      .from("credit_packages")
+      .select("id, name, description, credits, price_cents, currency, active, sort_order, updated_at")
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true });
+    if (error) throw new Error(error.message);
+    return { packages: data ?? [] };
+  });
+
+const UpsertPackageSchema = z.object({
+  id: z.string().uuid().optional().nullable(),
+  name: z.string().trim().min(1).max(120),
+  description: z.string().trim().max(500).optional().nullable(),
+  credits: z.number().int().min(1).max(100000),
+  price_cents: z.number().int().min(0).max(100000000),
+  currency: z.string().trim().min(3).max(3).default("BRL"),
+  active: z.boolean().default(true),
+  sort_order: z.number().int().min(0).max(10000).default(0),
+});
+
+export const adminUpsertCreditPackage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => UpsertPackageSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    const payload = {
+      name: data.name,
+      description: data.description ?? null,
+      credits: data.credits,
+      price_cents: data.price_cents,
+      currency: data.currency.toUpperCase(),
+      active: data.active,
+      sort_order: data.sort_order,
+      updated_by: context.userId,
+      updated_at: new Date().toISOString(),
+    };
+    if (data.id) {
+      const { error } = await supabaseAdmin
+        .from("credit_packages")
+        .update(payload)
+        .eq("id", data.id);
+      if (error) throw new Error(error.message);
+      return { ok: true, id: data.id };
+    }
+    const { data: row, error } = await supabaseAdmin
+      .from("credit_packages")
+      .insert(payload)
+      .select("id")
+      .single();
+    if (error) throw new Error(error.message);
+    return { ok: true, id: row.id };
+  });
+
+export const adminDeleteCreditPackage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    const { error } = await supabaseAdmin
+      .from("credit_packages")
+      .delete()
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+const ApplyPackageSchema = z.object({
+  user_id: z.string().uuid(),
+  package_id: z.string().uuid(),
+  note: z.string().trim().max(240).optional().nullable(),
+});
+
+/**
+ * Aplica um pacote de créditos a um usuário (compra avulsa lançada pelo admin).
+ * Lança automaticamente o saldo via adjust_credits e registra a transação
+ * com kind=`package_purchase` e referência detalhada do pacote/admin.
+ */
+export const adminApplyCreditPackage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => ApplyPackageSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+
+    const { data: pkg, error: pErr } = await supabaseAdmin
+      .from("credit_packages")
+      .select("id, name, credits, price_cents, currency, active")
+      .eq("id", data.package_id)
+      .maybeSingle();
+    if (pErr) throw new Error(pErr.message);
+    if (!pkg) throw new Error("Pacote não encontrado.");
+    if (!pkg.active) throw new Error("Pacote inativo.");
+
+    const priceLabel = (pkg.price_cents / 100).toLocaleString("pt-BR", {
+      style: "currency",
+      currency: pkg.currency || "BRL",
+    });
+    const ref = [
+      `[package:${pkg.id}]`,
+      `name=${pkg.name}`,
+      `price=${priceLabel}`,
+      `admin=${context.userId}`,
+      data.note ? `note=${data.note}` : null,
+    ]
+      .filter(Boolean)
+      .join(" ");
+
+    const { data: newBalance, error } = await supabaseAdmin.rpc("adjust_credits", {
+      _user_id: data.user_id,
+      _amount: pkg.credits,
+      _kind: "package_purchase",
+      _reference: ref,
+    });
+    if (error) throw new Error(error.message);
+
+    return {
+      ok: true,
+      balance: (newBalance as number) ?? 0,
+      credits: pkg.credits,
+      package_name: pkg.name,
+    };
+  });
