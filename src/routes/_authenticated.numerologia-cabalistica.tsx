@@ -148,24 +148,35 @@ function NumerologiaCabalisticaPage() {
           : "Soma das consoantes — a imagem que o mundo capta de você, sua aura externa.";
 
       const blocks: SimplePdfBlock[] = [
-        { type: "h2", text: "Introdução à Numerologia Cabalística" },
+        { type: "h2", text: "I. A tradição cabalística" },
         {
           type: "p",
           text:
-            "A numerologia cabalística é uma tradição milenar oriunda da Kabbalah hebraica. " +
-            "Diferente da pitagórica, ela trabalha exclusivamente com o nome — a vibração sonora " +
-            "que acompanha a alma desde o nascimento — e utiliza uma tabela inspirada no alfabeto " +
-            "hebraico que vai de 1 a 8. O número 9 é considerado sagrado, ligado à plenitude divina, " +
-            "e quando aparece é tratado como um sinal especial de serviço espiritual.",
+            "A numerologia cabalística nasce na Kabbalah hebraica, tradição mística milenar que estuda os " +
+            "nomes divinos e os caminhos da Árvore da Vida (Etz Chaim). Para os cabalistas, o universo foi " +
+            "criado por meio de letras e números — as 22 letras do alfabeto hebraico (Otiyot) são consideradas " +
+            "ferramentas de criação, descritas no Sefer Yetzirah (Livro da Formação) como os 'tijolos' com que " +
+            "o Eterno modelou todos os mundos.",
         },
         {
           type: "p",
           text:
-            "Cada letra do seu nome carrega uma vibração energética. Ao somar essas vibrações e " +
-            "reduzi-las, revelamos três aspectos centrais do seu ser: o Destino (nome completo), " +
-            "a Alma (vogais) e a Impressão (consoantes).",
+            "Diferente da numerologia pitagórica, a vertente cabalística trabalha exclusivamente com o NOME " +
+            "— a vibração sonora que acompanha a alma desde o nascimento e a identifica nos planos sutis. " +
+            "A tabela usada no Ocidente adapta o alfabeto hebraico ao latino, reduzindo cada letra a um valor " +
+            "entre 1 e 8. O número 9, ligado a Tet (ט) e à plenitude divina, é considerado sagrado e quando " +
+            "aparece é interpretado como um chamado especial ao serviço espiritual.",
         },
-        { type: "h2", text: "Seus números" },
+        {
+          type: "p",
+          text:
+            "Três aspectos centrais são revelados pelo seu nome: o NÚMERO DE DESTINO (soma de todas as letras) " +
+            "representa a missão da alma nesta encarnação; o NÚMERO DA ALMA (soma das vogais) revela o que " +
+            "vibra no íntimo, os desejos da centelha divina; o NÚMERO DA IMPRESSÃO (soma das consoantes) é " +
+            "a aura externa, como o mundo percebe sua presença.",
+        },
+
+        { type: "h2", text: "II. Seus números cabalísticos" },
         {
           type: "kv",
           rows: [
@@ -178,37 +189,108 @@ function NumerologiaCabalisticaPage() {
         },
       ];
 
+      // Hero box com a letra hebraica do Destino
+      const destinyMeaning = typeof nums.destiny === "number" ? CAB_MEANINGS[nums.destiny] : undefined;
+      if (destinyMeaning) {
+        blocks.push({
+          type: "hebrew-hero",
+          letter: destinyMeaning.hebrewLetter,
+          name: `Letra de Destino · ${destinyMeaning.letterName}`,
+          transliteration: destinyMeaning.title,
+          meaning: destinyMeaning.essence,
+        });
+      }
+
       (["destiny", "soul", "impression"] as const).forEach((k) => {
         const n = nums[k];
         const m = typeof n === "number" && n > 0 ? CAB_MEANINGS[n] : undefined;
         blocks.push({ type: "h2", text: `${labelOf(k)} — Número ${n ?? "—"}` });
         blocks.push({ type: "p", text: descOf(k) });
         if (m) {
-          blocks.push({ type: "quote", text: m.title });
-          blocks.push({ type: "p", text: `Essência: ${m.essence}` });
-          blocks.push({ type: "p", text: `Orientação: ${m.guidance}` });
+          blocks.push({
+            type: "hebrew-hero",
+            letter: m.hebrewLetter,
+            name: `${m.letterName} — letra hebraica regente`,
+            transliteration: m.title,
+            meaning: m.essence,
+          });
+          blocks.push({ type: "h3", text: "Essência vibracional" });
+          blocks.push({ type: "p", text: m.essence });
+          blocks.push({ type: "h3", text: "Significado profundo na tradição cabalística" });
+          blocks.push({ type: "p", text: m.deepMeaning });
+          blocks.push({ type: "h3", text: "Orientação prática" });
+          blocks.push({ type: "quote", text: m.guidance });
         }
       });
 
-      blocks.push({ type: "h2", text: "Síntese cabalística" });
+      blocks.push({ type: "h2", text: "III. O alfabeto hebraico completo" });
       blocks.push({
         type: "p",
         text:
-          `Seu nome "${fullName}" vibra na frequência ${nums.destiny ?? "—"} como Destino, ` +
-          `${nums.soul ?? "—"} como Alma e ${nums.impression ?? "—"} como Impressão. ` +
-          `Esta combinação revela como a sua essência interior se manifesta no mundo e qual o ` +
-          `chamado espiritual que acompanha sua jornada. Use estas vibrações como bússola — ` +
-          `não como destino fechado, mas como mapa de potenciais a serem cultivados.`,
+          "As 22 letras hebraicas (Otiyot) são a espinha dorsal da Kabbalah. Cada uma carrega um som, um " +
+          "número (Guematria), uma forma visual e um significado simbólico. Estudá-las é entrar em diálogo " +
+          "com a linguagem original da criação. Abaixo, todas as letras com seu valor numérico tradicional " +
+          "e seu significado essencial:",
       });
+
+      HEBREW_ALPHABET.forEach((l) => {
+        blocks.push({
+          type: "hebrew-row",
+          letter: l.letter,
+          name: l.name,
+          value: l.value,
+          meaning: l.meaning,
+        });
+      });
+
+      blocks.push({ type: "h2", text: "IV. Síntese cabalística do seu nome" });
+      blocks.push({
+        type: "p",
+        text:
+          `Seu nome "${fullName}" vibra na frequência ${nums.destiny ?? "—"} (${destinyMeaning?.letterName ?? "—"} ${destinyMeaning?.hebrewLetter ?? ""}) ` +
+          `como Destino, ${nums.soul ?? "—"} (${typeof nums.soul === "number" ? CAB_MEANINGS[nums.soul]?.letterName : "—"}) como Alma e ` +
+          `${nums.impression ?? "—"} (${typeof nums.impression === "number" ? CAB_MEANINGS[nums.impression]?.letterName : "—"}) como Impressão. ` +
+          `Esta tríade revela como sua essência divina (Alma) se manifesta no mundo concreto (Impressão) ` +
+          `cumprindo seu chamado espiritual (Destino). Os cabalistas ensinam que o nome é a 'assinatura ` +
+          `da alma' — não foi escolhido por acaso pelos seus pais, mas inspirado pela providência divina.`,
+      });
+
+      blocks.push({ type: "h3", text: "Como o Destino, Alma e Impressão dialogam" });
+      blocks.push({
+        type: "p",
+        text:
+          `Quando Alma (${nums.soul ?? "—"}) e Impressão (${nums.impression ?? "—"}) estão alinhadas, a pessoa ` +
+          `vive em coerência: o que sente, expressa. Quando há grande distância entre os dois números, surge ` +
+          `o desafio de unificar interior e exterior — autenticidade torna-se a prática espiritual central. ` +
+          `O Destino (${nums.destiny ?? "—"}) é a síntese, a missão que se cumpre quando Alma e Impressão se ` +
+          `harmonizam no serviço.`,
+      });
+
+      blocks.push({ type: "h2", text: "V. Práticas cabalísticas recomendadas" });
       blocks.push({
         type: "list",
         items: [
-          "Medite sobre a letra hebraica do seu número de Destino — ela carrega a chave da sua missão.",
-          "Observe quando sua Alma se manifesta com mais força (relações íntimas, criação, silêncio).",
-          "A Impressão é como o mundo te recebe — alinhe-a à sua verdade interior para evitar máscaras.",
-          "Quando o número 9 aparece, acolha-o como um chamado ao serviço e à compaixão universal.",
+          `Medite diariamente sobre a letra ${destinyMeaning?.hebrewLetter ?? ""} (${destinyMeaning?.letterName ?? "sua letra de Destino"}) — visualize-a em ouro sobre fundo violeta por 5 minutos.`,
+          "Escreva seu nome em hebraico (peça a um estudioso a transliteração) e contemple a forma das letras — cada traço carrega uma vibração.",
+          "Estude o Sefer Yetzirah e o Zohar — obras fundadoras que descrevem o poder criador das letras.",
+          "Observe quando sua Alma se manifesta com mais força (relações íntimas, silêncio, criação artística) e cultive esses espaços.",
+          "Alinhe sua Impressão à sua verdade interior: evite máscaras sociais que distorçam o som original do seu nome.",
+          "Quando o número 9 (Tet ט) aparecer em sua vida, acolha-o como chamado ao serviço, à compaixão universal e à luz oculta na matéria.",
+          "Pratique a Guematria: some o valor das palavras importantes da sua vida e contemple as conexões reveladas pelos números iguais.",
         ],
       });
+
+      blocks.push({ type: "h2", text: "VI. Considerações finais" });
+      blocks.push({
+        type: "p",
+        text:
+          "Este relatório é um mapa, não uma sentença. A Kabbalah ensina que o ser humano tem livre-arbítrio " +
+          "(Bechirá Chofshit) e que toda vibração pode ser elevada por meio da intenção (Kavaná) e da ação " +
+          "consciente. Use estes números como bússola para se conhecer mais profundamente, não como destino " +
+          "fechado. Que a luz das 22 letras ilumine seu caminho.",
+      });
+      blocks.push({ type: "quote", text: "\"Em princípio, era o Verbo.\" — Ecos do Bereshit, onde cada letra hebraica é uma porta para o infinito." });
+
 
       const bytes = await buildSimplePdf({
         brand: "Cosmic AI",
