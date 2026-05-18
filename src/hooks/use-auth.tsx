@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useRouter } from "@tanstack/react-router";
@@ -24,14 +24,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const qc = useQueryClient();
+  const bootstrappedRef = useRef(false);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, s) => {
       setSession(s);
-      setLoading(false);
-      router.invalidate();
-      qc.invalidateQueries();
-      if (event === "SIGNED_OUT" || (!s && event !== "INITIAL_SESSION")) {
+      const shouldReleaseLoading = bootstrappedRef.current || event !== "INITIAL_SESSION";
+
+      if (shouldReleaseLoading) {
+        setLoading(false);
+        router.invalidate();
+        qc.invalidateQueries();
+      }
+
+      if (bootstrappedRef.current && (event === "SIGNED_OUT" || (!s && event !== "INITIAL_SESSION"))) {
         router.navigate({ to: "/auth", replace: true });
       }
     });
@@ -41,6 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const current = await getFreshSession();
         setSession(current);
       } finally {
+        bootstrappedRef.current = true;
         setLoading(false);
       }
     })();
