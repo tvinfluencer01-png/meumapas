@@ -733,7 +733,7 @@ Regras:
       blueprints: z.infer<typeof BaseAiOutput>["sectionBlueprints"],
     ) => `${compactSectionContext}
 
-Escreva apenas o TEXTO da secao ${index + 1} de 3 do relatório.
+Escreva apenas o TEXTO da secao ${index + 1} de 3 do relatório, com PROFUNDIDADE REAL.
 Titulo da secao: ${blueprint.title}
 Foco da secao: ${blueprint.focus}
 Outras secoes para evitar repeticao: ${blueprints
@@ -744,11 +744,12 @@ Outras secoes para evitar repeticao: ${blueprints
 Responda APENAS com JSON valido neste formato:
 {
   "title": "${blueprint.title}",
-  "body": "2 ou 3 paragrafos claros, humanos e especificos para ${firstName}"
+  "body": "5 a 6 parágrafos longos (mínimo 800 caracteres no total). Estruture assim: (1) abertura simbólica que conecta o tema ao mapa e numerologia de ${firstName}; (2) análise dos padrões e tensões reais que aparecem; (3) sombra/ferida específica desta área; (4) força latente que pode ser ativada; (5) direção prática e madura para o próximo ciclo. Use exemplos concretos e linguagem viva."
 }
 
 Regras:
-- O body precisa ser especifico ao tema e ancorado no mapa/numerologia.
+- O body precisa ser denso, específico ao tema e ancorado em planetas, signos ou números reais do mapa de ${firstName}.
+- Nada de frases genéricas ou repetitivas. Cada parágrafo entrega algo novo.
 - Nao use o nome completo. Use apenas ${firstName}.`;
 
     yield { type: "progress" as const, progress: 28, step: "Montando a estrutura do relatório..." };
