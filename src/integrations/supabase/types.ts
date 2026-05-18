@@ -251,7 +251,10 @@ export type Database = {
       }
       credit_transactions: {
         Row: {
+          action: string | null
           amount: number
+          balance_after: number | null
+          balance_before: number | null
           created_at: string
           id: string
           kind: string
@@ -259,7 +262,10 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          action?: string | null
           amount: number
+          balance_after?: number | null
+          balance_before?: number | null
           created_at?: string
           id?: string
           kind: string
@@ -267,7 +273,10 @@ export type Database = {
           user_id: string
         }
         Update: {
+          action?: string | null
           amount?: number
+          balance_after?: number | null
+          balance_before?: number | null
           created_at?: string
           id?: string
           kind?: string

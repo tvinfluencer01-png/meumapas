@@ -24,7 +24,14 @@ import { listAdminUsers } from "@/lib/admin.functions";
 import {
   adminAdjustCredits,
   adminGetUserCredits,
+  adminListCreditHistory,
 } from "@/lib/credits.functions";
+import {
+  CreditHistoryFilters,
+  CreditHistoryTable,
+  toIsoRange,
+  useHistoryFiltersState,
+} from "@/components/CreditHistoryTable";
 
 export function AdminCreditsManager() {
   const listFn = useServerFn(listAdminUsers);
@@ -99,7 +106,7 @@ export function AdminCreditsManager() {
       </CardContent>
 
       <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           {selected && (
             <CreditsDialog
               userId={selected.id}
@@ -125,10 +132,25 @@ function CreditsDialog({
   const qc = useQueryClient();
   const getFn = useServerFn(adminGetUserCredits);
   const adjustFn = useServerFn(adminAdjustCredits);
+  const historyFn = useServerFn(adminListCreditHistory);
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["admin-credits", userId],
     queryFn: () => getFn({ data: { user_id: userId } }),
+  });
+
+  const [filters, setFilters] = useHistoryFiltersState();
+
+  const {
+    data: history,
+    isLoading: historyLoading,
+    refetch: refetchHistory,
+  } = useQuery({
+    queryKey: ["admin-credit-history", userId, filters],
+    queryFn: () =>
+      historyFn({
+        data: { user_id: userId, ...toIsoRange(filters), limit: 200 },
+      }),
   });
 
   const [amount, setAmount] = useState<string>("");
@@ -152,6 +174,7 @@ function CreditsDialog({
       setAmount("");
       setReason("");
       refetch();
+      refetchHistory();
       qc.invalidateQueries({ queryKey: ["addons-overview"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -215,44 +238,19 @@ function CreditsDialog({
         </Button>
       </div>
 
-      <div className="border-t border-border pt-3">
-        <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1">
-          <History className="size-3" /> Últimas movimentações
+      <div className="border-t border-border pt-3 space-y-3">
+        <div className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+          <History className="size-3" /> Histórico detalhado
         </div>
-        <div className="max-h-64 overflow-auto space-y-1">
-          {(data?.transactions ?? []).length === 0 ? (
-            <div className="text-sm text-muted-foreground">Sem movimentações.</div>
-          ) : (
-            data!.transactions.map((t) => (
-              <div
-                key={t.id}
-                className="flex items-center justify-between text-xs py-1 border-b border-border/40 last:border-b-0"
-              >
-                <div className="flex flex-col">
-                  <span className="text-foreground">{t.kind}</span>
-                  {t.reference && (
-                    <span className="text-muted-foreground truncate max-w-[280px]">
-                      {t.reference}
-                    </span>
-                  )}
-                  <span className="text-muted-foreground">
-                    {new Date(t.created_at).toLocaleString("pt-BR")}
-                  </span>
-                </div>
-                <span
-                  className={
-                    t.amount > 0
-                      ? "font-mono text-emerald-500"
-                      : "font-mono text-destructive"
-                  }
-                >
-                  {t.amount > 0 ? "+" : ""}
-                  {t.amount}
-                </span>
-              </div>
-            ))
-          )}
-        </div>
+        <CreditHistoryFilters
+          value={filters}
+          onChange={setFilters}
+          actions={(history?.transactions ?? []).map((t) => t.action || t.kind)}
+        />
+        <CreditHistoryTable
+          transactions={history?.transactions ?? []}
+          loading={historyLoading}
+        />
       </div>
 
       <div className="flex justify-end">
