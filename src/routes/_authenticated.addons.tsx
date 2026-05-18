@@ -81,6 +81,8 @@ function AddonsPage() {
     }
     window.history.replaceState({}, "", window.location.pathname);
     refetch();
+    // Saldo/custos podem ter mudado após o checkout — força refresh do badge
+    import("@/lib/credits-events").then((m) => m.emitCreditsChanged());
   }, [refetch]);
 
   const checkoutMut = useMutation({
