@@ -416,19 +416,44 @@ ${astroBlock}`;
         : new Error("Falha temporaria na IA. Tente novamente.");
     }
 
-    function extractJsonText(text: string) {
-      let jsonStr = text.trim();
-      const fence = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
-      if (fence) jsonStr = fence[1].trim();
-      const firstBrace = jsonStr.indexOf("{");
-      if (firstBrace > 0) jsonStr = jsonStr.slice(firstBrace);
-      const lastBrace = jsonStr.lastIndexOf("}");
-      if (lastBrace >= 0 && lastBrace < jsonStr.length - 1) jsonStr = jsonStr.slice(0, lastBrace + 1);
-      return jsonStr.replace(/[\u0000-\u001F]/g, " ");
+    function cleanInlineText(value: unknown) {
+      return String(value ?? "")
+        .replace(/```(?:json)?/gi, "")
+        .replace(/```/g, "")
+        .replace(/[“”]/g, '"')
+        .replace(/[‘’]/g, "'")
+        .replace(/\u2026/g, "...")
+        .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    function extractJsonCandidates(text: string) {
+      const trimmed = text.trim();
+      const candidates = new Set<string>();
+      if (trimmed) candidates.add(trimmed);
+
+      const fence = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
+      if (fence?.[1]) candidates.add(fence[1].trim());
+
+      for (const [open, close] of [["{", "}"], ["[", "]"]] as const) {
+        const start = trimmed.indexOf(open);
+        const end = trimmed.lastIndexOf(close);
+        if (start >= 0 && end > start) {
+          candidates.add(trimmed.slice(start, end + 1).trim());
+        }
+      }
+
+      return [...candidates].map((candidate) => cleanInlineText(candidate));
     }
 
     function tryRepairJson(s: string): string {
-      let r = s.replace(/,\s*([}\]])/g, "$1");
+      let r = cleanInlineText(s)
+        .replace(/,\s*([}\]])/g, "$1")
+        .replace(/:\s*undefined\b/g, ": null")
+        .replace(/\r?\n/g, " ")
+        .replace(/\t/g, " ");
+
       const quotes = (r.match(/"/g) || []).length;
       if (quotes % 2 === 1) r += '"';
       const opens = (r.match(/\{/g) || []).length;
@@ -441,11 +466,26 @@ ${astroBlock}`;
       return r;
     }
 
+    function parseJsonLenient(text: string) {
+      let lastError: unknown;
+      for (const candidate of extractJsonCandidates(text)) {
+        for (const variant of [candidate, tryRepairJson(candidate)]) {
+          try {
+            return JSON.parse(variant);
+          } catch (error) {
+            lastError = error;
+          }
+        }
+      }
+
+      throw lastError instanceof Error ? lastError : new Error("Falha ao interpretar JSON da IA");
+    }
+
     function normalizePlanList(value: unknown) {
       const arr = Array.isArray(value) ? value : [];
       return arr
         .map((item, index) => {
-          const text = String(item ?? "").replace(/\s+/g, " ").trim();
+          const text = cleanInlineText(item);
           const fallback = `Dia ${index + 1}: Aja com clareza e constância.`;
           if (!text) return fallback;
           return /^dia\s+\d+:/i.test(text) ? text : `Dia ${index + 1}: ${text}`;
@@ -454,42 +494,121 @@ ${astroBlock}`;
         .slice(0, 7);
     }
 
-    function normalizeSectionPayload(parsed: unknown) {
-      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return parsed;
+    function normalizeStringList(value: unknown, size: number, fallbackFactory: (index: number) => string) {
+      const items = (Array.isArray(value) ? value : [])
+        .map((item) => cleanInlineText(typeof item === "string" ? item : typeof item === "object" && item ? Object.values(item).join(" ") : item))
+        .filter(Boolean)
+        .slice(0, size);
+
+      while (items.length < size) {
+        items.push(fallbackFactory(items.length));
+      }
+
+      return items;
+    }
+
+    function createFallbackBasePayload() {
+      const blueprintDefaults = [
+        {
+          title: `Panorama de ${meta.title}`,
+          focus: `Leitura geral sobre ${meta.focus}`,
+        },
+        {
+          title: "Padrões e bloqueios centrais",
+          focus: `Identificar sombras, travas e repetições dentro de ${meta.focus}`,
+        },
+        {
+          title: "Direções práticas para o próximo ciclo",
+          focus: `Traduzir ${meta.focus} em movimentos concretos, maduros e sustentáveis`,
+        },
+      ];
+
+      return {
+        intro: `${firstName}, este relatório traduz seu mapa astral e sua numerologia para a área de ${meta.title.toLowerCase()}. A proposta aqui é revelar padrões, potenciais e tensões com linguagem clara e humana. Você receberá uma leitura simbólica, mas também prática, para transformar percepção em direção concreta.`,
+        sectionBlueprints: blueprintDefaults,
+        closing: `${firstName}, seu mapa não é sentença: ele mostra tendências, forças e aprendizados. O essencial agora é usar essa clareza com presença, consistência e escolhas mais alinhadas ao que deseja construir.`,
+        swot: {
+          strengths: normalizeStringList([], 3, () => "Sensibilidade para perceber padrões importantes."),
+          weaknesses: normalizeStringList([], 3, () => "Tendência a oscilar entre impulso e excesso de análise."),
+          opportunities: normalizeStringList([], 3, () => "Momento fértil para reorganizar prioridades com consciência."),
+          threats: normalizeStringList([], 3, () => "Ruídos emocionais e dispersão podem atrasar decisões."),
+        },
+        recommendations: {
+          improve: normalizeStringList([], 3, () => "Transforme percepção em rotina simples e contínua."),
+          avoid: normalizeStringList([], 3, () => "Evite decisões apressadas guiadas por carência ou medo."),
+          follow: normalizeStringList([], 3, () => "Siga o que amplia estabilidade, presença e coerência."),
+        },
+        suggestions: {
+          intro: `${firstName}, estas direções ajudam a ancorar sua leitura no cotidiano.`,
+          items: Array.from({ length: 5 }, (_, index) => ({
+            name: `${meta.suggestionHeading} ${index + 1}`,
+            why: `Esta sugestão reforça ${meta.focus} de forma prática, ajudando ${firstName} a criar consistência, clareza e escolhas mais alinhadas ao próprio mapa e numerologia.`,
+          })),
+        },
+        summary: `${firstName}, a síntese da sua leitura mostra potenciais reais, pontos de atenção e caminhos de amadurecimento. Quando você honra seu ritmo, organiza a energia e faz escolhas conscientes, ${meta.title.toLowerCase()} tende a se tornar uma área de crescimento e não de desgaste.`,
+      };
+    }
+
+    function normalizeBasePayload(parsed: unknown) {
+      const fallback = createFallbackBasePayload();
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return fallback;
+
       const record = parsed as Record<string, unknown>;
+      const swot = (record.swot && typeof record.swot === "object" && !Array.isArray(record.swot) ? record.swot : {}) as Record<string, unknown>;
+      const recommendations = (record.recommendations && typeof record.recommendations === "object" && !Array.isArray(record.recommendations)
+        ? record.recommendations
+        : {}) as Record<string, unknown>;
+      const suggestions = (record.suggestions && typeof record.suggestions === "object" && !Array.isArray(record.suggestions)
+        ? record.suggestions
+        : {}) as Record<string, unknown>;
+      const sectionBlueprints = Array.isArray(record.sectionBlueprints) ? record.sectionBlueprints : [];
 
-      if (record.plan && typeof record.plan === "object" && !Array.isArray(record.plan)) {
-        const plan = record.plan as Record<string, unknown>;
-        const normalizedPlan = {
-          improve: normalizePlanList(plan.improve),
-          avoid: normalizePlanList(plan.avoid),
-          follow: normalizePlanList(plan.follow),
-        };
-
-        const fillToSeven = (items: string[], seed: string) => {
-          const next = [...items];
-          while (next.length < 7) {
-            next.push(`Dia ${next.length + 1}: ${seed}`);
+      return {
+        intro: cleanInlineText(record.intro) || fallback.intro,
+        sectionBlueprints: normalizeStringList(sectionBlueprints, 3, (index) => fallback.sectionBlueprints[index]?.title ?? `Capítulo ${index + 1}`).map((title, index) => {
+          const source = sectionBlueprints[index];
+          if (source && typeof source === "object" && !Array.isArray(source)) {
+            const sourceRecord = source as Record<string, unknown>;
+            return {
+              title: cleanInlineText(sourceRecord.title) || title,
+              focus: cleanInlineText(sourceRecord.focus) || fallback.sectionBlueprints[index]?.focus || fallback.sectionBlueprints[0].focus,
+            };
           }
-          return next;
-        };
 
-        record.plan = {
-          improve: fillToSeven(normalizedPlan.improve, "Fortaleça o que gera prosperidade com calma."),
-          avoid: fillToSeven(normalizedPlan.avoid, "Evite impulsos que drenam sua energia financeira."),
-          follow: fillToSeven(normalizedPlan.follow, "Siga o que traz estabilidade e visão de longo prazo."),
-        };
-      }
+          return fallback.sectionBlueprints[index] ?? { title, focus: fallback.sectionBlueprints[0].focus };
+        }),
+        closing: cleanInlineText(record.closing) || fallback.closing,
+        swot: {
+          strengths: normalizeStringList(swot.strengths, 3, (index) => fallback.swot.strengths[index]),
+          weaknesses: normalizeStringList(swot.weaknesses, 3, (index) => fallback.swot.weaknesses[index]),
+          opportunities: normalizeStringList(swot.opportunities, 3, (index) => fallback.swot.opportunities[index]),
+          threats: normalizeStringList(swot.threats, 3, (index) => fallback.swot.threats[index]),
+        },
+        recommendations: {
+          improve: normalizeStringList(recommendations.improve, 3, (index) => fallback.recommendations.improve[index]),
+          avoid: normalizeStringList(recommendations.avoid, 3, (index) => fallback.recommendations.avoid[index]),
+          follow: normalizeStringList(recommendations.follow, 3, (index) => fallback.recommendations.follow[index]),
+        },
+        suggestions: {
+          intro: cleanInlineText(suggestions.intro) || fallback.suggestions.intro,
+          items: normalizeStringList(suggestions.items, 5, (index) => fallback.suggestions.items[index].why).map((item, index) => {
+            const source = Array.isArray(suggestions.items) ? suggestions.items[index] : null;
+            if (source && typeof source === "object" && !Array.isArray(source)) {
+              const sourceRecord = source as Record<string, unknown>;
+              return {
+                name: cleanInlineText(sourceRecord.name) || fallback.suggestions.items[index].name,
+                why: cleanInlineText(sourceRecord.why) || item || fallback.suggestions.items[index].why,
+              };
+            }
 
-      if (typeof record.body === "string") {
-        record.body = record.body.replace(/\s+/g, " ").trim();
-      }
-
-      if (typeof record.title === "string") {
-        record.title = record.title.replace(/\s+/g, " ").trim();
-      }
-
-      return record;
+            return {
+              name: fallback.suggestions.items[index].name,
+              why: item || fallback.suggestions.items[index].why,
+            };
+          }),
+        },
+        summary: cleanInlineText(record.summary) || fallback.summary,
+      };
     }
 
     function createLocalSectionPlan(
@@ -515,30 +634,41 @@ ${astroBlock}`;
       };
     }
 
-    function parseJsonWithSchema<T>(text: string, schema: z.ZodType<T>, label: string): T {
-      const jsonStr = extractJsonText(text);
+    function parseJsonWithSchema<T>(
+      text: string,
+      schema: z.ZodType<T>,
+      label: string,
+      options?: {
+        normalize?: (parsed: unknown) => unknown;
+        fallback?: T;
+      },
+    ): T {
       let parsed: unknown;
       try {
-        parsed = JSON.parse(jsonStr);
-      } catch {
-        try {
-          parsed = JSON.parse(tryRepairJson(jsonStr));
-        } catch (e) {
-          console.error(`[reports] JSON parse failed (${label})`, e, "len=", text.length, "tail=", text.slice(-300));
-          throw new Error("A IA devolveu um formato invalido. Tente novamente.");
-        }
-      }
-
-      if (label.startsWith("section-")) {
-        parsed = normalizeSectionPayload(parsed);
-      }
-
-      try {
-        return schema.parse(parsed);
+        parsed = parseJsonLenient(text);
       } catch (e) {
-        console.error(`[reports] schema validation failed (${label})`, e);
+        console.error(`[reports] JSON parse failed (${label})`, e, "len=", text.length, "tail=", text.slice(-300));
+        if (options?.fallback) {
+          console.info(`[reports] using fallback payload after parse failure (${label})`);
+          return schema.parse(options.fallback);
+        }
         throw new Error("A IA devolveu um formato invalido. Tente novamente.");
       }
+
+      if (options?.normalize) {
+        parsed = options.normalize(parsed);
+      }
+
+      const result = schema.safeParse(parsed);
+      if (result.success) return result.data;
+
+      console.error(`[reports] schema validation failed (${label})`, result.error);
+      if (options?.fallback) {
+        console.info(`[reports] using fallback payload after schema failure (${label})`);
+        return schema.parse(options.fallback);
+      }
+
+      throw new Error("A IA devolveu um formato invalido. Tente novamente.");
     }
 
     const compactSectionContext = `Relatorio: ${meta.title}
