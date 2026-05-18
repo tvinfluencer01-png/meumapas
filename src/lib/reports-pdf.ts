@@ -334,7 +334,7 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
     const font = opts?.italic ? serifItalic : serif;
     const color = opts?.color ?? INK;
     const justify = opts?.justify ?? true;
-    const lineHeight = size * 1.55;
+    const lineHeight = size * 1.38;
     const spaceW = font.widthOfTextAtSize(" ", size);
     const paragraphs = safe(text).split(/\n+/);
 
