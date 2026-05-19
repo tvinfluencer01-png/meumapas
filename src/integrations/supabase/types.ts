@@ -566,6 +566,8 @@ export type Database = {
       }
       pdf_branding: {
         Row: {
+          body_font_size: number
+          body_text_color: string
           cover_accent_color: string
           cover_bg_color: string
           cover_image_path: string | null
@@ -590,15 +592,25 @@ export type Database = {
           footer_name: string | null
           footer_phone: string | null
           footer_site: string | null
+          frame_style: string
           header_bg_color: string
           header_text_color: string
+          heading_text_color: string
+          line_height: number
           logo_height: number
           logo_path: string | null
           logo_width: number
+          page_bg_color: string
+          page_bg_image_path: string | null
+          page_margin: number
           updated_at: string
           user_id: string
+          watermark_image_path: string | null
+          watermark_opacity: number
         }
         Insert: {
+          body_font_size?: number
+          body_text_color?: string
           cover_accent_color?: string
           cover_bg_color?: string
           cover_image_path?: string | null
@@ -623,15 +635,25 @@ export type Database = {
           footer_name?: string | null
           footer_phone?: string | null
           footer_site?: string | null
+          frame_style?: string
           header_bg_color?: string
           header_text_color?: string
+          heading_text_color?: string
+          line_height?: number
           logo_height?: number
           logo_path?: string | null
           logo_width?: number
+          page_bg_color?: string
+          page_bg_image_path?: string | null
+          page_margin?: number
           updated_at?: string
           user_id: string
+          watermark_image_path?: string | null
+          watermark_opacity?: number
         }
         Update: {
+          body_font_size?: number
+          body_text_color?: string
           cover_accent_color?: string
           cover_bg_color?: string
           cover_image_path?: string | null
@@ -656,13 +678,21 @@ export type Database = {
           footer_name?: string | null
           footer_phone?: string | null
           footer_site?: string | null
+          frame_style?: string
           header_bg_color?: string
           header_text_color?: string
+          heading_text_color?: string
+          line_height?: number
           logo_height?: number
           logo_path?: string | null
           logo_width?: number
+          page_bg_color?: string
+          page_bg_image_path?: string | null
+          page_margin?: number
           updated_at?: string
           user_id?: string
+          watermark_image_path?: string | null
+          watermark_opacity?: number
         }
         Relationships: []
       }
