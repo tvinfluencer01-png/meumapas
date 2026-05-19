@@ -331,25 +331,6 @@ export function PdfBrandingForm() {
     if (inputRefToReset.current) inputRefToReset.current.value = "";
   }
 
-  const uploadMutation = useMutation({
-    mutationFn: async (file: File) => {
-      const { base64, mime } = await fileToBase64(file);
-      return uploadFn({ data: { base64, mime } });
-    },
-    onSuccess: () => {
-      toast.success("Logo enviado.");
-      qc.invalidateQueries({ queryKey: ["pdf-branding"] });
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  const removeMutation = useMutation({
-    mutationFn: () => removeFn(),
-    onSuccess: () => {
-      toast.success("Logo removido.");
-      qc.invalidateQueries({ queryKey: ["pdf-branding"] });
-    },
-  });
 
   function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
