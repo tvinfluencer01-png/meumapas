@@ -67,6 +67,13 @@ export const savePdfBranding = createServerFn({ method: "POST" })
       enabled_love: data.enabled_love,
       enabled_career: data.enabled_career,
       enabled_spiritual: data.enabled_spiritual,
+      enabled_tarot: data.enabled_tarot,
+      enabled_kabbalah: data.enabled_kabbalah,
+      enabled_numerology: data.enabled_numerology,
+      enabled_astrology: data.enabled_astrology,
+      enabled_kabbalah_numerology: data.enabled_kabbalah_numerology,
+      enabled_energy_calendar: data.enabled_energy_calendar,
+      enabled_weekly: data.enabled_weekly,
     };
     const { error } = await supabase
       .from("pdf_branding")
