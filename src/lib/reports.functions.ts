@@ -259,6 +259,60 @@ export const generateReport = createServerFn({ method: "POST" })
       .filter(Boolean)
       .join("  -  ");
 
+    const mercury = planets.find((p) => p.name === "Mercurio");
+    const venus = planets.find((p) => p.name === "Venus");
+    const mars = planets.find((p) => p.name === "Marte");
+    const jupiter = planets.find((p) => p.name === "Jupiter");
+    const saturn = planets.find((p) => p.name === "Saturno");
+    const astroAnchors = [
+      sun ? `Sol em ${SIGNS_LABEL[sun.sign] ?? sun.sign} (essência e identidade)` : null,
+      moon ? `Lua em ${SIGNS_LABEL[moon.sign] ?? moon.sign} (emoções e necessidades)` : null,
+      mercury ? `Mercúrio em ${SIGNS_LABEL[mercury.sign] ?? mercury.sign} (mente e linguagem)` : null,
+      venus ? `Vênus em ${SIGNS_LABEL[venus.sign] ?? venus.sign} (afeto e vínculos)` : null,
+      mars ? `Marte em ${SIGNS_LABEL[mars.sign] ?? mars.sign} (ação e desejo)` : null,
+      jupiter ? `Júpiter em ${SIGNS_LABEL[jupiter.sign] ?? jupiter.sign} (expansão e confiança)` : null,
+      saturn ? `Saturno em ${SIGNS_LABEL[saturn.sign] ?? saturn.sign} (limites e maturidade)` : null,
+    ]
+      .filter(Boolean)
+      .join(", ");
+    const aspectAnchors = aspects
+      .slice(0, 4)
+      .map((a) => `${a.a} ${a.aspect} ${a.b}`)
+      .join(", ");
+    const numerologyAnchors = `Caminho de Vida ${numLabel(num.life_path)}, Destino ${numLabel(num.destiny)}, Alma ${numLabel(num.soul_urge)} e Personalidade ${numLabel(num.personality)}`;
+    const CONTENT_MIN = {
+      intro: 1600,
+      section: 1400,
+      closing: 400,
+      summary: 500,
+    } as const;
+
+    function ensureMinNarrativeLength(
+      text: unknown,
+      min: number,
+      kind: keyof typeof CONTENT_MIN,
+      focus: string,
+    ) {
+      let output = cleanInlineText(text);
+      const supportParagraphs = [
+        `${firstName}, quando olhamos com mais calma para ${focus}, reaparecem ${astroAnchors || "os símbolos centrais do seu mapa"}${aspectAnchors ? `, e aspectos como ${aspectAnchors} ajudam a explicar tensões, talentos e repetições que atravessam este tema.` : "."} ${numerologyAnchors} mostram como essa experiência pede presença, coerência e maturidade no cotidiano.`,
+        `${firstName}, isso ganha corpo na prática porque sua vida não se move por uma peça só: ela nasce do encontro entre desejo, afeto, pensamento, ritmo e propósito. ${astroAnchors ? `Quando ${astroAnchors.toLowerCase()} se alinham, você encontra direção com mais verdade e menos ruído.` : "Quando suas forças internas se alinham, você encontra direção com mais verdade e menos ruído."}`,
+        kind === "intro"
+          ? `Esta abertura precisa nomear a espessura simbólica da sua travessia: ${numerologyAnchors} formam um eixo de sentido, enquanto ${aspectAnchors || "os principais movimentos do céu"} revelam onde a vida pede integração entre segurança, expressão, vínculo e ação.`
+          : kind === "summary"
+            ? `Na síntese, o mais importante é lembrar que seus símbolos não pedem pressa, e sim continuidade. ${numerologyAnchors} mostram que amadurecimento acontece quando consciência vira escolha, e escolha vira constância.`
+            : `Por isso, esta leitura não termina na compreensão mental. Ela pede prática, repetição saudável e decisões alinhadas ao que o seu mapa e a sua numerologia já mostram como caminho de crescimento.`,
+      ];
+
+      let index = 0;
+      while (output.length < min && index < supportParagraphs.length * 3) {
+        output = `${output}${output ? " " : ""}${cleanInlineText(supportParagraphs[index % supportParagraphs.length])}`.trim();
+        index += 1;
+      }
+
+      return output;
+    }
+
     // 2) Choose AI provider
     const provider = settings?.ai_provider ?? "lovable";
     const customKey = settings?.custom_ai_key as string | null;
@@ -514,9 +568,19 @@ ${astroBlock}`;
       ];
 
       return {
-        intro: `${firstName}, este relatório nasce do encontro entre o seu mapa astral e a sua numerologia, e abre uma leitura profunda sobre ${meta.title.toLowerCase()}. A proposta aqui não é entregar respostas prontas, mas iluminar os fios simbólicos que sustentam a sua vida nessa área. Você vai reconhecer padrões antigos, dons que ainda não foram nomeados e tensões que pedem cuidado. Cada parágrafo foi pensado para te oferecer linguagem, espelho e direção. Esta abertura te convida a respirar e olhar para si com mais verdade, antes de mergulhar nos próximos capítulos. O que vem a seguir é uma travessia: símbolo virando consciência, e consciência virando escolha concreta.`,
+        intro: ensureMinNarrativeLength(
+          `${firstName}, este relatório nasce do encontro entre o seu mapa astral e a sua numerologia, e abre uma leitura profunda sobre ${meta.title.toLowerCase()}. A proposta aqui não é entregar respostas prontas, mas iluminar os fios simbólicos que sustentam a sua vida nessa área. Você vai reconhecer padrões antigos, dons que ainda não foram nomeados e tensões que pedem cuidado. Cada parágrafo foi pensado para te oferecer linguagem, espelho e direção. Esta abertura te convida a respirar e olhar para si com mais verdade, antes de mergulhar nos próximos capítulos. O que vem a seguir é uma travessia: símbolo virando consciência, e consciência virando escolha concreta.`,
+          CONTENT_MIN.intro,
+          "intro",
+          meta.focus,
+        ),
         sectionBlueprints: blueprintDefaults,
-        closing: `${firstName}, seu mapa não é sentença: ele mostra tendências, forças e aprendizados. O essencial agora é usar essa clareza com presença, consistência e escolhas mais alinhadas ao que deseja construir. Permita que a leitura amadureça em silêncio, e volte a ela sempre que precisar reencontrar o seu eixo.`,
+        closing: ensureMinNarrativeLength(
+          `${firstName}, seu mapa não é sentença: ele mostra tendências, forças e aprendizados. O essencial agora é usar essa clareza com presença, consistência e escolhas mais alinhadas ao que deseja construir. Permita que a leitura amadureça em silêncio, e volte a ela sempre que precisar reencontrar o seu eixo.`,
+          CONTENT_MIN.closing,
+          "closing",
+          meta.focus,
+        ),
         swot: {
           strengths: normalizeStringList([], 3, () => "Sensibilidade para perceber padrões importantes."),
           weaknesses: normalizeStringList([], 3, () => "Tendência a oscilar entre impulso e excesso de análise."),
@@ -535,7 +599,12 @@ ${astroBlock}`;
             why: `Esta sugestão reforça ${meta.focus} de forma prática, ajudando ${firstName} a criar consistência, clareza e escolhas mais alinhadas ao próprio mapa e numerologia.`,
           })),
         },
-        summary: `${firstName}, a síntese da sua leitura mostra potenciais reais, pontos de atenção e caminhos de amadurecimento. Quando você honra seu ritmo, organiza a energia e faz escolhas conscientes, ${meta.title.toLowerCase()} tende a se tornar uma área de crescimento e não de desgaste. Volte a este resumo sempre que precisar reencontrar o eixo e lembrar do que já sabe sobre si.`,
+        summary: ensureMinNarrativeLength(
+          `${firstName}, a síntese da sua leitura mostra potenciais reais, pontos de atenção e caminhos de amadurecimento. Quando você honra seu ritmo, organiza a energia e faz escolhas conscientes, ${meta.title.toLowerCase()} tende a se tornar uma área de crescimento e não de desgaste. Volte a este resumo sempre que precisar reencontrar o eixo e lembrar do que já sabe sobre si.`,
+          CONTENT_MIN.summary,
+          "summary",
+          meta.focus,
+        ),
       };
     }
 
@@ -554,7 +623,7 @@ ${astroBlock}`;
       const sectionBlueprints = Array.isArray(record.sectionBlueprints) ? record.sectionBlueprints : [];
 
       return {
-        intro: cleanInlineText(record.intro) || fallback.intro,
+        intro: ensureMinNarrativeLength(cleanInlineText(record.intro) || fallback.intro, CONTENT_MIN.intro, "intro", meta.focus),
         sectionBlueprints: normalizeStringList(sectionBlueprints, 3, (index) => fallback.sectionBlueprints[index]?.title ?? `Capítulo ${index + 1}`).map((title, index) => {
           const source = sectionBlueprints[index];
           if (source && typeof source === "object" && !Array.isArray(source)) {
@@ -567,7 +636,7 @@ ${astroBlock}`;
 
           return fallback.sectionBlueprints[index] ?? { title, focus: fallback.sectionBlueprints[0].focus };
         }),
-        closing: cleanInlineText(record.closing) || fallback.closing,
+        closing: ensureMinNarrativeLength(cleanInlineText(record.closing) || fallback.closing, CONTENT_MIN.closing, "closing", meta.focus),
         swot: {
           strengths: normalizeStringList(swot.strengths, 3, (index) => fallback.swot.strengths[index]),
           weaknesses: normalizeStringList(swot.weaknesses, 3, (index) => fallback.swot.weaknesses[index]),
@@ -597,7 +666,7 @@ ${astroBlock}`;
             };
           }),
         },
-        summary: cleanInlineText(record.summary) || fallback.summary,
+        summary: ensureMinNarrativeLength(cleanInlineText(record.summary) || fallback.summary, CONTENT_MIN.summary, "summary", meta.focus),
       };
     }
 
@@ -627,9 +696,14 @@ ${astroBlock}`;
     function normalizeSectionPayload(parsed: unknown, blueprint?: z.infer<typeof BaseAiOutput>["sectionBlueprints"][number]) {
       const fallbackTitle = cleanInlineText(blueprint?.title) || "Capítulo";
       const focusText = cleanInlineText(blueprint?.focus);
-      const fallbackBody = focusText
-        ? `${firstName}, esta parte do relatório aprofunda ${focusText} a partir do seu mapa astral e da sua numerologia. O objetivo é traduzir os símbolos em percepção viva, para que você reconheça padrões reais, identifique tensões antigas e entenda o convite que esse momento está fazendo. Aqui não se trata de receita pronta, e sim de espelho: enxergar com mais nitidez como você se move nessa área da vida. Existem forças latentes no seu mapa que ainda pedem espaço para se manifestarem de forma madura, sem dramatização e sem fuga. Ao mesmo tempo, certas feridas tendem a aparecer como ruído ou repetição, e merecem ser olhadas com paciência. O próximo ciclo te convida a transformar consciência em prática constante, com escolhas mais coerentes ao que você é em essência.`
-        : `${firstName}, esta parte do relatório aprofunda a leitura do seu mapa e da sua numerologia com linguagem prática e humana. A intenção é te oferecer clareza sobre os padrões que se repetem, as forças que pedem espaço e as feridas que ainda buscam cura. Cada parágrafo aqui foi pensado como um espelho que devolve direção. Use esta seção como um guia de campo: leia devagar, sinta o que ressoa, anote o que provoca. O essencial não é concordar com tudo, é reconhecer onde a sua vida está pedindo um novo gesto. O próximo ciclo te chama para escolhas mais coerentes e maduras.`;
+      const fallbackBody = ensureMinNarrativeLength(
+        focusText
+          ? `${firstName}, esta parte do relatório aprofunda ${focusText} a partir do seu mapa astral e da sua numerologia. O objetivo é traduzir os símbolos em percepção viva, para que você reconheça padrões reais, identifique tensões antigas e entenda o convite que esse momento está fazendo. Aqui não se trata de receita pronta, e sim de espelho: enxergar com mais nitidez como você se move nessa área da vida. Existem forças latentes no seu mapa que ainda pedem espaço para se manifestarem de forma madura, sem dramatização e sem fuga. Ao mesmo tempo, certas feridas tendem a aparecer como ruído ou repetição, e merecem ser olhadas com paciência. O próximo ciclo te convida a transformar consciência em prática constante, com escolhas mais coerentes ao que você é em essência.`
+          : `${firstName}, esta parte do relatório aprofunda a leitura do seu mapa e da sua numerologia com linguagem prática e humana. A intenção é te oferecer clareza sobre os padrões que se repetem, as forças que pedem espaço e as feridas que ainda buscam cura. Cada parágrafo aqui foi pensado como um espelho que devolve direção. Use esta seção como um guia de campo: leia devagar, sinta o que ressoa, anote o que provoca. O essencial não é concordar com tudo, é reconhecer onde a sua vida está pedindo um novo gesto. O próximo ciclo te chama para escolhas mais coerentes e maduras.`,
+        CONTENT_MIN.section,
+        "section",
+        focusText || meta.focus,
+      );
 
       if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
         return {
@@ -641,7 +715,7 @@ ${astroBlock}`;
       const record = parsed as Record<string, unknown>;
       return {
         title: cleanInlineText(record.title) || fallbackTitle,
-        body: cleanInlineText(record.body) || fallbackBody,
+        body: ensureMinNarrativeLength(cleanInlineText(record.body) || fallbackBody, CONTENT_MIN.section, "section", focusText || meta.focus),
       };
     }
 
