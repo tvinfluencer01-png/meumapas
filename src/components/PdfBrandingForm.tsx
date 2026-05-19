@@ -157,6 +157,13 @@ export function PdfBrandingForm() {
           enabled_love: form.enabled_love,
           enabled_career: form.enabled_career,
           enabled_spiritual: form.enabled_spiritual,
+          enabled_tarot: form.enabled_tarot,
+          enabled_kabbalah: form.enabled_kabbalah,
+          enabled_numerology: form.enabled_numerology,
+          enabled_astrology: form.enabled_astrology,
+          enabled_kabbalah_numerology: form.enabled_kabbalah_numerology,
+          enabled_energy_calendar: form.enabled_energy_calendar,
+          enabled_weekly: form.enabled_weekly,
         },
       }),
     onSuccess: () => {
