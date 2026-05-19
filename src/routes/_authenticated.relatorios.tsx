@@ -129,21 +129,36 @@ function RelatoriosPage() {
     },
   });
 
-  async function downloadFromUrl(url: string, filename: string) {
-    // Baixa via fetch+blob para evitar ERR_BLOCKED_BY_CLIENT (adblockers)
-    // que bloqueiam window.open para dominios de storage.
-    const res = await fetch(url);
-    if (!res.ok) throw new Error("Falha ao baixar o arquivo");
-    const blob = await res.blob();
-    const objUrl = URL.createObjectURL(blob);
+  function fallbackDownload(url: string, filename: string) {
     const a = document.createElement("a");
-    a.href = objUrl;
+    a.href = url;
     a.download = filename;
+    a.target = "_blank";
     a.rel = "noopener";
     document.body.appendChild(a);
     a.click();
     a.remove();
-    setTimeout(() => URL.revokeObjectURL(objUrl), 2000);
+  }
+
+  async function downloadFromUrl(url: string, filename: string) {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Falha ao baixar o arquivo");
+      const blob = await res.blob();
+      const objUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = objUrl;
+      a.download = filename;
+      a.rel = "noopener";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(objUrl), 2000);
+    } catch (err) {
+      // Fallback: abre o link assinado diretamente (CORS/adblock no fetch)
+      console.warn("[download] fetch failed, fallback to direct link", err);
+      fallbackDownload(url, filename);
+    }
   }
 
   const genMutation = useMutation({
