@@ -3,6 +3,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway";
 import { generateText } from "ai";
 import * as Astro from "astronomy-engine";
+import { resolveActiveSubject } from "@/lib/active-subject";
 
 function reduce(n: number): number {
   while (n > 9 && n !== 11 && n !== 22 && n !== 33) {
@@ -40,12 +41,7 @@ export const getWeeklyReading = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
 
-    const { data: birth } = await supabase
-      .from("birth_data")
-      .select("birth_date, full_name")
-      .eq("user_id", userId)
-      .eq("is_primary", true)
-      .maybeSingle();
+    const birth = await resolveActiveSubject(supabase, userId);
 
     const today = new Date();
     const days = Array.from({ length: 7 }, (_, i) => {
