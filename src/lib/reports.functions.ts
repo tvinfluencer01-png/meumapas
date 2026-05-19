@@ -287,9 +287,9 @@ export const generateReport = createServerFn({ method: "POST" })
     } else if (provider === "anthropic" && customKey) {
       modelName = customModel ?? "claude-3-5-sonnet-20241022";
     } else if (provider === "gemini" && customKey) {
-      modelName = customModel ?? "gemini-2.5-flash";
+      modelName = customModel ?? "gemini-2.5-flash-lite";
     } else {
-      modelName = customModel?.startsWith("google/") ? customModel : "google/gemini-2.5-flash";
+      modelName = customModel?.startsWith("google/") ? customModel : "google/gemini-2.5-flash-lite";
     }
 
     let model = makeModel(modelName);
