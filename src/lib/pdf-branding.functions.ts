@@ -14,6 +14,7 @@ const HexColor = z
 
 const TitlePosition = z.enum(["top", "center", "bottom"]);
 const FontFamily = z.enum(["serif", "sans", "display"]);
+const FrameStyle = z.enum(["none", "simple", "double", "ornamental"]);
 
 const BrandingShape = z.object({
   enabled: z.boolean(),
@@ -43,6 +44,14 @@ const BrandingShape = z.object({
   header_bg_color: HexColor,
   footer_bg_color: HexColor,
   header_text_color: HexColor,
+  // PDF CSS Avançado
+  page_bg_color: HexColor,
+  body_text_color: HexColor,
+  heading_text_color: HexColor,
+  body_font_size: z.number().min(8).max(20),
+  line_height: z.number().min(1).max(2.2),
+  frame_style: FrameStyle,
+  watermark_opacity: z.number().min(0).max(1),
 });
 
 async function getSignedUrl(path: string | null | undefined, expires = 60 * 60) {
@@ -63,11 +72,12 @@ export const getPdfBranding = createServerFn({ method: "GET" })
       .eq("user_id", userId)
       .maybeSingle();
 
+    const row = data as Record<string, unknown> | null;
     const signedLogoUrl = await getSignedUrl(data?.logo_path);
-    const signedCoverUrl = await getSignedUrl(
-      (data as Record<string, unknown> | null)?.cover_image_path as string | undefined,
-    );
-    return { branding: data ?? null, signedLogoUrl, signedCoverUrl };
+    const signedCoverUrl = await getSignedUrl(row?.cover_image_path as string | undefined);
+    const signedPageBgUrl = await getSignedUrl(row?.page_bg_image_path as string | undefined);
+    const signedWatermarkUrl = await getSignedUrl(row?.watermark_image_path as string | undefined);
+    return { branding: data ?? null, signedLogoUrl, signedCoverUrl, signedPageBgUrl, signedWatermarkUrl };
   });
 
 export const savePdfBranding = createServerFn({ method: "POST" })
@@ -103,6 +113,13 @@ export const savePdfBranding = createServerFn({ method: "POST" })
       header_bg_color: data.header_bg_color,
       footer_bg_color: data.footer_bg_color,
       header_text_color: data.header_text_color,
+      page_bg_color: data.page_bg_color,
+      body_text_color: data.body_text_color,
+      heading_text_color: data.heading_text_color,
+      body_font_size: data.body_font_size,
+      line_height: data.line_height,
+      frame_style: data.frame_style,
+      watermark_opacity: data.watermark_opacity,
     };
     const { error } = await supabase
       .from("pdf_branding")
@@ -389,6 +406,17 @@ export async function resolveBrandingPayload(
       headerBgColor: string;
       footerBgColor: string;
       headerTextColor: string;
+      pageBgColor: string;
+      pageBgImageBytes?: Uint8Array;
+      pageBgImageMime?: "image/png" | "image/jpeg";
+      watermarkImageBytes?: Uint8Array;
+      watermarkImageMime?: "image/png" | "image/jpeg";
+      watermarkOpacity: number;
+      bodyTextColor: string;
+      headingTextColor: string;
+      bodyFontSize: number;
+      lineHeight: number;
+      frameStyle: "none" | "simple" | "double" | "ornamental";
     }
   | undefined
 > {
@@ -417,6 +445,8 @@ export async function resolveBrandingPayload(
 
   const logo = await loadImage(row.logo_path as string | null | undefined);
   const cover = await loadImage(row.cover_image_path as string | null | undefined);
+  const pageBg = await loadImage(row.page_bg_image_path as string | null | undefined);
+  const watermark = await loadImage(row.watermark_image_path as string | null | undefined);
 
   return {
     coverImageBytes: cover.bytes,
@@ -438,8 +468,122 @@ export async function resolveBrandingPayload(
     headerBgColor: (row.header_bg_color as string) ?? "#f5f1e6",
     footerBgColor: (row.footer_bg_color as string) ?? "#f5f1e6",
     headerTextColor: (row.header_text_color as string) ?? "#d4af37",
+    pageBgColor: (row.page_bg_color as string) ?? "#f5f1e6",
+    pageBgImageBytes: pageBg.bytes,
+    pageBgImageMime: pageBg.mime,
+    watermarkImageBytes: watermark.bytes,
+    watermarkImageMime: watermark.mime,
+    watermarkOpacity: Number(row.watermark_opacity ?? 0.08),
+    bodyTextColor: (row.body_text_color as string) ?? "#262218",
+    headingTextColor: (row.heading_text_color as string) ?? "#03060f",
+    bodyFontSize: Number(row.body_font_size ?? 12.5),
+    lineHeight: Number(row.line_height ?? 1.45),
+    frameStyle: ((row.frame_style as string) as "none" | "simple" | "double" | "ornamental") ?? "double",
   };
 }
+
+/* ---------- Imagem de fundo das páginas e marca d'água (PDF CSS) ---------- */
+
+async function uploadAssetGeneric(opts: {
+  userId: string;
+  base64: string;
+  mime: "image/png" | "image/jpeg";
+  prefix: "pagebg" | "watermark";
+  maxBytes: number;
+  column: "page_bg_image_path" | "watermark_image_path";
+}) {
+  const bytes = Buffer.from(opts.base64, "base64");
+  if (bytes.byteLength > opts.maxBytes) {
+    throw new Error(`Arquivo acima de ${Math.round(opts.maxBytes / 1024)}KB.`);
+  }
+  const ext = opts.mime === "image/png" ? "png" : "jpg";
+  const path = `${opts.userId}/${opts.prefix}-${Date.now()}.${ext}`;
+  const { data: existing } = await supabaseAdmin.storage
+    .from(BUCKET)
+    .list(opts.userId, { limit: 200 });
+  const old = (existing ?? []).filter((f) => f.name.startsWith(`${opts.prefix}-`));
+  if (old.length) {
+    await supabaseAdmin.storage
+      .from(BUCKET)
+      .remove(old.map((f) => `${opts.userId}/${f.name}`));
+  }
+  const { error: upErr } = await supabaseAdmin.storage
+    .from(BUCKET)
+    .upload(path, bytes, { contentType: opts.mime, upsert: true });
+  if (upErr) throw new Error(upErr.message);
+  const upsertPayload = { user_id: opts.userId, [opts.column]: path } as never;
+  await supabaseAdmin.from("pdf_branding").upsert(upsertPayload, { onConflict: "user_id" });
+  return path;
+}
+
+async function removeAssetGeneric(opts: {
+  userId: string;
+  prefix: "pagebg" | "watermark";
+  column: "page_bg_image_path" | "watermark_image_path";
+}) {
+  const { data: existing } = await supabaseAdmin.storage
+    .from(BUCKET)
+    .list(opts.userId, { limit: 200 });
+  const old = (existing ?? []).filter((f) => f.name.startsWith(`${opts.prefix}-`));
+  if (old.length) {
+    await supabaseAdmin.storage
+      .from(BUCKET)
+      .remove(old.map((f) => `${opts.userId}/${f.name}`));
+  }
+  const upsertPayload = { user_id: opts.userId, [opts.column]: null } as never;
+  await supabaseAdmin.from("pdf_branding").upsert(upsertPayload, { onConflict: "user_id" });
+}
+
+const AssetInput = z.object({
+  base64: z.string().min(20),
+  mime: z.enum(["image/png", "image/jpeg"]),
+});
+
+export const uploadPageBgImage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => AssetInput.parse(d))
+  .handler(async ({ data, context }) => {
+    const path = await uploadAssetGeneric({
+      userId: context.userId,
+      base64: data.base64, mime: data.mime,
+      prefix: "pagebg", maxBytes: 3 * 1024 * 1024,
+      column: "page_bg_image_path",
+    });
+    return { path, signedUrl: await getSignedUrl(path) };
+  });
+
+export const removePageBgImage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await removeAssetGeneric({
+      userId: context.userId,
+      prefix: "pagebg", column: "page_bg_image_path",
+    });
+    return { ok: true as const };
+  });
+
+export const uploadWatermarkImage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => AssetInput.parse(d))
+  .handler(async ({ data, context }) => {
+    const path = await uploadAssetGeneric({
+      userId: context.userId,
+      base64: data.base64, mime: data.mime,
+      prefix: "watermark", maxBytes: 1 * 1024 * 1024,
+      column: "watermark_image_path",
+    });
+    return { path, signedUrl: await getSignedUrl(path) };
+  });
+
+export const removeWatermarkImage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await removeAssetGeneric({
+      userId: context.userId,
+      prefix: "watermark", column: "watermark_image_path",
+    });
+    return { ok: true as const };
+  });
 
 /**
  * Verifica se o branding deve ser aplicado a um determinado módulo de PDF.

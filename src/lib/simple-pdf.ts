@@ -45,6 +45,18 @@ export type SimplePdfBranding = {
   headerBgColor?: string;
   footerBgColor?: string;
   headerTextColor?: string;
+  // ---- PDF CSS Avançado ----
+  pageBgColor?: string;
+  pageBgImageBytes?: Uint8Array;
+  pageBgImageMime?: "image/png" | "image/jpeg";
+  watermarkImageBytes?: Uint8Array;
+  watermarkImageMime?: "image/png" | "image/jpeg";
+  watermarkOpacity?: number; // 0..1
+  bodyTextColor?: string;
+  headingTextColor?: string;
+  bodyFontSize?: number; // default 12.5
+  lineHeight?: number; // multiplier (default 1.45)
+  frameStyle?: "none" | "simple" | "double" | "ornamental";
 };
 
 export type SimplePdfData = {
@@ -200,6 +212,34 @@ export async function buildSimplePdf(data: SimplePdfData): Promise<Uint8Array> {
   const footerBg = b?.footerBgColor ? hexToRgb(b.footerBgColor) : PARCHMENT;
   const headerText = b?.headerTextColor ? hexToRgb(b.headerTextColor) : GOLD;
   const titlePos = b?.coverTitlePosition ?? "center";
+  // ---- PDF CSS Avançado ----
+  const pageBg = b?.pageBgColor ? hexToRgb(b.pageBgColor) : PARCHMENT;
+  const bodyTextC = b?.bodyTextColor ? hexToRgb(b.bodyTextColor) : INK;
+  const headingTextC = b?.headingTextColor ? hexToRgb(b.headingTextColor) : NIGHT;
+  const bodySize = typeof b?.bodyFontSize === "number" ? b.bodyFontSize : 12.5;
+  const lineMul = typeof b?.lineHeight === "number" ? b.lineHeight : 1.45;
+  const frame = b?.frameStyle ?? "double";
+  const wmOpacity = typeof b?.watermarkOpacity === "number" ? Math.max(0, Math.min(1, b.watermarkOpacity)) : 0.08;
+
+  // Embed page bg image and watermark once (used by every newPage call)
+  let pageBgImage: Awaited<ReturnType<typeof doc.embedPng>> | null = null;
+  if (b?.pageBgImageBytes && b.pageBgImageMime) {
+    try {
+      pageBgImage =
+        b.pageBgImageMime === "image/png"
+          ? await doc.embedPng(b.pageBgImageBytes)
+          : await doc.embedJpg(b.pageBgImageBytes);
+    } catch { pageBgImage = null; }
+  }
+  let watermarkImage: Awaited<ReturnType<typeof doc.embedPng>> | null = null;
+  if (b?.watermarkImageBytes && b.watermarkImageMime) {
+    try {
+      watermarkImage =
+        b.watermarkImageMime === "image/png"
+          ? await doc.embedPng(b.watermarkImageBytes)
+          : await doc.embedJpg(b.watermarkImageBytes);
+    } catch { watermarkImage = null; }
+  }
 
   // -------- CAPA --------
   const cover = doc.addPage(PageSizes.A4);
@@ -237,17 +277,34 @@ export async function buildSimplePdf(data: SimplePdfData): Promise<Uint8Array> {
     }
   }
 
+  // Moldura da capa (estilo configurável)
   const inset = 28;
-  cover.drawRectangle({
-    x: inset, y: inset,
-    width: PAGE_W - inset * 2, height: PAGE_H - inset * 2,
-    borderColor: accent, borderWidth: 0.8,
-  });
-  cover.drawRectangle({
-    x: inset + 6, y: inset + 6,
-    width: PAGE_W - inset * 2 - 12, height: PAGE_H - inset * 2 - 12,
-    borderColor: accent, borderWidth: 0.3,
-  });
+  if (frame !== "none") {
+    cover.drawRectangle({
+      x: inset, y: inset,
+      width: PAGE_W - inset * 2, height: PAGE_H - inset * 2,
+      borderColor: accent, borderWidth: frame === "ornamental" ? 1.2 : 0.8,
+    });
+    if (frame === "double" || frame === "ornamental") {
+      cover.drawRectangle({
+        x: inset + 6, y: inset + 6,
+        width: PAGE_W - inset * 2 - 12, height: PAGE_H - inset * 2 - 12,
+        borderColor: accent, borderWidth: 0.3,
+      });
+    }
+    if (frame === "ornamental") {
+      // pequenos cantos decorativos
+      const corners: Array<[number, number]> = [
+        [inset + 14, inset + 14],
+        [PAGE_W - inset - 14, inset + 14],
+        [inset + 14, PAGE_H - inset - 14],
+        [PAGE_W - inset - 14, PAGE_H - inset - 14],
+      ];
+      for (const [cx, cy] of corners) {
+        cover.drawCircle({ x: cx, y: cy, size: 3, color: accent });
+      }
+    }
+  }
 
   const topLabel = safe(`${data.brand.toUpperCase()}  -  ${data.eyebrow.toUpperCase()}`);
   const topLabelW = sans.widthOfTextAtSize(topLabel, 9);
@@ -366,7 +423,28 @@ export async function buildSimplePdf(data: SimplePdfData): Promise<Uint8Array> {
 
   function newPage(num: number): Cursor {
     const page = doc.addPage(PageSizes.A4);
-    page.drawRectangle({ x: 0, y: 0, width: PAGE_W, height: PAGE_H, color: PARCHMENT });
+    page.drawRectangle({ x: 0, y: 0, width: PAGE_W, height: PAGE_H, color: pageBg });
+    // imagem de fundo da página (cover, respeitando proporção)
+    if (pageBgImage) {
+      const ratio = Math.max(PAGE_W / pageBgImage.width, PAGE_H / pageBgImage.height);
+      const dw = pageBgImage.width * ratio;
+      const dh = pageBgImage.height * ratio;
+      page.drawImage(pageBgImage, {
+        x: (PAGE_W - dw) / 2, y: (PAGE_H - dh) / 2,
+        width: dw, height: dh, opacity: 0.85,
+      });
+    }
+    // marca d'água (centralizada, opacidade configurável)
+    if (watermarkImage) {
+      const maxW = PAGE_W * 0.55;
+      const ratio = watermarkImage.height / watermarkImage.width;
+      const ww = maxW;
+      const wh = ww * ratio;
+      page.drawImage(watermarkImage, {
+        x: (PAGE_W - ww) / 2, y: (PAGE_H - wh) / 2,
+        width: ww, height: wh, opacity: wmOpacity,
+      });
+    }
     // faixa de topo
     page.drawRectangle({
       x: 0, y: PAGE_H - MARGIN + 16,
@@ -442,7 +520,7 @@ export async function buildSimplePdf(data: SimplePdfData): Promise<Uint8Array> {
     const lines = wrapPlain(safe(text), serifBold, size, CONTENT_W);
     for (const ln of lines) {
       cursor.page.drawText(ln, {
-        x: MARGIN, y: cursor.y - size, size, font: serifBold, color: NIGHT,
+        x: MARGIN, y: cursor.y - size, size, font: serifBold, color: headingTextC,
       });
       cursor.y -= size + 4;
     }
@@ -450,7 +528,7 @@ export async function buildSimplePdf(data: SimplePdfData): Promise<Uint8Array> {
     cursor.page.drawLine({
       start: { x: MARGIN, y: cursor.y },
       end: { x: MARGIN + 56, y: cursor.y },
-      color: GOLD, thickness: 1.2,
+      color: accent, thickness: 1.2,
     });
     cursor.y -= 14;
   }
@@ -459,17 +537,17 @@ export async function buildSimplePdf(data: SimplePdfData): Promise<Uint8Array> {
     const size = 15;
     ensureSpace(size + 16);
     cursor.page.drawText(safe(text), {
-      x: MARGIN, y: cursor.y - size, size, font: serifBold, color: NIGHT,
+      x: MARGIN, y: cursor.y - size, size, font: serifBold, color: headingTextC,
     });
     cursor.y -= size + 12;
   }
 
   function drawParagraph(text: string, opts?: { italic?: boolean; size?: number; color?: ReturnType<typeof rgb>; justify?: boolean }) {
-    const size = opts?.size ?? 12.5;
+    const size = opts?.size ?? bodySize;
     const font = opts?.italic ? serifItalic : serif;
-    const color = opts?.color ?? INK;
+    const color = opts?.color ?? bodyTextC;
     const justify = opts?.justify ?? true;
-    const lineHeight = size * 1.45;
+    const lineHeight = size * lineMul;
     const spaceW = measure(font, size, " ");
     const cleaned = safe(text).trim();
     if (!cleaned) return;

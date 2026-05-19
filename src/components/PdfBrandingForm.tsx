@@ -49,6 +49,13 @@ type FormState = {
   header_bg_color: string;
   footer_bg_color: string;
   header_text_color: string;
+  page_bg_color: string;
+  body_text_color: string;
+  heading_text_color: string;
+  body_font_size: number;
+  line_height: number;
+  frame_style: "none" | "simple" | "double" | "ornamental";
+  watermark_opacity: number;
 };
 
 const DEFAULT_FORM: FormState = {
@@ -78,6 +85,13 @@ const DEFAULT_FORM: FormState = {
   header_bg_color: "#f5f1e6",
   footer_bg_color: "#f5f1e6",
   header_text_color: "#d4af37",
+  page_bg_color: "#f5f1e6",
+  body_text_color: "#262218",
+  heading_text_color: "#03060f",
+  body_font_size: 12.5,
+  line_height: 1.45,
+  frame_style: "double",
+  watermark_opacity: 0.08,
 };
 
 const KIND_TOGGLES: Array<{ key: keyof FormState; label: string; hint: string }> = [
@@ -163,6 +177,13 @@ export function PdfBrandingForm() {
         header_bg_color: (b.header_bg_color as string | undefined) ?? DEFAULT_FORM.header_bg_color,
         footer_bg_color: (b.footer_bg_color as string | undefined) ?? DEFAULT_FORM.footer_bg_color,
         header_text_color: (b.header_text_color as string | undefined) ?? DEFAULT_FORM.header_text_color,
+        page_bg_color: (b.page_bg_color as string | undefined) ?? DEFAULT_FORM.page_bg_color,
+        body_text_color: (b.body_text_color as string | undefined) ?? DEFAULT_FORM.body_text_color,
+        heading_text_color: (b.heading_text_color as string | undefined) ?? DEFAULT_FORM.heading_text_color,
+        body_font_size: Number(b.body_font_size ?? DEFAULT_FORM.body_font_size),
+        line_height: Number(b.line_height ?? DEFAULT_FORM.line_height),
+        frame_style: ((b.frame_style as FormState["frame_style"] | undefined) ?? DEFAULT_FORM.frame_style),
+        watermark_opacity: Number(b.watermark_opacity ?? DEFAULT_FORM.watermark_opacity),
       });
     }
   }, [data]);
