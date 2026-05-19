@@ -68,10 +68,24 @@ export const SUBSCRIPTION_ADDONS: SubscriptionAddon[] = [
     ],
   },
   {
+    id: "sub_astrologer_numerologist",
+    name: "Astrólogo & Numerólogo",
+    price_cents: 9990,
+    highlight: true,
+    description:
+      "Para profissionais: gerencie clientes ilimitados, com mapa, numerologia, relatórios temáticos e PDFs personalizados para cada um.",
+    features: [
+      "Clientes ilimitados (CRM leve com tags, notas, telefone e e-mail)",
+      "Mapa astral, numerologia e numerologia cabalística por cliente",
+      "Todos os relatórios temáticos ilimitados por cliente",
+      "Oráculo e Tarot contextualizados pelo cliente ativo",
+      "Exportação PDF com a sua marca para cada cliente",
+    ],
+  },
+  {
     id: "sub_unlimited_reports",
     name: "Relatórios Ilimitados",
     price_cents: 7990,
-    highlight: true,
     description: "Gere quantos relatórios quiser sem consumir créditos.",
     features: [
       "Mapa astral, numerologia, amor, carreira",
@@ -79,6 +93,7 @@ export const SUBSCRIPTION_ADDONS: SubscriptionAddon[] = [
       "Inclui exportação PDF",
     ],
   },
+
   {
     id: "sub_oracle_premium",
     name: "Oráculo Premium",
