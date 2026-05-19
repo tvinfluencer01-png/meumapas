@@ -349,8 +349,58 @@ function MapaAstral() {
         <TooltipProvider delayDuration={150}>
           <ChartSummary chart={current} />
 
-          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] gap-6 mt-6">
-            <ChartWheel chart={current} userId={user?.id} svgRefProp={chartSvgRef} compact />
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] gap-6 mt-6 items-start">
+            <div className="space-y-4">
+              <ChartWheel chart={current} userId={user?.id} svgRefProp={chartSvgRef} compact />
+
+              {/* Previsões logo abaixo do mapa, na mesma coluna */}
+              <div className="glass-card rounded-2xl p-6 relative overflow-hidden">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <CalendarClock className="size-4 text-gold" />
+                    <h3 className="font-serif text-lg text-gold">Previsões para os próximos dias</h3>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CreditCostBadge action="astro_forecast" label="Previsões" />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleGenerateForecast}
+                      disabled={forecastLoading || !currentChartId}
+                      className="border-gold/40 text-gold hover:bg-gold/10"
+                    >
+                      {forecastLoading ? <Loader2 className="size-3 animate-spin mr-2" /> : <Sparkles className="size-3 mr-2" />}
+                      {forecast ? "Atualizar" : "Gerar previsões"}
+                    </Button>
+                  </div>
+                </div>
+
+                {!forecast && !forecastLoading && (
+                  <p className="mt-4 text-sm text-muted-foreground">
+                    Leitura prática para os próximos dias, semana, mês e ano com base no seu mapa natal.
+                  </p>
+                )}
+
+                {forecast && (
+                  <div className="mt-5 space-y-3">
+                    {[
+                      { label: "Próximos dias", text: forecast.nextDays },
+                      { label: "Esta semana", text: forecast.week },
+                      { label: "Este mês", text: forecast.month },
+                      { label: "Este ano", text: forecast.year },
+                    ].map((f) => (
+                      <div key={f.label} className="rounded-xl bg-secondary/30 border border-gold/15 p-4">
+                        <div className="text-[10px] uppercase tracking-widest text-gold mb-2">{f.label}</div>
+                        <p className="text-sm text-stardust whitespace-pre-wrap leading-relaxed">{f.text}</p>
+                      </div>
+                    ))}
+                    <p className="text-[11px] text-muted-foreground/70 text-right">
+                      Geradas em {new Date(forecast.generatedAt).toLocaleString("pt-BR")}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
             <div className="space-y-4">
               <div className="glass-card rounded-2xl p-6">
                 <h3 className="font-serif text-xl text-gold">Síntese</h3>
@@ -428,53 +478,6 @@ function MapaAstral() {
             </div>
           </div>
 
-          {/* Previsões geradas por IA com base no mapa */}
-          <div className="glass-card rounded-2xl p-6 mt-6 relative overflow-hidden">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <CalendarClock className="size-4 text-gold" />
-                <h3 className="font-serif text-xl text-gold">Previsões para os próximos dias</h3>
-              </div>
-              <div className="flex items-center gap-2">
-                <CreditCostBadge action="astro_forecast" label="Previsões" />
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleGenerateForecast}
-                  disabled={forecastLoading || !currentChartId}
-                  className="border-gold/40 text-gold hover:bg-gold/10"
-                >
-                  {forecastLoading ? <Loader2 className="size-3 animate-spin mr-2" /> : <Sparkles className="size-3 mr-2" />}
-                  {forecast ? "Atualizar" : "Gerar previsões"}
-                </Button>
-              </div>
-            </div>
-
-            {!forecast && !forecastLoading && (
-              <p className="mt-4 text-sm text-muted-foreground">
-                Geramos uma leitura prática para os próximos dias, semana, mês e ano com base no seu mapa natal e na fase atual do céu.
-              </p>
-            )}
-
-            {forecast && (
-              <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
-                {[
-                  { label: "Próximos dias", text: forecast.nextDays },
-                  { label: "Esta semana", text: forecast.week },
-                  { label: "Este mês", text: forecast.month },
-                  { label: "Este ano", text: forecast.year },
-                ].map((f) => (
-                  <div key={f.label} className="rounded-xl bg-secondary/30 border border-gold/15 p-4">
-                    <div className="text-[10px] uppercase tracking-widest text-gold mb-2">{f.label}</div>
-                    <p className="text-sm text-stardust whitespace-pre-wrap leading-relaxed">{f.text}</p>
-                  </div>
-                ))}
-                <p className="md:col-span-2 text-[11px] text-muted-foreground/70 text-right">
-                  Geradas em {new Date(forecast.generatedAt).toLocaleString("pt-BR")}
-                </p>
-              </div>
-            )}
-          </div>
         </TooltipProvider>
       )}
     </div>
@@ -696,11 +699,11 @@ function ChartWheel({ chart, userId, svgRefProp, compact }: { chart: any; userId
         <button type="button" onClick={() => zoomBy(1.3)} disabled={atMinZoom} className="size-7 rounded-md border border-gold/30 bg-background/70 text-gold text-sm hover:bg-gold/10 disabled:opacity-40" aria-label="Afastar">−</button>
         <button type="button" onClick={resetView} disabled={!isZoomed} className="h-7 px-2 rounded-md border border-gold/30 bg-background/70 text-gold text-[10px] hover:bg-gold/10 disabled:opacity-40">Reset</button>
       </div>
-      <p className="absolute bottom-2 left-3 text-[10px] text-muted-foreground/70 pointer-events-none">Arraste para mover · scroll para zoom</p>
+      <p className="absolute bottom-1 left-2 text-[9px] text-muted-foreground/60 pointer-events-none">Arraste · scroll p/ zoom</p>
       <svg
         ref={svgRef}
         viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`}
-        className={`w-full ${compact ? "max-w-[420px]" : "max-w-[560px]"} block mx-auto touch-none select-none`}
+        className={`w-full ${compact ? "max-w-[340px]" : "max-w-[560px]"} block mx-auto touch-none select-none`}
         style={{ cursor: drag.current ? "grabbing" : "grab" }}
         onWheel={onWheel}
         onPointerDown={onPointerDown}
