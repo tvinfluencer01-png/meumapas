@@ -470,3 +470,61 @@ function Field({ label, required, children }: { label: string; required?: boolea
     </div>
   );
 }
+
+function CityCombobox({
+  value, onChange,
+}: {
+  value: BRCity;
+  onChange: (c: BRCity) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const label = value.state ? `${value.name} - ${value.state}` : value.name;
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-full justify-between font-normal"
+        >
+          <span className="truncate">{label}</span>
+          <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+        <Command
+          filter={(itemValue, search) => {
+            const norm = (s: string) =>
+              s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            return norm(itemValue).includes(norm(search)) ? 1 : 0;
+          }}
+        >
+          <CommandInput placeholder="Buscar cidade…" />
+          <CommandList className="max-h-64">
+            <CommandEmpty>Nenhuma cidade encontrada.</CommandEmpty>
+            <CommandGroup>
+              {BR_CITIES.map((c) => {
+                const v = `${c.name} - ${c.state}`;
+                const selected = c.name === value.name && c.state === value.state;
+                return (
+                  <CommandItem
+                    key={v}
+                    value={v}
+                    onSelect={() => { onChange(c); setOpen(false); }}
+                  >
+                    <Check className={cn("mr-2 size-4", selected ? "opacity-100" : "opacity-0")} />
+                    <span className="flex-1">{c.name}</span>
+                    <span className="text-xs text-muted-foreground ml-2">{c.state}</span>
+                  </CommandItem>
+                );
+              })}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
