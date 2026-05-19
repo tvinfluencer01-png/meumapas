@@ -179,7 +179,7 @@ function MapaAstral() {
       setForecastDeleting(false);
     }
   }
-  }
+
 
   async function handleExportPdf() {
     if (!currentChartId) { toast.error("Gere o mapa primeiro."); return; }
