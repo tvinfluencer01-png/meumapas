@@ -429,7 +429,7 @@ function MapaAstral() {
                 )}
 
                 {forecast && (
-                  <div className="mt-5 space-y-3 lg:flex-1 lg:min-h-0 lg:overflow-y-auto pr-2 -mr-2 [scrollbar-gutter:stable]">
+                  <div className="mt-5 space-y-3 lg:flex-1 lg:min-h-0 lg:overflow-y-auto pr-2 -mr-2 [scrollbar-gutter:stable] scrollbar-gold">
                     {[
                       { label: "Próximos dias", text: forecast.nextDays },
                       { label: "Esta semana", text: forecast.week },

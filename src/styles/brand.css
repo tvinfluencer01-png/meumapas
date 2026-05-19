@@ -112,6 +112,25 @@
     background: var(--gradient-gold-line);
   }
 
+  /* Scrollbar dourado para combinar com a marca */
+  .scrollbar-gold {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklab, var(--gold) 55%, transparent) transparent;
+  }
+  .scrollbar-gold::-webkit-scrollbar { width: 8px; height: 8px; }
+  .scrollbar-gold::-webkit-scrollbar-track { background: transparent; }
+  .scrollbar-gold::-webkit-scrollbar-thumb {
+    background: color-mix(in oklab, var(--gold) 50%, transparent);
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  .scrollbar-gold::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in oklab, var(--gold) 75%, transparent);
+    background-clip: padding-box;
+    border: 2px solid transparent;
+  }
+
   /* ---------- 7. Keyframes ---------- */
   @keyframes shimmer { to { background-position: 200% center; } }
 
