@@ -283,6 +283,11 @@ function ActiveClientSwitcher() {
       qc.setQueryData(["client-profiles-switcher"], (old: typeof data) =>
         old ? { ...old, active_client_profile_id: id } : old,
       );
+      qc.setQueryData(["client-profiles"], (old: typeof data) =>
+        old ? { ...old, active_client_profile_id: id } : old,
+      );
+      await qc.cancelQueries({ queryKey: ["active-subject"] });
+      qc.removeQueries({ queryKey: ["active-subject"] });
       // Aguarda o reprocessamento de todas as telas (re-fetch global) antes de confirmar
       await qc.invalidateQueries();
       setConfirmName(name);
