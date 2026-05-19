@@ -166,7 +166,7 @@ function AuthedLayout() {
               </div>
             </Link>
           )}
-          <nav className="flex-1 overflow-y-auto p-4 space-y-1">
+          <nav className="flex-1 overflow-y-auto p-4 space-y-1 scrollbar-gold">
 
             {NAV.filter((item) => !item.addonId || activeAddons.has(item.addonId)).map((item) => (
               <Link
