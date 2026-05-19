@@ -291,7 +291,7 @@ export async function buildSimplePdf(data: SimplePdfData): Promise<Uint8Array> {
   }
 
   function drawParagraph(text: string, opts?: { italic?: boolean; size?: number; color?: ReturnType<typeof rgb>; justify?: boolean }) {
-    const size = opts?.size ?? 11;
+    const size = opts?.size ?? 12.5;
     const font = opts?.italic ? serifItalic : serif;
     const color = opts?.color ?? INK;
     const justify = opts?.justify ?? true;
