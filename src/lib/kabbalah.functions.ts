@@ -91,6 +91,7 @@ A lista "phases" deve ter entre 3 e 5 itens, cada um focado em um aspecto da sef
       const first = jsonStr.indexOf("{");
       const last = jsonStr.lastIndexOf("}");
       if (first >= 0 && last > first) jsonStr = jsonStr.slice(first, last + 1);
+      jsonStr = sanitizeJsonString(jsonStr);
       const parsed = JSON.parse(jsonStr) as {
         opening: string;
         phases: { title: string; duration_min: number; guidance: string }[];
