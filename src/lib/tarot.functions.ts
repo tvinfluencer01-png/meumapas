@@ -8,6 +8,7 @@ import {
   consumeCredits,
   refundCredits,
   getCreditCost,
+  hasUnlimitedAccess,
   type CreditAction,
 } from "@/lib/credits.functions";
 import { SPREADS, drawSpread, type SpreadId } from "@/lib/tarot.deck";
@@ -36,18 +37,22 @@ export const generateTarotReading = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { userId } = context;
     const action = ACTION_FOR_SPREAD[data.spread];
-    const cost = await getCreditCost(action);
-    const ok = await consumeCredits(
-      userId,
-      action,
-      `Tarot ${SPREADS[data.spread].label}`,
-    );
-    if (!ok) {
-      throw new Error(
-        `Saldo insuficiente. Esta leitura custa ${cost} créditos. Compre mais em /addons.`,
+    const unlimited = await hasUnlimitedAccess(userId, action);
+    const cost = unlimited ? 0 : await getCreditCost(action);
+    let charged = false;
+    if (!unlimited) {
+      const ok = await consumeCredits(
+        userId,
+        action,
+        `Tarot ${SPREADS[data.spread].label}`,
       );
+      if (!ok) {
+        throw new Error(
+          `Saldo insuficiente. Esta leitura custa ${cost} créditos. Compre mais em /addons.`,
+        );
+      }
+      charged = cost > 0;
     }
-    const charged = cost > 0;
 
     try {
       const draw = drawSpread(data.spread);
@@ -168,14 +173,18 @@ export const exportTarotPdf = createServerFn({ method: "POST" })
     }
 
     const action: CreditAction = "tarot_pdf";
-    const cost = await getCreditCost(action);
-    const ok = await consumeCredits(userId, action, `PDF tarot ${reading.id}`);
-    if (!ok) {
-      throw new Error(
-        `Saldo insuficiente. Exportar este PDF custa ${cost} créditos.`,
-      );
+    const unlimited = await hasUnlimitedAccess(userId, action);
+    const cost = unlimited ? 0 : await getCreditCost(action);
+    let charged = false;
+    if (!unlimited) {
+      const ok = await consumeCredits(userId, action, `PDF tarot ${reading.id}`);
+      if (!ok) {
+        throw new Error(
+          `Saldo insuficiente. Exportar este PDF custa ${cost} créditos.`,
+        );
+      }
+      charged = cost > 0;
     }
-    const charged = cost > 0;
 
     try {
       const interp = JSON.parse(reading.interpretation) as {
