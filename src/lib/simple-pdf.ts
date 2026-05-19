@@ -34,6 +34,11 @@ export type SimplePdfData = {
   meta?: string[];
   blocks: SimplePdfBlock[];
   accentHex?: string; // mantido por compatibilidade; ignorado em favor do dourado do template
+  /**
+   * Quando true, os títulos `h2` não forçam quebra de página — o conteúdo
+   * flui um abaixo do outro. Usado pela Meditação Cabalística.
+   */
+  flowing?: boolean;
 };
 
 // ---------- Paleta do template ----------
@@ -561,7 +566,7 @@ export async function buildSimplePdf(data: SimplePdfData): Promise<Uint8Array> {
 
   // -------- RENDER BLOCKS --------
   for (const block of data.blocks) {
-    if (block.type === "h2") drawHeading(block.text, 22, { newPage: true });
+    if (block.type === "h2") drawHeading(block.text, 22, { newPage: !data.flowing });
     else if (block.type === "h3") drawSubHeading(block.text);
     else if (block.type === "p") drawParagraph(block.text);
     else if (block.type === "quote") drawQuote(block.text);
