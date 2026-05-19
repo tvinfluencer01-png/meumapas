@@ -13,6 +13,7 @@ import {
 } from "@/lib/credits.functions";
 import { SEFIROT, findSefirah } from "@/lib/kabbalah.tree";
 import { buildSimplePdf, type SimplePdfBlock } from "@/lib/simple-pdf";
+import { sanitizeJsonString } from "@/lib/json-sanitize";
 
 const SefirahEnum = z.enum(SEFIROT.map((s) => s.id) as [string, ...string[]]);
 
