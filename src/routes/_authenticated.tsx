@@ -1,16 +1,24 @@
 import { createFileRoute, Outlet, Link, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Starfield } from "@/components/Starfield";
 import { UserProfileDialog } from "@/components/UserProfileDialog";
 import { Logo } from "@/components/Logo";
 import {
-  LayoutDashboard, CircleDot, Hash, MessageCircle, LogOut, Menu, X, ScrollText, Shield, Settings, Coins, Wand2, TreePine, Crown, Infinity as InfinityIcon, FileBadge, User as UserIcon, Palette, Users,
+  LayoutDashboard, CircleDot, Hash, MessageCircle, LogOut, Menu, X, ScrollText, Shield, Settings, Coins, Wand2, TreePine, Crown, Infinity as InfinityIcon, FileBadge, User as UserIcon, Palette, Users, UserCircle2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useActiveSubject } from "@/hooks/use-active-subject";
+import {
+  Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import { toast } from "sonner";
+
+import { listClientProfiles, setActiveClientProfile } from "@/lib/client-profiles.functions";
+
+const SELF_VALUE = "__self__";
 
 export const Route = createFileRoute("/_authenticated")({
   component: AuthedLayout,
@@ -53,7 +61,7 @@ function AuthedLayout() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [activeAddons, setActiveAddons] = useState<Set<string>>(new Set());
   const [profileOpen, setProfileOpen] = useState(false);
-  const { data: activeSubject } = useActiveSubject();
+  
 
 
   // Saldo de créditos + pico histórico para calcular a barra
@@ -153,18 +161,10 @@ function AuthedLayout() {
             <Logo sizeClassName="size-12" animation="float" />
             <span className="font-serif text-xl shimmer-text">Cosmic AI</span>
           </div>
-          {activeSubject?.kind === "client" && (
-            <Link
-              to="/clientes"
-              className="mx-4 mt-3 flex items-center gap-2 rounded-lg border border-gold/30 bg-gold/10 px-3 py-2 text-xs hover:bg-gold/20 transition-colors"
-              title="Cliente ativo — clique para gerenciar"
-            >
-              <Users className="size-3.5 text-gold shrink-0" />
-              <div className="min-w-0 flex-1">
-                <div className="text-[10px] uppercase tracking-wider text-gold/80">Cliente ativo</div>
-                <div className="truncate font-medium text-foreground">{activeSubject.full_name}</div>
-              </div>
-            </Link>
+          {activeAddons.has("sub_astrologer_numerologist") && (
+            <div className="px-4 pt-3">
+              <ActiveClientSwitcher />
+            </div>
           )}
           <nav className="flex-1 overflow-y-auto p-4 space-y-1 scrollbar-gold">
 
@@ -252,6 +252,89 @@ function AuthedLayout() {
           </div>
         </main>
       </div>
+    </div>
+  );
+}
+
+function ActiveClientSwitcher() {
+  const qc = useQueryClient();
+  const listFn = useServerFn(listClientProfiles);
+  const setActiveFn = useServerFn(setActiveClientProfile);
+
+  const { data } = useQuery({
+    queryKey: ["client-profiles-switcher"],
+    queryFn: () => listFn(),
+    staleTime: 30_000,
+  });
+
+  const profiles = data?.profiles ?? [];
+  const activeId = data?.active_client_profile_id ?? null;
+  const currentValue = activeId ?? SELF_VALUE;
+
+  const mutation = useMutation({
+    mutationFn: (id: string | null) => setActiveFn({ data: { id } }),
+    onSuccess: async (_r, id) => {
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["client-profiles-switcher"] }),
+        qc.invalidateQueries({ queryKey: ["active-subject"] }),
+        qc.invalidateQueries({ queryKey: ["client-profiles"] }),
+        qc.invalidateQueries({ queryKey: ["reports"] }),
+        qc.invalidateQueries({ queryKey: ["astro-chart"] }),
+      ]);
+      const name = id
+        ? profiles.find((p) => p.id === id)?.full_name ?? "Cliente"
+        : "Eu mesmo";
+      toast.success(`Contexto ativo: ${name}`);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  function handleChange(value: string) {
+    const id = value === SELF_VALUE ? null : value;
+    mutation.mutate(id);
+  }
+
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[10px] uppercase tracking-[0.2em] text-gold/80">
+          Contexto ativo
+        </span>
+        <Link to="/clientes" className="text-[10px] text-muted-foreground hover:text-gold transition-colors">
+          gerenciar
+        </Link>
+      </div>
+      <Select value={currentValue} onValueChange={handleChange} disabled={mutation.isPending}>
+        <SelectTrigger className="w-full h-9 text-xs bg-background/60 border-gold/30 hover:border-gold/60">
+          <SelectValue placeholder="Selecionar..." />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectGroup>
+            <SelectItem value={SELF_VALUE}>
+              <span className="flex items-center gap-2">
+                <UserCircle2 className="size-3.5 text-gold" /> Eu mesmo
+              </span>
+            </SelectItem>
+          </SelectGroup>
+          {profiles.length > 0 && (
+            <>
+              <SelectSeparator />
+              <SelectGroup>
+                <SelectLabel className="text-[10px] uppercase tracking-wider text-gold/70">
+                  Meus clientes
+                </SelectLabel>
+                {profiles.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    <span className="flex items-center gap-2">
+                      <Users className="size-3.5 text-gold" /> {p.full_name}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </>
+          )}
+        </SelectContent>
+      </Select>
     </div>
   );
 }
