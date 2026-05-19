@@ -75,6 +75,92 @@ function MapaAstral() {
     },
   });
 
+  // Carrega previsões já salvas quando o chart muda
+  useEffect(() => {
+    const f = (chart?.forecast ?? latest?.forecast) as typeof forecast | null;
+    if (f && f.nextDays) setForecast(f);
+    else setForecast(null);
+  }, [chart, latest]);
+
+  const currentChartId: string | null = chart?.id ?? latest?.id ?? null;
+
+  async function captureChartPng(): Promise<string | null> {
+    const svg = chartSvgRef.current;
+    if (!svg) return null;
+    try {
+      const clone = svg.cloneNode(true) as SVGSVGElement;
+      clone.setAttribute("viewBox", "0 0 560 560");
+      clone.setAttribute("width", "1120");
+      clone.setAttribute("height", "1120");
+      clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+      const xml = new XMLSerializer().serializeToString(clone);
+      const svgBlob = new Blob([xml], { type: "image/svg+xml;charset=utf-8" });
+      const url = URL.createObjectURL(svgBlob);
+      const png = await new Promise<string | null>((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          canvas.width = 1120; canvas.height = 1120;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) return resolve(null);
+          ctx.fillStyle = "#03060f";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          URL.revokeObjectURL(url);
+          resolve(canvas.toDataURL("image/png").split(",")[1] ?? null);
+        };
+        img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+        img.src = url;
+      });
+      return png;
+    } catch (e) {
+      console.error("[mapa-astral] captureChartPng failed", e);
+      return null;
+    }
+  }
+
+  async function handleGenerateForecast() {
+    if (!currentChartId) return;
+    setForecastLoading(true);
+    showLoader({ title: "Lendo o céu dos próximos dias", subtitle: "IA astrológica" });
+    try {
+      const f = await genForecast({ data: { chartId: currentChartId } });
+      setForecast(f);
+      toast.success("Previsões reveladas.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha ao gerar previsões.");
+    } finally {
+      setForecastLoading(false);
+      hideLoader();
+      emitCreditsChanged();
+    }
+  }
+
+  async function handleExportPdf() {
+    if (!currentChartId) { toast.error("Gere o mapa primeiro."); return; }
+    setPdfLoading(true);
+    showLoader({ title: "Montando seu relatório", subtitle: "PDF completo do mapa" });
+    try {
+      const chartImageB64 = await captureChartPng();
+      const r = await exportPdf({ data: { chartId: currentChartId, chartImageB64: chartImageB64 ?? undefined } });
+      const bytes = Uint8Array.from(atob(r.pdfBase64), (c) => c.charCodeAt(0));
+      const blob = new Blob([bytes], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `mapa-astral-${new Date().toISOString().slice(0, 10)}.pdf`;
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+      toast.success("PDF gerado.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha ao gerar PDF.");
+    } finally {
+      setPdfLoading(false);
+      hideLoader();
+      emitCreditsChanged();
+    }
+  }
+
   async function handleGenerate() {
     if (!birth) {
       toast.error("Complete seus dados de nascimento primeiro.");
