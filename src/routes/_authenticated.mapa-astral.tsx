@@ -32,12 +32,16 @@ function MapaAstral() {
   const ping = useServerFn(pingAstro);
   const genForecast = useServerFn(generateAstroForecast);
   const exportPdf = useServerFn(exportAstroPdf);
+  const deleteForecastFn = useServerFn(deleteAstroForecast);
+  const downloadForecastPdfFn = useServerFn(downloadAstroForecastPdf);
   const [loading, setLoading] = useState(false);
   const [chart, setChart] = useState<any>(null);
   const [genError, setGenError] = useState<string | null>(null);
   const [retryInfo, setRetryInfo] = useState<{ attempt: number; max: number; waitMs: number } | null>(null);
   const [forecast, setForecast] = useState<{ nextDays: string; week: string; month: string; year: string; generatedAt: string } | null>(null);
   const [forecastLoading, setForecastLoading] = useState(false);
+  const [forecastPdfLoading, setForecastPdfLoading] = useState(false);
+  const [forecastDeleting, setForecastDeleting] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
   const chartSvgRef = useRef<SVGSVGElement | null>(null);
 
