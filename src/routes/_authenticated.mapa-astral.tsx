@@ -4,10 +4,10 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { showLoader, hideLoader, updateLoader } from "@/components/system-feedback";
-import { Loader2, Sparkles, Wand2, AlertTriangle, FileDown, CalendarClock } from "lucide-react";
+import { Loader2, Sparkles, Wand2, AlertTriangle, FileDown, CalendarClock, Trash2, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { computeNatalChart, pingAstro, generateAstroForecast, exportAstroPdf } from "@/lib/astrology.functions";
+import { computeNatalChart, pingAstro, generateAstroForecast, exportAstroPdf, deleteAstroForecast, downloadAstroForecastPdf } from "@/lib/astrology.functions";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { PLANET_MEANING, SIGN_MEANING, ASPECT_MEANING, SIGN_GUIDANCE } from "@/lib/astro-meanings";
@@ -32,12 +32,16 @@ function MapaAstral() {
   const ping = useServerFn(pingAstro);
   const genForecast = useServerFn(generateAstroForecast);
   const exportPdf = useServerFn(exportAstroPdf);
+  const deleteForecastFn = useServerFn(deleteAstroForecast);
+  const downloadForecastPdfFn = useServerFn(downloadAstroForecastPdf);
   const [loading, setLoading] = useState(false);
   const [chart, setChart] = useState<any>(null);
   const [genError, setGenError] = useState<string | null>(null);
   const [retryInfo, setRetryInfo] = useState<{ attempt: number; max: number; waitMs: number } | null>(null);
   const [forecast, setForecast] = useState<{ nextDays: string; week: string; month: string; year: string; generatedAt: string } | null>(null);
   const [forecastLoading, setForecastLoading] = useState(false);
+  const [forecastPdfLoading, setForecastPdfLoading] = useState(false);
+  const [forecastDeleting, setForecastDeleting] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
   const chartSvgRef = useRef<SVGSVGElement | null>(null);
 
@@ -135,6 +139,47 @@ function MapaAstral() {
       emitCreditsChanged();
     }
   }
+
+
+
+  async function handleDownloadForecastPdf() {
+    if (!currentChartId || !forecast) return;
+    setForecastPdfLoading(true);
+    showLoader({ title: "Preparando PDF das previsões", subtitle: "Documento pronto para baixar" });
+    try {
+      const r = await downloadForecastPdfFn({ data: { chartId: currentChartId } });
+      const bytes = Uint8Array.from(atob(r.pdfBase64), (c) => c.charCodeAt(0));
+      const blob = new Blob([bytes], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `previsoes-astrais-${new Date().toISOString().slice(0, 10)}.pdf`;
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+      toast.success("PDF das previsões pronto.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha ao gerar PDF das previsões.");
+    } finally {
+      setForecastPdfLoading(false);
+      hideLoader();
+    }
+  }
+
+  async function handleDeleteForecast() {
+    if (!currentChartId) return;
+    if (!confirm("Apagar as previsões salvas deste mapa?")) return;
+    setForecastDeleting(true);
+    try {
+      await deleteForecastFn({ data: { chartId: currentChartId } });
+      setForecast(null);
+      toast.success("Previsões apagadas.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha ao apagar previsões.");
+    } finally {
+      setForecastDeleting(false);
+    }
+  }
+
 
   async function handleExportPdf() {
     if (!currentChartId) { toast.error("Gere o mapa primeiro."); return; }
@@ -397,6 +442,31 @@ function MapaAstral() {
                     <p className="text-[11px] text-muted-foreground/70 text-right">
                       Geradas em {new Date(forecast.generatedAt).toLocaleString("pt-BR")}
                     </p>
+                  </div>
+                )}
+
+                {forecast && (
+                  <div className="mt-4 flex flex-wrap items-center justify-end gap-2 shrink-0 border-t border-gold/10 pt-3">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleDownloadForecastPdf}
+                      disabled={forecastPdfLoading || forecastDeleting}
+                      className="border-gold/40 text-gold hover:bg-gold/10"
+                    >
+                      {forecastPdfLoading ? <Loader2 className="size-3 animate-spin mr-2" /> : <Download className="size-3 mr-2" />}
+                      Baixar PDF
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleDeleteForecast}
+                      disabled={forecastDeleting || forecastPdfLoading}
+                      className="border-destructive/40 text-destructive hover:bg-destructive/10"
+                    >
+                      {forecastDeleting ? <Loader2 className="size-3 animate-spin mr-2" /> : <Trash2 className="size-3 mr-2" />}
+                      Apagar
+                    </Button>
                   </div>
                 )}
               </div>

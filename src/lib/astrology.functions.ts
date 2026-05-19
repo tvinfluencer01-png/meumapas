@@ -549,3 +549,73 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
       throw err;
     }
   });
+
+/* ============================================================
+ * Apagar previsões salvas
+ * ============================================================ */
+export const deleteAstroForecast = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ chartId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    const { error } = await supabaseAdmin
+      .from("astro_charts")
+      .update({ forecast: null, forecast_generated_at: null })
+      .eq("id", data.chartId)
+      .eq("user_id", userId);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
+/* ============================================================
+ * PDF apenas com as previsões (sem custo extra — já foram pagas)
+ * ============================================================ */
+export const downloadAstroForecastPdf = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ chartId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    const { data: chart } = await supabaseAdmin
+      .from("astro_charts")
+      .select("*")
+      .eq("id", data.chartId)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (!chart) throw new Error("Mapa não encontrado");
+    const forecast = chart.forecast as AstroForecast | null;
+    if (!forecast) throw new Error("Nenhuma previsão salva para este mapa.");
+
+    const blocks: SimplePdfBlock[] = [];
+    blocks.push({ type: "h2", text: "Previsões para os próximos dias" });
+    blocks.push({ type: "p", text: forecast.nextDays });
+    blocks.push({ type: "h2", text: "Previsões para a semana" });
+    blocks.push({ type: "p", text: forecast.week });
+    blocks.push({ type: "h2", text: "Previsões para o mês" });
+    blocks.push({ type: "p", text: forecast.month });
+    blocks.push({ type: "h2", text: "Previsões para o ano" });
+    blocks.push({ type: "p", text: forecast.year });
+
+    const { data: brandRow } = await supabaseAdmin
+      .from("pdf_branding")
+      .select("*")
+      .eq("user_id", userId)
+      .maybeSingle();
+    const branding = isBrandingEnabledFor(brandRow, "astrology")
+      ? await resolveBrandingPayload(brandRow)
+      : undefined;
+
+    const pdfBytes = await buildSimplePdf({
+      brand: "Cosmic AI",
+      eyebrow: "Astrologia · Previsões",
+      title: "Suas previsões astrais",
+      subtitle: chart.summary ?? "Tendências para os próximos dias, semana, mês e ano",
+      meta: [`Geradas em ${new Date(forecast.generatedAt).toLocaleString("pt-BR")}`],
+      blocks,
+      accentHex: "#d4af37",
+      flowing: false,
+      branding,
+    });
+
+    const base64 = Buffer.from(pdfBytes).toString("base64");
+    return { pdfBase64: base64 };
+  });
