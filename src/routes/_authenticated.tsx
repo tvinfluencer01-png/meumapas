@@ -249,6 +249,7 @@ function AuthedLayout() {
 
         <main className="flex-1 min-h-screen lg:pl-0">
           <div className="p-4 lg:p-8 max-w-7xl mx-auto">
+            <ActiveContextBanner />
             <Outlet />
           </div>
         </main>
