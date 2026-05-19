@@ -61,7 +61,7 @@ function AuthedLayout() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [activeAddons, setActiveAddons] = useState<Set<string>>(new Set());
   const [profileOpen, setProfileOpen] = useState(false);
-  const { data: activeSubject } = useActiveSubject();
+  void useActiveSubject;
 
 
   // Saldo de créditos + pico histórico para calcular a barra
