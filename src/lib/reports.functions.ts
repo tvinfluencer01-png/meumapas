@@ -320,13 +320,13 @@ ${astroBlock}`;
     const getFallbackModels = () => {
       const candidates = (
         provider === "openai" && customKey
-          ? [modelName, "gpt-5-mini", "gpt-5-nano"]
+          ? [modelName, "gpt-5-nano"]
           : provider === "gemini" && customKey
-            ? [modelName, "gemini-2.5-flash", "gemini-2.0-flash"]
+            ? [modelName, "gemini-2.5-flash-lite"]
             : provider === "anthropic" && customKey
               ? [modelName, "claude-3-5-sonnet-20241022"]
               : !isCustomProvider && lovableKey
-                ? [modelName, "google/gemini-3-flash-preview", "google/gemini-3.1-flash-lite-preview"]
+                ? [modelName, "google/gemini-2.5-flash-lite", "google/gemini-3-flash-preview"]
                 : [modelName]
       ).filter((candidate, index, arr) => arr.indexOf(candidate) === index);
 
