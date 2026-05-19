@@ -222,14 +222,43 @@ function TarotPage() {
         )}
       </section>
 
+      {/* Shuffle overlay while drawing */}
+      {genMut.isPending && (
+        <section className="glass-card rounded-2xl p-8 flex flex-col items-center justify-center gap-6">
+          <div className="relative h-44 w-56">
+            {[0, 1, 2, 3, 4].map((i) => (
+              <div
+                key={i}
+                className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-32 rounded-lg border border-gold/50 bg-gradient-to-br from-background via-secondary to-background animate-tarot-shuffle animate-tarot-glow"
+                style={
+                  {
+                    ["--r" as string]: `${(i - 2) * 8}deg`,
+                    animationDelay: `${i * 0.12}s`,
+                    zIndex: i,
+                  } as React.CSSProperties
+                }
+              >
+                <div className="absolute inset-1 rounded-md border border-gold/30 flex items-center justify-center">
+                  <Sparkles className="size-6 text-gold/70" />
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="text-sm text-muted-foreground italic">
+            Embaralhando os arcanos e consultando o oráculo...
+          </p>
+        </section>
+      )}
+
       {/* Result */}
-      {current && (
-        <section className="space-y-4">
+      {current && !genMut.isPending && (
+        <section key={current.id} className="space-y-4">
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
             {current.cards.map((c, i) => (
               <div
                 key={i}
-                className="rounded-xl border border-gold/30 bg-secondary/40 p-3 text-center"
+                className="rounded-xl border border-gold/30 bg-secondary/40 p-3 text-center animate-tarot-flip"
+                style={{ animationDelay: `${i * 0.18}s` }}
               >
                 <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
                   {c.position}
@@ -249,7 +278,10 @@ function TarotPage() {
             ))}
           </div>
 
-          <article className="prose prose-invert prose-sm max-w-none glass-card rounded-2xl p-5 lg:p-6">
+          <article
+            className="prose prose-invert prose-sm max-w-none glass-card rounded-2xl p-5 lg:p-6 animate-tarot-reveal"
+            style={{ animationDelay: `${current.cards.length * 0.18 + 0.2}s` }}
+          >
             <h2 className="font-serif text-gold">Visão geral</h2>
             <p>{current.interpretation.summary}</p>
             {current.interpretation.perCard.map((p, i) => (
