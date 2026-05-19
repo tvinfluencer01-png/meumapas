@@ -212,6 +212,34 @@ export async function buildSimplePdf(data: SimplePdfData): Promise<Uint8Array> {
   const footerBg = b?.footerBgColor ? hexToRgb(b.footerBgColor) : PARCHMENT;
   const headerText = b?.headerTextColor ? hexToRgb(b.headerTextColor) : GOLD;
   const titlePos = b?.coverTitlePosition ?? "center";
+  // ---- PDF CSS Avançado ----
+  const pageBg = b?.pageBgColor ? hexToRgb(b.pageBgColor) : PARCHMENT;
+  const bodyTextC = b?.bodyTextColor ? hexToRgb(b.bodyTextColor) : INK;
+  const headingTextC = b?.headingTextColor ? hexToRgb(b.headingTextColor) : NIGHT;
+  const bodySize = typeof b?.bodyFontSize === "number" ? b.bodyFontSize : 12.5;
+  const lineMul = typeof b?.lineHeight === "number" ? b.lineHeight : 1.45;
+  const frame = b?.frameStyle ?? "double";
+  const wmOpacity = typeof b?.watermarkOpacity === "number" ? Math.max(0, Math.min(1, b.watermarkOpacity)) : 0.08;
+
+  // Embed page bg image and watermark once (used by every newPage call)
+  let pageBgImage: Awaited<ReturnType<typeof doc.embedPng>> | null = null;
+  if (b?.pageBgImageBytes && b.pageBgImageMime) {
+    try {
+      pageBgImage =
+        b.pageBgImageMime === "image/png"
+          ? await doc.embedPng(b.pageBgImageBytes)
+          : await doc.embedJpg(b.pageBgImageBytes);
+    } catch { pageBgImage = null; }
+  }
+  let watermarkImage: Awaited<ReturnType<typeof doc.embedPng>> | null = null;
+  if (b?.watermarkImageBytes && b.watermarkImageMime) {
+    try {
+      watermarkImage =
+        b.watermarkImageMime === "image/png"
+          ? await doc.embedPng(b.watermarkImageBytes)
+          : await doc.embedJpg(b.watermarkImageBytes);
+    } catch { watermarkImage = null; }
+  }
 
   // -------- CAPA --------
   const cover = doc.addPage(PageSizes.A4);
@@ -249,17 +277,34 @@ export async function buildSimplePdf(data: SimplePdfData): Promise<Uint8Array> {
     }
   }
 
+  // Moldura da capa (estilo configurável)
   const inset = 28;
-  cover.drawRectangle({
-    x: inset, y: inset,
-    width: PAGE_W - inset * 2, height: PAGE_H - inset * 2,
-    borderColor: accent, borderWidth: 0.8,
-  });
-  cover.drawRectangle({
-    x: inset + 6, y: inset + 6,
-    width: PAGE_W - inset * 2 - 12, height: PAGE_H - inset * 2 - 12,
-    borderColor: accent, borderWidth: 0.3,
-  });
+  if (frame !== "none") {
+    cover.drawRectangle({
+      x: inset, y: inset,
+      width: PAGE_W - inset * 2, height: PAGE_H - inset * 2,
+      borderColor: accent, borderWidth: frame === "ornamental" ? 1.2 : 0.8,
+    });
+    if (frame === "double" || frame === "ornamental") {
+      cover.drawRectangle({
+        x: inset + 6, y: inset + 6,
+        width: PAGE_W - inset * 2 - 12, height: PAGE_H - inset * 2 - 12,
+        borderColor: accent, borderWidth: 0.3,
+      });
+    }
+    if (frame === "ornamental") {
+      // pequenos cantos decorativos
+      const corners: Array<[number, number]> = [
+        [inset + 14, inset + 14],
+        [PAGE_W - inset - 14, inset + 14],
+        [inset + 14, PAGE_H - inset - 14],
+        [PAGE_W - inset - 14, PAGE_H - inset - 14],
+      ];
+      for (const [cx, cy] of corners) {
+        cover.drawCircle({ x: cx, y: cy, size: 3, color: accent });
+      }
+    }
+  }
 
   const topLabel = safe(`${data.brand.toUpperCase()}  -  ${data.eyebrow.toUpperCase()}`);
   const topLabelW = sans.widthOfTextAtSize(topLabel, 9);
