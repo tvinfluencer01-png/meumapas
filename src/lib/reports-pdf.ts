@@ -331,17 +331,41 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
   // Quebra silábica simples (PT-BR friendly): retorna posições de corte
   // válidas dentro da palavra, deixando pelo menos 2 chars de cada lado.
   function hyphenPoints(word: string): number[] {
+    // Regras silábicas PT-BR simplificadas:
+    // V-CV (te-la), VC-CV (tem-po, con-for-me), mantendo encontros
+    // consonantais inseparáveis juntos (so[m]-[br]as, a-[pl]au-so),
+    // e dígrafos ch/lh/nh/qu/gu também inseparáveis.
     const pts: number[] = [];
-    const vowels = /[aeiouáéíóúâêôãõàüy]/i;
-    for (let i = 2; i < word.length - 2; i++) {
-      const a = word[i - 1];
-      const b = word[i];
-      const aV = vowels.test(a);
-      const bV = vowels.test(b);
-      // V-C: vogal seguida de consoante -> corte antes da consoante
-      if (aV && !bV) pts.push(i);
-      // C-C diferentes: corte entre consoantes
-      else if (!aV && !bV && a.toLowerCase() !== b.toLowerCase()) pts.push(i);
+    const vowels = /[aeiouáéíóúâêôãõàüyAEIOUÁÉÍÓÚÂÊÔÃÕÀÜY]/;
+    const inseparable = new Set([
+      "bl","br","cl","cr","dl","dr","fl","fr","gl","gr","pl","pr","tl","tr","vl","vr",
+      "ch","lh","nh","qu","gu",
+    ]);
+    const w = word.toLowerCase();
+    const isV = (ch: string) => vowels.test(ch);
+    let i = 0;
+    while (i < w.length - 2) {
+      if (isV(w[i])) {
+        let j = i + 1;
+        while (j < w.length && !isV(w[j])) j++;
+        if (j >= w.length) break;
+        const consCount = j - (i + 1);
+        let breakAt = -1;
+        if (consCount === 0) {
+          breakAt = i + 1; // hiato V|V
+        } else if (consCount === 1) {
+          breakAt = i + 1; // V|CV
+        } else {
+          // mais de uma consoante: mantém cluster inseparável junto à próxima vogal
+          const lastPair = w[j - 2] + w[j - 1];
+          if (inseparable.has(lastPair)) breakAt = j - 2;
+          else breakAt = j - 1;
+        }
+        if (breakAt >= 2 && breakAt <= w.length - 2) pts.push(breakAt);
+        i = j;
+      } else {
+        i++;
+      }
     }
     return pts;
   }
