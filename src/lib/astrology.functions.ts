@@ -211,6 +211,7 @@ export const computeNatalChart = createServerFn({ method: "POST" })
         .insert({
           user_id: context.userId,
           birth_data_id: data.birthDataId ?? null,
+          client_profile_id: data.clientProfileId ?? null,
           engine: "swiss_ephemeris",
           planets,
           houses,
