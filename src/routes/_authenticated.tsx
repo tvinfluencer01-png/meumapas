@@ -275,12 +275,16 @@ function ActiveClientSwitcher() {
 
   const mutation = useMutation({
     mutationFn: (id: string | null) => setActiveFn({ data: { id } }),
-    onSuccess: async (_r, id) => {
+    onSuccess: (_r, id) => {
       const name = id
         ? profiles.find((p) => p.id === id)?.full_name ?? "Cliente"
         : "Eu mesmo";
-      // Invalida tudo que depende do contexto ativo para forçar regeneração/zeragem
-      await qc.invalidateQueries();
+      // Atualiza o switcher imediatamente para refletir o novo contexto
+      qc.setQueryData(["client-profiles-switcher"], (old: typeof data) =>
+        old ? { ...old, active_client_profile_id: id } : old,
+      );
+      // Invalida o resto para regenerar/zerar dados do contexto antigo
+      qc.invalidateQueries();
       setConfirmName(name);
     },
     onError: (e: Error) => toast.error(e.message),
