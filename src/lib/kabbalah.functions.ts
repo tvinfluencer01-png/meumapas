@@ -243,10 +243,8 @@ export const exportKabbalahPdf = createServerFn({ method: "POST" })
         .update({ storage_path: path })
         .eq("id", row.id);
 
-      const { data: signed } = await supabaseAdmin.storage
-        .from("reports")
-        .createSignedUrl(path, 60 * 60);
-      return { signedUrl: signed?.signedUrl ?? null, cached: false };
+      const base64 = Buffer.from(pdfBytes).toString("base64");
+      return { pdfBase64: base64, cached: false };
     } catch (err) {
       if (charged) {
         await refundCredits(userId, action, {
