@@ -266,7 +266,8 @@ function MapaAstral() {
 
     const offset = -new Date().getTimezoneOffset() / 60;
     const payload = {
-      birthDataId: birth.id,
+      birthDataId: birth.id ?? undefined,
+      clientProfileId: activeClientId,
       fullName: birth.full_name,
       birthDate: birth.birth_date,
       birthTime: birth.birth_time ?? undefined,
