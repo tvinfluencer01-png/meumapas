@@ -12,6 +12,7 @@ import {
 import { computeNumerology, NUMBER_MEANINGS, formatBirthDateBR, numLabel, numTitle } from "@/lib/numerology";
 import { buildReportPdf, type ReportData } from "@/lib/reports-pdf";
 import { consumeCredits, hasUnlimitedAccess, getCreditCost, refundCredits, type CreditAction } from "@/lib/credits.functions";
+import { applyActiveChartFilter, resolveActiveSubject } from "@/lib/active-subject";
 
 const KIND = z.enum([
   "personality",
@@ -175,19 +176,29 @@ export const generateReport = createServerFn({ method: "POST" })
     yield { type: "progress" as const, progress: 5, step: "Carregando seus dados cósmicos..." };
 
 
-    // 1) Load user context
-    const [{ data: birth }, { data: chart }, { data: settings }, { data: brandRow }, { data: brandingSub }] = await Promise.all([
-      supabase.from("birth_data").select("*").eq("user_id", userId).eq("is_primary", true).maybeSingle(),
-      supabase.from("astro_charts").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(1).maybeSingle(),
+    // 1) Load active context (client selected in the system, or the user's own profile)
+    const [{ data: settings }, { data: brandRow }, { data: brandingSub }, birth] = await Promise.all([
       supabase.from("user_settings").select("*").eq("user_id", userId).maybeSingle(),
       supabase.from("pdf_branding").select("*").eq("user_id", userId).maybeSingle(),
       supabase.from("user_subscriptions").select("status").eq("user_id", userId).eq("addon_id", "sub_branding_pdf").eq("status", "active").maybeSingle(),
+      resolveActiveSubject(supabase, userId),
     ]);
     const brandingAddonActive = !!brandingSub;
 
     if (!birth) {
       throw new Error("Complete seus dados de nascimento antes de gerar relatorios.");
     }
+
+    const chartBaseQuery = supabase
+      .from("astro_charts")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(1);
+    const { data: chart } = await applyActiveChartFilter(
+      chartBaseQuery,
+      birth.client_profile_id,
+    ).maybeSingle();
 
     // Charge credits unless user has unlimited reports subscription
     const action: CreditAction = `report_${data.kind}` as CreditAction;
@@ -1031,6 +1042,7 @@ Regras:
       .from("reports")
       .insert({
         user_id: userId,
+        client_profile_id: birth.client_profile_id,
         kind: data.kind,
         title: meta.title,
         storage_path: path,

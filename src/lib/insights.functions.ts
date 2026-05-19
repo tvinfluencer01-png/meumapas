@@ -4,6 +4,7 @@ import { createLovableAiGatewayProvider } from "@/lib/ai-gateway";
 import { generateText } from "ai";
 import { SIGN_GUIDANCE } from "@/lib/astro-meanings";
 import { computeNumerology, NUMBER_MEANINGS } from "@/lib/numerology";
+import { applyActiveChartFilter, resolveActiveSubject } from "@/lib/active-subject";
 import * as Astro from "astronomy-engine";
 
 function reduce(n: number): number {
@@ -73,10 +74,14 @@ export const getAIInsights = createServerFn({ method: "POST" })
   .handler(async ({ context }): Promise<AIInsightResult> => {
     const { supabase, userId } = context;
 
-    const [{ data: birth }, { data: chart }] = await Promise.all([
-      supabase.from("birth_data").select("*").eq("user_id", userId).eq("is_primary", true).maybeSingle(),
-      supabase.from("astro_charts").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(1).maybeSingle(),
-    ]);
+    const birth = await resolveActiveSubject(supabase, userId);
+    const chartQuery = supabase
+      .from("astro_charts")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(1);
+    const { data: chart } = await applyActiveChartFilter(chartQuery, birth?.client_profile_id ?? null).maybeSingle();
 
     const today = new Date();
     const utc = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate(), 12, 0, 0));

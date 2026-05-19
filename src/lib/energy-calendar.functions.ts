@@ -4,6 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway";
 import { generateText } from "ai";
 import * as Astro from "astronomy-engine";
+import { resolveActiveSubject } from "@/lib/active-subject";
 
 // --- numerology helpers (digit reduction, masters preserved) -------------
 function reduce(n: number): number {
@@ -55,13 +56,8 @@ export const getEnergyCalendar = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
-    // Birth data
-    const { data: birth } = await supabase
-      .from("birth_data")
-      .select("birth_date, full_name")
-      .eq("user_id", userId)
-      .eq("is_primary", true)
-      .maybeSingle();
+    // Active context: selected client or user's own profile
+    const birth = await resolveActiveSubject(supabase, userId);
 
     const daysInMonth = new Date(data.year, data.month, 0).getDate();
     const days: Array<{
