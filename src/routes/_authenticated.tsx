@@ -258,6 +258,36 @@ function AuthedLayout() {
   );
 }
 
+function ActiveContextBanner() {
+  const listFn = useServerFn(listClientProfiles);
+  const { data } = useQuery({
+    queryKey: ["client-profiles-switcher"],
+    queryFn: () => listFn(),
+    staleTime: 30_000,
+  });
+  const activeId = data?.active_client_profile_id ?? null;
+  const profile = activeId ? data?.profiles.find((p) => p.id === activeId) : null;
+  const name = profile?.full_name ?? "Eu mesmo";
+  const isSelf = !activeId;
+
+  return (
+    <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-gold/30 bg-secondary/40 backdrop-blur px-3 py-2">
+      {isSelf ? (
+        <UserCircle2 className="size-4 text-gold shrink-0" />
+      ) : (
+        <Users className="size-4 text-gold shrink-0" />
+      )}
+      <span className="text-[10px] uppercase tracking-[0.2em] text-gold/70">
+        Contexto ativo:
+      </span>
+      <span className="text-sm font-serif text-gold truncate">{name}</span>
+      <span className="ml-auto text-[10px] font-mono text-muted-foreground truncate">
+        ID: {activeId ?? "self"}
+      </span>
+    </div>
+  );
+}
+
 function ActiveClientSwitcher() {
   const qc = useQueryClient();
   const listFn = useServerFn(listClientProfiles);
