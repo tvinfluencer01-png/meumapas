@@ -137,7 +137,45 @@ function MapaAstral() {
       setForecastLoading(false);
       hideLoader();
       emitCreditsChanged();
+  }
+
+  async function handleDownloadForecastPdf() {
+    if (!currentChartId || !forecast) return;
+    setForecastPdfLoading(true);
+    showLoader({ title: "Preparando PDF das previsões", subtitle: "Documento pronto para baixar" });
+    try {
+      const r = await downloadForecastPdfFn({ data: { chartId: currentChartId } });
+      const bytes = Uint8Array.from(atob(r.pdfBase64), (c) => c.charCodeAt(0));
+      const blob = new Blob([bytes], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `previsoes-astrais-${new Date().toISOString().slice(0, 10)}.pdf`;
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+      toast.success("PDF das previsões pronto.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha ao gerar PDF das previsões.");
+    } finally {
+      setForecastPdfLoading(false);
+      hideLoader();
     }
+  }
+
+  async function handleDeleteForecast() {
+    if (!currentChartId) return;
+    if (!confirm("Apagar as previsões salvas deste mapa?")) return;
+    setForecastDeleting(true);
+    try {
+      await deleteForecastFn({ data: { chartId: currentChartId } });
+      setForecast(null);
+      toast.success("Previsões apagadas.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha ao apagar previsões.");
+    } finally {
+      setForecastDeleting(false);
+    }
+  }
   }
 
   async function handleExportPdf() {
