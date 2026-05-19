@@ -153,8 +153,7 @@ export const setActiveClientProfile = createServerFn({ method: "POST" })
     }
     const { error } = await supabaseAdmin
       .from("profiles")
-      .update({ active_client_profile_id: data.id })
-      .eq("id", userId);
+      .upsert({ id: userId, active_client_profile_id: data.id }, { onConflict: "id" });
     if (error) throw new Error(error.message);
     return { ok: true, active_client_profile_id: data.id };
   });
