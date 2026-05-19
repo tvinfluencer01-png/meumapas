@@ -153,21 +153,28 @@ export const exportKabbalahPdf = createServerFn({ method: "POST" })
     if (!row) throw new Error("Meditação não encontrada");
 
     if (row.storage_path) {
-      const { data: signed } = await supabaseAdmin.storage
+      const { data: blob, error: dlErr } = await supabaseAdmin.storage
         .from("reports")
-        .createSignedUrl(row.storage_path, 60 * 60);
-      return { signedUrl: signed?.signedUrl ?? null, cached: true };
+        .download(row.storage_path);
+      if (dlErr || !blob) throw new Error(dlErr?.message ?? "Falha ao baixar PDF");
+      const buf = new Uint8Array(await blob.arrayBuffer());
+      const base64 = Buffer.from(buf).toString("base64");
+      return { pdfBase64: base64, cached: true };
     }
 
     const action: CreditAction = "kabbalah_pdf";
-    const cost = await getCreditCost(action);
-    const ok = await consumeCredits(userId, action, `PDF meditação ${row.id}`);
-    if (!ok) {
-      throw new Error(
-        `Saldo insuficiente. Exportar este PDF custa ${cost} créditos.`,
-      );
+    const unlimited = await hasUnlimitedAccess(userId, action);
+    const cost = unlimited ? 0 : await getCreditCost(action);
+    let charged = false;
+    if (!unlimited) {
+      const ok = await consumeCredits(userId, action, `PDF meditação ${row.id}`);
+      if (!ok) {
+        throw new Error(
+          `Saldo insuficiente. Exportar este PDF custa ${cost} créditos.`,
+        );
+      }
+      charged = cost > 0;
     }
-    const charged = cost > 0;
 
     try {
       const sef = findSefirah(row.sefirah);
