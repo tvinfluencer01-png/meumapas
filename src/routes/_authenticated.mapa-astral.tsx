@@ -699,11 +699,11 @@ function ChartWheel({ chart, userId, svgRefProp, compact }: { chart: any; userId
         <button type="button" onClick={() => zoomBy(1.3)} disabled={atMinZoom} className="size-7 rounded-md border border-gold/30 bg-background/70 text-gold text-sm hover:bg-gold/10 disabled:opacity-40" aria-label="Afastar">−</button>
         <button type="button" onClick={resetView} disabled={!isZoomed} className="h-7 px-2 rounded-md border border-gold/30 bg-background/70 text-gold text-[10px] hover:bg-gold/10 disabled:opacity-40">Reset</button>
       </div>
-      <p className="absolute bottom-2 left-3 text-[10px] text-muted-foreground/70 pointer-events-none">Arraste para mover · scroll para zoom</p>
+      <p className="absolute bottom-1 left-2 text-[9px] text-muted-foreground/60 pointer-events-none">Arraste · scroll p/ zoom</p>
       <svg
         ref={svgRef}
         viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`}
-        className={`w-full ${compact ? "max-w-[420px]" : "max-w-[560px]"} block mx-auto touch-none select-none`}
+        className={`w-full ${compact ? "max-w-[340px]" : "max-w-[560px]"} block mx-auto touch-none select-none`}
         style={{ cursor: drag.current ? "grabbing" : "grab" }}
         onWheel={onWheel}
         onPointerDown={onPointerDown}
