@@ -161,11 +161,9 @@ function AuthedLayout() {
             <Logo sizeClassName="size-12" animation="float" />
             <span className="font-serif text-xl shimmer-text">Cosmic AI</span>
           </div>
-          {activeAddons.has("sub_astrologer_numerologist") && (
-            <div className="px-4 pt-3">
-              <ActiveClientSwitcher />
-            </div>
-          )}
+          <div className="px-4 pt-3">
+            <ActiveClientSwitcher />
+          </div>
           <nav className="flex-1 overflow-y-auto p-4 space-y-1 scrollbar-gold">
 
             {NAV.filter((item) => !item.addonId || activeAddons.has(item.addonId)).map((item) => (
