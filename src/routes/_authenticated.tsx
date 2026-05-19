@@ -269,6 +269,9 @@ function ActiveClientSwitcher() {
   const activeId = data?.active_client_profile_id ?? null;
   const currentValue = activeId ?? SELF_VALUE;
 
+  // Esconde o seletor se o usuário ainda não cadastrou nenhum cliente
+  if (profiles.length === 0 && !activeId) return null;
+
   const mutation = useMutation({
     mutationFn: (id: string | null) => setActiveFn({ data: { id } }),
     onSuccess: async (_r, id) => {
