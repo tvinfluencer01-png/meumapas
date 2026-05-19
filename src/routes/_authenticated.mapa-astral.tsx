@@ -395,8 +395,10 @@ function MapaAstral() {
           <ChartSummary chart={current} />
 
           <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] gap-6 mt-6 lg:items-stretch">
-            <div className="flex flex-col gap-4 lg:min-h-0">
-              <ChartWheel chart={current} userId={user?.id} svgRefProp={chartSvgRef} compact />
+            <div className="flex flex-col gap-4 lg:h-0 lg:min-h-full">
+              <div className="shrink-0">
+                <ChartWheel chart={current} userId={user?.id} svgRefProp={chartSvgRef} compact />
+              </div>
 
               {/* Previsões logo abaixo do mapa, na mesma coluna — altura espelha a coluna ao lado */}
               <div className="glass-card rounded-2xl p-6 relative overflow-hidden flex flex-col lg:flex-1 lg:min-h-0">
