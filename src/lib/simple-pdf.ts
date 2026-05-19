@@ -543,11 +543,11 @@ export async function buildSimplePdf(data: SimplePdfData): Promise<Uint8Array> {
   }
 
   function drawParagraph(text: string, opts?: { italic?: boolean; size?: number; color?: ReturnType<typeof rgb>; justify?: boolean }) {
-    const size = opts?.size ?? 12.5;
+    const size = opts?.size ?? bodySize;
     const font = opts?.italic ? serifItalic : serif;
-    const color = opts?.color ?? INK;
+    const color = opts?.color ?? bodyTextC;
     const justify = opts?.justify ?? true;
-    const lineHeight = size * 1.45;
+    const lineHeight = size * lineMul;
     const spaceW = measure(font, size, " ");
     const cleaned = safe(text).trim();
     if (!cleaned) return;
