@@ -1,8 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/use-auth";
+import { useActiveSubject } from "@/hooks/use-active-subject";
 import { listFavorites } from "@/lib/favorites.functions";
 import * as Astro from "astronomy-engine";
 import { Sparkles, Moon, Flame, Star, TrendingUp } from "lucide-react";
@@ -30,23 +29,13 @@ function moonLabel(date: Date) {
 }
 
 export function FavoritesImpact() {
-  const { user } = useAuth();
   const fetchFavs = useServerFn(listFavorites);
+  const { data: birth } = useActiveSubject();
 
   const { data: favorites } = useQuery({
     queryKey: ["calendar-favorites"],
     queryFn: () => fetchFavs({ data: undefined }),
     staleTime: 1000 * 60 * 5,
-  });
-
-  const { data: birth } = useQuery({
-    queryKey: ["birth", user?.id],
-    enabled: !!user,
-    queryFn: async () => {
-      const { data } = await supabase.from("birth_data")
-        .select("birth_date").eq("user_id", user!.id).eq("is_primary", true).maybeSingle();
-      return data;
-    },
   });
 
   const stats = useMemo(() => {
