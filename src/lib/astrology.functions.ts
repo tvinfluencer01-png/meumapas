@@ -13,7 +13,7 @@ import {
   type CreditAction,
 } from "@/lib/credits.functions";
 import { buildSimplePdf, type SimplePdfBlock } from "@/lib/simple-pdf";
-import { sanitizeJsonString } from "@/lib/json-sanitize";
+import { safeParseLlmJson } from "@/lib/json-sanitize";
 import { PLANET_MEANING, SIGN_MEANING, ASPECT_MEANING, SIGN_GUIDANCE } from "@/lib/astro-meanings";
 import {
   resolveBrandingPayload,
@@ -306,14 +306,7 @@ Responda APENAS com JSON válido (sem cercas de código):
 }`;
 
   const { text } = await generateText({ model, system, prompt });
-  let jsonStr = text.trim();
-  const fence = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
-  if (fence) jsonStr = fence[1].trim();
-  const first = jsonStr.indexOf("{");
-  const last = jsonStr.lastIndexOf("}");
-  if (first >= 0 && last > first) jsonStr = jsonStr.slice(first, last + 1);
-  jsonStr = sanitizeJsonString(jsonStr);
-  const parsed = JSON.parse(jsonStr) as Omit<AstroForecast, "generatedAt">;
+  const parsed = safeParseLlmJson<Omit<AstroForecast, "generatedAt">>(text);
   return { ...parsed, generatedAt: new Date().toISOString() };
 }
 
