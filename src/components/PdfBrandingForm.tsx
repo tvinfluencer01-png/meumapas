@@ -49,6 +49,13 @@ type FormState = {
   header_bg_color: string;
   footer_bg_color: string;
   header_text_color: string;
+  page_bg_color: string;
+  body_text_color: string;
+  heading_text_color: string;
+  body_font_size: number;
+  line_height: number;
+  frame_style: "none" | "simple" | "double" | "ornamental";
+  watermark_opacity: number;
 };
 
 const DEFAULT_FORM: FormState = {
@@ -78,6 +85,13 @@ const DEFAULT_FORM: FormState = {
   header_bg_color: "#f5f1e6",
   footer_bg_color: "#f5f1e6",
   header_text_color: "#d4af37",
+  page_bg_color: "#f5f1e6",
+  body_text_color: "#262218",
+  heading_text_color: "#03060f",
+  body_font_size: 12.5,
+  line_height: 1.45,
+  frame_style: "double",
+  watermark_opacity: 0.08,
 };
 
 const KIND_TOGGLES: Array<{ key: keyof FormState; label: string; hint: string }> = [
