@@ -13,7 +13,7 @@ import {
   type CreditAction,
 } from "@/lib/credits.functions";
 import { buildSimplePdf, type SimplePdfBlock } from "@/lib/simple-pdf";
-import { sanitizeJsonString } from "@/lib/json-sanitize";
+import { sanitizeJsonString, safeParseLlmJson } from "@/lib/json-sanitize";
 import { PLANET_MEANING, SIGN_MEANING, ASPECT_MEANING, SIGN_GUIDANCE } from "@/lib/astro-meanings";
 import {
   resolveBrandingPayload,
