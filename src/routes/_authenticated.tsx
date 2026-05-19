@@ -14,6 +14,9 @@ import { Button } from "@/components/ui/button";
 import {
   Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 
 import { listClientProfiles, setActiveClientProfile } from "@/lib/client-profiles.functions";
@@ -258,6 +261,7 @@ function ActiveClientSwitcher() {
   const qc = useQueryClient();
   const listFn = useServerFn(listClientProfiles);
   const setActiveFn = useServerFn(setActiveClientProfile);
+  const [confirmName, setConfirmName] = useState<string | null>(null);
 
   const { data } = useQuery({
     queryKey: ["client-profiles-switcher"],
@@ -269,23 +273,17 @@ function ActiveClientSwitcher() {
   const activeId = data?.active_client_profile_id ?? null;
   const currentValue = activeId ?? SELF_VALUE;
 
-  // Esconde o seletor se o usuário ainda não cadastrou nenhum cliente
   if (profiles.length === 0 && !activeId) return null;
 
   const mutation = useMutation({
     mutationFn: (id: string | null) => setActiveFn({ data: { id } }),
     onSuccess: async (_r, id) => {
-      await Promise.all([
-        qc.invalidateQueries({ queryKey: ["client-profiles-switcher"] }),
-        qc.invalidateQueries({ queryKey: ["active-subject"] }),
-        qc.invalidateQueries({ queryKey: ["client-profiles"] }),
-        qc.invalidateQueries({ queryKey: ["reports"] }),
-        qc.invalidateQueries({ queryKey: ["astro-chart"] }),
-      ]);
       const name = id
         ? profiles.find((p) => p.id === id)?.full_name ?? "Cliente"
         : "Eu mesmo";
-      toast.success(`Contexto ativo: ${name}`);
+      // Invalida tudo que depende do contexto ativo para forçar regeneração/zeragem
+      await qc.invalidateQueries();
+      setConfirmName(name);
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -336,6 +334,32 @@ function ActiveClientSwitcher() {
           )}
         </SelectContent>
       </Select>
+
+      <Dialog open={!!confirmName} onOpenChange={(o) => !o && setConfirmName(null)}>
+        <DialogContent className="border-gold/30 bg-background/95 backdrop-blur">
+          <DialogHeader>
+            <DialogTitle className="font-serif shimmer-text flex items-center gap-2">
+              <UserCircle2 className="size-5 text-gold" /> Contexto alterado
+            </DialogTitle>
+            <DialogDescription className="pt-2 text-sm">
+              A partir de agora, todo o sistema (Mapa Astral, Numerologia, Relatórios, Oráculo, etc.)
+              passará a operar no contexto de:
+            </DialogDescription>
+          </DialogHeader>
+          <div className="rounded-lg border border-gold/30 bg-secondary/40 px-4 py-3">
+            <div className="text-[10px] uppercase tracking-[0.2em] text-gold/70">Contexto ativo</div>
+            <div className="mt-1 text-lg font-serif text-gold">{confirmName}</div>
+          </div>
+          <DialogFooter>
+            <Button
+              onClick={() => setConfirmName(null)}
+              className="bg-gradient-to-r from-gold to-amber-300 text-background hover:opacity-90"
+            >
+              Entendido
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
