@@ -42,6 +42,13 @@ type FormState = {
   enabled_kabbalah_numerology: boolean;
   enabled_energy_calendar: boolean;
   enabled_weekly: boolean;
+  cover_bg_color: string;
+  cover_accent_color: string;
+  cover_title_position: "top" | "center" | "bottom";
+  font_family: "serif" | "sans" | "display";
+  header_bg_color: string;
+  footer_bg_color: string;
+  header_text_color: string;
 };
 
 const DEFAULT_FORM: FormState = {
@@ -64,6 +71,13 @@ const DEFAULT_FORM: FormState = {
   enabled_kabbalah_numerology: true,
   enabled_energy_calendar: true,
   enabled_weekly: true,
+  cover_bg_color: "#03060f",
+  cover_accent_color: "#d4af37",
+  cover_title_position: "center",
+  font_family: "serif",
+  header_bg_color: "#f5f1e6",
+  footer_bg_color: "#f5f1e6",
+  header_text_color: "#d4af37",
 };
 
 const KIND_TOGGLES: Array<{ key: keyof FormState; label: string; hint: string }> = [
