@@ -102,6 +102,7 @@ A lista "perCard" deve ter EXATAMENTE ${draw.length} item(ns), na MESMA ordem da
       const first = jsonStr.indexOf("{");
       const last = jsonStr.lastIndexOf("}");
       if (first >= 0 && last > first) jsonStr = jsonStr.slice(first, last + 1);
+      jsonStr = sanitizeJsonString(jsonStr);
       const parsed = JSON.parse(jsonStr) as {
         summary: string;
         perCard: { position: string; card: string; reading: string }[];
