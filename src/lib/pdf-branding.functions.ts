@@ -19,6 +19,13 @@ const BrandingShape = z.object({
   enabled_love: z.boolean(),
   enabled_career: z.boolean(),
   enabled_spiritual: z.boolean(),
+  enabled_tarot: z.boolean(),
+  enabled_kabbalah: z.boolean(),
+  enabled_numerology: z.boolean(),
+  enabled_astrology: z.boolean(),
+  enabled_kabbalah_numerology: z.boolean(),
+  enabled_energy_calendar: z.boolean(),
+  enabled_weekly: z.boolean(),
 });
 
 export const getPdfBranding = createServerFn({ method: "GET" })
