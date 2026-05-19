@@ -526,21 +526,21 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
   // Sections
   for (const section of data.sections) {
     setChapter(section.title);
-    drawHeading(section.title, 18, { startOnNewPage: true });
+    drawHeading(section.title, 22, { startOnNewPage: true });
     drawParagraph(section.body);
   }
 
   // Closing
   setChapter("Selo final");
-  drawHeading("Selo final", 18, { startOnNewPage: true });
+  drawHeading("Selo final", 22, { startOnNewPage: true });
   drawParagraph(data.closing, { italic: true, color: rgb(0.3, 0.25, 0.2) });
 
   // Analise
   setChapter("Analise");
-  drawHeading("Analise", 20, { startOnNewPage: true });
+  drawHeading("Analise", 24, { startOnNewPage: true });
   drawParagraph(
     "Sintese das forcas, fraquezas, oportunidades e ameacas reveladas pelo seu mapa.",
-    { italic: true, size: 13, color: MUTED },
+    { italic: true, size: 14, color: MUTED },
   );
   drawSubHeading("Forcas (Strengths)", rgb(0.15, 0.4, 0.2));
   drawBulletList(data.swot.strengths);
@@ -553,7 +553,7 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
 
   // Recomendacoes
   setChapter("Recomendacoes finais");
-  drawHeading("Recomendacoes finais", 20, { startOnNewPage: true });
+  drawHeading("Recomendacoes finais", 24, { startOnNewPage: true });
   drawSubHeading("O que MELHORAR", rgb(0.15, 0.4, 0.2));
   drawBulletList(data.recommendations.improve);
   drawSubHeading("O que EVITAR", rgb(0.55, 0.15, 0.2));
@@ -564,9 +564,9 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
   // Sugestoes (personalizadas por tema)
   if (data.suggestions?.items?.length) {
     setChapter(data.suggestions.heading);
-    drawHeading(data.suggestions.heading, 20, { startOnNewPage: true });
+    drawHeading(data.suggestions.heading, 24, { startOnNewPage: true });
     if (data.suggestions.intro) {
-      drawParagraph(data.suggestions.intro, { italic: true, size: 13, color: MUTED });
+      drawParagraph(data.suggestions.intro, { italic: true, size: 14, color: MUTED });
     }
     const nameSize = 12;
     const whySize = 11;
@@ -597,16 +597,16 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
 
   // Resumo
   setChapter("Resumo");
-  drawHeading("Resumo", 20, { startOnNewPage: true });
+  drawHeading("Resumo", 24, { startOnNewPage: true });
   drawParagraph(data.summary);
 
   // Plano de 7 dias (único, ao final, baseado no resumo)
   if (data.finalPlan) {
     setChapter("Plano de 7 dias");
-    drawHeading("Plano de 7 dias", 20, { startOnNewPage: true });
+    drawHeading("Plano de 7 dias", 24, { startOnNewPage: true });
     drawParagraph(
       "Pequenos passos diários, em linguagem simples, baseados no resumo deste relatório.",
-      { italic: true, size: 13, color: MUTED },
+      { italic: true, size: 14, color: MUTED },
     );
     const labelDays = (arr: string[]) =>
       arr.slice(0, 7).map((it, i) => (/^dia\s+\d+:/i.test(it) ? it : `Dia ${i + 1}: ${it}`));
