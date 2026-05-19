@@ -25,6 +25,27 @@ export type SimplePdfBlock =
   | { type: "hebrew-row"; letter: string; name: string; value: number | string; meaning: string }
   | { type: "hebrew-name"; latinName: string; hebrewWords: string[]; caption?: string };
 
+export type SimplePdfBranding = {
+  coverImageBytes?: Uint8Array;
+  coverImageMime?: "image/png" | "image/jpeg";
+  logoBytes?: Uint8Array;
+  logoMime?: "image/png" | "image/jpeg";
+  logoWidth?: number;
+  logoHeight?: number;
+  displayName?: string;
+  footerEnabled?: boolean;
+  footerName?: string;
+  footerSite?: string;
+  footerPhone?: string;
+  coverBgColor?: string; // #RRGGBB
+  coverAccentColor?: string; // #RRGGBB
+  coverTitlePosition?: "top" | "center" | "bottom";
+  fontFamily?: "serif" | "sans" | "display";
+  headerBgColor?: string;
+  footerBgColor?: string;
+  headerTextColor?: string;
+};
+
 export type SimplePdfData = {
   brand: string;
   eyebrow: string;
@@ -39,6 +60,11 @@ export type SimplePdfData = {
    * flui um abaixo do outro. Usado pela Meditação Cabalística.
    */
   flowing?: boolean;
+  /**
+   * Personalização opcional do branding (capa, cores, fonte, faixas).
+   * Quando ausente ou indefinido, mantém o template dourado padrão.
+   */
+  branding?: SimplePdfBranding;
 };
 
 // ---------- Paleta do template ----------
