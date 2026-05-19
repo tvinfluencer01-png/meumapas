@@ -275,7 +275,7 @@ function ActiveClientSwitcher() {
 
   const mutation = useMutation({
     mutationFn: (id: string | null) => setActiveFn({ data: { id } }),
-    onSuccess: (_r, id) => {
+    onSuccess: async (_r, id) => {
       const name = id
         ? profiles.find((p) => p.id === id)?.full_name ?? "Cliente"
         : "Eu mesmo";
@@ -283,14 +283,16 @@ function ActiveClientSwitcher() {
       qc.setQueryData(["client-profiles-switcher"], (old: typeof data) =>
         old ? { ...old, active_client_profile_id: id } : old,
       );
-      // Invalida o resto para regenerar/zerar dados do contexto antigo
-      qc.invalidateQueries();
+      // Aguarda o reprocessamento de todas as telas (re-fetch global) antes de confirmar
+      await qc.invalidateQueries();
       setConfirmName(name);
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
   if (profiles.length === 0 && !activeId) return null;
+
+  const isSwitching = mutation.isPending || !!confirmName;
 
   function handleChange(value: string) {
     const id = value === SELF_VALUE ? null : value;
