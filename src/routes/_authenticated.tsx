@@ -53,6 +53,8 @@ function AuthedLayout() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [activeAddons, setActiveAddons] = useState<Set<string>>(new Set());
   const [profileOpen, setProfileOpen] = useState(false);
+  const { data: activeSubject } = useActiveSubject();
+
 
   // Saldo de créditos + pico histórico para calcular a barra
   const { data: credits } = useQuery({
@@ -151,7 +153,21 @@ function AuthedLayout() {
             <Logo sizeClassName="size-12" animation="float" />
             <span className="font-serif text-xl shimmer-text">Cosmic AI</span>
           </div>
+          {activeSubject?.kind === "client" && (
+            <Link
+              to="/clientes"
+              className="mx-4 mt-3 flex items-center gap-2 rounded-lg border border-gold/30 bg-gold/10 px-3 py-2 text-xs hover:bg-gold/20 transition-colors"
+              title="Cliente ativo — clique para gerenciar"
+            >
+              <Users className="size-3.5 text-gold shrink-0" />
+              <div className="min-w-0 flex-1">
+                <div className="text-[10px] uppercase tracking-wider text-gold/80">Cliente ativo</div>
+                <div className="truncate font-medium text-foreground">{activeSubject.full_name}</div>
+              </div>
+            </Link>
+          )}
           <nav className="flex-1 overflow-y-auto p-4 space-y-1">
+
             {NAV.filter((item) => !item.addonId || activeAddons.has(item.addonId)).map((item) => (
               <Link
                 key={item.to} to={item.to} onClick={() => setOpen(false)}
