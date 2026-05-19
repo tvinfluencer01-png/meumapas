@@ -137,7 +137,10 @@ function MapaAstral() {
       setForecastLoading(false);
       hideLoader();
       emitCreditsChanged();
+    }
   }
+
+
 
   async function handleDownloadForecastPdf() {
     if (!currentChartId || !forecast) return;
