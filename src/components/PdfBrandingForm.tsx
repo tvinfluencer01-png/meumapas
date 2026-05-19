@@ -19,6 +19,10 @@ import {
   removeCoverImage,
   generateCoverImage,
   generateSampleBrandingPdf,
+  uploadPageBgImage,
+  removePageBgImage,
+  uploadWatermarkImage,
+  removeWatermarkImage,
 } from "@/lib/pdf-branding.functions";
 import { getAddonsOverview } from "@/lib/addons.functions";
 
