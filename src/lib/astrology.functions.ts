@@ -1,8 +1,24 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { generateText } from "ai";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import * as Astro from "astronomy-engine";
+import { createLovableAiGatewayProvider } from "@/lib/ai-gateway";
+import {
+  consumeCredits,
+  refundCredits,
+  getCreditCost,
+  hasUnlimitedAccess,
+  type CreditAction,
+} from "@/lib/credits.functions";
+import { buildSimplePdf, type SimplePdfBlock } from "@/lib/simple-pdf";
+import { sanitizeJsonString } from "@/lib/json-sanitize";
+import { PLANET_MEANING, SIGN_MEANING, ASPECT_MEANING, SIGN_GUIDANCE } from "@/lib/astro-meanings";
+import {
+  resolveBrandingPayload,
+  isBrandingEnabledFor,
+} from "@/lib/pdf-branding.functions";
 
 // Fire-and-forget structured error logger. Writes to app_logs via service role
 // so failures are captured even when the user context is absent.
