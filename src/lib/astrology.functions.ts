@@ -245,3 +245,307 @@ export const computeNatalChart = createServerFn({ method: "POST" })
       throw err;
     }
   });
+
+/* ============================================================
+ * Previsões astrais (próximos dias, semana, mês, ano) via IA
+ * ============================================================ */
+
+type AstroForecast = {
+  nextDays: string;
+  week: string;
+  month: string;
+  year: string;
+  generatedAt: string;
+};
+
+async function buildForecastWithAI(chart: {
+  planets: { name: string; sign: string; degree: number }[];
+  ascendant: number | null;
+  midheaven: number | null;
+  aspects: { a: string; b: string; aspect: string; orb: number }[];
+  summary: string | null;
+}): Promise<AstroForecast> {
+  const apiKey = process.env.LOVABLE_API_KEY;
+  if (!apiKey) throw new Error("LOVABLE_API_KEY ausente");
+  const model = createLovableAiGatewayProvider(apiKey)("google/gemini-2.5-flash");
+
+  const ascSign = chart.ascendant != null ? SIGNS[Math.floor(chart.ascendant / 30)] : "—";
+  const mcSign = chart.midheaven != null ? SIGNS[Math.floor(chart.midheaven / 30)] : "—";
+  const planetsBlock = chart.planets
+    .map((p) => `${p.name} em ${p.sign} (${p.degree.toFixed(1)}°)`)
+    .join("\n");
+  const aspectsBlock = chart.aspects
+    .slice(0, 10)
+    .map((a) => `${a.a} ${a.aspect} ${a.b} (orbe ${a.orb}°)`)
+    .join("\n");
+
+  const today = new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+
+  const system = `Você é o **Oráculo Cósmico de Astrologia**, astrólogo profissional.
+Escreve em PT-BR, tom acolhedor, claro, prático e poético. Nunca prevê eventos certos — oferece tendências e direções.
+Sem markdown, sem emojis, apenas texto corrido em parágrafos separados por linha em branco.`;
+
+  const prompt = `Data de referência: ${today}.
+
+Mapa natal do consulente:
+Ascendente: ${ascSign}
+Meio do Céu: ${mcSign}
+Planetas:
+${planetsBlock}
+
+Aspectos principais:
+${aspectsBlock}
+
+Com base nesse mapa e na fase atual do céu, escreva previsões em PT-BR.
+Responda APENAS com JSON válido (sem cercas de código):
+{
+  "nextDays": "2 a 3 parágrafos sobre tendências para os próximos 5 a 7 dias, com sugestões práticas",
+  "week": "2 a 3 parágrafos sobre a semana atual: emoções, foco, relacionamentos, trabalho",
+  "month": "2 a 3 parágrafos sobre o mês atual: oportunidades, cuidados, tema central",
+  "year": "3 a 4 parágrafos sobre o ano: grandes ciclos, áreas de crescimento, riscos a evitar"
+}`;
+
+  const { text } = await generateText({ model, system, prompt });
+  let jsonStr = text.trim();
+  const fence = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (fence) jsonStr = fence[1].trim();
+  const first = jsonStr.indexOf("{");
+  const last = jsonStr.lastIndexOf("}");
+  if (first >= 0 && last > first) jsonStr = jsonStr.slice(first, last + 1);
+  jsonStr = sanitizeJsonString(jsonStr);
+  const parsed = JSON.parse(jsonStr) as Omit<AstroForecast, "generatedAt">;
+  return { ...parsed, generatedAt: new Date().toISOString() };
+}
+
+export const generateAstroForecast = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ chartId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    const { data: chart } = await supabaseAdmin
+      .from("astro_charts")
+      .select("*")
+      .eq("id", data.chartId)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (!chart) throw new Error("Mapa não encontrado");
+
+    const action: CreditAction = "astro_forecast";
+    const unlimited = await hasUnlimitedAccess(userId, action);
+    const cost = unlimited ? 0 : await getCreditCost(action);
+    let charged = false;
+    if (!unlimited) {
+      const ok = await consumeCredits(userId, action, `Previsões mapa ${chart.id}`);
+      if (!ok) throw new Error(`Saldo insuficiente. Esta geração custa ${cost} créditos.`);
+      charged = cost > 0;
+    }
+
+    try {
+      const forecast = await buildForecastWithAI({
+        planets: chart.planets as any,
+        ascendant: chart.ascendant as number | null,
+        midheaven: chart.midheaven as number | null,
+        aspects: chart.aspects as any,
+        summary: chart.summary,
+      });
+      await supabaseAdmin
+        .from("astro_charts")
+        .update({ forecast, forecast_generated_at: forecast.generatedAt })
+        .eq("id", chart.id);
+      return forecast;
+    } catch (err) {
+      if (charged) {
+        await refundCredits(userId, action, {
+          reason: err instanceof Error ? `Falha em previsões: ${err.message}`.slice(0, 200) : "Falha em previsões",
+          actorLabel: "system:astro",
+          originalReference: `Previsões mapa ${chart.id}`,
+        }).catch(() => {});
+      }
+      await logFnError("generateAstroForecast", err, userId, { chartId: chart.id });
+      throw err;
+    }
+  });
+
+/* ============================================================
+ * Exportar PDF completo do Mapa Astral
+ * ============================================================ */
+
+export const exportAstroPdf = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({
+      chartId: z.string().uuid(),
+      chartImageB64: z.string().min(100).optional(),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    const { data: chart } = await supabaseAdmin
+      .from("astro_charts")
+      .select("*")
+      .eq("id", data.chartId)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (!chart) throw new Error("Mapa não encontrado");
+
+    const action: CreditAction = "astro_pdf";
+    const unlimited = await hasUnlimitedAccess(userId, action);
+    const cost = unlimited ? 0 : await getCreditCost(action);
+    let charged = false;
+    if (!unlimited) {
+      const ok = await consumeCredits(userId, action, `PDF mapa ${chart.id}`);
+      if (!ok) throw new Error(`Saldo insuficiente. Este PDF custa ${cost} créditos.`);
+      charged = cost > 0;
+    }
+
+    try {
+      // Garante que existem previsões; gera se não houver
+      let forecast = chart.forecast as AstroForecast | null;
+      if (!forecast) {
+        forecast = await buildForecastWithAI({
+          planets: chart.planets as any,
+          ascendant: chart.ascendant as number | null,
+          midheaven: chart.midheaven as number | null,
+          aspects: chart.aspects as any,
+          summary: chart.summary,
+        });
+        await supabaseAdmin
+          .from("astro_charts")
+          .update({ forecast, forecast_generated_at: forecast.generatedAt })
+          .eq("id", chart.id);
+      }
+
+      const planets = (chart.planets ?? []) as { name: string; sign: string; degree: number }[];
+      const aspects = (chart.aspects ?? []) as { a: string; b: string; aspect: string; orb: number }[];
+      const ascSign = chart.ascendant != null ? SIGNS[Math.floor((chart.ascendant as number) / 30)] : "—";
+      const mcSign = chart.midheaven != null ? SIGNS[Math.floor((chart.midheaven as number) / 30)] : "—";
+
+      const blocks: SimplePdfBlock[] = [];
+
+      // Resumo do seu céu
+      blocks.push({ type: "h2", text: "Resumo do seu céu" });
+      const sun = planets.find((p) => p.name === "Sol");
+      const moon = planets.find((p) => p.name === "Lua");
+      blocks.push({
+        type: "p",
+        text:
+          `${sun ? `Você brilha como ${sun.sign}` : ""}` +
+          `${moon ? `, sente o mundo como ${moon.sign}` : ""}` +
+          ` e se apresenta com a aura de ${ascSign}. Meio do Céu em ${mcSign}.\n\n` +
+          (chart.summary ?? ""),
+      });
+      blocks.push({
+        type: "kv",
+        rows: [
+          { k: "Ascendente", v: ascSign },
+          { k: "Meio do Céu", v: mcSign },
+          { k: "Total de aspectos", v: String(aspects.length) },
+        ],
+      });
+
+      // Mapa visual
+      if (data.chartImageB64) {
+        blocks.push({ type: "h2", text: "Mapa Astral" });
+        blocks.push({ type: "image", pngB64: data.chartImageB64, caption: "Roda zodiacal com posições planetárias e aspectos", maxHeight: 420 });
+      }
+
+      // Síntese — trio principal
+      blocks.push({ type: "h2", text: "Síntese — Sol, Lua e Ascendente" });
+      for (const t of [
+        sun && { label: "Sol", sign: sun.sign, role: "Sua essência e propósito" },
+        moon && { label: "Lua", sign: moon.sign, role: "Suas emoções e necessidades" },
+        { label: "Ascendente", sign: ascSign, role: "Como o mundo te vê" },
+      ].filter(Boolean) as { label: string; sign: string; role: string }[]) {
+        const g = SIGN_GUIDANCE[t.sign];
+        blocks.push({ type: "h3", text: `${t.label} em ${t.sign} — ${t.role}` });
+        if (g) {
+          blocks.push({
+            type: "kv",
+            rows: [
+              { k: "O que esperar", v: g.expect },
+              { k: "Faça agora", v: g.doNow },
+              { k: "Evite", v: g.avoid },
+              { k: "Sua força", v: g.strength },
+            ],
+          });
+        }
+      }
+
+      // Planetas — explicação de cada um
+      blocks.push({ type: "h2", text: "Cada planeta no seu mapa" });
+      for (const p of planets) {
+        const m = PLANET_MEANING[p.name];
+        const s = SIGN_MEANING[p.sign];
+        blocks.push({ type: "h3", text: `${m?.title ?? p.name} em ${p.sign} ${p.degree.toFixed(1)}°` });
+        blocks.push({
+          type: "p",
+          text: `${m?.short ?? ""} ${s ? `Em ${p.sign}: ${s.short}` : ""}`.trim(),
+        });
+      }
+
+      // Aspectos principais
+      if (aspects.length) {
+        blocks.push({ type: "h2", text: "Aspectos principais e o que significam" });
+        for (const a of aspects.slice(0, 16)) {
+          blocks.push({ type: "h3", text: `${a.a} ${a.aspect} ${a.b} · orbe ${a.orb}°` });
+          blocks.push({ type: "p", text: ASPECT_MEANING[a.aspect] ?? "Relação angular entre os astros." });
+        }
+      }
+
+      // Previsões
+      blocks.push({ type: "h2", text: "Previsões para os próximos dias" });
+      blocks.push({ type: "p", text: forecast.nextDays });
+      blocks.push({ type: "h2", text: "Previsões para a semana" });
+      blocks.push({ type: "p", text: forecast.week });
+      blocks.push({ type: "h2", text: "Previsões para o mês" });
+      blocks.push({ type: "p", text: forecast.month });
+      blocks.push({ type: "h2", text: "Previsões para o ano" });
+      blocks.push({ type: "p", text: forecast.year });
+
+      // Branding opcional
+      const { data: brandRow } = await supabaseAdmin
+        .from("pdf_branding")
+        .select("*")
+        .eq("user_id", userId)
+        .maybeSingle();
+      const branding = isBrandingEnabledFor(brandRow, "astrology")
+        ? await resolveBrandingPayload(brandRow)
+        : undefined;
+
+      const pdfBytes = await buildSimplePdf({
+        brand: "Cosmic AI",
+        eyebrow: "Astrologia · Mapa Natal",
+        title: "Seu Mapa Astral",
+        subtitle: chart.summary ?? "Relatório completo do seu céu",
+        meta: [`Gerado em ${new Date().toLocaleString("pt-BR")}`],
+        blocks,
+        accentHex: "#d4af37",
+        flowing: false,
+        branding,
+      });
+
+      const path = `${userId}/astro-${chart.id}.pdf`;
+      const { error: upErr } = await supabaseAdmin.storage
+        .from("reports")
+        .upload(path, pdfBytes, { contentType: "application/pdf", upsert: true });
+      if (upErr) throw new Error(upErr.message);
+
+      await supabaseAdmin
+        .from("astro_charts")
+        .update({ storage_path: path })
+        .eq("id", chart.id);
+
+      const base64 = Buffer.from(pdfBytes).toString("base64");
+      return { pdfBase64: base64 };
+    } catch (err) {
+      if (charged) {
+        await refundCredits(userId, action, {
+          reason: err instanceof Error ? `Falha no PDF do mapa: ${err.message}`.slice(0, 200) : "Falha no PDF do mapa",
+          actorLabel: "system:astro",
+          originalReference: `PDF mapa ${chart.id}`,
+        }).catch(() => {});
+      }
+      await logFnError("exportAstroPdf", err, userId, { chartId: chart.id });
+      throw err;
+    }
+  });
