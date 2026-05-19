@@ -134,7 +134,7 @@ const SuggestionsSchema = z.object({
 
 const SectionBodyOutput = z.object({
   title: z.string().min(2),
-  body: z.string().min(600),
+  body: z.string().min(1400),
 });
 
 const SectionPlanOutput = z.object({
@@ -143,28 +143,28 @@ const SectionPlanOutput = z.object({
 
 const SectionOutput = z.object({
   title: z.string().min(2),
-  body: z.string().min(600),
+  body: z.string().min(1400),
   plan: SectionPlanSchema,
 });
 
 const BaseAiOutput = z.object({
-  intro: z.string().min(600),
+  intro: z.string().min(1600),
   sectionBlueprints: z.array(z.object({ title: z.string().min(2), focus: z.string().min(30) })).length(3),
-  closing: z.string().min(200),
+  closing: z.string().min(400),
   swot: SwotSchema,
   recommendations: RecommendationsSchema,
   suggestions: SuggestionsSchema,
-  summary: z.string().min(300),
+  summary: z.string().min(500),
 });
 
 const AiOutput = z.object({
-  intro: z.string().min(600),
+  intro: z.string().min(1600),
   sections: z.array(SectionBodyOutput).length(3),
-  closing: z.string().min(200),
+  closing: z.string().min(400),
   swot: SwotSchema,
   recommendations: RecommendationsSchema,
   suggestions: SuggestionsSchema,
-  summary: z.string().min(300),
+  summary: z.string().min(500),
 });
 
 export const generateReport = createServerFn({ method: "POST" })
@@ -289,7 +289,7 @@ export const generateReport = createServerFn({ method: "POST" })
     } else if (provider === "gemini" && customKey) {
       modelName = customModel ?? "gemini-2.5-flash-lite";
     } else {
-      modelName = customModel?.startsWith("google/") ? customModel : "google/gemini-2.5-flash-lite";
+      modelName = customModel?.startsWith("google/") ? customModel : "google/gemini-2.5-flash";
     }
 
     let model = makeModel(modelName);
@@ -320,13 +320,13 @@ ${astroBlock}`;
     const getFallbackModels = () => {
       const candidates = (
         provider === "openai" && customKey
-          ? [modelName, "gpt-5-nano"]
+          ? [modelName, "gpt-5-mini"]
           : provider === "gemini" && customKey
-            ? [modelName, "gemini-2.5-flash-lite"]
+            ? [modelName, "gemini-2.5-flash"]
             : provider === "anthropic" && customKey
               ? [modelName, "claude-3-5-sonnet-20241022"]
               : !isCustomProvider && lovableKey
-                ? [modelName, "google/gemini-2.5-flash-lite", "google/gemini-3-flash-preview"]
+                ? [modelName, "google/gemini-2.5-flash", "google/gemini-3-flash-preview"]
                 : [modelName]
       ).filter((candidate, index, arr) => arr.indexOf(candidate) === index);
 
@@ -690,15 +690,15 @@ Assinatura astral: ${signLine || astroBlock}`;
 
     const basePrompt = `${reportContext}
 
-Monte apenas a ESTRUTURA BASE do relatório com PROFUNDIDADE REAL. Responda APENAS com JSON valido neste formato:
+Monte apenas a ESTRUTURA BASE do relatório com PROFUNDIDADE REAL e EXTENSÃO LONGA. Responda APENAS com JSON valido neste formato:
 {
-  "intro": "ABERTURA cinematográfica de 4 a 5 parágrafos longos (mínimo 700 caracteres no total). Comece nomeando ${firstName} e situando o momento de vida com poesia sóbria. Conecte explicitamente Sol, Lua e Caminho de Vida ao tema do relatório. Mostre a tensão central que ${firstName} vive nessa área, o convite simbólico do mapa e o tom da jornada que esse PDF vai percorrer. Linguagem humana, viva, sem clichês esotéricos genéricos.",
+  "intro": "ABERTURA cinematográfica de 6 a 8 parágrafos longos (MÍNIMO 1800 caracteres no total, idealmente entre 2000 e 2600). Comece nomeando ${firstName} pelo nome completo e situando o momento de vida com poesia sóbria. Cite EXPLICITAMENTE Sol, Lua, Mercúrio, Vênus, Marte (e Júpiter/Saturno quando relevantes) com seus signos e o que cada um significa entre parênteses em até 10 palavras. Cite os aspectos principais nominalmente (ex: 'Sol Quadratura Lua') traduzindo entre parênteses. Conecte o Caminho de Vida, Destino, Alma e Personalidade ao tema do relatório. Mostre a tensão central que ${firstName} vive nessa área, o convite simbólico do mapa e o tom da jornada. Linguagem humana, viva, sem clichês esotéricos genéricos. NUNCA entregue menos de 1800 caracteres.",
   "sectionBlueprints": [
     { "title": "Titulo 1", "focus": "Foco aprofundado e específico desta seção (mínimo 60 caracteres)" },
     { "title": "Titulo 2", "focus": "Foco aprofundado e específico desta seção (mínimo 60 caracteres)" },
     { "title": "Titulo 3", "focus": "Foco aprofundado e específico desta seção (mínimo 60 caracteres)" }
   ],
-  "closing": "ENCERRAMENTO de 2 a 3 parágrafos densos (mínimo 250 caracteres). Costure de volta o fio simbólico da abertura, reconheça a complexidade da jornada e entregue uma bênção concreta a ${firstName}.",
+  "closing": "ENCERRAMENTO de 3 a 4 parágrafos densos (MÍNIMO 500 caracteres). Costure de volta o fio simbólico da abertura, reconheça a complexidade da jornada e entregue uma bênção concreta a ${firstName}.",
   "swot": {
     "strengths": ["frase específica e ancorada no mapa", "...", "..."],
     "weaknesses": ["...", "...", "..."],
@@ -720,7 +720,7 @@ Monte apenas a ESTRUTURA BASE do relatório com PROFUNDIDADE REAL. Responda APEN
       { "name": "Sugestao 5", "why": "..." }
     ]
   },
-  "summary": "SÍNTESE final densa de 2 parágrafos (mínimo 350 caracteres) que amarra os 3 capítulos, a SWOT e as recomendações em uma leitura única e memorável para ${firstName}."
+  "summary": "SÍNTESE final densa de 3 parágrafos (MÍNIMO 600 caracteres) que amarra os 3 capítulos, a SWOT e as recomendações em uma leitura única e memorável para ${firstName}."
 }
 
 Regras:
@@ -729,7 +729,8 @@ Regras:
 - suggestions.items deve ter EXATAMENTE 5 itens.
 - Tema das sugestoes: ${meta.suggestionGuide}
 - Use o nome completo apenas 1x na intro. Depois, use apenas ${firstName}.
-- Nada de respostas curtas, superficiais ou repetitivas. Profundidade é obrigatória.`;
+- Nada de respostas curtas, superficiais ou repetitivas. Profundidade e EXTENSÃO são obrigatórias.
+- Se você entregar uma intro com menos de 1800 caracteres, o relatório será rejeitado.`;
 
     const makeSectionBodyPrompt = (
       blueprint: z.infer<typeof BaseAiOutput>["sectionBlueprints"][number],
@@ -748,20 +749,21 @@ Outras secoes para evitar repeticao: ${blueprints
 Responda APENAS com JSON valido neste formato:
 {
   "title": "${blueprint.title}",
-  "body": "5 a 6 parágrafos longos (mínimo 800 caracteres no total). Estruture assim: (1) abertura simbólica que conecta o tema ao mapa e numerologia de ${firstName}; (2) análise dos padrões e tensões reais que aparecem; (3) sombra/ferida específica desta área; (4) força latente que pode ser ativada; (5) direção prática e madura para o próximo ciclo. Use exemplos concretos e linguagem viva."
+  "body": "7 a 9 parágrafos longos (MÍNIMO 1600 caracteres no total, ideal entre 1800 e 2400). Estruture assim: (1) abertura simbólica conectando o tema ao mapa e numerologia de ${firstName}, citando planetas, signos e números EXPLICITAMENTE; (2) análise dos padrões e tensões reais que aparecem, citando aspectos nominalmente; (3) sombra/ferida específica desta área com exemplo concreto; (4) força latente que pode ser ativada, com exemplo; (5) como esses elementos se manifestam no dia a dia; (6) direção prática e madura para o próximo ciclo. Use exemplos concretos, linguagem viva e cite nominalmente Sol, Lua, Vênus, Marte, Caminho de Vida, Destino, Alma quando relevantes."
 }
 
 Regras:
-- O body precisa ser denso, específico ao tema e ancorado em planetas, signos ou números reais do mapa de ${firstName}.
+- O body precisa ser denso, específico ao tema e ancorado em planetas, signos ou números reais do mapa de ${firstName}, com MÍNIMO 1600 caracteres.
 - Nada de frases genéricas ou repetitivas. Cada parágrafo entrega algo novo.
-- Nao use o nome completo. Use apenas ${firstName}.`;
+- Nao use o nome completo. Use apenas ${firstName}.
+- Se o body tiver menos de 1600 caracteres, será rejeitado.`;
 
     yield { type: "progress" as const, progress: 28, step: "Montando a estrutura do relatório..." };
     let base: z.infer<typeof BaseAiOutput>;
     try {
       const baseText = await callWithRetry({
         prompt: basePrompt,
-        timeoutMs: 18_000,
+        timeoutMs: 45_000,
         errorMessage: "A geração demorou além do limite. Tente novamente.",
       });
       base = parseJsonWithSchema(baseText, BaseAiOutput, "base", {
@@ -786,7 +788,7 @@ Regras:
       try {
         const sectionBodyText = await callWithRetry({
           prompt: makeSectionBodyPrompt(blueprint, index, base.sectionBlueprints),
-          timeoutMs: 12_000,
+          timeoutMs: 40_000,
           errorMessage: "A geração demorou além do limite. Tente novamente.",
         });
         sectionBody = parseJsonWithSchema(sectionBodyText, SectionBodyOutput, `section-body-${index + 1}`, {
