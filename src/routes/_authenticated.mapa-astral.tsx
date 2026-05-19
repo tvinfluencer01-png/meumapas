@@ -427,6 +427,54 @@ function MapaAstral() {
               )}
             </div>
           </div>
+
+          {/* Previsões geradas por IA com base no mapa */}
+          <div className="glass-card rounded-2xl p-6 mt-6 relative overflow-hidden">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <CalendarClock className="size-4 text-gold" />
+                <h3 className="font-serif text-xl text-gold">Previsões para os próximos dias</h3>
+              </div>
+              <div className="flex items-center gap-2">
+                <CreditCostBadge action="astro_forecast" label="Previsões" />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleGenerateForecast}
+                  disabled={forecastLoading || !currentChartId}
+                  className="border-gold/40 text-gold hover:bg-gold/10"
+                >
+                  {forecastLoading ? <Loader2 className="size-3 animate-spin mr-2" /> : <Sparkles className="size-3 mr-2" />}
+                  {forecast ? "Atualizar" : "Gerar previsões"}
+                </Button>
+              </div>
+            </div>
+
+            {!forecast && !forecastLoading && (
+              <p className="mt-4 text-sm text-muted-foreground">
+                Geramos uma leitura prática para os próximos dias, semana, mês e ano com base no seu mapa natal e na fase atual do céu.
+              </p>
+            )}
+
+            {forecast && (
+              <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+                {[
+                  { label: "Próximos dias", text: forecast.nextDays },
+                  { label: "Esta semana", text: forecast.week },
+                  { label: "Este mês", text: forecast.month },
+                  { label: "Este ano", text: forecast.year },
+                ].map((f) => (
+                  <div key={f.label} className="rounded-xl bg-secondary/30 border border-gold/15 p-4">
+                    <div className="text-[10px] uppercase tracking-widest text-gold mb-2">{f.label}</div>
+                    <p className="text-sm text-stardust whitespace-pre-wrap leading-relaxed">{f.text}</p>
+                  </div>
+                ))}
+                <p className="md:col-span-2 text-[11px] text-muted-foreground/70 text-right">
+                  Geradas em {new Date(forecast.generatedAt).toLocaleString("pt-BR")}
+                </p>
+              </div>
+            )}
+          </div>
         </TooltipProvider>
       )}
     </div>
