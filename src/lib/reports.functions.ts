@@ -763,7 +763,7 @@ Regras:
     try {
       const baseText = await callWithRetry({
         prompt: basePrompt,
-        timeoutMs: 18_000,
+        timeoutMs: 45_000,
         errorMessage: "A geração demorou além do limite. Tente novamente.",
       });
       base = parseJsonWithSchema(baseText, BaseAiOutput, "base", {
