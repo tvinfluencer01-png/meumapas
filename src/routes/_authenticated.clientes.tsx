@@ -1,11 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { toast } from "sonner";
 import {
   Users, Plus, Pencil, Trash2, Star, StarOff, Phone, Mail, Tag,
-  Sparkles, Lock, ShoppingCart, Search,
+  Sparkles, ShoppingCart, Search, Check, ChevronsUpDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,12 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
+} from "@/components/ui/command";
+import { cn } from "@/lib/utils";
+import { BR_CITIES, findCity, type BRCity } from "@/lib/br-cities";
 import {
   listClientProfiles, upsertClientProfile, deleteClientProfile, setActiveClientProfile,
 } from "@/lib/client-profiles.functions";
@@ -307,6 +313,45 @@ function ProfileDialog({
 }) {
   const [submitting, setSubmitting] = useState(false);
 
+  // Pré-seleciona a cidade do cliente em edição (ou São Paulo para novos).
+  const initialCity = useMemo<BRCity>(() => {
+    if (editing?.city) {
+      const found = findCity(editing.city);
+      if (found) return found;
+      // cidade legada que não está no catálogo: cria item ad-hoc só para exibir
+      return {
+        name: editing.city,
+        state: "",
+        latitude: editing.latitude ?? -23.5505,
+        longitude: editing.longitude ?? -46.6333,
+        timezone: editing.timezone ?? "America/Sao_Paulo",
+      };
+    }
+    return BR_CITIES[0]; // São Paulo
+  }, [editing]);
+
+  const [city, setCity] = useState<BRCity>(initialCity);
+  const [latitude, setLatitude] = useState<string>(String(initialCity.latitude));
+  const [longitude, setLongitude] = useState<string>(String(initialCity.longitude));
+  const [timezone, setTimezone] = useState<string>(initialCity.timezone);
+
+  // Reseta quando o diálogo abre/fecha ou troca o cliente em edição.
+  useEffect(() => {
+    if (open) {
+      setCity(initialCity);
+      setLatitude(String(initialCity.latitude));
+      setLongitude(String(initialCity.longitude));
+      setTimezone(initialCity.timezone);
+    }
+  }, [open, initialCity]);
+
+  function handleCityChange(next: BRCity) {
+    setCity(next);
+    setLatitude(String(next.latitude));
+    setLongitude(String(next.longitude));
+    setTimezone(next.timezone);
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -326,19 +371,18 @@ function ProfileDialog({
             const tagsStr = String(f.get("tags") || "").trim();
             const tags = tagsStr ? tagsStr.split(",").map((t) => t.trim()).filter(Boolean) : [];
             const time_unknown = f.get("time_unknown") === "on";
-            const latStr = String(f.get("latitude") || "").trim();
-            const lonStr = String(f.get("longitude") || "").trim();
+            const cityLabel = city.state ? `${city.name} - ${city.state}` : city.name;
             const payload: Record<string, unknown> = {
               id: editing?.id,
               full_name: String(f.get("full_name") || ""),
               birth_date: String(f.get("birth_date") || ""),
               birth_time: time_unknown ? null : (String(f.get("birth_time") || "") || null),
               time_unknown,
-              city: String(f.get("city") || ""),
-              country: String(f.get("country") || "") || null,
-              latitude: latStr ? Number(latStr) : null,
-              longitude: lonStr ? Number(lonStr) : null,
-              timezone: String(f.get("timezone") || "") || null,
+              city: cityLabel,
+              country: "Brasil",
+              latitude: latitude ? Number(latitude) : null,
+              longitude: longitude ? Number(longitude) : null,
+              timezone: timezone || null,
               email: String(f.get("email") || "") || null,
               phone: String(f.get("phone") || "") || null,
               tags,
@@ -368,19 +412,28 @@ function ProfileDialog({
               </label>
             </Field>
             <Field label="Cidade *" required>
-              <Input name="city" defaultValue={editing?.city ?? ""} required />
+              <CityCombobox value={city} onChange={handleCityChange} />
             </Field>
-            <Field label="País">
-              <Input name="country" defaultValue={editing?.country ?? ""} />
+            <Field label="Fuso horário">
+              <Input
+                value={timezone}
+                onChange={(e) => setTimezone(e.target.value)}
+                placeholder="America/Sao_Paulo"
+              />
             </Field>
             <Field label="Latitude">
-              <Input name="latitude" type="number" step="any" defaultValue={editing?.latitude ?? ""} />
+              <Input
+                type="number" step="any"
+                value={latitude}
+                onChange={(e) => setLatitude(e.target.value)}
+              />
             </Field>
             <Field label="Longitude">
-              <Input name="longitude" type="number" step="any" defaultValue={editing?.longitude ?? ""} />
-            </Field>
-            <Field label="Fuso (ex.: America/Sao_Paulo)">
-              <Input name="timezone" defaultValue={editing?.timezone ?? ""} />
+              <Input
+                type="number" step="any"
+                value={longitude}
+                onChange={(e) => setLongitude(e.target.value)}
+              />
             </Field>
             <Field label="E-mail">
               <Input name="email" type="email" defaultValue={editing?.email ?? ""} />
@@ -415,5 +468,63 @@ function Field({ label, required, children }: { label: string; required?: boolea
       <Label className={required ? "" : "text-muted-foreground"}>{label}</Label>
       {children}
     </div>
+  );
+}
+
+function CityCombobox({
+  value, onChange,
+}: {
+  value: BRCity;
+  onChange: (c: BRCity) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const label = value.state ? `${value.name} - ${value.state}` : value.name;
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-full justify-between font-normal"
+        >
+          <span className="truncate">{label}</span>
+          <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+        <Command
+          filter={(itemValue, search) => {
+            const norm = (s: string) =>
+              s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            return norm(itemValue).includes(norm(search)) ? 1 : 0;
+          }}
+        >
+          <CommandInput placeholder="Buscar cidade…" />
+          <CommandList className="max-h-64">
+            <CommandEmpty>Nenhuma cidade encontrada.</CommandEmpty>
+            <CommandGroup>
+              {BR_CITIES.map((c) => {
+                const v = `${c.name} - ${c.state}`;
+                const selected = c.name === value.name && c.state === value.state;
+                return (
+                  <CommandItem
+                    key={v}
+                    value={v}
+                    onSelect={() => { onChange(c); setOpen(false); }}
+                  >
+                    <Check className={cn("mr-2 size-4", selected ? "opacity-100" : "opacity-0")} />
+                    <span className="flex-1">{c.name}</span>
+                    <span className="text-xs text-muted-foreground ml-2">{c.state}</span>
+                  </CommandItem>
+                );
+              })}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }
