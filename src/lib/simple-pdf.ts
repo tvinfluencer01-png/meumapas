@@ -442,7 +442,7 @@ export async function buildSimplePdf(data: SimplePdfData): Promise<Uint8Array> {
   }
 
   function drawQuote(text: string) {
-    drawParagraph(text, { italic: true, color: rgb(0.3, 0.25, 0.2), size: 11 });
+    drawParagraph(text, { italic: true, color: rgb(0.3, 0.25, 0.2), size: 13 });
   }
 
   function drawHebrewHero(b: { letter: string; name: string; transliteration: string; meaning: string }) {
@@ -540,7 +540,7 @@ export async function buildSimplePdf(data: SimplePdfData): Promise<Uint8Array> {
 
   // -------- RENDER BLOCKS --------
   for (const block of data.blocks) {
-    if (block.type === "h2") drawHeading(block.text, 18, { newPage: true });
+    if (block.type === "h2") drawHeading(block.text, 22, { newPage: true });
     else if (block.type === "h3") drawSubHeading(block.text);
     else if (block.type === "p") drawParagraph(block.text);
     else if (block.type === "quote") drawQuote(block.text);
