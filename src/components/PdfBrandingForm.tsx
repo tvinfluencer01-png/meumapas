@@ -156,6 +156,13 @@ export function PdfBrandingForm() {
         enabled_kabbalah_numerology: (b.enabled_kabbalah_numerology as boolean | undefined) ?? true,
         enabled_energy_calendar: (b.enabled_energy_calendar as boolean | undefined) ?? true,
         enabled_weekly: (b.enabled_weekly as boolean | undefined) ?? true,
+        cover_bg_color: (b.cover_bg_color as string | undefined) ?? DEFAULT_FORM.cover_bg_color,
+        cover_accent_color: (b.cover_accent_color as string | undefined) ?? DEFAULT_FORM.cover_accent_color,
+        cover_title_position: ((b.cover_title_position as FormState["cover_title_position"] | undefined) ?? DEFAULT_FORM.cover_title_position),
+        font_family: ((b.font_family as FormState["font_family"] | undefined) ?? DEFAULT_FORM.font_family),
+        header_bg_color: (b.header_bg_color as string | undefined) ?? DEFAULT_FORM.header_bg_color,
+        footer_bg_color: (b.footer_bg_color as string | undefined) ?? DEFAULT_FORM.footer_bg_color,
+        header_text_color: (b.header_text_color as string | undefined) ?? DEFAULT_FORM.header_text_color,
       });
     }
   }, [data]);

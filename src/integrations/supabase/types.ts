@@ -107,10 +107,13 @@ export type Database = {
           birth_data_id: string | null
           created_at: string
           engine: string
+          forecast: Json | null
+          forecast_generated_at: string | null
           houses: Json
           id: string
           midheaven: number | null
           planets: Json
+          storage_path: string | null
           summary: string | null
           user_id: string
         }
@@ -120,10 +123,13 @@ export type Database = {
           birth_data_id?: string | null
           created_at?: string
           engine?: string
+          forecast?: Json | null
+          forecast_generated_at?: string | null
           houses?: Json
           id?: string
           midheaven?: number | null
           planets?: Json
+          storage_path?: string | null
           summary?: string | null
           user_id: string
         }
@@ -133,10 +139,13 @@ export type Database = {
           birth_data_id?: string | null
           created_at?: string
           engine?: string
+          forecast?: Json | null
+          forecast_generated_at?: string | null
           houses?: Json
           id?: string
           midheaven?: number | null
           planets?: Json
+          storage_path?: string | null
           summary?: string | null
           user_id?: string
         }

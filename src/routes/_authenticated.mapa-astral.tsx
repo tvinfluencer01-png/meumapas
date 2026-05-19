@@ -4,10 +4,10 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { showLoader, hideLoader, updateLoader } from "@/components/system-feedback";
-import { Loader2, Sparkles, Wand2, AlertTriangle } from "lucide-react";
+import { Loader2, Sparkles, Wand2, AlertTriangle, FileDown, CalendarClock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { computeNatalChart, pingAstro } from "@/lib/astrology.functions";
+import { computeNatalChart, pingAstro, generateAstroForecast, exportAstroPdf } from "@/lib/astrology.functions";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { PLANET_MEANING, SIGN_MEANING, ASPECT_MEANING, SIGN_GUIDANCE } from "@/lib/astro-meanings";
@@ -30,10 +30,16 @@ function MapaAstral() {
   const { user } = useAuth();
   const compute = useServerFn(computeNatalChart);
   const ping = useServerFn(pingAstro);
+  const genForecast = useServerFn(generateAstroForecast);
+  const exportPdf = useServerFn(exportAstroPdf);
   const [loading, setLoading] = useState(false);
   const [chart, setChart] = useState<any>(null);
   const [genError, setGenError] = useState<string | null>(null);
   const [retryInfo, setRetryInfo] = useState<{ attempt: number; max: number; waitMs: number } | null>(null);
+  const [forecast, setForecast] = useState<{ nextDays: string; week: string; month: string; year: string; generatedAt: string } | null>(null);
+  const [forecastLoading, setForecastLoading] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const chartSvgRef = useRef<SVGSVGElement | null>(null);
 
   // Health probe: confirms the astrology serverFn is deployed/reachable.
   const health = useQuery({
@@ -68,6 +74,92 @@ function MapaAstral() {
       return data;
     },
   });
+
+  // Carrega previsões já salvas quando o chart muda
+  useEffect(() => {
+    const f = (chart?.forecast ?? latest?.forecast) as typeof forecast | null;
+    if (f && f.nextDays) setForecast(f);
+    else setForecast(null);
+  }, [chart, latest]);
+
+  const currentChartId: string | null = chart?.id ?? latest?.id ?? null;
+
+  async function captureChartPng(): Promise<string | null> {
+    const svg = chartSvgRef.current;
+    if (!svg) return null;
+    try {
+      const clone = svg.cloneNode(true) as SVGSVGElement;
+      clone.setAttribute("viewBox", "0 0 560 560");
+      clone.setAttribute("width", "1120");
+      clone.setAttribute("height", "1120");
+      clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+      const xml = new XMLSerializer().serializeToString(clone);
+      const svgBlob = new Blob([xml], { type: "image/svg+xml;charset=utf-8" });
+      const url = URL.createObjectURL(svgBlob);
+      const png = await new Promise<string | null>((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          canvas.width = 1120; canvas.height = 1120;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) return resolve(null);
+          ctx.fillStyle = "#03060f";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          URL.revokeObjectURL(url);
+          resolve(canvas.toDataURL("image/png").split(",")[1] ?? null);
+        };
+        img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+        img.src = url;
+      });
+      return png;
+    } catch (e) {
+      console.error("[mapa-astral] captureChartPng failed", e);
+      return null;
+    }
+  }
+
+  async function handleGenerateForecast() {
+    if (!currentChartId) return;
+    setForecastLoading(true);
+    showLoader({ title: "Lendo o céu dos próximos dias", subtitle: "IA astrológica" });
+    try {
+      const f = await genForecast({ data: { chartId: currentChartId } });
+      setForecast(f);
+      toast.success("Previsões reveladas.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha ao gerar previsões.");
+    } finally {
+      setForecastLoading(false);
+      hideLoader();
+      emitCreditsChanged();
+    }
+  }
+
+  async function handleExportPdf() {
+    if (!currentChartId) { toast.error("Gere o mapa primeiro."); return; }
+    setPdfLoading(true);
+    showLoader({ title: "Montando seu relatório", subtitle: "PDF completo do mapa" });
+    try {
+      const chartImageB64 = await captureChartPng();
+      const r = await exportPdf({ data: { chartId: currentChartId, chartImageB64: chartImageB64 ?? undefined } });
+      const bytes = Uint8Array.from(atob(r.pdfBase64), (c) => c.charCodeAt(0));
+      const blob = new Blob([bytes], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `mapa-astral-${new Date().toISOString().slice(0, 10)}.pdf`;
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+      toast.success("PDF gerado.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha ao gerar PDF.");
+    } finally {
+      setPdfLoading(false);
+      hideLoader();
+      emitCreditsChanged();
+    }
+  }
 
   async function handleGenerate() {
     if (!birth) {
@@ -178,15 +270,29 @@ function MapaAstral() {
           </p>
         </div>
         <div className="flex flex-col items-end gap-2">
-          <Button
-            onClick={handleGenerate}
-            disabled={loading || !birth || backendDown || health.isLoading}
-            className="bg-gold text-primary-foreground hover:bg-gold-glow"
-          >
-            {loading ? <Loader2 className="size-4 animate-spin mr-2" /> : <Wand2 className="size-4 mr-2" />}
-            {backendDown ? "Indisponível" : current ? "Recalcular" : "Gerar mapa"}
-          </Button>
-          <CreditCostBadge action="astro_chart" label="Custo por geração" />
+          <div className="flex flex-wrap items-center gap-2 justify-end">
+            <Button
+              onClick={handleGenerate}
+              disabled={loading || !birth || backendDown || health.isLoading}
+              className="bg-gold text-primary-foreground hover:bg-gold-glow"
+            >
+              {loading ? <Loader2 className="size-4 animate-spin mr-2" /> : <Wand2 className="size-4 mr-2" />}
+              {backendDown ? "Indisponível" : current ? "Recalcular" : "Gerar mapa"}
+            </Button>
+            <Button
+              onClick={handleExportPdf}
+              disabled={pdfLoading || !currentChartId || backendDown}
+              variant="outline"
+              className="border-gold/40 text-gold hover:bg-gold/10"
+            >
+              {pdfLoading ? <Loader2 className="size-4 animate-spin mr-2" /> : <FileDown className="size-4 mr-2" />}
+              Exportar PDF
+            </Button>
+          </div>
+          <div className="flex flex-wrap items-center gap-3 justify-end">
+            <CreditCostBadge action="astro_chart" label="Mapa" />
+            <CreditCostBadge action="astro_pdf" label="PDF" />
+          </div>
         </div>
       </header>
 
@@ -243,8 +349,8 @@ function MapaAstral() {
         <TooltipProvider delayDuration={150}>
           <ChartSummary chart={current} />
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-            <ChartWheel chart={current} userId={user?.id} />
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] gap-6 mt-6">
+            <ChartWheel chart={current} userId={user?.id} svgRefProp={chartSvgRef} compact />
             <div className="space-y-4">
               <div className="glass-card rounded-2xl p-6">
                 <h3 className="font-serif text-xl text-gold">Síntese</h3>
@@ -320,6 +426,54 @@ function MapaAstral() {
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Previsões geradas por IA com base no mapa */}
+          <div className="glass-card rounded-2xl p-6 mt-6 relative overflow-hidden">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <CalendarClock className="size-4 text-gold" />
+                <h3 className="font-serif text-xl text-gold">Previsões para os próximos dias</h3>
+              </div>
+              <div className="flex items-center gap-2">
+                <CreditCostBadge action="astro_forecast" label="Previsões" />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleGenerateForecast}
+                  disabled={forecastLoading || !currentChartId}
+                  className="border-gold/40 text-gold hover:bg-gold/10"
+                >
+                  {forecastLoading ? <Loader2 className="size-3 animate-spin mr-2" /> : <Sparkles className="size-3 mr-2" />}
+                  {forecast ? "Atualizar" : "Gerar previsões"}
+                </Button>
+              </div>
+            </div>
+
+            {!forecast && !forecastLoading && (
+              <p className="mt-4 text-sm text-muted-foreground">
+                Geramos uma leitura prática para os próximos dias, semana, mês e ano com base no seu mapa natal e na fase atual do céu.
+              </p>
+            )}
+
+            {forecast && (
+              <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+                {[
+                  { label: "Próximos dias", text: forecast.nextDays },
+                  { label: "Esta semana", text: forecast.week },
+                  { label: "Este mês", text: forecast.month },
+                  { label: "Este ano", text: forecast.year },
+                ].map((f) => (
+                  <div key={f.label} className="rounded-xl bg-secondary/30 border border-gold/15 p-4">
+                    <div className="text-[10px] uppercase tracking-widest text-gold mb-2">{f.label}</div>
+                    <p className="text-sm text-stardust whitespace-pre-wrap leading-relaxed">{f.text}</p>
+                  </div>
+                ))}
+                <p className="md:col-span-2 text-[11px] text-muted-foreground/70 text-right">
+                  Geradas em {new Date(forecast.generatedAt).toLocaleString("pt-BR")}
+                </p>
+              </div>
+            )}
           </div>
         </TooltipProvider>
       )}
@@ -416,7 +570,7 @@ function spreadAngles(items: { angle: number }[], minGap = 7) {
   return out;
 }
 
-function ChartWheel({ chart, userId }: { chart: any; userId?: string }) {
+function ChartWheel({ chart, userId, svgRefProp, compact }: { chart: any; userId?: string; svgRefProp?: React.RefObject<SVGSVGElement | null>; compact?: boolean }) {
   const [hover, setHover] = useState<HoverInfo | null>(null);
   const size = 560;
   const cx = size / 2, cy = size / 2;
@@ -429,7 +583,8 @@ function ChartWheel({ chart, userId }: { chart: any; userId?: string }) {
   const display = spreadAngles(planetAngles.map((angle: number) => ({ angle })), 8);
 
   // Pan & zoom via viewBox manipulation
-  const svgRef = useRef<SVGSVGElement | null>(null);
+  const localSvgRef = useRef<SVGSVGElement | null>(null);
+  const svgRef = svgRefProp ?? localSvgRef;
   // Persistência por usuário: zoom + posição são restaurados ao voltar à página.
   const storageKey = userId ? `cosmic-ai:chart-view:${userId}` : "cosmic-ai:chart-view:anon";
   const readStoredView = () => {
@@ -545,7 +700,7 @@ function ChartWheel({ chart, userId }: { chart: any; userId?: string }) {
       <svg
         ref={svgRef}
         viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`}
-        className="w-full max-w-[560px] block mx-auto touch-none select-none"
+        className={`w-full ${compact ? "max-w-[420px]" : "max-w-[560px]"} block mx-auto touch-none select-none`}
         style={{ cursor: drag.current ? "grabbing" : "grab" }}
         onWheel={onWheel}
         onPointerDown={onPointerDown}

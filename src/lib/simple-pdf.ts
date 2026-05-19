@@ -21,6 +21,7 @@ export type SimplePdfBlock =
   | { type: "quote"; text: string }
   | { type: "list"; items: string[] }
   | { type: "kv"; rows: { k: string; v: string }[] }
+  | { type: "image"; pngB64: string; caption?: string; maxHeight?: number }
   | { type: "hebrew-hero"; letter: string; name: string; transliteration: string; meaning: string }
   | { type: "hebrew-row"; letter: string; name: string; value: number | string; meaning: string }
   | { type: "hebrew-name"; latinName: string; hebrewWords: string[]; caption?: string };
@@ -712,6 +713,34 @@ export async function buildSimplePdf(data: SimplePdfData): Promise<Uint8Array> {
   }
 
   // -------- RENDER BLOCKS --------
+  async function drawImage(b: { pngB64: string; caption?: string; maxHeight?: number }) {
+    try {
+      const bytes = Uint8Array.from(Buffer.from(b.pngB64, "base64"));
+      const img = await doc.embedPng(bytes);
+      const maxH = b.maxHeight ?? 360;
+      const ratio = img.height / img.width;
+      let w = CONTENT_W;
+      let h = w * ratio;
+      if (h > maxH) { h = maxH; w = h / ratio; }
+      ensureSpace(h + (b.caption ? 18 : 8));
+      const x = MARGIN + (CONTENT_W - w) / 2;
+      cursor.page.drawImage(img, { x, y: cursor.y - h, width: w, height: h });
+      cursor.y -= h + 6;
+      if (b.caption) {
+        const cap = safe(b.caption);
+        const cw = serifItalic.widthOfTextAtSize(cap, 9);
+        cursor.page.drawText(cap, {
+          x: MARGIN + (CONTENT_W - cw) / 2, y: cursor.y - 10,
+          size: 9, font: serifItalic, color: MUTED,
+        });
+        cursor.y -= 16;
+      }
+      cursor.y -= 6;
+    } catch (e) {
+      console.error("[simple-pdf] image embed failed", e);
+    }
+  }
+
   for (const block of data.blocks) {
     if (block.type === "h2") drawHeading(block.text, 22, { newPage: !data.flowing });
     else if (block.type === "h3") drawSubHeading(block.text);
@@ -719,6 +748,7 @@ export async function buildSimplePdf(data: SimplePdfData): Promise<Uint8Array> {
     else if (block.type === "quote") drawQuote(block.text);
     else if (block.type === "list") drawBulletList(block.items);
     else if (block.type === "kv") drawKv(block.rows);
+    else if (block.type === "image") await drawImage(block);
     else if (block.type === "hebrew-hero") drawHebrewHero(block);
     else if (block.type === "hebrew-row") drawHebrewRow(block);
     else if (block.type === "hebrew-name") drawHebrewName(block);
