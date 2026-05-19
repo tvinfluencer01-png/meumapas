@@ -177,6 +177,13 @@ export function PdfBrandingForm() {
         header_bg_color: (b.header_bg_color as string | undefined) ?? DEFAULT_FORM.header_bg_color,
         footer_bg_color: (b.footer_bg_color as string | undefined) ?? DEFAULT_FORM.footer_bg_color,
         header_text_color: (b.header_text_color as string | undefined) ?? DEFAULT_FORM.header_text_color,
+        page_bg_color: (b.page_bg_color as string | undefined) ?? DEFAULT_FORM.page_bg_color,
+        body_text_color: (b.body_text_color as string | undefined) ?? DEFAULT_FORM.body_text_color,
+        heading_text_color: (b.heading_text_color as string | undefined) ?? DEFAULT_FORM.heading_text_color,
+        body_font_size: Number(b.body_font_size ?? DEFAULT_FORM.body_font_size),
+        line_height: Number(b.line_height ?? DEFAULT_FORM.line_height),
+        frame_style: ((b.frame_style as FormState["frame_style"] | undefined) ?? DEFAULT_FORM.frame_style),
+        watermark_opacity: Number(b.watermark_opacity ?? DEFAULT_FORM.watermark_opacity),
       });
     }
   }, [data]);
