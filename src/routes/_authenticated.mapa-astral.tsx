@@ -59,15 +59,27 @@ function MapaAstral() {
   });
   const backendDown = health.isError;
 
+  const { data: activeSubject } = useActiveSubject();
   const { data: birth } = useQuery({
-    queryKey: ["birth", user?.id],
-    enabled: !!user,
+    queryKey: ["birth-or-subject", user?.id, activeSubject?.client_profile_id ?? "self"],
+    enabled: !!user && !!activeSubject,
     queryFn: async () => {
-      const { data } = await supabase.from("birth_data")
-        .select("*").eq("user_id", user!.id).eq("is_primary", true).maybeSingle();
-      return data;
+      if (!activeSubject) return null;
+      return {
+        id: activeSubject.birth_data_id,
+        full_name: activeSubject.full_name,
+        birth_date: activeSubject.birth_date,
+        birth_time: activeSubject.birth_time,
+        time_unknown: activeSubject.time_unknown,
+        city: activeSubject.city,
+        country: activeSubject.country,
+        latitude: activeSubject.latitude,
+        longitude: activeSubject.longitude,
+        timezone: activeSubject.timezone,
+      };
     },
   });
+
 
   const { data: latest } = useQuery({
     queryKey: ["latest-chart", user?.id],
