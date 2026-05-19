@@ -14,6 +14,7 @@ const HexColor = z
 
 const TitlePosition = z.enum(["top", "center", "bottom"]);
 const FontFamily = z.enum(["serif", "sans", "display"]);
+const FrameStyle = z.enum(["none", "simple", "double", "ornamental"]);
 
 const BrandingShape = z.object({
   enabled: z.boolean(),
@@ -43,6 +44,14 @@ const BrandingShape = z.object({
   header_bg_color: HexColor,
   footer_bg_color: HexColor,
   header_text_color: HexColor,
+  // PDF CSS Avançado
+  page_bg_color: HexColor,
+  body_text_color: HexColor,
+  heading_text_color: HexColor,
+  body_font_size: z.number().min(8).max(20),
+  line_height: z.number().min(1).max(2.2),
+  frame_style: FrameStyle,
+  watermark_opacity: z.number().min(0).max(1),
 });
 
 async function getSignedUrl(path: string | null | undefined, expires = 60 * 60) {
