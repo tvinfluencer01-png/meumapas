@@ -7,9 +7,10 @@ import { Starfield } from "@/components/Starfield";
 import { UserProfileDialog } from "@/components/UserProfileDialog";
 import { Logo } from "@/components/Logo";
 import {
-  LayoutDashboard, CircleDot, Hash, MessageCircle, LogOut, Menu, X, ScrollText, Shield, Settings, Coins, Wand2, TreePine, Crown, Infinity as InfinityIcon, FileBadge, User as UserIcon, Palette,
+  LayoutDashboard, CircleDot, Hash, MessageCircle, LogOut, Menu, X, ScrollText, Shield, Settings, Coins, Wand2, TreePine, Crown, Infinity as InfinityIcon, FileBadge, User as UserIcon, Palette, Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useActiveSubject } from "@/hooks/use-active-subject";
 
 export const Route = createFileRoute("/_authenticated")({
   component: AuthedLayout,
@@ -33,6 +34,7 @@ const NAV: NavItem[] = [
 ];
 
 const ADDON_MENU: Record<string, { label: string; to: string; icon: typeof LayoutDashboard }> = {
+  sub_astrologer_numerologist: { label: "Clientes", to: "/clientes", icon: Users },
   sub_branding_pdf: { label: "Branding PDF", to: "/configuracoes", icon: FileBadge },
   sub_pdf_css: { label: "PDF CSS Avançado", to: "/pdf-css", icon: Palette },
   sub_unlimited_reports: { label: "Relatórios Ilimitados", to: "/relatorios", icon: InfinityIcon },
@@ -41,6 +43,7 @@ const ADDON_MENU: Record<string, { label: string; to: string; icon: typeof Layou
   sub_kabbalah_unlimited: { label: "Meditação Ilimitada", to: "/meditacao", icon: TreePine },
   sub_kabbalistic_numerology: { label: "Numerologia Cabalística", to: "/numerologia-cabalistica", icon: Hash },
 };
+
 
 function AuthedLayout() {
   const { signOut, user, loading } = useAuth();
