@@ -227,6 +227,7 @@ export const exportKabbalahPdf = createServerFn({ method: "POST" })
         ],
         blocks,
         accentHex: "#3b82f6",
+        flowing: true,
       });
 
       const path = `${userId}/kabbalah-${row.id}.pdf`;
