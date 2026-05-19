@@ -700,7 +700,7 @@ function ChartWheel({ chart, userId, svgRefProp, compact }: { chart: any; userId
       <svg
         ref={svgRef}
         viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`}
-        className="w-full max-w-[560px] block mx-auto touch-none select-none"
+        className={`w-full ${compact ? "max-w-[420px]" : "max-w-[560px]"} block mx-auto touch-none select-none`}
         style={{ cursor: drag.current ? "grabbing" : "grab" }}
         onWheel={onWheel}
         onPointerDown={onPointerDown}
