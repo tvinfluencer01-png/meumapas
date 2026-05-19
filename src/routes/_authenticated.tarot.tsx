@@ -10,6 +10,17 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { CreditCostBadge } from "@/components/CreditCostBadge";
 import { emitCreditsChanged } from "@/lib/credits-events";
 import { SPREADS, type SpreadId } from "@/lib/tarot.deck";
@@ -91,7 +102,12 @@ function TarotPage() {
         for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
         const blob = new Blob([bytes], { type: "application/pdf" });
         const url = URL.createObjectURL(blob);
-        window.open(url, "_blank");
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `tarot-${Date.now()}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
         setTimeout(() => URL.revokeObjectURL(url), 60_000);
         toast.success(res.cached ? "PDF aberto." : "PDF gerado.");
       }
@@ -100,6 +116,7 @@ function TarotPage() {
     onError: (e: Error) => toast.error(e.message),
     onSettled: () => emitCreditsChanged(),
   });
+
 
   const delMut = useMutation({
     mutationFn: (id: string) => deleteFn({ data: { id } }),
@@ -330,14 +347,35 @@ function TarotPage() {
                     >
                       <FileDown className="size-3 mr-1" /> PDF
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => delMut.mutate(r.id)}
-                      disabled={delMut.isPending}
-                    >
-                      <Trash2 className="size-3 mr-1" /> Excluir
-                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          disabled={delMut.isPending}
+                        >
+                          <Trash2 className="size-3 mr-1" /> Excluir
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Excluir esta leitura?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Esta ação é permanente. A leitura e o PDF
+                            relacionado serão removidos do seu histórico.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => delMut.mutate(r.id)}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Excluir
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </CardContent>
               </Card>
