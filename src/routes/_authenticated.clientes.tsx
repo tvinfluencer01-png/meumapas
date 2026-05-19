@@ -313,6 +313,45 @@ function ProfileDialog({
 }) {
   const [submitting, setSubmitting] = useState(false);
 
+  // Pré-seleciona a cidade do cliente em edição (ou São Paulo para novos).
+  const initialCity = useMemo<BRCity>(() => {
+    if (editing?.city) {
+      const found = findCity(editing.city);
+      if (found) return found;
+      // cidade legada que não está no catálogo: cria item ad-hoc só para exibir
+      return {
+        name: editing.city,
+        state: "",
+        latitude: editing.latitude ?? -23.5505,
+        longitude: editing.longitude ?? -46.6333,
+        timezone: editing.timezone ?? "America/Sao_Paulo",
+      };
+    }
+    return BR_CITIES[0]; // São Paulo
+  }, [editing]);
+
+  const [city, setCity] = useState<BRCity>(initialCity);
+  const [latitude, setLatitude] = useState<string>(String(initialCity.latitude));
+  const [longitude, setLongitude] = useState<string>(String(initialCity.longitude));
+  const [timezone, setTimezone] = useState<string>(initialCity.timezone);
+
+  // Reseta quando o diálogo abre/fecha ou troca o cliente em edição.
+  useEffect(() => {
+    if (open) {
+      setCity(initialCity);
+      setLatitude(String(initialCity.latitude));
+      setLongitude(String(initialCity.longitude));
+      setTimezone(initialCity.timezone);
+    }
+  }, [open, initialCity]);
+
+  function handleCityChange(next: BRCity) {
+    setCity(next);
+    setLatitude(String(next.latitude));
+    setLongitude(String(next.longitude));
+    setTimezone(next.timezone);
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -332,19 +371,18 @@ function ProfileDialog({
             const tagsStr = String(f.get("tags") || "").trim();
             const tags = tagsStr ? tagsStr.split(",").map((t) => t.trim()).filter(Boolean) : [];
             const time_unknown = f.get("time_unknown") === "on";
-            const latStr = String(f.get("latitude") || "").trim();
-            const lonStr = String(f.get("longitude") || "").trim();
+            const cityLabel = city.state ? `${city.name} - ${city.state}` : city.name;
             const payload: Record<string, unknown> = {
               id: editing?.id,
               full_name: String(f.get("full_name") || ""),
               birth_date: String(f.get("birth_date") || ""),
               birth_time: time_unknown ? null : (String(f.get("birth_time") || "") || null),
               time_unknown,
-              city: String(f.get("city") || ""),
-              country: String(f.get("country") || "") || null,
-              latitude: latStr ? Number(latStr) : null,
-              longitude: lonStr ? Number(lonStr) : null,
-              timezone: String(f.get("timezone") || "") || null,
+              city: cityLabel,
+              country: "Brasil",
+              latitude: latitude ? Number(latitude) : null,
+              longitude: longitude ? Number(longitude) : null,
+              timezone: timezone || null,
               email: String(f.get("email") || "") || null,
               phone: String(f.get("phone") || "") || null,
               tags,
@@ -374,19 +412,28 @@ function ProfileDialog({
               </label>
             </Field>
             <Field label="Cidade *" required>
-              <Input name="city" defaultValue={editing?.city ?? ""} required />
+              <CityCombobox value={city} onChange={handleCityChange} />
             </Field>
-            <Field label="País">
-              <Input name="country" defaultValue={editing?.country ?? ""} />
+            <Field label="Fuso horário">
+              <Input
+                value={timezone}
+                onChange={(e) => setTimezone(e.target.value)}
+                placeholder="America/Sao_Paulo"
+              />
             </Field>
             <Field label="Latitude">
-              <Input name="latitude" type="number" step="any" defaultValue={editing?.latitude ?? ""} />
+              <Input
+                type="number" step="any"
+                value={latitude}
+                onChange={(e) => setLatitude(e.target.value)}
+              />
             </Field>
             <Field label="Longitude">
-              <Input name="longitude" type="number" step="any" defaultValue={editing?.longitude ?? ""} />
-            </Field>
-            <Field label="Fuso (ex.: America/Sao_Paulo)">
-              <Input name="timezone" defaultValue={editing?.timezone ?? ""} />
+              <Input
+                type="number" step="any"
+                value={longitude}
+                onChange={(e) => setLongitude(e.target.value)}
+              />
             </Field>
             <Field label="E-mail">
               <Input name="email" type="email" defaultValue={editing?.email ?? ""} />
