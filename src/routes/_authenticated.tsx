@@ -7,9 +7,10 @@ import { Starfield } from "@/components/Starfield";
 import { UserProfileDialog } from "@/components/UserProfileDialog";
 import { Logo } from "@/components/Logo";
 import {
-  LayoutDashboard, CircleDot, Hash, MessageCircle, LogOut, Menu, X, ScrollText, Shield, Settings, Coins, Wand2, TreePine, Crown, Infinity as InfinityIcon, FileBadge, User as UserIcon, Palette,
+  LayoutDashboard, CircleDot, Hash, MessageCircle, LogOut, Menu, X, ScrollText, Shield, Settings, Coins, Wand2, TreePine, Crown, Infinity as InfinityIcon, FileBadge, User as UserIcon, Palette, Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useActiveSubject } from "@/hooks/use-active-subject";
 
 export const Route = createFileRoute("/_authenticated")({
   component: AuthedLayout,
@@ -33,6 +34,7 @@ const NAV: NavItem[] = [
 ];
 
 const ADDON_MENU: Record<string, { label: string; to: string; icon: typeof LayoutDashboard }> = {
+  sub_astrologer_numerologist: { label: "Clientes", to: "/clientes", icon: Users },
   sub_branding_pdf: { label: "Branding PDF", to: "/configuracoes", icon: FileBadge },
   sub_pdf_css: { label: "PDF CSS Avançado", to: "/pdf-css", icon: Palette },
   sub_unlimited_reports: { label: "Relatórios Ilimitados", to: "/relatorios", icon: InfinityIcon },
@@ -42,6 +44,7 @@ const ADDON_MENU: Record<string, { label: string; to: string; icon: typeof Layou
   sub_kabbalistic_numerology: { label: "Numerologia Cabalística", to: "/numerologia-cabalistica", icon: Hash },
 };
 
+
 function AuthedLayout() {
   const { signOut, user, loading } = useAuth();
   const router = useRouter();
@@ -50,6 +53,8 @@ function AuthedLayout() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [activeAddons, setActiveAddons] = useState<Set<string>>(new Set());
   const [profileOpen, setProfileOpen] = useState(false);
+  const { data: activeSubject } = useActiveSubject();
+
 
   // Saldo de créditos + pico histórico para calcular a barra
   const { data: credits } = useQuery({
@@ -148,7 +153,21 @@ function AuthedLayout() {
             <Logo sizeClassName="size-12" animation="float" />
             <span className="font-serif text-xl shimmer-text">Cosmic AI</span>
           </div>
+          {activeSubject?.kind === "client" && (
+            <Link
+              to="/clientes"
+              className="mx-4 mt-3 flex items-center gap-2 rounded-lg border border-gold/30 bg-gold/10 px-3 py-2 text-xs hover:bg-gold/20 transition-colors"
+              title="Cliente ativo — clique para gerenciar"
+            >
+              <Users className="size-3.5 text-gold shrink-0" />
+              <div className="min-w-0 flex-1">
+                <div className="text-[10px] uppercase tracking-wider text-gold/80">Cliente ativo</div>
+                <div className="truncate font-medium text-foreground">{activeSubject.full_name}</div>
+              </div>
+            </Link>
+          )}
           <nav className="flex-1 overflow-y-auto p-4 space-y-1">
+
             {NAV.filter((item) => !item.addonId || activeAddons.has(item.addonId)).map((item) => (
               <Link
                 key={item.to} to={item.to} onClick={() => setOpen(false)}

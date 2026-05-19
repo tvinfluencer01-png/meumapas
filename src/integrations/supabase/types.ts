@@ -105,6 +105,7 @@ export type Database = {
           ascendant: number | null
           aspects: Json
           birth_data_id: string | null
+          client_profile_id: string | null
           created_at: string
           engine: string
           forecast: Json | null
@@ -121,6 +122,7 @@ export type Database = {
           ascendant?: number | null
           aspects?: Json
           birth_data_id?: string | null
+          client_profile_id?: string | null
           created_at?: string
           engine?: string
           forecast?: Json | null
@@ -137,6 +139,7 @@ export type Database = {
           ascendant?: number | null
           aspects?: Json
           birth_data_id?: string | null
+          client_profile_id?: string | null
           created_at?: string
           engine?: string
           forecast?: Json | null
@@ -155,6 +158,13 @@ export type Database = {
             columns: ["birth_data_id"]
             isOneToOne: false
             referencedRelation: "birth_data"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "astro_charts_client_profile_id_fkey"
+            columns: ["client_profile_id"]
+            isOneToOne: false
+            referencedRelation: "client_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -227,6 +237,69 @@ export type Database = {
           date?: string
           id?: string
           note?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      client_profiles: {
+        Row: {
+          avatar_url: string | null
+          birth_date: string
+          birth_time: string | null
+          city: string
+          country: string | null
+          created_at: string
+          email: string | null
+          full_name: string
+          id: string
+          latitude: number | null
+          longitude: number | null
+          notes: string | null
+          phone: string | null
+          tags: string[]
+          time_unknown: boolean
+          timezone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          birth_date: string
+          birth_time?: string | null
+          city: string
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          full_name: string
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          notes?: string | null
+          phone?: string | null
+          tags?: string[]
+          time_unknown?: boolean
+          timezone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          birth_date?: string
+          birth_time?: string | null
+          city?: string
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          notes?: string | null
+          phone?: string | null
+          tags?: string[]
+          time_unknown?: boolean
+          timezone?: string | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -339,6 +412,7 @@ export type Database = {
       kabbalah_meditations: {
         Row: {
           ai_model: string | null
+          client_profile_id: string | null
           created_at: string
           duration_min: number
           id: string
@@ -350,6 +424,7 @@ export type Database = {
         }
         Insert: {
           ai_model?: string | null
+          client_profile_id?: string | null
           created_at?: string
           duration_min?: number
           id?: string
@@ -361,6 +436,7 @@ export type Database = {
         }
         Update: {
           ai_model?: string | null
+          client_profile_id?: string | null
           created_at?: string
           duration_min?: number
           id?: string
@@ -370,7 +446,15 @@ export type Database = {
           storage_path?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "kabbalah_meditations_client_profile_id_fkey"
+            columns: ["client_profile_id"]
+            isOneToOne: false
+            referencedRelation: "client_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       mercado_pago_settings: {
         Row: {
@@ -478,6 +562,7 @@ export type Database = {
         Row: {
           birth_date: string
           birthday: number | null
+          client_profile_id: string | null
           created_at: string
           destiny: number | null
           details: Json | null
@@ -492,6 +577,7 @@ export type Database = {
         Insert: {
           birth_date: string
           birthday?: number | null
+          client_profile_id?: string | null
           created_at?: string
           destiny?: number | null
           details?: Json | null
@@ -506,6 +592,7 @@ export type Database = {
         Update: {
           birth_date?: string
           birthday?: number | null
+          client_profile_id?: string | null
           created_at?: string
           destiny?: number | null
           details?: Json | null
@@ -517,7 +604,15 @@ export type Database = {
           soul_urge?: number | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "numerology_reports_client_profile_id_fkey"
+            columns: ["client_profile_id"]
+            isOneToOne: false
+            referencedRelation: "client_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payment_orders: {
         Row: {
@@ -698,6 +793,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          active_client_profile_id: string | null
           avatar_url: string | null
           created_at: string
           full_name: string | null
@@ -707,6 +803,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          active_client_profile_id?: string | null
           avatar_url?: string | null
           created_at?: string
           full_name?: string | null
@@ -716,6 +813,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          active_client_profile_id?: string | null
           avatar_url?: string | null
           created_at?: string
           full_name?: string | null
@@ -724,11 +822,20 @@ export type Database = {
           phone?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_active_client_profile_id_fkey"
+            columns: ["active_client_profile_id"]
+            isOneToOne: false
+            referencedRelation: "client_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       reports: {
         Row: {
           ai_model: string | null
+          client_profile_id: string | null
           created_at: string
           id: string
           kind: string
@@ -739,6 +846,7 @@ export type Database = {
         }
         Insert: {
           ai_model?: string | null
+          client_profile_id?: string | null
           created_at?: string
           id?: string
           kind: string
@@ -749,6 +857,7 @@ export type Database = {
         }
         Update: {
           ai_model?: string | null
+          client_profile_id?: string | null
           created_at?: string
           id?: string
           kind?: string
@@ -757,7 +866,15 @@ export type Database = {
           title?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "reports_client_profile_id_fkey"
+            columns: ["client_profile_id"]
+            isOneToOne: false
+            referencedRelation: "client_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       role_audit_log: {
         Row: {
@@ -796,6 +913,7 @@ export type Database = {
         Row: {
           ai_model: string | null
           cards: Json
+          client_profile_id: string | null
           created_at: string
           id: string
           interpretation: string
@@ -807,6 +925,7 @@ export type Database = {
         Insert: {
           ai_model?: string | null
           cards?: Json
+          client_profile_id?: string | null
           created_at?: string
           id?: string
           interpretation: string
@@ -818,6 +937,7 @@ export type Database = {
         Update: {
           ai_model?: string | null
           cards?: Json
+          client_profile_id?: string | null
           created_at?: string
           id?: string
           interpretation?: string
@@ -826,7 +946,15 @@ export type Database = {
           storage_path?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tarot_readings_client_profile_id_fkey"
+            columns: ["client_profile_id"]
+            isOneToOne: false
+            referencedRelation: "client_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       twilio_settings: {
         Row: {
@@ -993,6 +1121,10 @@ export type Database = {
           _reference?: string
           _user_id: string
         }
+        Returns: boolean
+      }
+      has_active_addon: {
+        Args: { _addon_id: string; _user_id: string }
         Returns: boolean
       }
       has_role: {
