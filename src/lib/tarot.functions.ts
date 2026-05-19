@@ -164,13 +164,18 @@ export const exportTarotPdf = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!reading) throw new Error("Leitura não encontrada");
 
-    // If already exported, return existing signed URL
+    // If already exported, download from storage and return as base64 to
+    // bypass adblockers that block direct *.supabase.co URLs.
     if (reading.storage_path) {
-      const { data: signed } = await supabaseAdmin.storage
+      const { data: blob, error: dlErr } = await supabaseAdmin.storage
         .from("reports")
-        .createSignedUrl(reading.storage_path, 60 * 60);
-      return { signedUrl: signed?.signedUrl ?? null, cached: true };
+        .download(reading.storage_path);
+      if (dlErr || !blob) throw new Error(dlErr?.message ?? "Falha ao baixar PDF");
+      const buf = new Uint8Array(await blob.arrayBuffer());
+      const base64 = Buffer.from(buf).toString("base64");
+      return { pdfBase64: base64, cached: true };
     }
+
 
     const action: CreditAction = "tarot_pdf";
     const unlimited = await hasUnlimitedAccess(userId, action);
@@ -247,10 +252,9 @@ export const exportTarotPdf = createServerFn({ method: "POST" })
         .update({ storage_path: path })
         .eq("id", reading.id);
 
-      const { data: signed } = await supabaseAdmin.storage
-        .from("reports")
-        .createSignedUrl(path, 60 * 60);
-      return { signedUrl: signed?.signedUrl ?? null, cached: false };
+      const base64 = Buffer.from(pdfBytes).toString("base64");
+      return { pdfBase64: base64, cached: false };
+
     } catch (err) {
       if (charged) {
         await refundCredits(userId, action, {
