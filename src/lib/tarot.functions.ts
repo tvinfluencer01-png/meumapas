@@ -238,6 +238,7 @@ export const exportTarotPdf = createServerFn({ method: "POST" })
         ],
         blocks,
         accentHex: "#a855f7",
+        flowing: true,
       });
 
       const path = `${userId}/tarot-${reading.id}.pdf`;
