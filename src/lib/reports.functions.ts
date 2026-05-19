@@ -690,15 +690,15 @@ Assinatura astral: ${signLine || astroBlock}`;
 
     const basePrompt = `${reportContext}
 
-Monte apenas a ESTRUTURA BASE do relatório com PROFUNDIDADE REAL. Responda APENAS com JSON valido neste formato:
+Monte apenas a ESTRUTURA BASE do relatório com PROFUNDIDADE REAL e EXTENSÃO LONGA. Responda APENAS com JSON valido neste formato:
 {
-  "intro": "ABERTURA cinematográfica de 4 a 5 parágrafos longos (mínimo 700 caracteres no total). Comece nomeando ${firstName} e situando o momento de vida com poesia sóbria. Conecte explicitamente Sol, Lua e Caminho de Vida ao tema do relatório. Mostre a tensão central que ${firstName} vive nessa área, o convite simbólico do mapa e o tom da jornada que esse PDF vai percorrer. Linguagem humana, viva, sem clichês esotéricos genéricos.",
+  "intro": "ABERTURA cinematográfica de 6 a 8 parágrafos longos (MÍNIMO 1800 caracteres no total, idealmente entre 2000 e 2600). Comece nomeando ${firstName} pelo nome completo e situando o momento de vida com poesia sóbria. Cite EXPLICITAMENTE Sol, Lua, Mercúrio, Vênus, Marte (e Júpiter/Saturno quando relevantes) com seus signos e o que cada um significa entre parênteses em até 10 palavras. Cite os aspectos principais nominalmente (ex: 'Sol Quadratura Lua') traduzindo entre parênteses. Conecte o Caminho de Vida, Destino, Alma e Personalidade ao tema do relatório. Mostre a tensão central que ${firstName} vive nessa área, o convite simbólico do mapa e o tom da jornada. Linguagem humana, viva, sem clichês esotéricos genéricos. NUNCA entregue menos de 1800 caracteres.",
   "sectionBlueprints": [
     { "title": "Titulo 1", "focus": "Foco aprofundado e específico desta seção (mínimo 60 caracteres)" },
     { "title": "Titulo 2", "focus": "Foco aprofundado e específico desta seção (mínimo 60 caracteres)" },
     { "title": "Titulo 3", "focus": "Foco aprofundado e específico desta seção (mínimo 60 caracteres)" }
   ],
-  "closing": "ENCERRAMENTO de 2 a 3 parágrafos densos (mínimo 250 caracteres). Costure de volta o fio simbólico da abertura, reconheça a complexidade da jornada e entregue uma bênção concreta a ${firstName}.",
+  "closing": "ENCERRAMENTO de 3 a 4 parágrafos densos (MÍNIMO 500 caracteres). Costure de volta o fio simbólico da abertura, reconheça a complexidade da jornada e entregue uma bênção concreta a ${firstName}.",
   "swot": {
     "strengths": ["frase específica e ancorada no mapa", "...", "..."],
     "weaknesses": ["...", "...", "..."],
@@ -720,7 +720,7 @@ Monte apenas a ESTRUTURA BASE do relatório com PROFUNDIDADE REAL. Responda APEN
       { "name": "Sugestao 5", "why": "..." }
     ]
   },
-  "summary": "SÍNTESE final densa de 2 parágrafos (mínimo 350 caracteres) que amarra os 3 capítulos, a SWOT e as recomendações em uma leitura única e memorável para ${firstName}."
+  "summary": "SÍNTESE final densa de 3 parágrafos (MÍNIMO 600 caracteres) que amarra os 3 capítulos, a SWOT e as recomendações em uma leitura única e memorável para ${firstName}."
 }
 
 Regras:
@@ -729,7 +729,8 @@ Regras:
 - suggestions.items deve ter EXATAMENTE 5 itens.
 - Tema das sugestoes: ${meta.suggestionGuide}
 - Use o nome completo apenas 1x na intro. Depois, use apenas ${firstName}.
-- Nada de respostas curtas, superficiais ou repetitivas. Profundidade é obrigatória.`;
+- Nada de respostas curtas, superficiais ou repetitivas. Profundidade e EXTENSÃO são obrigatórias.
+- Se você entregar uma intro com menos de 1800 caracteres, o relatório será rejeitado.`;
 
     const makeSectionBodyPrompt = (
       blueprint: z.infer<typeof BaseAiOutput>["sectionBlueprints"][number],
