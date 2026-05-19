@@ -583,7 +583,8 @@ function ChartWheel({ chart, userId, svgRefProp, compact }: { chart: any; userId
   const display = spreadAngles(planetAngles.map((angle: number) => ({ angle })), 8);
 
   // Pan & zoom via viewBox manipulation
-  const svgRef = useRef<SVGSVGElement | null>(null);
+  const localSvgRef = useRef<SVGSVGElement | null>(null);
+  const svgRef = svgRefProp ?? localSvgRef;
   // Persistência por usuário: zoom + posição são restaurados ao voltar à página.
   const storageKey = userId ? `cosmic-ai:chart-view:${userId}` : "cosmic-ai:chart-view:anon";
   const readStoredView = () => {
