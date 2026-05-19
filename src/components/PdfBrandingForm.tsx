@@ -209,36 +209,127 @@ export function PdfBrandingForm() {
   }, [data]);
 
   const saveMutation = useMutation({
-    mutationFn: () =>
-      saveFn({
-        data: {
-          enabled: form.enabled,
-          logo_width: form.logo_width,
-          logo_height: form.logo_height,
-          display_name: form.display_name,
-          footer_enabled: form.footer_enabled,
-          footer_name: form.footer_name,
-          footer_site: form.footer_site,
-          footer_phone: form.footer_phone,
-          enabled_personality: form.enabled_personality,
-          enabled_love: form.enabled_love,
-          enabled_career: form.enabled_career,
-          enabled_spiritual: form.enabled_spiritual,
-          enabled_tarot: form.enabled_tarot,
-          enabled_kabbalah: form.enabled_kabbalah,
-          enabled_numerology: form.enabled_numerology,
-          enabled_astrology: form.enabled_astrology,
-          enabled_kabbalah_numerology: form.enabled_kabbalah_numerology,
-          enabled_energy_calendar: form.enabled_energy_calendar,
-          enabled_weekly: form.enabled_weekly,
-        },
-      }),
+    mutationFn: () => saveFn({ data: { ...form } }),
     onSuccess: () => {
       toast.success("Personalização salva. Será aplicada nos próximos PDFs.");
       qc.invalidateQueries({ queryKey: ["pdf-branding"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  const uploadMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const { base64, mime } = await fileToBase64(file);
+      return uploadFn({ data: { base64, mime } });
+    },
+    onSuccess: () => {
+      toast.success("Logo enviado.");
+      qc.invalidateQueries({ queryKey: ["pdf-branding"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const removeMutation = useMutation({
+    mutationFn: () => removeFn(),
+    onSuccess: () => {
+      toast.success("Logo removido.");
+      qc.invalidateQueries({ queryKey: ["pdf-branding"] });
+    },
+  });
+
+  const uploadCoverMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const { base64, mime } = await fileToBase64(file);
+      return uploadCoverFn({ data: { base64, mime } });
+    },
+    onSuccess: () => {
+      toast.success("Imagem de capa enviada.");
+      qc.invalidateQueries({ queryKey: ["pdf-branding"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const removeCoverMutation = useMutation({
+    mutationFn: () => removeCoverFn(),
+    onSuccess: () => {
+      toast.success("Imagem de capa removida.");
+      qc.invalidateQueries({ queryKey: ["pdf-branding"] });
+    },
+  });
+  const generateCoverMutation = useMutation({
+    mutationFn: () => generateCoverFn({ data: { prompt: coverPrompt.trim() || "capa mística com estrelas douradas e nebulosa profunda" } }),
+    onSuccess: () => {
+      toast.success("Capa gerada por IA.");
+      qc.invalidateQueries({ queryKey: ["pdf-branding"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const uploadPageBgMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const { base64, mime } = await fileToBase64(file);
+      return uploadPageBgFn({ data: { base64, mime } });
+    },
+    onSuccess: () => {
+      toast.success("Fundo de página enviado.");
+      qc.invalidateQueries({ queryKey: ["pdf-branding"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const removePageBgMutation = useMutation({
+    mutationFn: () => removePageBgFn(),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["pdf-branding"] });
+    },
+  });
+  const uploadWatermarkMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const { base64, mime } = await fileToBase64(file);
+      return uploadWatermarkFn({ data: { base64, mime } });
+    },
+    onSuccess: () => {
+      toast.success("Marca d'água enviada.");
+      qc.invalidateQueries({ queryKey: ["pdf-branding"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const removeWatermarkMutation = useMutation({
+    mutationFn: () => removeWatermarkFn(),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["pdf-branding"] });
+    },
+  });
+
+  async function handlePreview() {
+    setPreviewing(true);
+    try {
+      await saveMutation.mutateAsync();
+      const r = await samplePdfFn();
+      const bin = atob(r.pdfBase64);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      const blob = new Blob([bytes], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank", "noopener,noreferrer");
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setPreviewing(false);
+    }
+  }
+
+  function handleAssetFile(
+    e: React.ChangeEvent<HTMLInputElement>,
+    mutation: { mutate: (f: File) => void },
+    maxKB: number,
+    inputRefToReset: React.RefObject<HTMLInputElement | null>,
+  ) {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    if (f.size > maxKB * 1024) { toast.error(`Arquivo maior que ${maxKB}KB.`); return; }
+    if (!["image/png", "image/jpeg"].includes(f.type)) { toast.error("Use PNG ou JPG."); return; }
+    mutation.mutate(f);
+    if (inputRefToReset.current) inputRefToReset.current.value = "";
+  }
 
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
