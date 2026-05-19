@@ -309,37 +309,50 @@ function ActiveClientSwitcher() {
           gerenciar
         </Link>
       </div>
-      <Select value={currentValue} onValueChange={handleChange} disabled={mutation.isPending}>
-        <SelectTrigger className="w-full h-9 text-xs bg-background/60 border-gold/30 hover:border-gold/60">
-          <SelectValue placeholder="Selecionar..." />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectGroup>
-            <SelectItem value={SELF_VALUE}>
-              <span className="flex items-center gap-2">
-                <UserCircle2 className="size-3.5 text-gold" /> Eu mesmo
-              </span>
-            </SelectItem>
-          </SelectGroup>
-          {profiles.length > 0 && (
-            <>
-              <SelectSeparator />
-              <SelectGroup>
-                <SelectLabel className="text-[10px] uppercase tracking-wider text-gold/70">
-                  Meus clientes
-                </SelectLabel>
-                {profiles.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    <span className="flex items-center gap-2">
-                      <Users className="size-3.5 text-gold" /> {p.full_name}
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </>
-          )}
-        </SelectContent>
-      </Select>
+      <div className="relative">
+        <Select value={currentValue} onValueChange={handleChange} disabled={isSwitching}>
+          <SelectTrigger className="w-full h-9 text-xs bg-background/60 border-gold/30 hover:border-gold/60 disabled:opacity-100 disabled:cursor-wait">
+            <SelectValue placeholder="Selecionar..." />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectItem value={SELF_VALUE}>
+                <span className="flex items-center gap-2">
+                  <UserCircle2 className="size-3.5 text-gold" /> Eu mesmo
+                </span>
+              </SelectItem>
+            </SelectGroup>
+            {profiles.length > 0 && (
+              <>
+                <SelectSeparator />
+                <SelectGroup>
+                  <SelectLabel className="text-[10px] uppercase tracking-wider text-gold/70">
+                    Meus clientes
+                  </SelectLabel>
+                  {profiles.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      <span className="flex items-center gap-2">
+                        <Users className="size-3.5 text-gold" /> {p.full_name}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </>
+            )}
+          </SelectContent>
+        </Select>
+        {mutation.isPending && (
+          <div className="pointer-events-none absolute inset-y-0 right-8 flex items-center">
+            <Loader2 className="size-3.5 text-gold animate-spin" />
+          </div>
+        )}
+      </div>
+      {mutation.isPending && (
+        <p className="flex items-center gap-1.5 text-[10px] text-gold/80">
+          <Loader2 className="size-3 animate-spin" />
+          Reprocessando contexto...
+        </p>
+      )}
 
       <Dialog open={!!confirmName} onOpenChange={(o) => !o && setConfirmName(null)}>
         <DialogContent className="border-gold/30 bg-background/95 backdrop-blur">
