@@ -130,6 +130,13 @@ export function PdfBrandingForm() {
         enabled_love: (b.enabled_love as boolean | undefined) ?? true,
         enabled_career: (b.enabled_career as boolean | undefined) ?? true,
         enabled_spiritual: (b.enabled_spiritual as boolean | undefined) ?? true,
+        enabled_tarot: (b.enabled_tarot as boolean | undefined) ?? true,
+        enabled_kabbalah: (b.enabled_kabbalah as boolean | undefined) ?? true,
+        enabled_numerology: (b.enabled_numerology as boolean | undefined) ?? true,
+        enabled_astrology: (b.enabled_astrology as boolean | undefined) ?? true,
+        enabled_kabbalah_numerology: (b.enabled_kabbalah_numerology as boolean | undefined) ?? true,
+        enabled_energy_calendar: (b.enabled_energy_calendar as boolean | undefined) ?? true,
+        enabled_weekly: (b.enabled_weekly as boolean | undefined) ?? true,
       });
     }
   }, [data]);
