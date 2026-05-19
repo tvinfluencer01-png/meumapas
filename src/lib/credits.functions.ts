@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { requireCreditsAuth } from "@/lib/credits-auth.server";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 /**
  * Canonical catalog of cobráveis actions.
@@ -232,7 +232,7 @@ export async function hasUnlimitedAccess(
 
 /** Get user's current balance (own). */
 export const getMyCredits = createServerFn({ method: "GET" })
-  .middleware([requireCreditsAuth])
+  .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { data } = await supabaseAdmin
       .from("user_credits")
@@ -244,7 +244,7 @@ export const getMyCredits = createServerFn({ method: "GET" })
 
 /** Saldo + tabela de custos configurados — para mostrar antes de cada ação. */
 export const getMyCreditsOverview = createServerFn({ method: "GET" })
-  .middleware([requireCreditsAuth])
+  .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const [{ data: bal }, { data: costs }] = await Promise.all([
       supabaseAdmin
