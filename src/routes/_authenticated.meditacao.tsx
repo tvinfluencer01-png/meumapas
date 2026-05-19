@@ -9,6 +9,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { CreditCostBadge } from "@/components/CreditCostBadge";
 import { emitCreditsChanged } from "@/lib/credits-events";
 import { SEFIROT, findSefirah } from "@/lib/kabbalah.tree";
@@ -281,14 +292,35 @@ function MeditacaoPage() {
                       >
                         <FileDown className="size-3 mr-1" /> PDF
                       </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => delMut.mutate(r.id)}
-                        disabled={delMut.isPending}
-                      >
-                        <Trash2 className="size-3 mr-1" /> Excluir
-                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            disabled={delMut.isPending}
+                          >
+                            <Trash2 className="size-3 mr-1" /> Excluir
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Excluir esta meditação?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Esta ação é permanente. O roteiro e o PDF
+                              relacionado serão removidos do seu histórico.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => delMut.mutate(r.id)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Excluir
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </CardContent>
                 </Card>
