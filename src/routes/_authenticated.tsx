@@ -255,3 +255,86 @@ function AuthedLayout() {
     </div>
   );
 }
+
+function ActiveClientSwitcher() {
+  const qc = useQueryClient();
+  const listFn = useServerFn(listClientProfiles);
+  const setActiveFn = useServerFn(setActiveClientProfile);
+
+  const { data } = useQuery({
+    queryKey: ["client-profiles-switcher"],
+    queryFn: () => listFn(),
+    staleTime: 30_000,
+  });
+
+  const profiles = data?.profiles ?? [];
+  const activeId = data?.active_client_profile_id ?? null;
+  const currentValue = activeId ?? SELF_VALUE;
+
+  const mutation = useMutation({
+    mutationFn: (id: string | null) => setActiveFn({ data: { id } }),
+    onSuccess: async (_r, id) => {
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["client-profiles-switcher"] }),
+        qc.invalidateQueries({ queryKey: ["active-subject"] }),
+        qc.invalidateQueries({ queryKey: ["client-profiles"] }),
+        qc.invalidateQueries({ queryKey: ["reports"] }),
+        qc.invalidateQueries({ queryKey: ["astro-chart"] }),
+      ]);
+      const name = id
+        ? profiles.find((p) => p.id === id)?.full_name ?? "Cliente"
+        : "Eu mesmo";
+      toast.success(`Contexto ativo: ${name}`);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  function handleChange(value: string) {
+    const id = value === SELF_VALUE ? null : value;
+    mutation.mutate(id);
+  }
+
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[10px] uppercase tracking-[0.2em] text-gold/80">
+          Contexto ativo
+        </span>
+        <Link to="/clientes" className="text-[10px] text-muted-foreground hover:text-gold transition-colors">
+          gerenciar
+        </Link>
+      </div>
+      <Select value={currentValue} onValueChange={handleChange} disabled={mutation.isPending}>
+        <SelectTrigger className="w-full h-9 text-xs bg-background/60 border-gold/30 hover:border-gold/60">
+          <SelectValue placeholder="Selecionar..." />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectGroup>
+            <SelectItem value={SELF_VALUE}>
+              <span className="flex items-center gap-2">
+                <UserCircle2 className="size-3.5 text-gold" /> Eu mesmo
+              </span>
+            </SelectItem>
+          </SelectGroup>
+          {profiles.length > 0 && (
+            <>
+              <SelectSeparator />
+              <SelectGroup>
+                <SelectLabel className="text-[10px] uppercase tracking-wider text-gold/70">
+                  Meus clientes
+                </SelectLabel>
+                {profiles.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    <span className="flex items-center gap-2">
+                      <Users className="size-3.5 text-gold" /> {p.full_name}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </>
+          )}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
