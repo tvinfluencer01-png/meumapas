@@ -72,11 +72,12 @@ export const getPdfBranding = createServerFn({ method: "GET" })
       .eq("user_id", userId)
       .maybeSingle();
 
+    const row = data as Record<string, unknown> | null;
     const signedLogoUrl = await getSignedUrl(data?.logo_path);
-    const signedCoverUrl = await getSignedUrl(
-      (data as Record<string, unknown> | null)?.cover_image_path as string | undefined,
-    );
-    return { branding: data ?? null, signedLogoUrl, signedCoverUrl };
+    const signedCoverUrl = await getSignedUrl(row?.cover_image_path as string | undefined);
+    const signedPageBgUrl = await getSignedUrl(row?.page_bg_image_path as string | undefined);
+    const signedWatermarkUrl = await getSignedUrl(row?.watermark_image_path as string | undefined);
+    return { branding: data ?? null, signedLogoUrl, signedCoverUrl, signedPageBgUrl, signedWatermarkUrl };
   });
 
 export const savePdfBranding = createServerFn({ method: "POST" })
