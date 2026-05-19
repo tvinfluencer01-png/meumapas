@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiChatRouteImport } from './routes/api.chat'
 import { Route as AuthenticatedTarotRouteImport } from './routes/_authenticated.tarot'
 import { Route as AuthenticatedRelatoriosRouteImport } from './routes/_authenticated.relatorios'
+import { Route as AuthenticatedPdfCssRouteImport } from './routes/_authenticated.pdf-css'
 import { Route as AuthenticatedOraculoRouteImport } from './routes/_authenticated.oraculo'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated.onboarding'
 import { Route as AuthenticatedNumerologiaCabalisticaRouteImport } from './routes/_authenticated.numerologia-cabalistica'
@@ -54,6 +55,11 @@ const AuthenticatedTarotRoute = AuthenticatedTarotRouteImport.update({
 const AuthenticatedRelatoriosRoute = AuthenticatedRelatoriosRouteImport.update({
   id: '/relatorios',
   path: '/relatorios',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedPdfCssRoute = AuthenticatedPdfCssRouteImport.update({
+  id: '/pdf-css',
+  path: '/pdf-css',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedOraculoRoute = AuthenticatedOraculoRouteImport.update({
@@ -128,6 +134,7 @@ export interface FileRoutesByFullPath {
   '/numerologia-cabalistica': typeof AuthenticatedNumerologiaCabalisticaRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/oraculo': typeof AuthenticatedOraculoRoute
+  '/pdf-css': typeof AuthenticatedPdfCssRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/tarot': typeof AuthenticatedTarotRoute
   '/api/chat': typeof ApiChatRoute
@@ -146,6 +153,7 @@ export interface FileRoutesByTo {
   '/numerologia-cabalistica': typeof AuthenticatedNumerologiaCabalisticaRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/oraculo': typeof AuthenticatedOraculoRoute
+  '/pdf-css': typeof AuthenticatedPdfCssRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/tarot': typeof AuthenticatedTarotRoute
   '/api/chat': typeof ApiChatRoute
@@ -166,6 +174,7 @@ export interface FileRoutesById {
   '/_authenticated/numerologia-cabalistica': typeof AuthenticatedNumerologiaCabalisticaRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/oraculo': typeof AuthenticatedOraculoRoute
+  '/_authenticated/pdf-css': typeof AuthenticatedPdfCssRoute
   '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
   '/_authenticated/tarot': typeof AuthenticatedTarotRoute
   '/api/chat': typeof ApiChatRoute
@@ -186,6 +195,7 @@ export interface FileRouteTypes {
     | '/numerologia-cabalistica'
     | '/onboarding'
     | '/oraculo'
+    | '/pdf-css'
     | '/relatorios'
     | '/tarot'
     | '/api/chat'
@@ -204,6 +214,7 @@ export interface FileRouteTypes {
     | '/numerologia-cabalistica'
     | '/onboarding'
     | '/oraculo'
+    | '/pdf-css'
     | '/relatorios'
     | '/tarot'
     | '/api/chat'
@@ -223,6 +234,7 @@ export interface FileRouteTypes {
     | '/_authenticated/numerologia-cabalistica'
     | '/_authenticated/onboarding'
     | '/_authenticated/oraculo'
+    | '/_authenticated/pdf-css'
     | '/_authenticated/relatorios'
     | '/_authenticated/tarot'
     | '/api/chat'
@@ -278,6 +290,13 @@ declare module '@tanstack/react-router' {
       path: '/relatorios'
       fullPath: '/relatorios'
       preLoaderRoute: typeof AuthenticatedRelatoriosRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/pdf-css': {
+      id: '/_authenticated/pdf-css'
+      path: '/pdf-css'
+      fullPath: '/pdf-css'
+      preLoaderRoute: typeof AuthenticatedPdfCssRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/oraculo': {
@@ -382,6 +401,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedNumerologiaCabalisticaRoute: typeof AuthenticatedNumerologiaCabalisticaRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedOraculoRoute: typeof AuthenticatedOraculoRoute
+  AuthenticatedPdfCssRoute: typeof AuthenticatedPdfCssRoute
   AuthenticatedRelatoriosRoute: typeof AuthenticatedRelatoriosRoute
   AuthenticatedTarotRoute: typeof AuthenticatedTarotRoute
 }
@@ -398,6 +418,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedNumerologiaCabalisticaRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedOraculoRoute: AuthenticatedOraculoRoute,
+  AuthenticatedPdfCssRoute: AuthenticatedPdfCssRoute,
   AuthenticatedRelatoriosRoute: AuthenticatedRelatoriosRoute,
   AuthenticatedTarotRoute: AuthenticatedTarotRoute,
 }
