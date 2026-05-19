@@ -761,8 +761,8 @@ Regras:
     try {
       const baseText = await callWithRetry({
         prompt: basePrompt,
-        timeoutMs: 28_000,
-        errorMessage: "A geração demorou além do limite. Tente novamente; agora o relatório usa um modo mais rápido.",
+        timeoutMs: 18_000,
+        errorMessage: "A geração demorou além do limite. Tente novamente.",
       });
       base = parseJsonWithSchema(baseText, BaseAiOutput, "base", {
         normalize: normalizeBasePayload,
@@ -773,32 +773,32 @@ Regras:
       base = normalizeBasePayload(null) as z.infer<typeof BaseAiOutput>;
     }
 
-    yield { type: "progress" as const, progress: 44, step: "Escrevendo os 3 capítulos em paralelo..." };
-
-    const sections = await Promise.all(
-      base.sectionBlueprints.map(async (blueprint, index) => {
-        let sectionBody: z.infer<typeof SectionBodyOutput>;
-        try {
-          const sectionBodyText = await callWithRetry({
-            prompt: makeSectionBodyPrompt(blueprint, index, base.sectionBlueprints),
-            timeoutMs: 16_000,
-            errorMessage: "A geração demorou além do limite. Tente novamente; agora o relatório usa um modo mais rápido.",
-          });
-          sectionBody = parseJsonWithSchema(sectionBodyText, SectionBodyOutput, `section-body-${index + 1}`, {
-            normalize: (parsed) => normalizeSectionPayload(parsed, blueprint),
-            fallback: normalizeSectionPayload(null, blueprint) as z.infer<typeof SectionBodyOutput>,
-          });
-        } catch (error) {
-          console.error(`[reports] section generation fallback (${index + 1})`, error);
-          sectionBody = normalizeSectionPayload(null, blueprint) as z.infer<typeof SectionBodyOutput>;
-        }
-
-        return {
-          title: sectionBody.title,
-          body: sectionBody.body,
-        };
-      }),
-    );
+    const sections: { title: string; body: string }[] = [];
+    const progressPerSection = [50, 60, 70];
+    for (let index = 0; index < base.sectionBlueprints.length; index++) {
+      const blueprint = base.sectionBlueprints[index];
+      yield {
+        type: "progress" as const,
+        progress: progressPerSection[index] ?? 70,
+        step: `Escrevendo o capítulo ${index + 1} de 3...`,
+      };
+      let sectionBody: z.infer<typeof SectionBodyOutput>;
+      try {
+        const sectionBodyText = await callWithRetry({
+          prompt: makeSectionBodyPrompt(blueprint, index, base.sectionBlueprints),
+          timeoutMs: 12_000,
+          errorMessage: "A geração demorou além do limite. Tente novamente.",
+        });
+        sectionBody = parseJsonWithSchema(sectionBodyText, SectionBodyOutput, `section-body-${index + 1}`, {
+          normalize: (parsed) => normalizeSectionPayload(parsed, blueprint),
+          fallback: normalizeSectionPayload(null, blueprint) as z.infer<typeof SectionBodyOutput>,
+        });
+      } catch (error) {
+        console.error(`[reports] section generation fallback (${index + 1})`, error);
+        sectionBody = normalizeSectionPayload(null, blueprint) as z.infer<typeof SectionBodyOutput>;
+      }
+      sections.push({ title: sectionBody.title, body: sectionBody.body });
+    }
 
     yield { type: "progress" as const, progress: 72, step: "Validando a leitura recebida..." };
     const ai = AiOutput.parse({
