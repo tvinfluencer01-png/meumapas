@@ -347,14 +347,35 @@ function TarotPage() {
                     >
                       <FileDown className="size-3 mr-1" /> PDF
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => delMut.mutate(r.id)}
-                      disabled={delMut.isPending}
-                    >
-                      <Trash2 className="size-3 mr-1" /> Excluir
-                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          disabled={delMut.isPending}
+                        >
+                          <Trash2 className="size-3 mr-1" /> Excluir
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Excluir esta leitura?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Esta ação é permanente. A leitura e o PDF
+                            relacionado serão removidos do seu histórico.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => delMut.mutate(r.id)}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Excluir
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </CardContent>
               </Card>
