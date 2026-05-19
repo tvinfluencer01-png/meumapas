@@ -91,7 +91,12 @@ function TarotPage() {
         for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
         const blob = new Blob([bytes], { type: "application/pdf" });
         const url = URL.createObjectURL(blob);
-        window.open(url, "_blank");
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `tarot-${Date.now()}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
         setTimeout(() => URL.revokeObjectURL(url), 60_000);
         toast.success(res.cached ? "PDF aberto." : "PDF gerado.");
       }
@@ -100,6 +105,7 @@ function TarotPage() {
     onError: (e: Error) => toast.error(e.message),
     onSettled: () => emitCreditsChanged(),
   });
+
 
   const delMut = useMutation({
     mutationFn: (id: string) => deleteFn({ data: { id } }),
