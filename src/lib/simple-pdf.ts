@@ -253,41 +253,41 @@ export async function buildSimplePdf(data: SimplePdfData): Promise<Uint8Array> {
   }
 
   let isFirstHeading = true;
-  function drawHeading(text: string, size = 20, opts?: { newPage?: boolean }) {
+  function drawHeading(text: string, size = 24, opts?: { newPage?: boolean }) {
     if (!isFirstHeading) {
       if (opts?.newPage) {
         cursor = newPage(cursor.pageNumber + 1);
       } else {
-        const need = size + 18 + size * 1.4 * 3;
+        const need = size + 20 + size * 1.4 * 3;
         if (cursor.y - need < MARGIN) cursor = newPage(cursor.pageNumber + 1);
-        else cursor.y -= 16;
+        else cursor.y -= 20;
       }
     }
     isFirstHeading = false;
-    cursor.y -= 6;
+    cursor.y -= 8;
     const lines = wrapPlain(safe(text), serifBold, size, CONTENT_W);
     for (const ln of lines) {
       cursor.page.drawText(ln, {
         x: MARGIN, y: cursor.y - size, size, font: serifBold, color: NIGHT,
       });
-      cursor.y -= size + 3;
+      cursor.y -= size + 4;
     }
-    cursor.y -= 2;
+    cursor.y -= 3;
     cursor.page.drawLine({
       start: { x: MARGIN, y: cursor.y },
-      end: { x: MARGIN + 48, y: cursor.y },
+      end: { x: MARGIN + 56, y: cursor.y },
       color: GOLD, thickness: 1.2,
     });
-    cursor.y -= 12;
+    cursor.y -= 14;
   }
 
   function drawSubHeading(text: string) {
-    const size = 13;
-    ensureSpace(size + 14);
+    const size = 15;
+    ensureSpace(size + 16);
     cursor.page.drawText(safe(text), {
       x: MARGIN, y: cursor.y - size, size, font: serifBold, color: NIGHT,
     });
-    cursor.y -= size + 10;
+    cursor.y -= size + 12;
   }
 
   function drawParagraph(text: string, opts?: { italic?: boolean; size?: number; color?: ReturnType<typeof rgb>; justify?: boolean }) {
@@ -442,7 +442,7 @@ export async function buildSimplePdf(data: SimplePdfData): Promise<Uint8Array> {
   }
 
   function drawQuote(text: string) {
-    drawParagraph(text, { italic: true, color: rgb(0.3, 0.25, 0.2), size: 11 });
+    drawParagraph(text, { italic: true, color: rgb(0.3, 0.25, 0.2), size: 13 });
   }
 
   function drawHebrewHero(b: { letter: string; name: string; transliteration: string; meaning: string }) {
@@ -540,7 +540,7 @@ export async function buildSimplePdf(data: SimplePdfData): Promise<Uint8Array> {
 
   // -------- RENDER BLOCKS --------
   for (const block of data.blocks) {
-    if (block.type === "h2") drawHeading(block.text, 18, { newPage: true });
+    if (block.type === "h2") drawHeading(block.text, 22, { newPage: true });
     else if (block.type === "h3") drawSubHeading(block.text);
     else if (block.type === "p") drawParagraph(block.text);
     else if (block.type === "quote") drawQuote(block.text);

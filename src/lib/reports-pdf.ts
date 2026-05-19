@@ -272,17 +272,17 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
   }
 
   function drawChapterTitleAt(c: Cursor) {
-    const titleSize = 14;
+    const titleSize = 16;
     c.page.drawText(safe(currentChapter), {
       x: MARGIN, y: c.y - titleSize, size: titleSize, font: serifBold, color: NIGHT,
     });
-    c.y -= titleSize + 6;
+    c.y -= titleSize + 7;
     c.page.drawLine({
       start: { x: MARGIN, y: c.y },
-      end: { x: MARGIN + 36, y: c.y },
+      end: { x: MARGIN + 40, y: c.y },
       color: GOLD, thickness: 0.8,
     });
-    c.y -= 16;
+    c.y -= 18;
   }
 
   let cursor: Cursor = newPage(pdf, 1);
@@ -300,31 +300,31 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
   void drawChapterTitleAt;
 
   let isFirstHeading = true;
-  function drawHeading(text: string, size = 20, opts?: { startOnNewPage?: boolean }) {
+  function drawHeading(text: string, size = 24, opts?: { startOnNewPage?: boolean }) {
     const headingLines = wrap(safe(text), serifBold, size, CONTENT_W).filter((l) => l !== "");
-    const neededHeight = 10 + headingLines.length * (size + 4) + 2 + 18 + size * 1.4 * 3; // titulo + 3 linhas de conteudo
+    const neededHeight = 12 + headingLines.length * (size + 4) + 2 + 20 + size * 1.4 * 3;
     if (!isFirstHeading && opts?.startOnNewPage) {
       cursor = newPage(pdf, cursor.pageNumber + 1);
     } else if (!isFirstHeading && cursor.y - neededHeight < MARGIN) {
       cursor = newPage(pdf, cursor.pageNumber + 1);
     } else if (!isFirstHeading) {
-      cursor.y -= 16; // respiro antes do proximo titulo, sem trocar de pagina
+      cursor.y -= 20;
     }
     isFirstHeading = false;
-    cursor.y -= 6;
+    cursor.y -= 8;
     for (const line of headingLines) {
       cursor.page.drawText(line, {
         x: MARGIN, y: cursor.y - size, size, font: serifBold, color: NIGHT,
       });
-      cursor.y -= size + 3;
+      cursor.y -= size + 4;
     }
-    cursor.y -= 2;
+    cursor.y -= 3;
     cursor.page.drawLine({
       start: { x: MARGIN, y: cursor.y },
-      end: { x: MARGIN + 48, y: cursor.y },
+      end: { x: MARGIN + 56, y: cursor.y },
       color: GOLD, thickness: 1.2,
     });
-    cursor.y -= 12;
+    cursor.y -= 14;
   }
 
 
@@ -491,56 +491,56 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
 
 
   function drawBulletList(items: string[]) {
-    const size = 11;
+    const size = 12.5;
     const lineHeight = size * 1.5;
     for (const item of items) {
-      const lines = wrap(safe("- " + item), serif, size, CONTENT_W - 12);
+      const lines = wrap(safe("- " + item), serif, size, CONTENT_W - 14);
       for (let i = 0; i < lines.length; i++) {
         ensureSpace(lineHeight);
         cursor.page.drawText(lines[i], {
-          x: MARGIN + (i === 0 ? 0 : 12),
+          x: MARGIN + (i === 0 ? 0 : 14),
           y: cursor.y - size,
           size, font: serif, color: INK,
         });
         cursor.y -= lineHeight;
       }
-      cursor.y -= 2;
+      cursor.y -= 3;
     }
-    cursor.y -= 4;
+    cursor.y -= 6;
   }
 
   function drawSubHeading(text: string, color = NIGHT) {
-    const size = 13;
-    ensureSpace(size + 14);
+    const size = 15;
+    ensureSpace(size + 16);
     cursor.page.drawText(safe(text), {
       x: MARGIN, y: cursor.y - size, size, font: serifBold, color,
     });
-    cursor.y -= size + 10;
+    cursor.y -= size + 12;
   }
 
   // Intro chapter
   setChapter("Abertura");
-  drawHeading("Abertura", 26);
-  drawParagraph(data.intro, { italic: true, size: 13, color: rgb(0.25, 0.22, 0.18) });
+  drawHeading("Abertura", 30);
+  drawParagraph(data.intro, { italic: true, size: 14, color: rgb(0.25, 0.22, 0.18) });
 
   // Sections
   for (const section of data.sections) {
     setChapter(section.title);
-    drawHeading(section.title, 18, { startOnNewPage: true });
+    drawHeading(section.title, 22, { startOnNewPage: true });
     drawParagraph(section.body);
   }
 
   // Closing
   setChapter("Selo final");
-  drawHeading("Selo final", 18, { startOnNewPage: true });
+  drawHeading("Selo final", 22, { startOnNewPage: true });
   drawParagraph(data.closing, { italic: true, color: rgb(0.3, 0.25, 0.2) });
 
   // Analise
   setChapter("Analise");
-  drawHeading("Analise", 20, { startOnNewPage: true });
+  drawHeading("Analise", 24, { startOnNewPage: true });
   drawParagraph(
     "Sintese das forcas, fraquezas, oportunidades e ameacas reveladas pelo seu mapa.",
-    { italic: true, size: 13, color: MUTED },
+    { italic: true, size: 14, color: MUTED },
   );
   drawSubHeading("Forcas (Strengths)", rgb(0.15, 0.4, 0.2));
   drawBulletList(data.swot.strengths);
@@ -553,7 +553,7 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
 
   // Recomendacoes
   setChapter("Recomendacoes finais");
-  drawHeading("Recomendacoes finais", 20, { startOnNewPage: true });
+  drawHeading("Recomendacoes finais", 24, { startOnNewPage: true });
   drawSubHeading("O que MELHORAR", rgb(0.15, 0.4, 0.2));
   drawBulletList(data.recommendations.improve);
   drawSubHeading("O que EVITAR", rgb(0.55, 0.15, 0.2));
@@ -564,9 +564,9 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
   // Sugestoes (personalizadas por tema)
   if (data.suggestions?.items?.length) {
     setChapter(data.suggestions.heading);
-    drawHeading(data.suggestions.heading, 20, { startOnNewPage: true });
+    drawHeading(data.suggestions.heading, 24, { startOnNewPage: true });
     if (data.suggestions.intro) {
-      drawParagraph(data.suggestions.intro, { italic: true, size: 13, color: MUTED });
+      drawParagraph(data.suggestions.intro, { italic: true, size: 14, color: MUTED });
     }
     const nameSize = 12;
     const whySize = 11;
@@ -597,16 +597,16 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
 
   // Resumo
   setChapter("Resumo");
-  drawHeading("Resumo", 20, { startOnNewPage: true });
+  drawHeading("Resumo", 24, { startOnNewPage: true });
   drawParagraph(data.summary);
 
   // Plano de 7 dias (único, ao final, baseado no resumo)
   if (data.finalPlan) {
     setChapter("Plano de 7 dias");
-    drawHeading("Plano de 7 dias", 20, { startOnNewPage: true });
+    drawHeading("Plano de 7 dias", 24, { startOnNewPage: true });
     drawParagraph(
       "Pequenos passos diários, em linguagem simples, baseados no resumo deste relatório.",
-      { italic: true, size: 13, color: MUTED },
+      { italic: true, size: 14, color: MUTED },
     );
     const labelDays = (arr: string[]) =>
       arr.slice(0, 7).map((it, i) => (/^dia\s+\d+:/i.test(it) ? it : `Dia ${i + 1}: ${it}`));
