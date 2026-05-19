@@ -346,37 +346,43 @@ ${astroBlock}`;
       const fallbackModels = getFallbackModels();
       for (const candidate of fallbackModels) {
         const candidateModel = candidate === modelName ? model : makeModel(candidate);
-        const ac = new AbortController();
-        let didTimeout = false;
-        const timer = setTimeout(() => {
-          didTimeout = true;
-          ac.abort();
-        }, timeoutMs);
         const startedAt = Date.now();
+        // Hard wall-clock timeout. Uses AbortSignal.timeout which is honored
+        // by fetch in Cloudflare Workers, plus a manual Promise.race fallback
+        // in case the SDK swallows the abort signal.
+        const signal = AbortSignal.timeout(timeoutMs);
         try {
           console.info(`[reports] AI stage start (model=${candidate}, timeout=${timeoutMs}ms)`);
-          const res = await Promise.race([
+          const text = await new Promise<string>((resolve, reject) => {
+            const timer = setTimeout(
+              () => reject(new Error(`AI timeout after ${timeoutMs}ms`)),
+              timeoutMs + 200,
+            );
             generateText({
               model: candidateModel,
               system,
               prompt,
-              abortSignal: ac.signal,
+              abortSignal: signal,
               maxRetries: 0,
-            }),
-            new Promise<never>((_, reject) => {
-              setTimeout(() => reject(new Error(`AI timeout after ${timeoutMs}ms`)), timeoutMs + 50);
-            }),
-          ]);
+            })
+              .then((res) => {
+                clearTimeout(timer);
+                resolve(res.text);
+              })
+              .catch((err) => {
+                clearTimeout(timer);
+                reject(err);
+              });
+          });
           console.info(`[reports] AI stage done (model=${candidate}, elapsed=${Date.now() - startedAt}ms)`);
           modelName = candidate;
           model = candidateModel;
-          return res.text;
+          return text;
         } catch (e) {
           lastErr = e;
           const rawMessage = e instanceof Error ? e.message : String(e);
           const msg = rawMessage.toLowerCase();
           const retriable =
-            didTimeout ||
             msg.includes("timeout") ||
             msg.includes("aborted") ||
             msg.includes("upstream") ||
@@ -392,9 +398,6 @@ ${astroBlock}`;
             rawMessage,
           );
           if (!retriable) throw e;
-        } finally {
-          clearTimeout(timer);
-          ac.abort();
         }
       }
 
