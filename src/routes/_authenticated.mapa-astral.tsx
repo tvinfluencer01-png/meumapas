@@ -570,7 +570,7 @@ function spreadAngles(items: { angle: number }[], minGap = 7) {
   return out;
 }
 
-function ChartWheel({ chart, userId }: { chart: any; userId?: string }) {
+function ChartWheel({ chart, userId, svgRefProp, compact }: { chart: any; userId?: string; svgRefProp?: React.RefObject<SVGSVGElement | null>; compact?: boolean }) {
   const [hover, setHover] = useState<HoverInfo | null>(null);
   const size = 560;
   const cx = size / 2, cy = size / 2;
