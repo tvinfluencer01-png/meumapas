@@ -54,6 +54,20 @@ export const SUBSCRIPTION_ADDONS: SubscriptionAddon[] = [
     ],
   },
   {
+    id: "sub_pdf_css",
+    name: "PDF CSS Avançado",
+    price_cents: 1990,
+    description:
+      "Personalize por completo a aparência dos seus PDFs: fundo de página, marca d'água, cores de texto, fontes e moldura.",
+    features: [
+      "Cor ou imagem de fundo nas páginas internas",
+      "Marca d'água com opacidade ajustável",
+      "Cores de corpo, título e subtítulo customizáveis",
+      "Tamanho de fonte e altura de linha",
+      "Estilo da moldura da capa (simples, dupla, ornamental ou nenhuma)",
+    ],
+  },
+  {
     id: "sub_unlimited_reports",
     name: "Relatórios Ilimitados",
     price_cents: 7990,
