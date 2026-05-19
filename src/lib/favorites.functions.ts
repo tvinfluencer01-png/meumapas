@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { resolveActiveSubject } from "@/lib/active-subject";
 
 export const listFavorites = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -104,12 +105,7 @@ export const generateFavoriteNote = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
-    const { data: birth } = await supabase
-      .from("birth_data")
-      .select("birth_date, full_name")
-      .eq("user_id", userId)
-      .eq("is_primary", true)
-      .maybeSingle();
+    const birth = await resolveActiveSubject(supabase, userId);
 
     const dateObj = new Date(data.date + "T12:00:00Z");
     const pd = birth ? _personalDay(data.date, birth.birth_date) : null;
