@@ -112,6 +112,13 @@ export const savePdfBranding = createServerFn({ method: "POST" })
       header_bg_color: data.header_bg_color,
       footer_bg_color: data.footer_bg_color,
       header_text_color: data.header_text_color,
+      page_bg_color: data.page_bg_color,
+      body_text_color: data.body_text_color,
+      heading_text_color: data.heading_text_color,
+      body_font_size: data.body_font_size,
+      line_height: data.line_height,
+      frame_style: data.frame_style,
+      watermark_opacity: data.watermark_opacity,
     };
     const { error } = await supabase
       .from("pdf_branding")
