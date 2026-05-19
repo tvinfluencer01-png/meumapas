@@ -1,9 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useActiveSubject } from "@/hooks/use-active-subject";
 import { computeNumerology, NUMBER_MEANINGS, numLabel, numTitle } from "@/lib/numerology";
 import {
   Sparkles, Sun, Moon, Star, Heart, Flame, ChevronRight,
@@ -42,17 +42,7 @@ function sunSignFromDate(d: string | null | undefined) {
 }
 
 function Dashboard() {
-  const { user } = useAuth();
-
-  const { data: birth } = useQuery({
-    queryKey: ["birth", user?.id],
-    enabled: !!user,
-    queryFn: async () => {
-      const { data } = await supabase.from("birth_data")
-        .select("*").eq("user_id", user!.id).eq("is_primary", true).maybeSingle();
-      return data;
-    },
-  });
+  const { data: birth } = useActiveSubject();
 
   const num = birth ? computeNumerology(birth.full_name, birth.birth_date) : null;
   const sunSign = birth ? sunSignFromDate(birth.birth_date) : null;
