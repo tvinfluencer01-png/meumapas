@@ -511,9 +511,8 @@ async function uploadAssetGeneric(opts: {
     .from(BUCKET)
     .upload(path, bytes, { contentType: opts.mime, upsert: true });
   if (upErr) throw new Error(upErr.message);
-  await supabaseAdmin
-    .from("pdf_branding")
-    .upsert({ user_id: opts.userId, [opts.column]: path }, { onConflict: "user_id" });
+  const upsertPayload = { user_id: opts.userId, [opts.column]: path } as never;
+  await supabaseAdmin.from("pdf_branding").upsert(upsertPayload, { onConflict: "user_id" });
   return path;
 }
 
