@@ -244,7 +244,7 @@ function RelatoriosPage() {
           return (
             <button
               key={c.kind}
-              onClick={() => !isLoading && genMutation.mutate(c.kind)}
+              onClick={() => handleGenerateClick(c.kind)}
               disabled={isLoading || !!loadingKind}
               className="group relative text-left glass-card rounded-2xl p-6 overflow-hidden hover:gold-glow transition-all disabled:opacity-60 disabled:cursor-wait"
             >
