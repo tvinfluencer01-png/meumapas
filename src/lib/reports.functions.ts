@@ -289,7 +289,7 @@ export const generateReport = createServerFn({ method: "POST" })
     } else if (provider === "gemini" && customKey) {
       modelName = customModel ?? "gemini-2.5-flash-lite";
     } else {
-      modelName = customModel?.startsWith("google/") ? customModel : "google/gemini-2.5-flash-lite";
+      modelName = customModel?.startsWith("google/") ? customModel : "google/gemini-2.5-flash";
     }
 
     let model = makeModel(modelName);
