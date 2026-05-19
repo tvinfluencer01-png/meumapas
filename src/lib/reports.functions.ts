@@ -749,13 +749,14 @@ Outras secoes para evitar repeticao: ${blueprints
 Responda APENAS com JSON valido neste formato:
 {
   "title": "${blueprint.title}",
-  "body": "5 a 6 parágrafos longos (mínimo 800 caracteres no total). Estruture assim: (1) abertura simbólica que conecta o tema ao mapa e numerologia de ${firstName}; (2) análise dos padrões e tensões reais que aparecem; (3) sombra/ferida específica desta área; (4) força latente que pode ser ativada; (5) direção prática e madura para o próximo ciclo. Use exemplos concretos e linguagem viva."
+  "body": "7 a 9 parágrafos longos (MÍNIMO 1600 caracteres no total, ideal entre 1800 e 2400). Estruture assim: (1) abertura simbólica conectando o tema ao mapa e numerologia de ${firstName}, citando planetas, signos e números EXPLICITAMENTE; (2) análise dos padrões e tensões reais que aparecem, citando aspectos nominalmente; (3) sombra/ferida específica desta área com exemplo concreto; (4) força latente que pode ser ativada, com exemplo; (5) como esses elementos se manifestam no dia a dia; (6) direção prática e madura para o próximo ciclo. Use exemplos concretos, linguagem viva e cite nominalmente Sol, Lua, Vênus, Marte, Caminho de Vida, Destino, Alma quando relevantes."
 }
 
 Regras:
-- O body precisa ser denso, específico ao tema e ancorado em planetas, signos ou números reais do mapa de ${firstName}.
+- O body precisa ser denso, específico ao tema e ancorado em planetas, signos ou números reais do mapa de ${firstName}, com MÍNIMO 1600 caracteres.
 - Nada de frases genéricas ou repetitivas. Cada parágrafo entrega algo novo.
-- Nao use o nome completo. Use apenas ${firstName}.`;
+- Nao use o nome completo. Use apenas ${firstName}.
+- Se o body tiver menos de 1600 caracteres, será rejeitado.`;
 
     yield { type: "progress" as const, progress: 28, step: "Montando a estrutura do relatório..." };
     let base: z.infer<typeof BaseAiOutput>;
