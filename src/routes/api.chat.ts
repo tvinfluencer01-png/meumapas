@@ -9,6 +9,7 @@ import {
   createGeminiProvider,
 } from "@/lib/ai-gateway";
 import { computeNumerology, formatBirthDateBR, numLabel, numTitle } from "@/lib/numerology";
+import { applyActiveChartFilter, resolveActiveSubject } from "@/lib/active-subject";
 
 type ChatBody = { messages?: UIMessage[] };
 
@@ -25,11 +26,17 @@ async function buildContext(userId: string, accessToken: string) {
     { global: { headers: { Authorization: `Bearer ${accessToken}` } } },
   );
 
-  const [{ data: birth }, { data: chart }, { data: settings }] = await Promise.all([
-    supabase.from("birth_data").select("*").eq("user_id", userId).eq("is_primary", true).maybeSingle(),
-    supabase.from("astro_charts").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(1).maybeSingle(),
+  const [birth, { data: settings }] = await Promise.all([
+    resolveActiveSubject(supabase, userId),
     supabase.from("user_settings").select("*").eq("user_id", userId).maybeSingle(),
   ]);
+  const chartQuery = supabase
+    .from("astro_charts")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(1);
+  const { data: chart } = await applyActiveChartFilter(chartQuery, birth?.client_profile_id ?? null).maybeSingle();
 
   let context = "";
   if (birth) {
