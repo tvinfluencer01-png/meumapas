@@ -351,9 +351,22 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
     const font = opts?.italic ? serifItalic : serif;
     const color = opts?.color ?? INK;
     const justify = opts?.justify ?? true;
-    const lineHeight = size * 1.38;
+    const lineHeight = size * 1.45;
     const spaceW = measureText(font, size, " ");
-    const paragraphs = safe(text).split(/\n+/);
+    const cleaned = safe(text).trim();
+    // Split em paragrafos: respeita quebras de linha explicitas; quando o
+    // texto vem como bloco unico, agrupa em paragrafos de ~3 frases para
+    // garantir espacamento visivel.
+    let paragraphs: string[];
+    if (/\n/.test(cleaned)) {
+      paragraphs = cleaned.split(/\n+/);
+    } else {
+      const sentences = cleaned.match(/[^.!?]+[.!?]+(?:\s|$)/g) ?? [cleaned];
+      paragraphs = [];
+      for (let i = 0; i < sentences.length; i += 3) {
+        paragraphs.push(sentences.slice(i, i + 3).join(" ").trim());
+      }
+    }
 
     // Tenta dividir uma palavra em (prefixo + "-", restante) de modo que o
     // prefixo caiba em `availableWidth`. Devolve null se não houver corte viável.
@@ -467,8 +480,9 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
         }
         cursor.y -= lineHeight;
       }
-      // Espaco curto entre paragrafos; suprime se acabamos de virar a pagina
-      if (cursor.y < PAGE_H - MARGIN - 2) cursor.y -= 2;
+      // Espaco visivel entre paragrafos (~meia linha); suprime se acabamos de virar a pagina
+      const paraGap = Math.round(lineHeight * 0.55);
+      if (cursor.y < PAGE_H - MARGIN - paraGap) cursor.y -= paraGap;
     }
   }
 
