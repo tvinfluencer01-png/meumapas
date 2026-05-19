@@ -8,6 +8,7 @@ import {
   consumeCredits,
   refundCredits,
   getCreditCost,
+  hasUnlimitedAccess,
   type CreditAction,
 } from "@/lib/credits.functions";
 import { SEFIROT, findSefirah } from "@/lib/kabbalah.tree";
