@@ -282,7 +282,7 @@ export const getMyCreditsOverview = createServerFn({ method: "GET" })
 
 /** Recent transactions (own). */
 export const listMyCreditTransactions = createServerFn({ method: "POST" })
-  .middleware([requireCreditsAuth])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d) =>
     z.object({ limit: z.number().int().min(1).max(100).default(30) }).parse(d),
   )
@@ -305,7 +305,7 @@ const HistoryFilterSchema = z.object({
 });
 
 export const listMyCreditHistory = createServerFn({ method: "POST" })
-  .middleware([requireCreditsAuth])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d) => HistoryFilterSchema.parse(d))
   .handler(async ({ data, context }) => {
     let q = supabaseAdmin
@@ -348,7 +348,7 @@ const AdjustSchema = z.object({
 });
 
 export const adminAdjustCredits = createServerFn({ method: "POST" })
-  .middleware([requireCreditsAuth])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d) => AdjustSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
@@ -380,7 +380,7 @@ const RefundSchema = z.object({
 
 /** Admin-triggered manual refund. */
 export const adminRefundCredits = createServerFn({ method: "POST" })
-  .middleware([requireCreditsAuth])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d) => RefundSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
@@ -424,7 +424,7 @@ export const adminRefundCredits = createServerFn({ method: "POST" })
   });
 
 export const adminGetUserCredits = createServerFn({ method: "POST" })
-  .middleware([requireCreditsAuth])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({ user_id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
@@ -457,7 +457,7 @@ const AdminHistorySchema = z.object({
 });
 
 export const adminListCreditHistory = createServerFn({ method: "POST" })
-  .middleware([requireCreditsAuth])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d) => AdminHistorySchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
@@ -480,7 +480,7 @@ export const adminListCreditHistory = createServerFn({ method: "POST" })
 // =========== Credit cost configuration ===========
 
 export const adminListCreditCosts = createServerFn({ method: "GET" })
-  .middleware([requireCreditsAuth])
+  .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context.userId);
     const { data, error } = await supabaseAdmin
@@ -504,7 +504,7 @@ const UpsertCostSchema = z.object({
 });
 
 export const adminUpsertCreditCost = createServerFn({ method: "POST" })
-  .middleware([requireCreditsAuth])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d) => UpsertCostSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
@@ -526,7 +526,7 @@ export const adminUpsertCreditCost = createServerFn({ method: "POST" })
   });
 
 export const adminDeleteCreditCost = createServerFn({ method: "POST" })
-  .middleware([requireCreditsAuth])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({ action: z.string().min(1).max(64) }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
@@ -541,7 +541,7 @@ export const adminDeleteCreditCost = createServerFn({ method: "POST" })
 // =========== Credit packages (compra avulsa) ===========
 
 export const listCreditPackages = createServerFn({ method: "GET" })
-  .middleware([requireCreditsAuth])
+  .middleware([requireSupabaseAuth])
   .handler(async () => {
     const { data, error } = await supabaseAdmin
       .from("credit_packages")
@@ -553,7 +553,7 @@ export const listCreditPackages = createServerFn({ method: "GET" })
   });
 
 export const adminListCreditPackages = createServerFn({ method: "GET" })
-  .middleware([requireCreditsAuth])
+  .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context.userId);
     const { data, error } = await supabaseAdmin
@@ -577,7 +577,7 @@ const UpsertPackageSchema = z.object({
 });
 
 export const adminUpsertCreditPackage = createServerFn({ method: "POST" })
-  .middleware([requireCreditsAuth])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d) => UpsertPackageSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
@@ -610,7 +610,7 @@ export const adminUpsertCreditPackage = createServerFn({ method: "POST" })
   });
 
 export const adminDeleteCreditPackage = createServerFn({ method: "POST" })
-  .middleware([requireCreditsAuth])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
@@ -634,7 +634,7 @@ const ApplyPackageSchema = z.object({
  * com kind=`package_purchase` e referência detalhada do pacote/admin.
  */
 export const adminApplyCreditPackage = createServerFn({ method: "POST" })
-  .middleware([requireCreditsAuth])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d) => ApplyPackageSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
