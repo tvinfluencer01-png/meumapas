@@ -273,8 +273,6 @@ function ActiveClientSwitcher() {
   const activeId = data?.active_client_profile_id ?? null;
   const currentValue = activeId ?? SELF_VALUE;
 
-  if (profiles.length === 0 && !activeId) return null;
-
   const mutation = useMutation({
     mutationFn: (id: string | null) => setActiveFn({ data: { id } }),
     onSuccess: async (_r, id) => {
@@ -287,6 +285,8 @@ function ActiveClientSwitcher() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  if (profiles.length === 0 && !activeId) return null;
 
   function handleChange(value: string) {
     const id = value === SELF_VALUE ? null : value;
