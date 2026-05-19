@@ -480,8 +480,9 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
         }
         cursor.y -= lineHeight;
       }
-      // Espaco curto entre paragrafos; suprime se acabamos de virar a pagina
-      if (cursor.y < PAGE_H - MARGIN - 2) cursor.y -= 2;
+      // Espaco visivel entre paragrafos (~meia linha); suprime se acabamos de virar a pagina
+      const paraGap = Math.round(lineHeight * 0.55);
+      if (cursor.y < PAGE_H - MARGIN - paraGap) cursor.y -= paraGap;
     }
   }
 
