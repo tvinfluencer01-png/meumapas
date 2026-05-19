@@ -223,6 +223,15 @@ export const exportKabbalahPdf = createServerFn({ method: "POST" })
       blocks.push({ type: "h2", text: "Integração na vida diária" });
       blocks.push({ type: "list", items: script.integration });
 
+      const { data: brandRow } = await supabaseAdmin
+        .from("pdf_branding")
+        .select("*")
+        .eq("user_id", userId)
+        .maybeSingle();
+      const branding = isBrandingEnabledFor(brandRow, "kabbalah")
+        ? await resolveBrandingPayload(brandRow)
+        : undefined;
+
       const pdfBytes = await buildSimplePdf({
         brand: "Cosmic AI",
         eyebrow: `Meditação Cabalística · ${sef?.name ?? row.sefirah}`,
@@ -234,6 +243,7 @@ export const exportKabbalahPdf = createServerFn({ method: "POST" })
         blocks,
         accentHex: "#3b82f6",
         flowing: true,
+        branding,
       });
 
       const path = `${userId}/kabbalah-${row.id}.pdf`;
