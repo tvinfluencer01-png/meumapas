@@ -349,13 +349,13 @@ function MapaAstral() {
         <TooltipProvider delayDuration={150}>
           <ChartSummary chart={current} />
 
-          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] gap-6 mt-6 items-start">
-            <div className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] gap-6 mt-6 lg:items-stretch">
+            <div className="flex flex-col gap-4 lg:min-h-0">
               <ChartWheel chart={current} userId={user?.id} svgRefProp={chartSvgRef} compact />
 
-              {/* Previsões logo abaixo do mapa, na mesma coluna */}
-              <div className="glass-card rounded-2xl p-6 relative overflow-hidden">
-                <div className="flex flex-wrap items-center justify-between gap-3">
+              {/* Previsões logo abaixo do mapa, na mesma coluna — altura espelha a coluna ao lado */}
+              <div className="glass-card rounded-2xl p-6 relative overflow-hidden flex flex-col lg:flex-1 lg:min-h-0">
+                <div className="flex flex-wrap items-center justify-between gap-3 shrink-0">
                   <div className="flex items-center gap-2">
                     <CalendarClock className="size-4 text-gold" />
                     <h3 className="font-serif text-lg text-gold">Previsões para os próximos dias</h3>
@@ -376,13 +376,13 @@ function MapaAstral() {
                 </div>
 
                 {!forecast && !forecastLoading && (
-                  <p className="mt-4 text-sm text-muted-foreground">
+                  <p className="mt-4 text-sm text-muted-foreground shrink-0">
                     Leitura prática para os próximos dias, semana, mês e ano com base no seu mapa natal.
                   </p>
                 )}
 
                 {forecast && (
-                  <div className="mt-5 space-y-3">
+                  <div className="mt-5 space-y-3 lg:flex-1 lg:min-h-0 lg:overflow-y-auto pr-2 -mr-2 [scrollbar-gutter:stable]">
                     {[
                       { label: "Próximos dias", text: forecast.nextDays },
                       { label: "Esta semana", text: forecast.week },
