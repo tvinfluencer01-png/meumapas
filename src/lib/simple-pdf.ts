@@ -423,7 +423,28 @@ export async function buildSimplePdf(data: SimplePdfData): Promise<Uint8Array> {
 
   function newPage(num: number): Cursor {
     const page = doc.addPage(PageSizes.A4);
-    page.drawRectangle({ x: 0, y: 0, width: PAGE_W, height: PAGE_H, color: PARCHMENT });
+    page.drawRectangle({ x: 0, y: 0, width: PAGE_W, height: PAGE_H, color: pageBg });
+    // imagem de fundo da página (cover, respeitando proporção)
+    if (pageBgImage) {
+      const ratio = Math.max(PAGE_W / pageBgImage.width, PAGE_H / pageBgImage.height);
+      const dw = pageBgImage.width * ratio;
+      const dh = pageBgImage.height * ratio;
+      page.drawImage(pageBgImage, {
+        x: (PAGE_W - dw) / 2, y: (PAGE_H - dh) / 2,
+        width: dw, height: dh, opacity: 0.85,
+      });
+    }
+    // marca d'água (centralizada, opacidade configurável)
+    if (watermarkImage) {
+      const maxW = PAGE_W * 0.55;
+      const ratio = watermarkImage.height / watermarkImage.width;
+      const ww = maxW;
+      const wh = ww * ratio;
+      page.drawImage(watermarkImage, {
+        x: (PAGE_W - ww) / 2, y: (PAGE_H - wh) / 2,
+        width: ww, height: wh, opacity: wmOpacity,
+      });
+    }
     // faixa de topo
     page.drawRectangle({
       x: 0, y: PAGE_H - MARGIN + 16,
