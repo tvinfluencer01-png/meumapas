@@ -14,6 +14,10 @@ import {
 import { SPREADS, drawSpread, type SpreadId } from "@/lib/tarot.deck";
 import { buildSimplePdf, type SimplePdfBlock } from "@/lib/simple-pdf";
 import { sanitizeJsonString } from "@/lib/json-sanitize";
+import {
+  resolveBrandingPayload,
+  isBrandingEnabledFor,
+} from "@/lib/pdf-branding.functions";
 
 const SpreadEnum = z.enum(["card_day", "three", "celtic"]);
 
