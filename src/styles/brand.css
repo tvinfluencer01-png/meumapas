@@ -163,4 +163,37 @@
     100% { transform: rotate(360deg) translateY(-2px) rotate(-360deg); }
   }
   .animate-logo-orbit { animation: logo-orbit 18s linear infinite; }
+
+  /* ---------- Tarot card animations ---------- */
+  @keyframes tarot-shuffle {
+    0%   { transform: translate(0,0) rotate(var(--r,0deg)); }
+    25%  { transform: translate(-40px,-10px) rotate(calc(var(--r,0deg) - 12deg)); }
+    50%  { transform: translate(30px,8px) rotate(calc(var(--r,0deg) + 14deg)); }
+    75%  { transform: translate(-18px,12px) rotate(calc(var(--r,0deg) - 6deg)); }
+    100% { transform: translate(0,0) rotate(var(--r,0deg)); }
+  }
+  .animate-tarot-shuffle { animation: tarot-shuffle 1.6s ease-in-out infinite; }
+
+  @keyframes tarot-flip-in {
+    0%   { opacity: 0; transform: perspective(800px) rotateY(180deg) translateY(20px) scale(0.85); }
+    60%  { opacity: 1; transform: perspective(800px) rotateY(-10deg) translateY(0) scale(1.02); }
+    100% { opacity: 1; transform: perspective(800px) rotateY(0deg) translateY(0) scale(1); }
+  }
+  .animate-tarot-flip {
+    animation: tarot-flip-in 0.9s cubic-bezier(.2,.8,.2,1) both;
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+  }
+
+  @keyframes tarot-reveal {
+    0%   { opacity: 0; transform: translateY(14px); filter: blur(6px); }
+    100% { opacity: 1; transform: translateY(0); filter: blur(0); }
+  }
+  .animate-tarot-reveal { animation: tarot-reveal 0.8s ease-out both; }
+
+  @keyframes tarot-glow {
+    0%, 100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--gold) 0%, transparent); }
+    50%      { box-shadow: 0 0 28px 4px color-mix(in oklab, var(--gold) 55%, transparent); }
+  }
+  .animate-tarot-glow { animation: tarot-glow 2.4s ease-in-out infinite; }
 }
