@@ -30,6 +30,13 @@ type FormState = {
   enabled_love: boolean;
   enabled_career: boolean;
   enabled_spiritual: boolean;
+  enabled_tarot: boolean;
+  enabled_kabbalah: boolean;
+  enabled_numerology: boolean;
+  enabled_astrology: boolean;
+  enabled_kabbalah_numerology: boolean;
+  enabled_energy_calendar: boolean;
+  enabled_weekly: boolean;
 };
 
 const DEFAULT_FORM: FormState = {
@@ -45,6 +52,13 @@ const DEFAULT_FORM: FormState = {
   enabled_love: true,
   enabled_career: true,
   enabled_spiritual: true,
+  enabled_tarot: true,
+  enabled_kabbalah: true,
+  enabled_numerology: true,
+  enabled_astrology: true,
+  enabled_kabbalah_numerology: true,
+  enabled_energy_calendar: true,
+  enabled_weekly: true,
 };
 
 const KIND_TOGGLES: Array<{ key: keyof FormState; label: string; hint: string }> = [
@@ -52,6 +66,13 @@ const KIND_TOGGLES: Array<{ key: keyof FormState; label: string; hint: string }>
   { key: "enabled_love", label: "Amor", hint: "Amor e Relacionamento" },
   { key: "enabled_career", label: "Carreira", hint: "Vocação e Propósito" },
   { key: "enabled_spiritual", label: "Espiritualidade", hint: "Jornada Espiritual" },
+  { key: "enabled_tarot", label: "Tarot", hint: "Tarot dos Arcanos" },
+  { key: "enabled_kabbalah", label: "Meditação Cabalística", hint: "Meditações guiadas" },
+  { key: "enabled_numerology", label: "Numerologia", hint: "Mapa numerológico" },
+  { key: "enabled_astrology", label: "Mapa Astral", hint: "Astrologia natal" },
+  { key: "enabled_kabbalah_numerology", label: "Numerologia Cabalística", hint: "Análise por gematria" },
+  { key: "enabled_energy_calendar", label: "Calendário Energético", hint: "Energias do mês" },
+  { key: "enabled_weekly", label: "Leitura Semanal", hint: "Previsão da semana" },
 ];
 
 function fileToBase64(file: File): Promise<{ base64: string; mime: "image/png" | "image/jpeg" }> {
