@@ -232,6 +232,16 @@ export const exportTarotPdf = createServerFn({ method: "POST" })
       blocks.push({ type: "h2", text: "Afirmação" });
       blocks.push({ type: "quote", text: interp.affirmation });
 
+      // Carrega branding do usuário se aplicável ao Tarot
+      const { data: brandRow } = await supabaseAdmin
+        .from("pdf_branding")
+        .select("*")
+        .eq("user_id", userId)
+        .maybeSingle();
+      const branding = isBrandingEnabledFor(brandRow, "tarot")
+        ? await resolveBrandingPayload(brandRow)
+        : undefined;
+
       const pdfBytes = await buildSimplePdf({
         brand: "Cosmic AI",
         eyebrow: `Tarot · ${spreadLabel}`,
@@ -243,6 +253,7 @@ export const exportTarotPdf = createServerFn({ method: "POST" })
         blocks,
         accentHex: "#a855f7",
         flowing: true,
+        branding,
       });
 
       const path = `${userId}/tarot-${reading.id}.pdf`;
