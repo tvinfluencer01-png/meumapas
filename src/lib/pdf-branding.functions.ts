@@ -530,9 +530,8 @@ async function removeAssetGeneric(opts: {
       .from(BUCKET)
       .remove(old.map((f) => `${opts.userId}/${f.name}`));
   }
-  await supabaseAdmin
-    .from("pdf_branding")
-    .upsert({ user_id: opts.userId, [opts.column]: null }, { onConflict: "user_id" });
+  const upsertPayload = { user_id: opts.userId, [opts.column]: null } as never;
+  await supabaseAdmin.from("pdf_branding").upsert(upsertPayload, { onConflict: "user_id" });
 }
 
 const AssetInput = z.object({
