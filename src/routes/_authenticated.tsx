@@ -34,6 +34,7 @@ const NAV: NavItem[] = [
 
 const ADDON_MENU: Record<string, { label: string; to: string; icon: typeof LayoutDashboard }> = {
   sub_branding_pdf: { label: "Branding PDF", to: "/configuracoes", icon: FileBadge },
+  sub_pdf_css: { label: "PDF CSS Avançado", to: "/pdf-css", icon: Palette },
   sub_unlimited_reports: { label: "Relatórios Ilimitados", to: "/relatorios", icon: InfinityIcon },
   sub_oracle_premium: { label: "Oráculo Premium", to: "/oraculo", icon: Crown },
   sub_tarot_unlimited: { label: "Tarot Ilimitado", to: "/tarot", icon: Wand2 },
