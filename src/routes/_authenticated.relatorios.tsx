@@ -4,10 +4,14 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useActiveSubject } from "@/hooks/use-active-subject";
 import { generateReport, getReportUrl, deleteReport } from "@/lib/reports.functions";
 import { emitCreditsChanged } from "@/lib/credits-events";
 import { toast } from "sonner";
 import { showLoader, hideLoader, updateLoader, confirmDialog } from "@/components/system-feedback";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 import {
   FileText, Download, Sparkles, Heart, Briefcase, Flame, Loader2, Trash2, ScrollText,
   Coins, Home, HeartPulse, Users,
@@ -87,6 +91,31 @@ function RelatoriosPage() {
   const getUrl = useServerFn(getReportUrl);
   const removeFn = useServerFn(deleteReport);
   const [loadingKind, setLoadingKind] = useState<Kind | null>(null);
+  const { data: activeSubject } = useActiveSubject();
+  const [existingPrompt, setExistingPrompt] = useState<{
+    kind: Kind;
+    report: { id: string; title: string; created_at: string };
+  } | null>(null);
+
+  function findExistingReport(kind: Kind) {
+    if (!reports) return null;
+    const clientId = activeSubject?.client_profile_id ?? null;
+    return (
+      reports.find(
+        (r) => r.kind === kind && (r.client_profile_id ?? null) === clientId,
+      ) ?? null
+    );
+  }
+
+  function handleGenerateClick(kind: Kind) {
+    if (loadingKind) return;
+    const existing = findExistingReport(kind);
+    if (existing) {
+      setExistingPrompt({ kind, report: existing });
+      return;
+    }
+    genMutation.mutate(kind);
+  }
 
   const { data: reports } = useQuery({
     queryKey: ["reports", user?.id],
@@ -215,7 +244,7 @@ function RelatoriosPage() {
           return (
             <button
               key={c.kind}
-              onClick={() => !isLoading && genMutation.mutate(c.kind)}
+              onClick={() => handleGenerateClick(c.kind)}
               disabled={isLoading || !!loadingKind}
               className="group relative text-left glass-card rounded-2xl p-6 overflow-hidden hover:gold-glow transition-all disabled:opacity-60 disabled:cursor-wait"
             >
@@ -293,6 +322,69 @@ function RelatoriosPage() {
           </div>
         )}
       </section>
+
+      {/* Existing report prompt */}
+      <Dialog
+        open={!!existingPrompt}
+        onOpenChange={(o) => { if (!o) setExistingPrompt(null); }}
+      >
+        <DialogContent className="glass-card gold-glow border-gold/30">
+          <DialogHeader>
+            <DialogTitle className="font-serif text-2xl text-stardust flex items-center gap-2">
+              <FileText className="size-5 text-gold" /> Você já tem este relatório
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              {existingPrompt && (
+                <>
+                  Já existe um PDF de{" "}
+                  <span className="text-stardust font-medium">
+                    “{CARDS.find((c) => c.kind === existingPrompt.kind)?.title}”
+                  </span>{" "}
+                  gerado em{" "}
+                  {new Date(existingPrompt.report.created_at).toLocaleString("pt-BR")}
+                  {activeSubject?.kind === "client" && (
+                    <> para <span className="text-stardust">{activeSubject.full_name}</span></>
+                  )}
+                  . Deseja baixar o existente ou gerar um novo (consome créditos)?
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <button
+              type="button"
+              onClick={() => setExistingPrompt(null)}
+              className="px-4 py-2 rounded-lg border border-border text-muted-foreground hover:text-stardust hover:border-gold/40 transition text-sm"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={async () => {
+                if (!existingPrompt) return;
+                const r = existingPrompt.report;
+                setExistingPrompt(null);
+                await openReport(r.id, r.title);
+              }}
+              className="px-4 py-2 rounded-lg border border-gold/40 text-gold hover:bg-gold/10 transition text-sm inline-flex items-center gap-2"
+            >
+              <Download className="size-4" /> Baixar existente
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (!existingPrompt) return;
+                const kind = existingPrompt.kind;
+                setExistingPrompt(null);
+                genMutation.mutate(kind);
+              }}
+              className="px-4 py-2 rounded-lg bg-gradient-to-r from-gold/80 to-gold-glow text-night font-medium hover:opacity-90 transition text-sm inline-flex items-center gap-2"
+            >
+              <Sparkles className="size-4" /> Gerar novo
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
