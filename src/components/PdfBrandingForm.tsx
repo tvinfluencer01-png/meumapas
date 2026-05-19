@@ -133,7 +133,20 @@ export function PdfBrandingForm() {
   const saveFn = useServerFn(savePdfBranding);
   const uploadFn = useServerFn(uploadPdfLogo);
   const removeFn = useServerFn(removePdfLogo);
+  const uploadCoverFn = useServerFn(uploadCoverImage);
+  const removeCoverFn = useServerFn(removeCoverImage);
+  const generateCoverFn = useServerFn(generateCoverImage);
+  const samplePdfFn = useServerFn(generateSampleBrandingPdf);
+  const uploadPageBgFn = useServerFn(uploadPageBgImage);
+  const removePageBgFn = useServerFn(removePageBgImage);
+  const uploadWatermarkFn = useServerFn(uploadWatermarkImage);
+  const removeWatermarkFn = useServerFn(removeWatermarkImage);
   const inputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
+  const pageBgInputRef = useRef<HTMLInputElement>(null);
+  const watermarkInputRef = useRef<HTMLInputElement>(null);
+  const [coverPrompt, setCoverPrompt] = useState("");
+  const [previewing, setPreviewing] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["pdf-branding"],
@@ -147,6 +160,9 @@ export function PdfBrandingForm() {
   });
   const subscriptionActive = !!addons?.subscriptions.some(
     (s) => s.addon_id === "sub_branding_pdf" && s.status === "active",
+  );
+  const pdfCssActive = !!addons?.subscriptions.some(
+    (s) => s.addon_id === "sub_pdf_css" && s.status === "active",
   );
 
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
