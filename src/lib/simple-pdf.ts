@@ -520,7 +520,7 @@ export async function buildSimplePdf(data: SimplePdfData): Promise<Uint8Array> {
     const lines = wrapPlain(safe(text), serifBold, size, CONTENT_W);
     for (const ln of lines) {
       cursor.page.drawText(ln, {
-        x: MARGIN, y: cursor.y - size, size, font: serifBold, color: NIGHT,
+        x: MARGIN, y: cursor.y - size, size, font: serifBold, color: headingTextC,
       });
       cursor.y -= size + 4;
     }
@@ -528,7 +528,7 @@ export async function buildSimplePdf(data: SimplePdfData): Promise<Uint8Array> {
     cursor.page.drawLine({
       start: { x: MARGIN, y: cursor.y },
       end: { x: MARGIN + 56, y: cursor.y },
-      color: GOLD, thickness: 1.2,
+      color: accent, thickness: 1.2,
     });
     cursor.y -= 14;
   }
@@ -537,7 +537,7 @@ export async function buildSimplePdf(data: SimplePdfData): Promise<Uint8Array> {
     const size = 15;
     ensureSpace(size + 16);
     cursor.page.drawText(safe(text), {
-      x: MARGIN, y: cursor.y - size, size, font: serifBold, color: NIGHT,
+      x: MARGIN, y: cursor.y - size, size, font: serifBold, color: headingTextC,
     });
     cursor.y -= size + 12;
   }
