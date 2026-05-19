@@ -85,8 +85,14 @@ function TarotPage() {
   const pdfMut = useMutation({
     mutationFn: (id: string) => exportFn({ data: { id } }),
     onSuccess: (res) => {
-      if (res.signedUrl) {
-        window.open(res.signedUrl, "_blank");
+      if (res.pdfBase64) {
+        const bin = atob(res.pdfBase64);
+        const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        const blob = new Blob([bytes], { type: "application/pdf" });
+        const url = URL.createObjectURL(blob);
+        window.open(url, "_blank");
+        setTimeout(() => URL.revokeObjectURL(url), 60_000);
         toast.success(res.cached ? "PDF aberto." : "PDF gerado.");
       }
       qc.invalidateQueries({ queryKey: ["tarot-readings"] });
