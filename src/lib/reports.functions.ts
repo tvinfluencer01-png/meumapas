@@ -1042,6 +1042,7 @@ Regras:
       .from("reports")
       .insert({
         user_id: userId,
+        client_profile_id: birth.client_profile_id,
         kind: data.kind,
         title: meta.title,
         storage_path: path,
