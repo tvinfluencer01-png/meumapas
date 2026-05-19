@@ -441,6 +441,31 @@ function MapaAstral() {
                     </p>
                   </div>
                 )}
+
+                {forecast && (
+                  <div className="mt-4 flex flex-wrap items-center justify-end gap-2 shrink-0 border-t border-gold/10 pt-3">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleDownloadForecastPdf}
+                      disabled={forecastPdfLoading || forecastDeleting}
+                      className="border-gold/40 text-gold hover:bg-gold/10"
+                    >
+                      {forecastPdfLoading ? <Loader2 className="size-3 animate-spin mr-2" /> : <Download className="size-3 mr-2" />}
+                      Baixar PDF
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleDeleteForecast}
+                      disabled={forecastDeleting || forecastPdfLoading}
+                      className="border-destructive/40 text-destructive hover:bg-destructive/10"
+                    >
+                      {forecastDeleting ? <Loader2 className="size-3 animate-spin mr-2" /> : <Trash2 className="size-3 mr-2" />}
+                      Apagar
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
             <div className="space-y-4">
