@@ -7,7 +7,7 @@ import { Starfield } from "@/components/Starfield";
 import { UserProfileDialog } from "@/components/UserProfileDialog";
 import { Logo } from "@/components/Logo";
 import {
-  LayoutDashboard, CircleDot, Hash, MessageCircle, LogOut, Menu, X, ScrollText, Shield, Settings, Coins, Wand2, TreePine, Crown, Infinity as InfinityIcon, FileBadge, User as UserIcon,
+  LayoutDashboard, CircleDot, Hash, MessageCircle, LogOut, Menu, X, ScrollText, Shield, Settings, Coins, Wand2, TreePine, Crown, Infinity as InfinityIcon, FileBadge, User as UserIcon, Palette,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
