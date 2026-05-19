@@ -45,6 +45,18 @@ export type SimplePdfBranding = {
   headerBgColor?: string;
   footerBgColor?: string;
   headerTextColor?: string;
+  // ---- PDF CSS Avançado ----
+  pageBgColor?: string;
+  pageBgImageBytes?: Uint8Array;
+  pageBgImageMime?: "image/png" | "image/jpeg";
+  watermarkImageBytes?: Uint8Array;
+  watermarkImageMime?: "image/png" | "image/jpeg";
+  watermarkOpacity?: number; // 0..1
+  bodyTextColor?: string;
+  headingTextColor?: string;
+  bodyFontSize?: number; // default 12.5
+  lineHeight?: number; // multiplier (default 1.45)
+  frameStyle?: "none" | "simple" | "double" | "ornamental";
 };
 
 export type SimplePdfData = {
