@@ -775,32 +775,68 @@ Regras:
       base = normalizeBasePayload(null) as z.infer<typeof BaseAiOutput>;
     }
 
-    const sections: { title: string; body: string }[] = [];
-    const progressPerSection = [50, 60, 70];
-    for (let index = 0; index < base.sectionBlueprints.length; index++) {
-      const blueprint = base.sectionBlueprints[index];
-      yield {
-        type: "progress" as const,
-        progress: progressPerSection[index] ?? 70,
-        step: `Escrevendo o capítulo ${index + 1} de 3...`,
-      };
-      let sectionBody: z.infer<typeof SectionBodyOutput>;
+    // Generate all 3 chapters in PARALLEL to avoid sequential wall-clock timeouts.
+    // Each call has its own 40s timeout; running in parallel keeps total time ~40s
+    // instead of ~120s, eliminating the "stuck at 60%" hang on the 2nd chapter.
+    yield {
+      type: "progress" as const,
+      progress: 50,
+      step: `Escrevendo os 3 capítulos em paralelo...`,
+    };
+
+    const sectionPromises = base.sectionBlueprints.map(async (blueprint, index) => {
       try {
         const sectionBodyText = await callWithRetry({
           prompt: makeSectionBodyPrompt(blueprint, index, base.sectionBlueprints),
-          timeoutMs: 40_000,
+          timeoutMs: 45_000,
           errorMessage: "A geração demorou além do limite. Tente novamente.",
         });
-        sectionBody = parseJsonWithSchema(sectionBodyText, SectionBodyOutput, `section-body-${index + 1}`, {
+        return parseJsonWithSchema(sectionBodyText, SectionBodyOutput, `section-body-${index + 1}`, {
           normalize: (parsed) => normalizeSectionPayload(parsed, blueprint),
           fallback: normalizeSectionPayload(null, blueprint) as z.infer<typeof SectionBodyOutput>,
         });
       } catch (error) {
         console.error(`[reports] section generation fallback (${index + 1})`, error);
-        sectionBody = normalizeSectionPayload(null, blueprint) as z.infer<typeof SectionBodyOutput>;
+        return normalizeSectionPayload(null, blueprint) as z.infer<typeof SectionBodyOutput>;
       }
-      sections.push({ title: sectionBody.title, body: sectionBody.body });
+    });
+
+    yield {
+      type: "progress" as const,
+      progress: 60,
+      step: `Tecendo capítulo 1 de 3...`,
+    };
+    // Heartbeat yields so the client progress bar keeps moving while we await
+    // the parallel chapter generations. These are cosmetic; the real work runs
+    // concurrently in sectionPromises above.
+    const heartbeatTimer = (async function* () {
+      const steps = [
+        { progress: 63, step: "Tecendo capítulo 2 de 3..." },
+        { progress: 66, step: "Tecendo capítulo 3 de 3..." },
+        { progress: 69, step: "Aguardando os últimos parágrafos..." },
+      ];
+      for (const s of steps) {
+        await new Promise((r) => setTimeout(r, 8000));
+        yield s;
+      }
+    })();
+
+    const sectionsResultPromise = Promise.all(sectionPromises);
+    let sectionsResolved: z.infer<typeof SectionBodyOutput>[] | null = null;
+    sectionsResultPromise.then((r) => {
+      sectionsResolved = r;
+    });
+
+    for await (const beat of heartbeatTimer) {
+      if (sectionsResolved) break;
+      yield { type: "progress" as const, ...beat };
     }
+
+    const sectionsRaw = await sectionsResultPromise;
+    const sections: { title: string; body: string }[] = sectionsRaw.map((s) => ({
+      title: s.title,
+      body: s.body,
+    }));
 
     yield { type: "progress" as const, progress: 72, step: "Validando a leitura recebida..." };
     const ai = AiOutput.parse({
