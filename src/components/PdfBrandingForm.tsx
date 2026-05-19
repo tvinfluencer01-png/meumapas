@@ -30,6 +30,13 @@ type FormState = {
   enabled_love: boolean;
   enabled_career: boolean;
   enabled_spiritual: boolean;
+  enabled_tarot: boolean;
+  enabled_kabbalah: boolean;
+  enabled_numerology: boolean;
+  enabled_astrology: boolean;
+  enabled_kabbalah_numerology: boolean;
+  enabled_energy_calendar: boolean;
+  enabled_weekly: boolean;
 };
 
 const DEFAULT_FORM: FormState = {
@@ -45,6 +52,13 @@ const DEFAULT_FORM: FormState = {
   enabled_love: true,
   enabled_career: true,
   enabled_spiritual: true,
+  enabled_tarot: true,
+  enabled_kabbalah: true,
+  enabled_numerology: true,
+  enabled_astrology: true,
+  enabled_kabbalah_numerology: true,
+  enabled_energy_calendar: true,
+  enabled_weekly: true,
 };
 
 const KIND_TOGGLES: Array<{ key: keyof FormState; label: string; hint: string }> = [
@@ -52,6 +66,13 @@ const KIND_TOGGLES: Array<{ key: keyof FormState; label: string; hint: string }>
   { key: "enabled_love", label: "Amor", hint: "Amor e Relacionamento" },
   { key: "enabled_career", label: "Carreira", hint: "Vocação e Propósito" },
   { key: "enabled_spiritual", label: "Espiritualidade", hint: "Jornada Espiritual" },
+  { key: "enabled_tarot", label: "Tarot", hint: "Tarot dos Arcanos" },
+  { key: "enabled_kabbalah", label: "Meditação Cabalística", hint: "Meditações guiadas" },
+  { key: "enabled_numerology", label: "Numerologia", hint: "Mapa numerológico" },
+  { key: "enabled_astrology", label: "Mapa Astral", hint: "Astrologia natal" },
+  { key: "enabled_kabbalah_numerology", label: "Numerologia Cabalística", hint: "Análise por gematria" },
+  { key: "enabled_energy_calendar", label: "Calendário Energético", hint: "Energias do mês" },
+  { key: "enabled_weekly", label: "Leitura Semanal", hint: "Previsão da semana" },
 ];
 
 function fileToBase64(file: File): Promise<{ base64: string; mime: "image/png" | "image/jpeg" }> {
@@ -109,6 +130,13 @@ export function PdfBrandingForm() {
         enabled_love: (b.enabled_love as boolean | undefined) ?? true,
         enabled_career: (b.enabled_career as boolean | undefined) ?? true,
         enabled_spiritual: (b.enabled_spiritual as boolean | undefined) ?? true,
+        enabled_tarot: (b.enabled_tarot as boolean | undefined) ?? true,
+        enabled_kabbalah: (b.enabled_kabbalah as boolean | undefined) ?? true,
+        enabled_numerology: (b.enabled_numerology as boolean | undefined) ?? true,
+        enabled_astrology: (b.enabled_astrology as boolean | undefined) ?? true,
+        enabled_kabbalah_numerology: (b.enabled_kabbalah_numerology as boolean | undefined) ?? true,
+        enabled_energy_calendar: (b.enabled_energy_calendar as boolean | undefined) ?? true,
+        enabled_weekly: (b.enabled_weekly as boolean | undefined) ?? true,
       });
     }
   }, [data]);
@@ -129,6 +157,13 @@ export function PdfBrandingForm() {
           enabled_love: form.enabled_love,
           enabled_career: form.enabled_career,
           enabled_spiritual: form.enabled_spiritual,
+          enabled_tarot: form.enabled_tarot,
+          enabled_kabbalah: form.enabled_kabbalah,
+          enabled_numerology: form.enabled_numerology,
+          enabled_astrology: form.enabled_astrology,
+          enabled_kabbalah_numerology: form.enabled_kabbalah_numerology,
+          enabled_energy_calendar: form.enabled_energy_calendar,
+          enabled_weekly: form.enabled_weekly,
         },
       }),
     onSuccess: () => {

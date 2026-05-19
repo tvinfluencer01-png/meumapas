@@ -560,10 +560,17 @@ export type Database = {
           created_at: string
           display_name: string | null
           enabled: boolean
+          enabled_astrology: boolean
           enabled_career: boolean
+          enabled_energy_calendar: boolean
+          enabled_kabbalah: boolean
+          enabled_kabbalah_numerology: boolean
           enabled_love: boolean
+          enabled_numerology: boolean
           enabled_personality: boolean
           enabled_spiritual: boolean
+          enabled_tarot: boolean
+          enabled_weekly: boolean
           footer_enabled: boolean
           footer_name: string | null
           footer_phone: string | null
@@ -578,10 +585,17 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           enabled?: boolean
+          enabled_astrology?: boolean
           enabled_career?: boolean
+          enabled_energy_calendar?: boolean
+          enabled_kabbalah?: boolean
+          enabled_kabbalah_numerology?: boolean
           enabled_love?: boolean
+          enabled_numerology?: boolean
           enabled_personality?: boolean
           enabled_spiritual?: boolean
+          enabled_tarot?: boolean
+          enabled_weekly?: boolean
           footer_enabled?: boolean
           footer_name?: string | null
           footer_phone?: string | null
@@ -596,10 +610,17 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           enabled?: boolean
+          enabled_astrology?: boolean
           enabled_career?: boolean
+          enabled_energy_calendar?: boolean
+          enabled_kabbalah?: boolean
+          enabled_kabbalah_numerology?: boolean
           enabled_love?: boolean
+          enabled_numerology?: boolean
           enabled_personality?: boolean
           enabled_spiritual?: boolean
+          enabled_tarot?: boolean
+          enabled_weekly?: boolean
           footer_enabled?: boolean
           footer_name?: string | null
           footer_phone?: string | null
