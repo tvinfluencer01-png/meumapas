@@ -91,6 +91,31 @@ function RelatoriosPage() {
   const getUrl = useServerFn(getReportUrl);
   const removeFn = useServerFn(deleteReport);
   const [loadingKind, setLoadingKind] = useState<Kind | null>(null);
+  const { data: activeSubject } = useActiveSubject();
+  const [existingPrompt, setExistingPrompt] = useState<{
+    kind: Kind;
+    report: { id: string; title: string; created_at: string };
+  } | null>(null);
+
+  function findExistingReport(kind: Kind) {
+    if (!reports) return null;
+    const clientId = activeSubject?.client_profile_id ?? null;
+    return (
+      reports.find(
+        (r) => r.kind === kind && (r.client_profile_id ?? null) === clientId,
+      ) ?? null
+    );
+  }
+
+  function handleGenerateClick(kind: Kind) {
+    if (loadingKind) return;
+    const existing = findExistingReport(kind);
+    if (existing) {
+      setExistingPrompt({ kind, report: existing });
+      return;
+    }
+    genMutation.mutate(kind);
+  }
 
   const { data: reports } = useQuery({
     queryKey: ["reports", user?.id],
