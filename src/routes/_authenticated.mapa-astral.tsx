@@ -270,15 +270,29 @@ function MapaAstral() {
           </p>
         </div>
         <div className="flex flex-col items-end gap-2">
-          <Button
-            onClick={handleGenerate}
-            disabled={loading || !birth || backendDown || health.isLoading}
-            className="bg-gold text-primary-foreground hover:bg-gold-glow"
-          >
-            {loading ? <Loader2 className="size-4 animate-spin mr-2" /> : <Wand2 className="size-4 mr-2" />}
-            {backendDown ? "Indisponível" : current ? "Recalcular" : "Gerar mapa"}
-          </Button>
-          <CreditCostBadge action="astro_chart" label="Custo por geração" />
+          <div className="flex flex-wrap items-center gap-2 justify-end">
+            <Button
+              onClick={handleGenerate}
+              disabled={loading || !birth || backendDown || health.isLoading}
+              className="bg-gold text-primary-foreground hover:bg-gold-glow"
+            >
+              {loading ? <Loader2 className="size-4 animate-spin mr-2" /> : <Wand2 className="size-4 mr-2" />}
+              {backendDown ? "Indisponível" : current ? "Recalcular" : "Gerar mapa"}
+            </Button>
+            <Button
+              onClick={handleExportPdf}
+              disabled={pdfLoading || !currentChartId || backendDown}
+              variant="outline"
+              className="border-gold/40 text-gold hover:bg-gold/10"
+            >
+              {pdfLoading ? <Loader2 className="size-4 animate-spin mr-2" /> : <FileDown className="size-4 mr-2" />}
+              Exportar PDF
+            </Button>
+          </div>
+          <div className="flex flex-wrap items-center gap-3 justify-end">
+            <CreditCostBadge action="astro_chart" label="Mapa" />
+            <CreditCostBadge action="astro_pdf" label="PDF" />
+          </div>
         </div>
       </header>
 
