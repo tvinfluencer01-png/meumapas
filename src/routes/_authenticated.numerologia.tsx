@@ -1,9 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/use-auth";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useActiveSubject } from "@/hooks/use-active-subject";
 import { computeNumerology, NUMBER_MEANINGS, formatBirthDateBR, numLabel } from "@/lib/numerology";
-import { Hash, Heart, Eye, User as UserIcon, Cake, Sparkles } from "lucide-react";
+import { Hash, Heart, Eye, User as UserIcon, Cake, Sparkles, Users } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/numerologia")({
   component: NumerologiaPage,
@@ -20,16 +18,8 @@ const CARDS = [
 ] as const;
 
 function NumerologiaPage() {
-  const { user } = useAuth();
-  const { data: birth } = useQuery({
-    queryKey: ["birth", user?.id],
-    enabled: !!user,
-    queryFn: async () => {
-      const { data } = await supabase.from("birth_data")
-        .select("*").eq("user_id", user!.id).eq("is_primary", true).maybeSingle();
-      return data;
-    },
-  });
+  const { data: subject } = useActiveSubject();
+  const birth = subject ? { full_name: subject.full_name, birth_date: subject.birth_date } : null;
 
   const nums = birth ? computeNumerology(birth.full_name, birth.birth_date) : null;
 
@@ -41,7 +31,16 @@ function NumerologiaPage() {
         {birth && (
           <p className="mt-2 text-muted-foreground">{birth.full_name} — nascido em {formatBirthDateBR(birth.birth_date)}</p>
         )}
+        {subject?.kind === "client" && (
+          <Link
+            to="/clientes"
+            className="inline-flex items-center gap-1.5 mt-2 text-xs text-gold hover:underline"
+          >
+            <Users className="size-3" /> Calculando para cliente ativo · trocar
+          </Link>
+        )}
       </header>
+
 
       {!nums && (
         <div className="glass-card rounded-2xl p-12 text-center text-muted-foreground">
