@@ -209,6 +209,15 @@ export async function hasUnlimitedAccess(
     if (specific) addonIds.push(specific);
   } else if (action === "oracle_message") {
     addonIds.push("sub_oracle_premium");
+  } else if (
+    action === "tarot_card_day" ||
+    action === "tarot_three" ||
+    action === "tarot_celtic" ||
+    action === "tarot_pdf"
+  ) {
+    addonIds.push("sub_tarot_unlimited");
+  } else if (action === "kabbalah_meditation" || action === "kabbalah_pdf") {
+    addonIds.push("sub_kabbalah_unlimited");
   }
   if (addonIds.length === 0) return false;
   const { data } = await supabaseAdmin
