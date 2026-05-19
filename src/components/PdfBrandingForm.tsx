@@ -19,6 +19,10 @@ import {
   removeCoverImage,
   generateCoverImage,
   generateSampleBrandingPdf,
+  uploadPageBgImage,
+  removePageBgImage,
+  uploadWatermarkImage,
+  removeWatermarkImage,
 } from "@/lib/pdf-branding.functions";
 import { getAddonsOverview } from "@/lib/addons.functions";
 
@@ -129,7 +133,20 @@ export function PdfBrandingForm() {
   const saveFn = useServerFn(savePdfBranding);
   const uploadFn = useServerFn(uploadPdfLogo);
   const removeFn = useServerFn(removePdfLogo);
+  const uploadCoverFn = useServerFn(uploadCoverImage);
+  const removeCoverFn = useServerFn(removeCoverImage);
+  const generateCoverFn = useServerFn(generateCoverImage);
+  const samplePdfFn = useServerFn(generateSampleBrandingPdf);
+  const uploadPageBgFn = useServerFn(uploadPageBgImage);
+  const removePageBgFn = useServerFn(removePageBgImage);
+  const uploadWatermarkFn = useServerFn(uploadWatermarkImage);
+  const removeWatermarkFn = useServerFn(removeWatermarkImage);
   const inputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
+  const pageBgInputRef = useRef<HTMLInputElement>(null);
+  const watermarkInputRef = useRef<HTMLInputElement>(null);
+  const [coverPrompt, setCoverPrompt] = useState("");
+  const [previewing, setPreviewing] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["pdf-branding"],
@@ -143,6 +160,9 @@ export function PdfBrandingForm() {
   });
   const subscriptionActive = !!addons?.subscriptions.some(
     (s) => s.addon_id === "sub_branding_pdf" && s.status === "active",
+  );
+  const pdfCssActive = !!addons?.subscriptions.some(
+    (s) => s.addon_id === "sub_pdf_css" && s.status === "active",
   );
 
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
@@ -189,30 +209,7 @@ export function PdfBrandingForm() {
   }, [data]);
 
   const saveMutation = useMutation({
-    mutationFn: () =>
-      saveFn({
-        data: {
-          enabled: form.enabled,
-          logo_width: form.logo_width,
-          logo_height: form.logo_height,
-          display_name: form.display_name,
-          footer_enabled: form.footer_enabled,
-          footer_name: form.footer_name,
-          footer_site: form.footer_site,
-          footer_phone: form.footer_phone,
-          enabled_personality: form.enabled_personality,
-          enabled_love: form.enabled_love,
-          enabled_career: form.enabled_career,
-          enabled_spiritual: form.enabled_spiritual,
-          enabled_tarot: form.enabled_tarot,
-          enabled_kabbalah: form.enabled_kabbalah,
-          enabled_numerology: form.enabled_numerology,
-          enabled_astrology: form.enabled_astrology,
-          enabled_kabbalah_numerology: form.enabled_kabbalah_numerology,
-          enabled_energy_calendar: form.enabled_energy_calendar,
-          enabled_weekly: form.enabled_weekly,
-        },
-      }),
+    mutationFn: () => saveFn({ data: { ...form } }),
     onSuccess: () => {
       toast.success("Personalização salva. Será aplicada nos próximos PDFs.");
       qc.invalidateQueries({ queryKey: ["pdf-branding"] });
@@ -239,6 +236,101 @@ export function PdfBrandingForm() {
       qc.invalidateQueries({ queryKey: ["pdf-branding"] });
     },
   });
+
+  const uploadCoverMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const { base64, mime } = await fileToBase64(file);
+      return uploadCoverFn({ data: { base64, mime } });
+    },
+    onSuccess: () => {
+      toast.success("Imagem de capa enviada.");
+      qc.invalidateQueries({ queryKey: ["pdf-branding"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const removeCoverMutation = useMutation({
+    mutationFn: () => removeCoverFn(),
+    onSuccess: () => {
+      toast.success("Imagem de capa removida.");
+      qc.invalidateQueries({ queryKey: ["pdf-branding"] });
+    },
+  });
+  const generateCoverMutation = useMutation({
+    mutationFn: () => generateCoverFn({ data: { prompt: coverPrompt.trim() || "capa mística com estrelas douradas e nebulosa profunda" } }),
+    onSuccess: () => {
+      toast.success("Capa gerada por IA.");
+      qc.invalidateQueries({ queryKey: ["pdf-branding"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const uploadPageBgMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const { base64, mime } = await fileToBase64(file);
+      return uploadPageBgFn({ data: { base64, mime } });
+    },
+    onSuccess: () => {
+      toast.success("Fundo de página enviado.");
+      qc.invalidateQueries({ queryKey: ["pdf-branding"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const removePageBgMutation = useMutation({
+    mutationFn: () => removePageBgFn(),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["pdf-branding"] });
+    },
+  });
+  const uploadWatermarkMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const { base64, mime } = await fileToBase64(file);
+      return uploadWatermarkFn({ data: { base64, mime } });
+    },
+    onSuccess: () => {
+      toast.success("Marca d'água enviada.");
+      qc.invalidateQueries({ queryKey: ["pdf-branding"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const removeWatermarkMutation = useMutation({
+    mutationFn: () => removeWatermarkFn(),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["pdf-branding"] });
+    },
+  });
+
+  async function handlePreview() {
+    setPreviewing(true);
+    try {
+      await saveMutation.mutateAsync();
+      const r = await samplePdfFn();
+      const bin = atob(r.pdfBase64);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      const blob = new Blob([bytes], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank", "noopener,noreferrer");
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setPreviewing(false);
+    }
+  }
+
+  function handleAssetFile(
+    e: React.ChangeEvent<HTMLInputElement>,
+    mutation: { mutate: (f: File) => void },
+    maxKB: number,
+    inputRefToReset: React.RefObject<HTMLInputElement | null>,
+  ) {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    if (f.size > maxKB * 1024) { toast.error(`Arquivo maior que ${maxKB}KB.`); return; }
+    if (!["image/png", "image/jpeg"].includes(f.type)) { toast.error("Use PNG ou JPG."); return; }
+    mutation.mutate(f);
+    if (inputRefToReset.current) inputRefToReset.current.value = "";
+  }
+
 
   function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
@@ -493,7 +585,252 @@ export function PdfBrandingForm() {
         </div>
       </section>
 
-      <div className="flex justify-end">
+      {/* Capa: cores, fontes, imagem */}
+      <section className="space-y-4">
+        <h3 className="text-sm uppercase tracking-widest text-gold">Capa do relatório</h3>
+
+        <div className="grid md:grid-cols-3 gap-4">
+          <ColorField label="Fundo da capa" value={form.cover_bg_color}
+            onChange={(v) => setForm((p) => ({ ...p, cover_bg_color: v }))} />
+          <ColorField label="Cor de destaque" value={form.cover_accent_color}
+            onChange={(v) => setForm((p) => ({ ...p, cover_accent_color: v }))} />
+          <div>
+            <Label>Posição do título</Label>
+            <select
+              className="w-full bg-night/30 border border-border rounded-md px-3 py-2 text-sm"
+              value={form.cover_title_position}
+              onChange={(e) => setForm((p) => ({ ...p, cover_title_position: e.target.value as FormState["cover_title_position"] }))}
+            >
+              <option value="top">Topo</option>
+              <option value="center">Centro</option>
+              <option value="bottom">Inferior</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <Label>Família tipográfica</Label>
+          <select
+            className="w-full bg-night/30 border border-border rounded-md px-3 py-2 text-sm"
+            value={form.font_family}
+            onChange={(e) => setForm((p) => ({ ...p, font_family: e.target.value as FormState["font_family"] }))}
+          >
+            <option value="serif">Serif (clássica)</option>
+            <option value="sans">Sans (moderna)</option>
+            <option value="display">Display (alto impacto)</option>
+          </select>
+        </div>
+
+        <div className="flex flex-col md:flex-row gap-4 items-start">
+          <div className="w-44 h-28 border border-border rounded-lg grid place-items-center bg-night/30 shrink-0 overflow-hidden">
+            {data?.signedCoverUrl ? (
+              <img src={data.signedCoverUrl} alt="Capa" className="max-w-full max-h-full object-contain" />
+            ) : (
+              <div className="text-muted-foreground text-xs text-center px-2">
+                <ImageIcon className="size-6 mx-auto mb-1 opacity-50" />
+                Sem imagem de capa
+              </div>
+            )}
+          </div>
+          <div className="flex-1 space-y-2">
+            <input ref={coverInputRef} type="file" accept="image/png,image/jpeg" className="hidden"
+              onChange={(e) => handleAssetFile(e, uploadCoverMutation, 3072, coverInputRef)} />
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" variant="outline" size="sm"
+                onClick={() => coverInputRef.current?.click()}
+                disabled={uploadCoverMutation.isPending}>
+                <Upload className="size-4 mr-2" />
+                {uploadCoverMutation.isPending ? "Enviando…" : "Enviar imagem"}
+              </Button>
+              {data?.signedCoverUrl && (
+                <Button type="button" variant="ghost" size="sm" className="text-destructive hover:text-destructive"
+                  onClick={() => removeCoverMutation.mutate()}>
+                  <Trash2 className="size-4 mr-2" /> Remover
+                </Button>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <Input
+                value={coverPrompt}
+                placeholder="Descreva uma capa (ex: nebulosa púrpura com runas douradas)"
+                onChange={(e) => setCoverPrompt(e.target.value)}
+              />
+              <Button type="button" variant="outline" size="sm"
+                onClick={() => generateCoverMutation.mutate()}
+                disabled={generateCoverMutation.isPending}>
+                {generateCoverMutation.isPending ? <Loader2 className="size-4 animate-spin mr-2" /> : <Wand2 className="size-4 mr-2" />}
+                Gerar com IA
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">PNG/JPG até 3MB.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Cabeçalho/Rodapé cores */}
+      <section className="space-y-3">
+        <h3 className="text-sm uppercase tracking-widest text-gold">Cores de cabeçalho e rodapé</h3>
+        <div className="grid md:grid-cols-3 gap-4">
+          <ColorField label="Fundo do cabeçalho" value={form.header_bg_color}
+            onChange={(v) => setForm((p) => ({ ...p, header_bg_color: v }))} />
+          <ColorField label="Texto do cabeçalho" value={form.header_text_color}
+            onChange={(v) => setForm((p) => ({ ...p, header_text_color: v }))} />
+          <ColorField label="Fundo do rodapé" value={form.footer_bg_color}
+            onChange={(v) => setForm((p) => ({ ...p, footer_bg_color: v }))} />
+        </div>
+      </section>
+
+      {/* PDF CSS Avançado */}
+      <section className="space-y-4 border border-gold/20 rounded-xl p-4 bg-night/10">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h3 className="text-sm uppercase tracking-widest text-gold">PDF CSS Avançado</h3>
+            <p className="text-xs text-muted-foreground mt-1">
+              Personalize fundo da página, marca d'água, tipografia, cores de texto e molduras.
+            </p>
+          </div>
+          {!pdfCssActive && (
+            <Button asChild size="sm" variant="outline" className="shrink-0">
+              <Link to="/addons">Assinar add-on</Link>
+            </Button>
+          )}
+        </div>
+
+        {!pdfCssActive && (
+          <div className="flex items-start gap-2 text-xs text-amber-200/80 border border-amber-500/30 bg-amber-500/10 rounded-lg p-2">
+            <Lock className="size-4 shrink-0 mt-0.5 text-amber-400" />
+            Sem o add-on "PDF CSS Avançado" ativo, estas configurações ficam salvas mas não são aplicadas nos PDFs.
+          </div>
+        )}
+
+        <div className="grid md:grid-cols-3 gap-4">
+          <ColorField label="Fundo da página" value={form.page_bg_color}
+            onChange={(v) => setForm((p) => ({ ...p, page_bg_color: v }))} />
+          <ColorField label="Cor do texto" value={form.body_text_color}
+            onChange={(v) => setForm((p) => ({ ...p, body_text_color: v }))} />
+          <ColorField label="Cor dos títulos" value={form.heading_text_color}
+            onChange={(v) => setForm((p) => ({ ...p, heading_text_color: v }))} />
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-5">
+          <div>
+            <div className="flex justify-between text-sm mb-2">
+              <Label>Tamanho do texto</Label>
+              <span className="text-gold tabular-nums">{form.body_font_size.toFixed(1)}pt</span>
+            </div>
+            <Slider min={8} max={20} step={0.5} value={[form.body_font_size]}
+              onValueChange={([v]) => setForm((p) => ({ ...p, body_font_size: v }))} />
+          </div>
+          <div>
+            <div className="flex justify-between text-sm mb-2">
+              <Label>Entrelinha</Label>
+              <span className="text-gold tabular-nums">{form.line_height.toFixed(2)}</span>
+            </div>
+            <Slider min={1} max={2.2} step={0.05} value={[form.line_height]}
+              onValueChange={([v]) => setForm((p) => ({ ...p, line_height: v }))} />
+          </div>
+        </div>
+
+        <div>
+          <Label>Moldura da capa</Label>
+          <select
+            className="w-full bg-night/30 border border-border rounded-md px-3 py-2 text-sm"
+            value={form.frame_style}
+            onChange={(e) => setForm((p) => ({ ...p, frame_style: e.target.value as FormState["frame_style"] }))}
+          >
+            <option value="none">Sem moldura</option>
+            <option value="simple">Simples</option>
+            <option value="double">Dupla</option>
+            <option value="ornamental">Ornamental</option>
+          </select>
+        </div>
+
+        {/* Fundo de página (imagem) */}
+        <div className="flex flex-col md:flex-row gap-4 items-start">
+          <div className="w-44 h-28 border border-border rounded-lg grid place-items-center bg-night/30 shrink-0 overflow-hidden">
+            {data?.signedPageBgUrl ? (
+              <img src={data.signedPageBgUrl} alt="Fundo" className="max-w-full max-h-full object-cover" />
+            ) : (
+              <div className="text-muted-foreground text-xs text-center px-2">
+                <ImageIcon className="size-6 mx-auto mb-1 opacity-50" />
+                Sem imagem de fundo
+              </div>
+            )}
+          </div>
+          <div className="flex-1 space-y-2">
+            <Label className="text-sm">Imagem de fundo das páginas</Label>
+            <input ref={pageBgInputRef} type="file" accept="image/png,image/jpeg" className="hidden"
+              onChange={(e) => handleAssetFile(e, uploadPageBgMutation, 3072, pageBgInputRef)} />
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => pageBgInputRef.current?.click()}
+                disabled={uploadPageBgMutation.isPending}>
+                <Upload className="size-4 mr-2" />
+                {uploadPageBgMutation.isPending ? "Enviando…" : "Enviar imagem"}
+              </Button>
+              {data?.signedPageBgUrl && (
+                <Button type="button" variant="ghost" size="sm" className="text-destructive hover:text-destructive"
+                  onClick={() => removePageBgMutation.mutate()}>
+                  <Trash2 className="size-4 mr-2" /> Remover
+                </Button>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">PNG/JPG até 3MB. Aplicada como fundo de todas as páginas.</p>
+          </div>
+        </div>
+
+        {/* Marca d'água */}
+        <div className="flex flex-col md:flex-row gap-4 items-start">
+          <div className="w-44 h-28 border border-border rounded-lg grid place-items-center bg-night/30 shrink-0 overflow-hidden">
+            {data?.signedWatermarkUrl ? (
+              <img src={data.signedWatermarkUrl} alt="Marca d'água" className="max-w-full max-h-full object-contain" />
+            ) : (
+              <div className="text-muted-foreground text-xs text-center px-2">
+                <ImageIcon className="size-6 mx-auto mb-1 opacity-50" />
+                Sem marca d'água
+              </div>
+            )}
+          </div>
+          <div className="flex-1 space-y-2">
+            <Label className="text-sm">Marca d'água</Label>
+            <input ref={watermarkInputRef} type="file" accept="image/png,image/jpeg" className="hidden"
+              onChange={(e) => handleAssetFile(e, uploadWatermarkMutation, 1024, watermarkInputRef)} />
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => watermarkInputRef.current?.click()}
+                disabled={uploadWatermarkMutation.isPending}>
+                <Upload className="size-4 mr-2" />
+                {uploadWatermarkMutation.isPending ? "Enviando…" : "Enviar marca d'água"}
+              </Button>
+              {data?.signedWatermarkUrl && (
+                <Button type="button" variant="ghost" size="sm" className="text-destructive hover:text-destructive"
+                  onClick={() => removeWatermarkMutation.mutate()}>
+                  <Trash2 className="size-4 mr-2" /> Remover
+                </Button>
+              )}
+            </div>
+            <div>
+              <div className="flex justify-between text-sm mb-1">
+                <Label>Opacidade</Label>
+                <span className="text-gold tabular-nums">{Math.round(form.watermark_opacity * 100)}%</span>
+              </div>
+              <Slider min={0} max={1} step={0.01} value={[form.watermark_opacity]}
+                onValueChange={([v]) => setForm((p) => ({ ...p, watermark_opacity: v }))} />
+            </div>
+            <p className="text-xs text-muted-foreground">PNG transparente recomendado, até 1MB.</p>
+          </div>
+        </div>
+      </section>
+
+      <div className="flex flex-wrap justify-end gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handlePreview}
+          disabled={previewing || saveMutation.isPending}
+          className="gap-2"
+        >
+          {previewing ? <Loader2 className="size-4 animate-spin" /> : <FileDown className="size-4" />}
+          {previewing ? "Gerando preview…" : "Salvar e visualizar PDF"}
+        </Button>
         <Button
           onClick={() => saveMutation.mutate()}
           disabled={saveMutation.isPending}
@@ -502,6 +839,23 @@ export function PdfBrandingForm() {
           <Save className="size-4" />
           {saveMutation.isPending ? "Salvando…" : "Salvar personalização"}
         </Button>
+      </div>
+    </div>
+  );
+}
+
+function ColorField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <div>
+      <Label className="text-sm">{label}</Label>
+      <div className="flex items-center gap-2">
+        <input
+          type="color"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="h-9 w-12 rounded border border-border bg-transparent cursor-pointer"
+        />
+        <Input value={value} onChange={(e) => onChange(e.target.value)} maxLength={9} className="font-mono text-xs" />
       </div>
     </div>
   );
