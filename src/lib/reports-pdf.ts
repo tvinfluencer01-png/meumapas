@@ -521,7 +521,7 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
   // Intro chapter
   setChapter("Abertura");
   drawHeading("Abertura", 26);
-  drawParagraph(data.intro, { italic: true, size: 12, color: rgb(0.25, 0.22, 0.18) });
+  drawParagraph(data.intro, { italic: true, size: 13, color: rgb(0.25, 0.22, 0.18) });
 
   // Sections
   for (const section of data.sections) {
@@ -540,7 +540,7 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
   drawHeading("Analise", 20, { startOnNewPage: true });
   drawParagraph(
     "Sintese das forcas, fraquezas, oportunidades e ameacas reveladas pelo seu mapa.",
-    { italic: true, size: 11, color: MUTED },
+    { italic: true, size: 13, color: MUTED },
   );
   drawSubHeading("Forcas (Strengths)", rgb(0.15, 0.4, 0.2));
   drawBulletList(data.swot.strengths);
@@ -566,7 +566,7 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
     setChapter(data.suggestions.heading);
     drawHeading(data.suggestions.heading, 20, { startOnNewPage: true });
     if (data.suggestions.intro) {
-      drawParagraph(data.suggestions.intro, { italic: true, size: 11, color: MUTED });
+      drawParagraph(data.suggestions.intro, { italic: true, size: 13, color: MUTED });
     }
     const nameSize = 12;
     const whySize = 11;
@@ -606,7 +606,7 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
     drawHeading("Plano de 7 dias", 20, { startOnNewPage: true });
     drawParagraph(
       "Pequenos passos diários, em linguagem simples, baseados no resumo deste relatório.",
-      { italic: true, size: 11, color: MUTED },
+      { italic: true, size: 13, color: MUTED },
     );
     const labelDays = (arr: string[]) =>
       arr.slice(0, 7).map((it, i) => (/^dia\s+\d+:/i.test(it) ? it : `Dia ${i + 1}: ${it}`));
