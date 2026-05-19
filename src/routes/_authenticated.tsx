@@ -15,7 +15,7 @@ import {
   Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { useActiveSubject } from "@/hooks/use-active-subject";
+
 import { listClientProfiles, setActiveClientProfile } from "@/lib/client-profiles.functions";
 
 const SELF_VALUE = "__self__";
