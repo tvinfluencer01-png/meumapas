@@ -34,6 +34,11 @@ export type SimplePdfData = {
   meta?: string[];
   blocks: SimplePdfBlock[];
   accentHex?: string; // mantido por compatibilidade; ignorado em favor do dourado do template
+  /**
+   * Quando true, os títulos `h2` não forçam quebra de página — o conteúdo
+   * flui um abaixo do outro. Usado pela Meditação Cabalística.
+   */
+  flowing?: boolean;
 };
 
 // ---------- Paleta do template ----------
