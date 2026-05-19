@@ -82,15 +82,29 @@ function MapaAstral() {
   });
 
 
+  const activeClientId = activeSubject?.client_profile_id ?? null;
   const { data: latest } = useQuery({
-    queryKey: ["latest-chart", user?.id],
-    enabled: !!user,
+    queryKey: ["latest-chart", user?.id, activeClientId ?? "self"],
+    enabled: !!user && !!activeSubject,
     queryFn: async () => {
-      const { data } = await supabase.from("astro_charts")
-        .select("*").eq("user_id", user!.id).order("created_at",{ascending:false}).limit(1).maybeSingle();
+      let q = supabase.from("astro_charts")
+        .select("*").eq("user_id", user!.id)
+        .order("created_at",{ascending:false}).limit(1);
+      q = activeClientId
+        ? q.eq("client_profile_id", activeClientId)
+        : q.is("client_profile_id", null);
+      const { data } = await q.maybeSingle();
       return data;
     },
   });
+
+  // Quando troca o contexto ativo (eu mesmo <-> cliente), limpa o estado local
+  // para evitar mostrar o mapa/previsão do contexto anterior.
+  useEffect(() => {
+    setChart(null);
+    setForecast(null);
+    setGenError(null);
+  }, [activeClientId]);
 
   // Carrega previsões já salvas quando o chart muda
   useEffect(() => {
@@ -252,7 +266,8 @@ function MapaAstral() {
 
     const offset = -new Date().getTimezoneOffset() / 60;
     const payload = {
-      birthDataId: birth.id,
+      birthDataId: birth.id ?? undefined,
+      clientProfileId: activeClientId,
       fullName: birth.full_name,
       birthDate: birth.birth_date,
       birthTime: birth.birth_time ?? undefined,

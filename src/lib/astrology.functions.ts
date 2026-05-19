@@ -151,6 +151,7 @@ function computeAspects(planets: { name: string; longitude: number }[]) {
 // --- input schema ---------------------------------------------------------
 const ChartInput = z.object({
   birthDataId: z.string().uuid().optional(),
+  clientProfileId: z.string().uuid().nullable().optional(),
   fullName: z.string().min(1),
   birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   birthTime: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/).optional(),
@@ -210,6 +211,7 @@ export const computeNatalChart = createServerFn({ method: "POST" })
         .insert({
           user_id: context.userId,
           birth_data_id: data.birthDataId ?? null,
+          client_profile_id: data.clientProfileId ?? null,
           engine: "swiss_ephemeris",
           planets,
           houses,
