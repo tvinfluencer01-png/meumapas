@@ -4,10 +4,14 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useActiveSubject } from "@/hooks/use-active-subject";
 import { generateReport, getReportUrl, deleteReport } from "@/lib/reports.functions";
 import { emitCreditsChanged } from "@/lib/credits-events";
 import { toast } from "sonner";
 import { showLoader, hideLoader, updateLoader, confirmDialog } from "@/components/system-feedback";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 import {
   FileText, Download, Sparkles, Heart, Briefcase, Flame, Loader2, Trash2, ScrollText,
   Coins, Home, HeartPulse, Users,
