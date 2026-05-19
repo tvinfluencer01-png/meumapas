@@ -8,6 +8,7 @@ import {
   consumeCredits,
   refundCredits,
   getCreditCost,
+  hasUnlimitedAccess,
   type CreditAction,
 } from "@/lib/credits.functions";
 import { SPREADS, drawSpread, type SpreadId } from "@/lib/tarot.deck";
