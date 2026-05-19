@@ -557,6 +557,10 @@ export type Database = {
       }
       pdf_branding: {
         Row: {
+          cover_accent_color: string
+          cover_bg_color: string
+          cover_image_path: string | null
+          cover_title_position: string
           created_at: string
           display_name: string | null
           enabled: boolean
@@ -571,10 +575,14 @@ export type Database = {
           enabled_spiritual: boolean
           enabled_tarot: boolean
           enabled_weekly: boolean
+          font_family: string
+          footer_bg_color: string
           footer_enabled: boolean
           footer_name: string | null
           footer_phone: string | null
           footer_site: string | null
+          header_bg_color: string
+          header_text_color: string
           logo_height: number
           logo_path: string | null
           logo_width: number
@@ -582,6 +590,10 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          cover_accent_color?: string
+          cover_bg_color?: string
+          cover_image_path?: string | null
+          cover_title_position?: string
           created_at?: string
           display_name?: string | null
           enabled?: boolean
@@ -596,10 +608,14 @@ export type Database = {
           enabled_spiritual?: boolean
           enabled_tarot?: boolean
           enabled_weekly?: boolean
+          font_family?: string
+          footer_bg_color?: string
           footer_enabled?: boolean
           footer_name?: string | null
           footer_phone?: string | null
           footer_site?: string | null
+          header_bg_color?: string
+          header_text_color?: string
           logo_height?: number
           logo_path?: string | null
           logo_width?: number
@@ -607,6 +623,10 @@ export type Database = {
           user_id: string
         }
         Update: {
+          cover_accent_color?: string
+          cover_bg_color?: string
+          cover_image_path?: string | null
+          cover_title_position?: string
           created_at?: string
           display_name?: string | null
           enabled?: boolean
@@ -621,10 +641,14 @@ export type Database = {
           enabled_spiritual?: boolean
           enabled_tarot?: boolean
           enabled_weekly?: boolean
+          font_family?: string
+          footer_bg_color?: string
           footer_enabled?: boolean
           footer_name?: string | null
           footer_phone?: string | null
           footer_site?: string | null
+          header_bg_color?: string
+          header_text_color?: string
           logo_height?: number
           logo_path?: string | null
           logo_width?: number

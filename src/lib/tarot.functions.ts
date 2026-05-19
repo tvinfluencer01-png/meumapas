@@ -14,6 +14,10 @@ import {
 import { SPREADS, drawSpread, type SpreadId } from "@/lib/tarot.deck";
 import { buildSimplePdf, type SimplePdfBlock } from "@/lib/simple-pdf";
 import { sanitizeJsonString } from "@/lib/json-sanitize";
+import {
+  resolveBrandingPayload,
+  isBrandingEnabledFor,
+} from "@/lib/pdf-branding.functions";
 
 const SpreadEnum = z.enum(["card_day", "three", "celtic"]);
 
@@ -228,6 +232,16 @@ export const exportTarotPdf = createServerFn({ method: "POST" })
       blocks.push({ type: "h2", text: "Afirmação" });
       blocks.push({ type: "quote", text: interp.affirmation });
 
+      // Carrega branding do usuário se aplicável ao Tarot
+      const { data: brandRow } = await supabaseAdmin
+        .from("pdf_branding")
+        .select("*")
+        .eq("user_id", userId)
+        .maybeSingle();
+      const branding = isBrandingEnabledFor(brandRow, "tarot")
+        ? await resolveBrandingPayload(brandRow)
+        : undefined;
+
       const pdfBytes = await buildSimplePdf({
         brand: "Cosmic AI",
         eyebrow: `Tarot · ${spreadLabel}`,
@@ -239,6 +253,7 @@ export const exportTarotPdf = createServerFn({ method: "POST" })
         blocks,
         accentHex: "#a855f7",
         flowing: true,
+        branding,
       });
 
       const path = `${userId}/tarot-${reading.id}.pdf`;

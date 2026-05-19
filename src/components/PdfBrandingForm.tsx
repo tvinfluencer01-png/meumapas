@@ -3,17 +3,22 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { Image as ImageIcon, Upload, Trash2, Save, Sparkles, Info, Lock } from "lucide-react";
+import { Image as ImageIcon, Upload, Trash2, Save, Sparkles, Info, Lock, Wand2, FileDown, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
+import { Textarea } from "@/components/ui/textarea";
 import {
   getPdfBranding,
   savePdfBranding,
   uploadPdfLogo,
   removePdfLogo,
+  uploadCoverImage,
+  removeCoverImage,
+  generateCoverImage,
+  generateSampleBrandingPdf,
 } from "@/lib/pdf-branding.functions";
 import { getAddonsOverview } from "@/lib/addons.functions";
 
@@ -37,6 +42,13 @@ type FormState = {
   enabled_kabbalah_numerology: boolean;
   enabled_energy_calendar: boolean;
   enabled_weekly: boolean;
+  cover_bg_color: string;
+  cover_accent_color: string;
+  cover_title_position: "top" | "center" | "bottom";
+  font_family: "serif" | "sans" | "display";
+  header_bg_color: string;
+  footer_bg_color: string;
+  header_text_color: string;
 };
 
 const DEFAULT_FORM: FormState = {
@@ -59,6 +71,13 @@ const DEFAULT_FORM: FormState = {
   enabled_kabbalah_numerology: true,
   enabled_energy_calendar: true,
   enabled_weekly: true,
+  cover_bg_color: "#03060f",
+  cover_accent_color: "#d4af37",
+  cover_title_position: "center",
+  font_family: "serif",
+  header_bg_color: "#f5f1e6",
+  footer_bg_color: "#f5f1e6",
+  header_text_color: "#d4af37",
 };
 
 const KIND_TOGGLES: Array<{ key: keyof FormState; label: string; hint: string }> = [

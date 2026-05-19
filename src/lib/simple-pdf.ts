@@ -25,6 +25,27 @@ export type SimplePdfBlock =
   | { type: "hebrew-row"; letter: string; name: string; value: number | string; meaning: string }
   | { type: "hebrew-name"; latinName: string; hebrewWords: string[]; caption?: string };
 
+export type SimplePdfBranding = {
+  coverImageBytes?: Uint8Array;
+  coverImageMime?: "image/png" | "image/jpeg";
+  logoBytes?: Uint8Array;
+  logoMime?: "image/png" | "image/jpeg";
+  logoWidth?: number;
+  logoHeight?: number;
+  displayName?: string;
+  footerEnabled?: boolean;
+  footerName?: string;
+  footerSite?: string;
+  footerPhone?: string;
+  coverBgColor?: string; // #RRGGBB
+  coverAccentColor?: string; // #RRGGBB
+  coverTitlePosition?: "top" | "center" | "bottom";
+  fontFamily?: "serif" | "sans" | "display";
+  headerBgColor?: string;
+  footerBgColor?: string;
+  headerTextColor?: string;
+};
+
 export type SimplePdfData = {
   brand: string;
   eyebrow: string;
@@ -39,6 +60,11 @@ export type SimplePdfData = {
    * flui um abaixo do outro. Usado pela Meditação Cabalística.
    */
   flowing?: boolean;
+  /**
+   * Personalização opcional do branding (capa, cores, fonte, faixas).
+   * Quando ausente ou indefinido, mantém o template dourado padrão.
+   */
+  branding?: SimplePdfBranding;
 };
 
 // ---------- Paleta do template ----------
@@ -117,6 +143,13 @@ function hyphenPoints(word: string): number[] {
   return pts;
 }
 
+function hexToRgb(hex: string): ReturnType<typeof rgb> {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m) return GOLD;
+  const v = parseInt(m[1], 16);
+  return rgb(((v >> 16) & 255) / 255, ((v >> 8) & 255) / 255, (v & 255) / 255);
+}
+
 export async function buildSimplePdf(data: SimplePdfData): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
   doc.registerFontkit(fontkit);
@@ -125,10 +158,26 @@ export async function buildSimplePdf(data: SimplePdfData): Promise<Uint8Array> {
   doc.setSubject(safe(data.subtitle ?? data.eyebrow));
   doc.setCreator("Cosmic AI - Oraculo");
 
-  const serif = await doc.embedFont(StandardFonts.TimesRoman);
-  const serifBold = await doc.embedFont(StandardFonts.TimesRomanBold);
-  const serifItalic = await doc.embedFont(StandardFonts.TimesRomanItalic);
-  const sans = await doc.embedFont(StandardFonts.Helvetica);
+  // Famílias possíveis para o branding
+  const timesRegular = await doc.embedFont(StandardFonts.TimesRoman);
+  const timesBold = await doc.embedFont(StandardFonts.TimesRomanBold);
+  const timesItalic = await doc.embedFont(StandardFonts.TimesRomanItalic);
+  const helvRegular = await doc.embedFont(StandardFonts.Helvetica);
+  const helvBold = await doc.embedFont(StandardFonts.HelveticaBold);
+  const helvOblique = await doc.embedFont(StandardFonts.HelveticaOblique);
+  const courierRegular = await doc.embedFont(StandardFonts.Courier);
+  const courierBold = await doc.embedFont(StandardFonts.CourierBold);
+  const courierOblique = await doc.embedFont(StandardFonts.CourierOblique);
+
+  const fontChoice = data.branding?.fontFamily ?? "serif";
+  const serif =
+    fontChoice === "sans" ? helvRegular : fontChoice === "display" ? courierRegular : timesRegular;
+  const serifBold =
+    fontChoice === "sans" ? helvBold : fontChoice === "display" ? courierBold : timesBold;
+  const serifItalic =
+    fontChoice === "sans" ? helvOblique : fontChoice === "display" ? courierOblique : timesItalic;
+  // sans permanece para labels pequenos sempre legíveis
+  const sans = helvRegular;
 
   // Fonte hebraica opcional
   let fontHebrew: PDFFont | null = null;
@@ -142,36 +191,117 @@ export async function buildSimplePdf(data: SimplePdfData): Promise<Uint8Array> {
     fontHebrew = null;
   }
 
+  // Branding colors with fallbacks
+  const b = data.branding;
+  const coverBg = b?.coverBgColor ? hexToRgb(b.coverBgColor) : NIGHT;
+  const accent = b?.coverAccentColor ? hexToRgb(b.coverAccentColor) : GOLD;
+  const headerBg = b?.headerBgColor ? hexToRgb(b.headerBgColor) : PARCHMENT;
+  const footerBg = b?.footerBgColor ? hexToRgb(b.footerBgColor) : PARCHMENT;
+  const headerText = b?.headerTextColor ? hexToRgb(b.headerTextColor) : GOLD;
+  const titlePos = b?.coverTitlePosition ?? "center";
+
   // -------- CAPA --------
   const cover = doc.addPage(PageSizes.A4);
-  cover.drawRectangle({ x: 0, y: 0, width: PAGE_W, height: PAGE_H, color: NIGHT });
+  // fundo sólido
+  cover.drawRectangle({ x: 0, y: 0, width: PAGE_W, height: PAGE_H, color: coverBg });
+  // imagem de capa opcional (cobre toda a página)
+  if (b?.coverImageBytes && b.coverImageMime) {
+    try {
+      const img =
+        b.coverImageMime === "image/png"
+          ? await doc.embedPng(b.coverImageBytes)
+          : await doc.embedJpg(b.coverImageBytes);
+      // cover, mantendo proporção
+      const ratio = Math.max(PAGE_W / img.width, PAGE_H / img.height);
+      const drawW = img.width * ratio;
+      const drawH = img.height * ratio;
+      cover.drawImage(img, {
+        x: (PAGE_W - drawW) / 2,
+        y: (PAGE_H - drawH) / 2,
+        width: drawW,
+        height: drawH,
+        opacity: 0.85,
+      });
+      // overlay escuro suave para legibilidade
+      cover.drawRectangle({
+        x: 0,
+        y: 0,
+        width: PAGE_W,
+        height: PAGE_H,
+        color: coverBg,
+        opacity: 0.45,
+      });
+    } catch {
+      /* ignora imagem inválida */
+    }
+  }
+
   const inset = 28;
   cover.drawRectangle({
     x: inset, y: inset,
     width: PAGE_W - inset * 2, height: PAGE_H - inset * 2,
-    borderColor: GOLD, borderWidth: 0.8,
+    borderColor: accent, borderWidth: 0.8,
   });
   cover.drawRectangle({
     x: inset + 6, y: inset + 6,
     width: PAGE_W - inset * 2 - 12, height: PAGE_H - inset * 2 - 12,
-    borderColor: GOLD, borderWidth: 0.3,
+    borderColor: accent, borderWidth: 0.3,
   });
 
   const topLabel = safe(`${data.brand.toUpperCase()}  -  ${data.eyebrow.toUpperCase()}`);
   const topLabelW = sans.widthOfTextAtSize(topLabel, 9);
   cover.drawText(topLabel, {
     x: (PAGE_W - topLabelW) / 2, y: PAGE_H - 100,
-    size: 9, font: sans, color: GOLD,
+    size: 9, font: sans, color: accent,
   });
 
-  // Título (quebra se necessário)
+  // Logo personalizado no topo da capa
+  if (b?.logoBytes && b.logoMime) {
+    try {
+      const logoImg =
+        b.logoMime === "image/png"
+          ? await doc.embedPng(b.logoBytes)
+          : await doc.embedJpg(b.logoBytes);
+      const lw = b.logoWidth ?? 120;
+      const lh = b.logoHeight ?? 60;
+      cover.drawImage(logoImg, {
+        x: (PAGE_W - lw) / 2,
+        y: PAGE_H - 100 - lh - 12,
+        width: lw,
+        height: lh,
+      });
+    } catch {
+      /* ignora logo inválido */
+    }
+  } else if (b?.displayName) {
+    const dn = safe(b.displayName);
+    const dw0 = serifBold.widthOfTextAtSize(dn, 16);
+    cover.drawText(dn, {
+      x: (PAGE_W - dw0) / 2,
+      y: PAGE_H - 130,
+      size: 16,
+      font: serifBold,
+      color: accent,
+    });
+  }
+
+  // Título (quebra se necessário). Posição vertical depende de titlePos.
   const titleSize = 38;
   const titleLines = wrapPlain(safe(data.title), serifBold, titleSize, CONTENT_W - 40);
-  let ty = PAGE_H / 2 + 60 + (titleLines.length - 1) * (titleSize * 0.5);
+  const titleBlockH = titleLines.length * titleSize * 1.05;
+  let titleAnchorY: number;
+  if (titlePos === "top") {
+    titleAnchorY = PAGE_H - 180;
+  } else if (titlePos === "bottom") {
+    titleAnchorY = 220 + titleBlockH;
+  } else {
+    titleAnchorY = PAGE_H / 2 + 60 + (titleLines.length - 1) * (titleSize * 0.5);
+  }
+  let ty = titleAnchorY;
   for (const line of titleLines) {
     const w = serifBold.widthOfTextAtSize(line, titleSize);
     cover.drawText(line, {
-      x: (PAGE_W - w) / 2, y: ty, size: titleSize, font: serifBold, color: GOLD,
+      x: (PAGE_W - w) / 2, y: ty, size: titleSize, font: serifBold, color: accent,
     });
     ty -= titleSize * 1.05;
   }
@@ -179,7 +309,7 @@ export async function buildSimplePdf(data: SimplePdfData): Promise<Uint8Array> {
   if (data.subtitle) {
     const subSize = 14;
     const subLines = wrapPlain(safe(data.subtitle), serifItalic, subSize, CONTENT_W - 60);
-    let sy = PAGE_H / 2 + 20;
+    let sy = ty - 16;
     for (const line of subLines.slice(0, 3)) {
       const w = serifItalic.widthOfTextAtSize(line, subSize);
       cover.drawText(line, {
@@ -190,28 +320,27 @@ export async function buildSimplePdf(data: SimplePdfData): Promise<Uint8Array> {
   }
 
   cover.drawLine({
-    start: { x: PAGE_W / 2 - 40, y: PAGE_H / 2 - 30 },
-    end: { x: PAGE_W / 2 + 40, y: PAGE_H / 2 - 30 },
-    color: GOLD, thickness: 0.8,
+    start: { x: PAGE_W / 2 - 40, y: Math.max(120, ty - 60) },
+    end: { x: PAGE_W / 2 + 40, y: Math.max(120, ty - 60) },
+    color: accent, thickness: 0.8,
   });
 
   const coverBlocks: { label: string; value: string }[] = [];
   if (data.consultantName) coverBlocks.push({ label: "PARA", value: data.consultantName });
   for (const m of data.meta ?? []) {
-    // tenta separar "Rótulo: valor" -> label uppercase + valor; senão, só valor
     const match = m.match(/^([^:]{1,40}):\s*(.+)$/);
     if (match) coverBlocks.push({ label: match[1].toUpperCase(), value: match[2] });
     else coverBlocks.push({ label: "", value: m });
   }
-  let by = PAGE_H / 2 - 70;
-  for (const b of coverBlocks) {
-    if (b.label) {
-      const lab = safe(b.label);
+  let by = Math.max(110, ty - 90);
+  for (const bb of coverBlocks) {
+    if (bb.label) {
+      const lab = safe(bb.label);
       const lw = sans.widthOfTextAtSize(lab, 8);
-      cover.drawText(lab, { x: (PAGE_W - lw) / 2, y: by, size: 8, font: sans, color: GOLD });
+      cover.drawText(lab, { x: (PAGE_W - lw) / 2, y: by, size: 8, font: sans, color: accent });
       by -= 14;
     }
-    const val = safe(b.value);
+    const val = safe(bb.value);
     const vw = serif.widthOfTextAtSize(val, 12);
     cover.drawText(val, { x: (PAGE_W - vw) / 2, y: by, size: 12, font: serif, color: PARCHMENT });
     by -= 26;
@@ -220,33 +349,51 @@ export async function buildSimplePdf(data: SimplePdfData): Promise<Uint8Array> {
   const dateStr = safe(new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" }));
   const dw = sans.widthOfTextAtSize(dateStr, 9);
   cover.drawText(dateStr, {
-    x: (PAGE_W - dw) / 2, y: 70, size: 9, font: sans, color: GOLD,
+    x: (PAGE_W - dw) / 2, y: 70, size: 9, font: sans, color: accent,
   });
 
   // -------- PÁGINAS DE CONTEÚDO --------
   type Cursor = { page: PDFPage; y: number; pageNumber: number };
-  const headerText = safe(data.title.toUpperCase());
-  const footerText = safe(`${data.brand} - Inteligencia espiritual personalizada`);
+  const headerLabel = safe(data.title.toUpperCase());
+  const customFooter =
+    b?.footerEnabled !== false
+      ? [b?.footerName, b?.footerSite, b?.footerPhone].filter(Boolean).join("  ·  ")
+      : "";
+  const footerTextStr = customFooter
+    ? safe(customFooter)
+    : safe(`${data.brand} - Inteligencia espiritual personalizada`);
 
   function newPage(num: number): Cursor {
     const page = doc.addPage(PageSizes.A4);
     page.drawRectangle({ x: 0, y: 0, width: PAGE_W, height: PAGE_H, color: PARCHMENT });
+    // faixa de topo
+    page.drawRectangle({
+      x: 0, y: PAGE_H - MARGIN + 16,
+      width: PAGE_W, height: MARGIN - 16,
+      color: headerBg,
+    });
+    // faixa de rodapé
+    page.drawRectangle({
+      x: 0, y: 0,
+      width: PAGE_W, height: MARGIN - 16,
+      color: footerBg,
+    });
     page.drawLine({
       start: { x: MARGIN, y: PAGE_H - MARGIN + 24 },
       end: { x: PAGE_W - MARGIN, y: PAGE_H - MARGIN + 24 },
-      color: GOLD, thickness: 0.5,
+      color: accent, thickness: 0.5,
     });
-    page.drawText(headerText, {
-      x: MARGIN, y: PAGE_H - MARGIN + 30, size: 8, font: sans, color: GOLD,
+    page.drawText(headerLabel, {
+      x: MARGIN, y: PAGE_H - MARGIN + 30, size: 8, font: sans, color: headerText,
     });
     const numTxt = String(num);
     const nw = sans.widthOfTextAtSize(numTxt, 8);
     page.drawText(numTxt, {
-      x: PAGE_W - MARGIN - nw, y: PAGE_H - MARGIN + 30, size: 8, font: sans, color: GOLD,
+      x: PAGE_W - MARGIN - nw, y: PAGE_H - MARGIN + 30, size: 8, font: sans, color: headerText,
     });
-    const fw = sans.widthOfTextAtSize(footerText, 8);
-    page.drawText(footerText, {
-      x: (PAGE_W - fw) / 2, y: MARGIN - 24, size: 8, font: sans, color: MUTED,
+    const fw = sans.widthOfTextAtSize(footerTextStr, 8);
+    page.drawText(footerTextStr, {
+      x: (PAGE_W - fw) / 2, y: MARGIN - 24, size: 8, font: sans, color: headerText,
     });
     return { page, y: PAGE_H - MARGIN, pageNumber: num };
   }

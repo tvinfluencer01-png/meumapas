@@ -5,6 +5,15 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const BUCKET = "pdf-branding";
 const MAX_BYTES = 500 * 1024; // 500KB
+const MAX_COVER_BYTES = 3 * 1024 * 1024; // 3MB para imagem de capa
+
+const HexColor = z
+  .string()
+  .trim()
+  .regex(/^#[0-9a-fA-F]{6}$/, "Cor inválida (use formato #RRGGBB)");
+
+const TitlePosition = z.enum(["top", "center", "bottom"]);
+const FontFamily = z.enum(["serif", "sans", "display"]);
 
 const BrandingShape = z.object({
   enabled: z.boolean(),
@@ -26,7 +35,23 @@ const BrandingShape = z.object({
   enabled_kabbalah_numerology: z.boolean(),
   enabled_energy_calendar: z.boolean(),
   enabled_weekly: z.boolean(),
+  // Personalização avançada da capa e cabeçalho/rodapé
+  cover_bg_color: HexColor,
+  cover_accent_color: HexColor,
+  cover_title_position: TitlePosition,
+  font_family: FontFamily,
+  header_bg_color: HexColor,
+  footer_bg_color: HexColor,
+  header_text_color: HexColor,
 });
+
+async function getSignedUrl(path: string | null | undefined, expires = 60 * 60) {
+  if (!path) return null;
+  const { data: signed } = await supabaseAdmin.storage
+    .from(BUCKET)
+    .createSignedUrl(path, expires);
+  return signed?.signedUrl ?? null;
+}
 
 export const getPdfBranding = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -38,14 +63,11 @@ export const getPdfBranding = createServerFn({ method: "GET" })
       .eq("user_id", userId)
       .maybeSingle();
 
-    let signedLogoUrl: string | null = null;
-    if (data?.logo_path) {
-      const { data: signed } = await supabaseAdmin.storage
-        .from(BUCKET)
-        .createSignedUrl(data.logo_path, 60 * 60);
-      signedLogoUrl = signed?.signedUrl ?? null;
-    }
-    return { branding: data ?? null, signedLogoUrl };
+    const signedLogoUrl = await getSignedUrl(data?.logo_path);
+    const signedCoverUrl = await getSignedUrl(
+      (data as Record<string, unknown> | null)?.cover_image_path as string | undefined,
+    );
+    return { branding: data ?? null, signedLogoUrl, signedCoverUrl };
   });
 
 export const savePdfBranding = createServerFn({ method: "POST" })
@@ -74,6 +96,13 @@ export const savePdfBranding = createServerFn({ method: "POST" })
       enabled_kabbalah_numerology: data.enabled_kabbalah_numerology,
       enabled_energy_calendar: data.enabled_energy_calendar,
       enabled_weekly: data.enabled_weekly,
+      cover_bg_color: data.cover_bg_color,
+      cover_accent_color: data.cover_accent_color,
+      cover_title_position: data.cover_title_position,
+      font_family: data.font_family,
+      header_bg_color: data.header_bg_color,
+      footer_bg_color: data.footer_bg_color,
+      header_text_color: data.header_text_color,
     };
     const { error } = await supabase
       .from("pdf_branding")
@@ -101,14 +130,15 @@ export const uploadPdfLogo = createServerFn({ method: "POST" })
     const ext = data.mime === "image/png" ? "png" : "jpg";
     const path = `${userId}/logo-${Date.now()}.${ext}`;
 
-    // Remove previous logo files for this user
+    // Remove logos anteriores (não as imagens de capa)
     const { data: existing } = await supabaseAdmin.storage
       .from(BUCKET)
-      .list(userId, { limit: 100 });
-    if (existing?.length) {
+      .list(userId, { limit: 200 });
+    const oldLogos = (existing ?? []).filter((f) => f.name.startsWith("logo-"));
+    if (oldLogos.length) {
       await supabaseAdmin.storage
         .from(BUCKET)
-        .remove(existing.map((f) => `${userId}/${f.name}`));
+        .remove(oldLogos.map((f) => `${userId}/${f.name}`));
     }
 
     const { error: upErr } = await supabaseAdmin.storage
@@ -116,15 +146,11 @@ export const uploadPdfLogo = createServerFn({ method: "POST" })
       .upload(path, bytes, { contentType: data.mime, upsert: true });
     if (upErr) throw new Error(upErr.message);
 
-    // Ensure row exists; update logo_path
     await supabaseAdmin
       .from("pdf_branding")
       .upsert({ user_id: userId, logo_path: path }, { onConflict: "user_id" });
 
-    const { data: signed } = await supabaseAdmin.storage
-      .from(BUCKET)
-      .createSignedUrl(path, 60 * 60);
-    return { path, signedUrl: signed?.signedUrl ?? null };
+    return { path, signedUrl: await getSignedUrl(path) };
   });
 
 export const removePdfLogo = createServerFn({ method: "POST" })
@@ -133,14 +159,310 @@ export const removePdfLogo = createServerFn({ method: "POST" })
     const { userId } = context;
     const { data: existing } = await supabaseAdmin.storage
       .from(BUCKET)
-      .list(userId, { limit: 100 });
-    if (existing?.length) {
+      .list(userId, { limit: 200 });
+    const oldLogos = (existing ?? []).filter((f) => f.name.startsWith("logo-"));
+    if (oldLogos.length) {
       await supabaseAdmin.storage
         .from(BUCKET)
-        .remove(existing.map((f) => `${userId}/${f.name}`));
+        .remove(oldLogos.map((f) => `${userId}/${f.name}`));
     }
     await supabaseAdmin
       .from("pdf_branding")
       .upsert({ user_id: userId, logo_path: null }, { onConflict: "user_id" });
     return { ok: true };
   });
+
+/* ---------- Imagem de capa (upload manual) ---------- */
+
+export const uploadCoverImage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        base64: z.string().min(20),
+        mime: z.enum(["image/png", "image/jpeg"]),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    const bytes = Buffer.from(data.base64, "base64");
+    if (bytes.byteLength > MAX_COVER_BYTES) {
+      throw new Error("Imagem de capa acima de 3MB. Comprima antes de enviar.");
+    }
+    const ext = data.mime === "image/png" ? "png" : "jpg";
+    const path = `${userId}/cover-${Date.now()}.${ext}`;
+
+    const { data: existing } = await supabaseAdmin.storage
+      .from(BUCKET)
+      .list(userId, { limit: 200 });
+    const oldCovers = (existing ?? []).filter((f) => f.name.startsWith("cover-"));
+    if (oldCovers.length) {
+      await supabaseAdmin.storage
+        .from(BUCKET)
+        .remove(oldCovers.map((f) => `${userId}/${f.name}`));
+    }
+
+    const { error: upErr } = await supabaseAdmin.storage
+      .from(BUCKET)
+      .upload(path, bytes, { contentType: data.mime, upsert: true });
+    if (upErr) throw new Error(upErr.message);
+
+    await supabaseAdmin
+      .from("pdf_branding")
+      .upsert({ user_id: userId, cover_image_path: path }, { onConflict: "user_id" });
+
+    return { path, signedUrl: await getSignedUrl(path) };
+  });
+
+export const removeCoverImage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { userId } = context;
+    const { data: existing } = await supabaseAdmin.storage
+      .from(BUCKET)
+      .list(userId, { limit: 200 });
+    const oldCovers = (existing ?? []).filter((f) => f.name.startsWith("cover-"));
+    if (oldCovers.length) {
+      await supabaseAdmin.storage
+        .from(BUCKET)
+        .remove(oldCovers.map((f) => `${userId}/${f.name}`));
+    }
+    await supabaseAdmin
+      .from("pdf_branding")
+      .upsert(
+        { user_id: userId, cover_image_path: null },
+        { onConflict: "user_id" },
+      );
+    return { ok: true };
+  });
+
+/* ---------- Geração de imagem de capa por IA ---------- */
+
+export const generateCoverImage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({ prompt: z.string().trim().min(8).max(500) }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    const apiKey = process.env.LOVABLE_API_KEY;
+    if (!apiKey) throw new Error("LOVABLE_API_KEY não configurada.");
+
+    const sysPrompt =
+      "Generate a single elegant, sophisticated, dark-tone abstract cover image suitable as the background of a premium spiritual report cover page. Vertical A4 composition, leave dark/empty space in the center for title overlay. No text, no letters, no words in the image. Mystical, painterly, cinematic.";
+
+    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash-image-preview",
+        messages: [
+          { role: "system", content: sysPrompt },
+          { role: "user", content: data.prompt },
+        ],
+        modalities: ["image", "text"],
+      }),
+    });
+
+    if (!res.ok) {
+      const txt = await res.text().catch(() => "");
+      throw new Error(`Falha ao gerar imagem (${res.status}): ${txt.slice(0, 200)}`);
+    }
+
+    const json = (await res.json()) as {
+      choices?: Array<{
+        message?: {
+          images?: Array<{ image_url?: { url?: string } }>;
+        };
+      }>;
+    };
+
+    const imageDataUrl = json.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    if (!imageDataUrl) throw new Error("Resposta sem imagem.");
+
+    // Formato esperado: data:image/png;base64,XXXX
+    const match = imageDataUrl.match(/^data:(image\/(?:png|jpeg));base64,(.+)$/);
+    if (!match) throw new Error("Formato de imagem inesperado.");
+    const mime = match[1] as "image/png" | "image/jpeg";
+    const base64 = match[2];
+    const bytes = Buffer.from(base64, "base64");
+
+    const ext = mime === "image/png" ? "png" : "jpg";
+    const path = `${userId}/cover-${Date.now()}.${ext}`;
+
+    // remove anteriores
+    const { data: existing } = await supabaseAdmin.storage
+      .from(BUCKET)
+      .list(userId, { limit: 200 });
+    const oldCovers = (existing ?? []).filter((f) => f.name.startsWith("cover-"));
+    if (oldCovers.length) {
+      await supabaseAdmin.storage
+        .from(BUCKET)
+        .remove(oldCovers.map((f) => `${userId}/${f.name}`));
+    }
+
+    const { error: upErr } = await supabaseAdmin.storage
+      .from(BUCKET)
+      .upload(path, bytes, { contentType: mime, upsert: true });
+    if (upErr) throw new Error(upErr.message);
+
+    await supabaseAdmin
+      .from("pdf_branding")
+      .upsert({ user_id: userId, cover_image_path: path }, { onConflict: "user_id" });
+
+    return { path, signedUrl: await getSignedUrl(path) };
+  });
+
+/* ---------- PDF de exemplo (preview real) ---------- */
+
+export const generateSampleBrandingPdf = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { data: row } = await supabase
+      .from("pdf_branding")
+      .select("*")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    const branding = await resolveBrandingPayload(row);
+
+    // Importa dinamicamente para evitar custo em outros fluxos
+    const { buildSimplePdf } = await import("@/lib/simple-pdf");
+
+    const bytes = await buildSimplePdf({
+      brand: "Cosmic AI",
+      eyebrow: "Preview de personalização",
+      title: "Exemplo de Relatório",
+      subtitle: "Esta é uma capa de teste com o seu branding atual",
+      consultantName: branding?.footerName ?? undefined,
+      meta: ["Data: Hoje", "Tipo: Amostra"],
+      blocks: [
+        { type: "h2", text: "Introdução" },
+        {
+          type: "p",
+          text: "Este é um PDF de exemplo gerado para você visualizar como ficará o branding aplicado nos relatórios. As cores, a tipografia e a imagem de capa configuradas aparecem como nos relatórios reais.",
+        },
+        { type: "h2", text: "Como funciona" },
+        {
+          type: "p",
+          text: "Cada vez que você ajustar uma cor, fonte ou imagem, basta salvar e gerar um novo preview. Os relatórios verdadeiros usarão exatamente esta mesma configuração.",
+        },
+        { type: "quote", text: "A beleza está nos detalhes meticulosamente cuidados." },
+      ],
+      flowing: true,
+      branding,
+    });
+
+    const base64 = Buffer.from(bytes).toString("base64");
+    return { pdfBase64: base64 };
+  });
+
+/**
+ * Carrega a configuração de branding atual do usuário em um payload pronto
+ * para o `buildSimplePdf`/`reports-pdf`. Retorna undefined quando o branding
+ * está desativado.
+ */
+export async function resolveBrandingPayload(
+  row: Record<string, unknown> | null | undefined,
+): Promise<
+  | {
+      coverImageBytes?: Uint8Array;
+      coverImageMime?: "image/png" | "image/jpeg";
+      logoBytes?: Uint8Array;
+      logoMime?: "image/png" | "image/jpeg";
+      logoWidth: number;
+      logoHeight: number;
+      displayName?: string;
+      footerEnabled: boolean;
+      footerName?: string;
+      footerSite?: string;
+      footerPhone?: string;
+      coverBgColor: string;
+      coverAccentColor: string;
+      coverTitlePosition: "top" | "center" | "bottom";
+      fontFamily: "serif" | "sans" | "display";
+      headerBgColor: string;
+      footerBgColor: string;
+      headerTextColor: string;
+    }
+  | undefined
+> {
+  if (!row) return undefined;
+  if (!(row.enabled as boolean)) return undefined;
+
+  async function loadImage(path: string | undefined | null) {
+    if (!path) return { bytes: undefined, mime: undefined };
+    try {
+      const { data: blob } = await supabaseAdmin.storage
+        .from(BUCKET)
+        .download(path);
+      if (!blob) return { bytes: undefined, mime: undefined };
+      const ab = await blob.arrayBuffer();
+      const bytes = new Uint8Array(ab);
+      const mime: "image/png" | "image/jpeg" = path
+        .toLowerCase()
+        .endsWith(".png")
+        ? "image/png"
+        : "image/jpeg";
+      return { bytes, mime };
+    } catch {
+      return { bytes: undefined, mime: undefined };
+    }
+  }
+
+  const logo = await loadImage(row.logo_path as string | null | undefined);
+  const cover = await loadImage(row.cover_image_path as string | null | undefined);
+
+  return {
+    coverImageBytes: cover.bytes,
+    coverImageMime: cover.mime,
+    logoBytes: logo.bytes,
+    logoMime: logo.mime,
+    logoWidth: (row.logo_width as number) ?? 120,
+    logoHeight: (row.logo_height as number) ?? 60,
+    displayName: (row.display_name as string) || undefined,
+    footerEnabled: (row.footer_enabled as boolean) ?? true,
+    footerName: (row.footer_name as string) || undefined,
+    footerSite: (row.footer_site as string) || undefined,
+    footerPhone: (row.footer_phone as string) || undefined,
+    coverBgColor: (row.cover_bg_color as string) ?? "#03060f",
+    coverAccentColor: (row.cover_accent_color as string) ?? "#d4af37",
+    coverTitlePosition:
+      ((row.cover_title_position as string) as "top" | "center" | "bottom") ?? "center",
+    fontFamily: ((row.font_family as string) as "serif" | "sans" | "display") ?? "serif",
+    headerBgColor: (row.header_bg_color as string) ?? "#f5f1e6",
+    footerBgColor: (row.footer_bg_color as string) ?? "#f5f1e6",
+    headerTextColor: (row.header_text_color as string) ?? "#d4af37",
+  };
+}
+
+/**
+ * Verifica se o branding deve ser aplicado a um determinado módulo de PDF.
+ * Use as chaves: 'tarot' | 'kabbalah' | 'numerology' | 'astrology' |
+ * 'kabbalah_numerology' | 'energy_calendar' | 'weekly' | 'personality' |
+ * 'love' | 'career' | 'spiritual'.
+ */
+export function isBrandingEnabledFor(
+  row: Record<string, unknown> | null | undefined,
+  kind:
+    | "tarot"
+    | "kabbalah"
+    | "numerology"
+    | "astrology"
+    | "kabbalah_numerology"
+    | "energy_calendar"
+    | "weekly"
+    | "personality"
+    | "love"
+    | "career"
+    | "spiritual",
+): boolean {
+  if (!row || !(row.enabled as boolean)) return false;
+  const key = `enabled_${kind}`;
+  return (row[key] as boolean | undefined) ?? true;
+}
