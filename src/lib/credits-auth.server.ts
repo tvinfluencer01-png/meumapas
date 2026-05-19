@@ -37,16 +37,16 @@ export const requireCreditsAuth = createMiddleware({ type: "function" }).server(
       },
     });
 
-    const { data, error } = await supabase.auth.getUser(token);
-    if (error || !data.user) {
+    const { data, error } = await supabase.auth.getClaims(token);
+    if (error || !data?.claims?.sub) {
       throw new Error("Unauthorized: Invalid token");
     }
 
     return next({
       context: {
         supabase,
-        userId: data.user.id,
-        user: data.user,
+        userId: data.claims.sub as string,
+        claims: data.claims,
       },
     });
   },
