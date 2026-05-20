@@ -26,7 +26,7 @@ import {
   Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
-import { BR_CITIES, findCity, type BRCity } from "@/lib/br-cities";
+import { BR_CITIES, findCity, timezoneForUF, type BRCity } from "@/lib/br-cities";
 import {
   listClientProfiles, upsertClientProfile, deleteClientProfile, setActiveClientProfile,
 } from "@/lib/client-profiles.functions";
