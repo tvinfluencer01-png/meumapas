@@ -5,8 +5,10 @@ export const attachAuthToken = createMiddleware({ type: "function" }).client(
   async ({ next }) => {
     const token = await getFreshAccessToken();
 
-    return next({
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
+    if (!token) {
+      throw new Error("Sessão expirada. Entre novamente para continuar.");
+    }
+
+    return next({ headers: { Authorization: `Bearer ${token}` } });
   },
 );
