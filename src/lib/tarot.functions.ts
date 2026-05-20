@@ -118,10 +118,12 @@ A lista "perCard" deve ter EXATAMENTE ${draw.length} item(ns), na MESMA ordem da
 
       const interpretation = JSON.stringify(parsed);
 
+      const activeClientId = await resolveActiveClientId(userId);
       const { data: row, error: insErr } = await supabaseAdmin
         .from("tarot_readings")
         .insert({
           user_id: userId,
+          client_profile_id: activeClientId,
           spread: data.spread,
           question: data.question ?? null,
           cards: draw,
