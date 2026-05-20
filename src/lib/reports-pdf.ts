@@ -71,6 +71,17 @@ const PAGE_W = PageSizes.A4[0];
 const PAGE_H = PageSizes.A4[1];
 const CONTENT_W = PAGE_W - MARGIN * 2;
 
+function hexToRgb(hex: string | null | undefined, fallback: ReturnType<typeof rgb>) {
+  if (!hex) return fallback;
+  const m = hex.trim().replace(/^#/, "");
+  const full = m.length === 3 ? m.split("").map((c) => c + c).join("") : m;
+  if (!/^[0-9a-fA-F]{6}$/.test(full)) return fallback;
+  const r = parseInt(full.slice(0, 2), 16) / 255;
+  const g = parseInt(full.slice(2, 4), 16) / 255;
+  const b = parseInt(full.slice(4, 6), 16) / 255;
+  return rgb(r, g, b);
+}
+
 type PdfFontRef = import("pdf-lib").PDFFont;
 const TEXT_WIDTH_CACHE = new WeakMap<PdfFontRef, Map<string, number>>();
 
