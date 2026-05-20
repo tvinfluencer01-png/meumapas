@@ -34,6 +34,12 @@ export type ReportBranding = {
   footerName?: string | null;
   footerSite?: string | null;
   footerPhone?: string | null;
+  coverImageBytes?: Uint8Array;
+  coverImageMime?: "image/png" | "image/jpeg";
+  coverBgColor?: string | null;
+  coverAccentColor?: string | null;
+  coverTitlePosition?: "top" | "center" | "bottom" | null;
+  frameStyle?: "none" | "simple" | "double" | "ornamental" | null;
 };
 export type ReportData = {
   kind: "personality" | "love" | "career" | "spiritual" | "finance" | "family" | "health" | "friendships";
@@ -64,6 +70,17 @@ const MARGIN = 56;
 const PAGE_W = PageSizes.A4[0];
 const PAGE_H = PageSizes.A4[1];
 const CONTENT_W = PAGE_W - MARGIN * 2;
+
+function hexToRgb(hex: string | null | undefined, fallback: ReturnType<typeof rgb>) {
+  if (!hex) return fallback;
+  const m = hex.trim().replace(/^#/, "");
+  const full = m.length === 3 ? m.split("").map((c) => c + c).join("") : m;
+  if (!/^[0-9a-fA-F]{6}$/.test(full)) return fallback;
+  const r = parseInt(full.slice(0, 2), 16) / 255;
+  const g = parseInt(full.slice(2, 4), 16) / 255;
+  const b = parseInt(full.slice(4, 6), 16) / 255;
+  return rgb(r, g, b);
+}
 
 type PdfFontRef = import("pdf-lib").PDFFont;
 const TEXT_WIDTH_CACHE = new WeakMap<PdfFontRef, Map<string, number>>();
@@ -131,23 +148,55 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
 
   // -------- COVER --------
   const cover = pdf.addPage(PageSizes.A4);
-  cover.drawRectangle({ x: 0, y: 0, width: PAGE_W, height: PAGE_H, color: NIGHT });
+  const brandingForCover = data.branding?.enabled ? data.branding : null;
+  const coverBg = hexToRgb(brandingForCover?.coverBgColor ?? null, NIGHT);
+  const accent = hexToRgb(brandingForCover?.coverAccentColor ?? null, GOLD);
 
-  // gold ornamental frame
+  // Background: solid color, then optional full-bleed image overlay
+  cover.drawRectangle({ x: 0, y: 0, width: PAGE_W, height: PAGE_H, color: coverBg });
+  if (brandingForCover?.coverImageBytes && brandingForCover.coverImageMime) {
+    try {
+      const bgImg =
+        brandingForCover.coverImageMime === "image/png"
+          ? await pdf.embedPng(brandingForCover.coverImageBytes)
+          : await pdf.embedJpg(brandingForCover.coverImageBytes);
+      // cover-fit: scale to fill A4 keeping aspect ratio
+      const ir = bgImg.width / bgImg.height;
+      const pr = PAGE_W / PAGE_H;
+      let dw: number, dh: number;
+      if (ir > pr) { dh = PAGE_H; dw = dh * ir; }
+      else { dw = PAGE_W; dh = dw / ir; }
+      cover.drawImage(bgImg, {
+        x: (PAGE_W - dw) / 2,
+        y: (PAGE_H - dh) / 2,
+        width: dw,
+        height: dh,
+      });
+    } catch (e) {
+      console.error("[reports-pdf] failed to embed cover image", e);
+    }
+  }
+
+  // Decorative frame
+  const frameStyle = brandingForCover?.frameStyle ?? "double";
   const inset = 28;
-  cover.drawRectangle({
-    x: inset, y: inset,
-    width: PAGE_W - inset * 2, height: PAGE_H - inset * 2,
-    borderColor: GOLD, borderWidth: 0.8,
-  });
-  cover.drawRectangle({
-    x: inset + 6, y: inset + 6,
-    width: PAGE_W - inset * 2 - 12, height: PAGE_H - inset * 2 - 12,
-    borderColor: GOLD, borderWidth: 0.3,
-  });
+  if (frameStyle !== "none") {
+    cover.drawRectangle({
+      x: inset, y: inset,
+      width: PAGE_W - inset * 2, height: PAGE_H - inset * 2,
+      borderColor: accent, borderWidth: frameStyle === "ornamental" ? 1.2 : 0.8,
+    });
+    if (frameStyle === "double" || frameStyle === "ornamental") {
+      cover.drawRectangle({
+        x: inset + 6, y: inset + 6,
+        width: PAGE_W - inset * 2 - 12, height: PAGE_H - inset * 2 - 12,
+        borderColor: accent, borderWidth: 0.3,
+      });
+    }
+  }
 
   // Branding (add-on): logo image OR custom display name replaces "COSMIC AI"
-  const branding = data.branding?.enabled ? data.branding : null;
+  const branding = brandingForCover;
   let topLabel = "COSMIC AI  -  RELATORIO PREMIUM";
   if (branding?.displayName && !branding.logoBytes) {
     topLabel = branding.displayName.toUpperCase();
@@ -175,23 +224,30 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
     const labelW = sans.widthOfTextAtSize(label, 9);
     cover.drawText(label, {
       x: (PAGE_W - labelW) / 2, y: PAGE_H - 100,
-      size: 9, font: sans, color: GOLD,
+      size: 9, font: sans, color: accent,
     });
   }
+
+  // Title position: top / center / bottom
+  const titlePos = branding?.coverTitlePosition ?? "center";
+  const titleBaseY =
+    titlePos === "top" ? PAGE_H - 180 :
+    titlePos === "bottom" ? 280 :
+    PAGE_H / 2 + 60;
 
   // title
   const titleSize = 38;
   const titleText = safe(data.title);
   const titleW = serifBold.widthOfTextAtSize(titleText, titleSize);
   cover.drawText(titleText, {
-    x: (PAGE_W - titleW) / 2, y: PAGE_H / 2 + 60,
-    size: titleSize, font: serifBold, color: GOLD,
+    x: (PAGE_W - titleW) / 2, y: titleBaseY,
+    size: titleSize, font: serifBold, color: accent,
   });
 
   // subtitle
   const subSize = 14;
   const subLines = wrap(safe(data.subtitle), serifItalic, subSize, CONTENT_W - 60);
-  let sy = PAGE_H / 2 + 20;
+  let sy = titleBaseY - 40;
   for (const line of subLines.slice(0, 3)) {
     const w = serifItalic.widthOfTextAtSize(line, subSize);
     cover.drawText(line, {
@@ -202,9 +258,9 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
 
   // divider
   cover.drawLine({
-    start: { x: PAGE_W / 2 - 40, y: PAGE_H / 2 - 30 },
-    end: { x: PAGE_W / 2 + 40, y: PAGE_H / 2 - 30 },
-    color: GOLD, thickness: 0.8,
+    start: { x: PAGE_W / 2 - 40, y: sy - 10 },
+    end: { x: PAGE_W / 2 + 40, y: sy - 10 },
+    color: accent, thickness: 0.8,
   });
 
   // consultant block
@@ -214,11 +270,11 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
     { label: "ASSINATURA CELESTE", value: data.signLine },
     { label: "VIBRACAO NUMERICA", value: data.numerologyLine },
   ];
-  let by = PAGE_H / 2 - 70;
+  let by = sy - 50;
   for (const b of blocks) {
     const lab = safe(b.label);
     const lw = sans.widthOfTextAtSize(lab, 8);
-    cover.drawText(lab, { x: (PAGE_W - lw) / 2, y: by, size: 8, font: sans, color: GOLD });
+    cover.drawText(lab, { x: (PAGE_W - lw) / 2, y: by, size: 8, font: sans, color: accent });
     by -= 14;
     const val = safe(b.value);
     const vw = serif.widthOfTextAtSize(val, 12);

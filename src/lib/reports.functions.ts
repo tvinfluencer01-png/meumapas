@@ -948,28 +948,27 @@ Regras:
     };
     let brandingPayload: ReportData["branding"] = undefined;
     if (brandingAddonActive && brandRow?.enabled && kindEnabledMap[data.kind]) {
-      let logoBytes: Uint8Array | undefined;
-      let logoMime: "image/png" | "image/jpeg" | undefined;
-      if (brandRow.logo_path) {
+      async function loadAsset(path: string | null | undefined) {
+        if (!path) return { bytes: undefined as Uint8Array | undefined, mime: undefined as "image/png" | "image/jpeg" | undefined };
         try {
-          const { data: blob } = await supabaseAdmin.storage
-            .from("pdf-branding")
-            .download(brandRow.logo_path);
-          if (blob) {
-            const ab = await blob.arrayBuffer();
-            logoBytes = new Uint8Array(ab);
-            logoMime = brandRow.logo_path.toLowerCase().endsWith(".png")
-              ? "image/png"
-              : "image/jpeg";
-          }
+          const { data: blob } = await supabaseAdmin.storage.from("pdf-branding").download(path);
+          if (!blob) return { bytes: undefined, mime: undefined };
+          const ab = await blob.arrayBuffer();
+          const mime: "image/png" | "image/jpeg" = path.toLowerCase().endsWith(".png") ? "image/png" : "image/jpeg";
+          return { bytes: new Uint8Array(ab), mime };
         } catch (e) {
-          console.error("[reports] failed to load branding logo", e);
+          console.error("[reports] failed to load branding asset", path, e);
+          return { bytes: undefined, mime: undefined };
         }
       }
+      const [logoAsset, coverAsset] = await Promise.all([
+        loadAsset(brandRow.logo_path as string | null | undefined),
+        loadAsset((brandRow as Record<string, unknown>).cover_image_path as string | null | undefined),
+      ]);
       brandingPayload = {
         enabled: true,
-        logoBytes,
-        logoMime,
+        logoBytes: logoAsset.bytes,
+        logoMime: logoAsset.mime,
         logoWidth: brandRow.logo_width ?? 120,
         logoHeight: brandRow.logo_height ?? 60,
         displayName: brandRow.display_name,
@@ -977,6 +976,12 @@ Regras:
         footerName: brandRow.footer_name,
         footerSite: brandRow.footer_site,
         footerPhone: brandRow.footer_phone,
+        coverImageBytes: coverAsset.bytes,
+        coverImageMime: coverAsset.mime,
+        coverBgColor: (brandRow as Record<string, unknown>).cover_bg_color as string | null | undefined,
+        coverAccentColor: (brandRow as Record<string, unknown>).cover_accent_color as string | null | undefined,
+        coverTitlePosition: (brandRow as Record<string, unknown>).cover_title_position as "top" | "center" | "bottom" | null | undefined,
+        frameStyle: (brandRow as Record<string, unknown>).frame_style as "none" | "simple" | "double" | "ornamental" | null | undefined,
       };
     }
 
