@@ -150,6 +150,7 @@ export function PdfBrandingForm() {
   const watermarkInputRef = useRef<HTMLInputElement>(null);
   const [coverPrompt, setCoverPrompt] = useState("");
   const [previewing, setPreviewing] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["pdf-branding"],
