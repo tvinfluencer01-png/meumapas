@@ -34,6 +34,12 @@ export type ReportBranding = {
   footerName?: string | null;
   footerSite?: string | null;
   footerPhone?: string | null;
+  coverImageBytes?: Uint8Array;
+  coverImageMime?: "image/png" | "image/jpeg";
+  coverBgColor?: string | null;
+  coverAccentColor?: string | null;
+  coverTitlePosition?: "top" | "center" | "bottom" | null;
+  frameStyle?: "none" | "simple" | "double" | "ornamental" | null;
 };
 export type ReportData = {
   kind: "personality" | "love" | "career" | "spiritual" | "finance" | "family" | "health" | "friendships";
