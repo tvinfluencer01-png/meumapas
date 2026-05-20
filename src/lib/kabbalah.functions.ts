@@ -107,10 +107,12 @@ A lista "phases" deve ter entre 3 e 5 itens, cada um focado em um aspecto da sef
 
       const script = JSON.stringify(parsed);
 
+      const activeClientId = await resolveActiveClientId(userId);
       const { data: row, error: insErr } = await supabaseAdmin
         .from("kabbalah_meditations")
         .insert({
           user_id: userId,
+          client_profile_id: activeClientId,
           sefirah: data.sefirah,
           intention: data.intention ?? null,
           script,
