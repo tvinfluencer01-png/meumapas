@@ -13,6 +13,7 @@ import { computeNumerology, NUMBER_MEANINGS, formatBirthDateBR, numLabel, numTit
 import { buildReportPdf, type ReportData } from "@/lib/reports-pdf";
 import { consumeCredits, hasUnlimitedAccess, getCreditCost, refundCredits, type CreditAction } from "@/lib/credits.functions";
 import { applyActiveChartFilter, resolveActiveSubject } from "@/lib/active-subject";
+import { resolveActiveClientId } from "@/lib/client-profiles.functions";
 
 const KIND = z.enum([
   "personality",
