@@ -232,8 +232,6 @@ export const UF_TIMEZONE: Record<string, string> = {
   SE: TZ_MACEIO,
   TO: TZ_ARAGUAINA,
 };
-// alias para manter consistência
-const TZ_BAHIA = TZ_BA;
 
 export function timezoneForUF(uf: string): string {
   return UF_TIMEZONE[uf.toUpperCase()] ?? TZ_SP;
