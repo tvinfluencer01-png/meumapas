@@ -862,6 +862,29 @@ export function PdfBrandingForm() {
           {saveMutation.isPending ? "Salvando…" : "Salvar personalização"}
         </Button>
       </div>
+
+      <Dialog open={!!previewUrl} onOpenChange={(o) => { if (!o) closePreview(); }}>
+        <DialogContent className="max-w-5xl w-[95vw] h-[90vh] flex flex-col p-0 gap-0">
+          <DialogHeader className="p-4 border-b">
+            <DialogTitle>Pré-visualização do PDF</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-hidden bg-muted">
+            {previewUrl && (
+              <iframe
+                src={previewUrl}
+                title="Preview do PDF"
+                className="w-full h-full border-0"
+              />
+            )}
+          </div>
+          <DialogFooter className="p-3 border-t">
+            <Button type="button" variant="outline" onClick={downloadPreview} className="gap-2">
+              <FileDown className="size-4" /> Baixar PDF
+            </Button>
+            <Button type="button" onClick={closePreview}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
