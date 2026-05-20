@@ -92,6 +92,9 @@ function RelatoriosPage() {
   const removeFn = useServerFn(deleteReport);
   const [loadingKind, setLoadingKind] = useState<Kind | null>(null);
   const { data: activeSubject } = useActiveSubject();
+  const hasActiveClient = activeSubject?.kind === "client";
+  const [scope, setScope] = useState<"self" | "client">("client");
+  const effectiveScope: "self" | "client" = hasActiveClient ? scope : "self";
   const [existingPrompt, setExistingPrompt] = useState<{
     kind: Kind;
     report: { id: string; title: string; created_at: string };
@@ -99,12 +102,7 @@ function RelatoriosPage() {
 
   function findExistingReport(kind: Kind) {
     if (!reports) return null;
-    const clientId = activeSubject?.client_profile_id ?? null;
-    return (
-      reports.find(
-        (r) => r.kind === kind && (r.client_profile_id ?? null) === clientId,
-      ) ?? null
-    );
+    return reports.find((r) => r.kind === kind) ?? null;
   }
 
   function handleGenerateClick(kind: Kind) {
@@ -118,16 +116,17 @@ function RelatoriosPage() {
   }
 
   const activeClientId = activeSubject?.client_profile_id ?? null;
+  const queryClientId = effectiveScope === "client" ? activeClientId : null;
   const { data: reports } = useQuery({
-    queryKey: ["reports", user?.id, activeClientId],
+    queryKey: ["reports", user?.id, queryClientId, effectiveScope],
     enabled: !!user,
     queryFn: async () => {
       let q = supabase
         .from("reports")
         .select("*")
         .order("created_at", { ascending: false });
-      q = activeClientId
-        ? q.eq("client_profile_id", activeClientId)
+      q = queryClientId
+        ? q.eq("client_profile_id", queryClientId)
         : q.is("client_profile_id", null);
       const { data } = await q;
       return data ?? [];
@@ -299,9 +298,51 @@ function RelatoriosPage() {
 
       {/* Library */}
       <section>
-        <h2 className="font-serif text-2xl text-stardust mb-4 flex items-center gap-2">
-          <FileText className="size-5 text-gold" /> Seus relatorios
-        </h2>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+          <h2 className="font-serif text-2xl text-stardust flex items-center gap-2">
+            <FileText className="size-5 text-gold" />
+            {effectiveScope === "client" && hasActiveClient
+              ? `Relatórios de ${activeSubject?.full_name ?? "cliente"}`
+              : "Meus relatórios"}
+          </h2>
+
+          {hasActiveClient && (
+            <div
+              role="tablist"
+              aria-label="Filtrar relatórios"
+              className="inline-flex rounded-xl border border-gold/30 bg-night/40 p-1 text-xs"
+            >
+              <button
+                type="button"
+                role="tab"
+                aria-selected={scope === "self"}
+                onClick={() => setScope("self")}
+                className={`px-3 py-1.5 rounded-lg transition ${
+                  scope === "self"
+                    ? "bg-gold/15 text-gold"
+                    : "text-muted-foreground hover:text-stardust"
+                }`}
+              >
+                Meus relatórios
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={scope === "client"}
+                onClick={() => setScope("client")}
+                className={`px-3 py-1.5 rounded-lg transition inline-flex items-center gap-1.5 ${
+                  scope === "client"
+                    ? "bg-gold/15 text-gold"
+                    : "text-muted-foreground hover:text-stardust"
+                }`}
+              >
+                <Users className="size-3.5" />
+                {activeSubject?.full_name?.split(" ")[0] ?? "Cliente ativo"}
+              </button>
+            </div>
+          )}
+        </div>
+
 
         {!reports || reports.length === 0 ? (
           <div className="glass-card rounded-2xl p-10 text-center text-muted-foreground">
