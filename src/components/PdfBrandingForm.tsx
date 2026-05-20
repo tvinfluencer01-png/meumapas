@@ -311,15 +311,33 @@ export function PdfBrandingForm() {
       const bytes = new Uint8Array(bin.length);
       for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
       const blob = new Blob([bytes], { type: "application/pdf" });
+      // Revoga URL anterior (se houver) antes de criar a nova.
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
       const url = URL.createObjectURL(blob);
-      window.open(url, "_blank", "noopener,noreferrer");
-      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      // Abre dentro de um Dialog (iframe) — evita pop-up blocker / ERR_BLOCKED_BY_CLIENT.
+      setPreviewUrl(url);
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
       setPreviewing(false);
     }
   }
+
+  function closePreview() {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+  }
+
+  function downloadPreview() {
+    if (!previewUrl) return;
+    const a = document.createElement("a");
+    a.href = previewUrl;
+    a.download = "preview-branding.pdf";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+
 
   function handleAssetFile(
     e: React.ChangeEvent<HTMLInputElement>,
