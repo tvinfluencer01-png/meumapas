@@ -208,7 +208,7 @@ export const UF_TIMEZONE: Record<string, string> = {
   AL: TZ_MACEIO,
   AP: TZ_BELEM,
   AM: TZ_MANAUS,
-  BA: TZ_BAHIA,
+  BA: TZ_BA,
   CE: TZ_FOR,
   DF: TZ_SP,
   ES: TZ_SP,
