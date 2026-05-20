@@ -92,6 +92,9 @@ function RelatoriosPage() {
   const removeFn = useServerFn(deleteReport);
   const [loadingKind, setLoadingKind] = useState<Kind | null>(null);
   const { data: activeSubject } = useActiveSubject();
+  const hasActiveClient = activeSubject?.kind === "client";
+  const [scope, setScope] = useState<"self" | "client">("client");
+  const effectiveScope: "self" | "client" = hasActiveClient ? scope : "self";
   const [existingPrompt, setExistingPrompt] = useState<{
     kind: Kind;
     report: { id: string; title: string; created_at: string };
@@ -99,12 +102,7 @@ function RelatoriosPage() {
 
   function findExistingReport(kind: Kind) {
     if (!reports) return null;
-    const clientId = activeSubject?.client_profile_id ?? null;
-    return (
-      reports.find(
-        (r) => r.kind === kind && (r.client_profile_id ?? null) === clientId,
-      ) ?? null
-    );
+    return reports.find((r) => r.kind === kind) ?? null;
   }
 
   function handleGenerateClick(kind: Kind) {
@@ -118,16 +116,17 @@ function RelatoriosPage() {
   }
 
   const activeClientId = activeSubject?.client_profile_id ?? null;
+  const queryClientId = effectiveScope === "client" ? activeClientId : null;
   const { data: reports } = useQuery({
-    queryKey: ["reports", user?.id, activeClientId],
+    queryKey: ["reports", user?.id, queryClientId, effectiveScope],
     enabled: !!user,
     queryFn: async () => {
       let q = supabase
         .from("reports")
         .select("*")
         .order("created_at", { ascending: false });
-      q = activeClientId
-        ? q.eq("client_profile_id", activeClientId)
+      q = queryClientId
+        ? q.eq("client_profile_id", queryClientId)
         : q.is("client_profile_id", null);
       const { data } = await q;
       return data ?? [];
