@@ -31,6 +31,31 @@ async function userHasAddon(userId: string): Promise<boolean> {
   return !!data;
 }
 
+/**
+ * Retorna o client_profile_id ativo SE o add-on de Clientes estiver ativo.
+ * Caso contrário (ou se não houver cliente ativo) retorna null — usado para
+ * vincular gerações de PDF ao cliente selecionado.
+ */
+export async function resolveActiveClientId(userId: string): Promise<string | null> {
+  const hasAddon = await userHasAddon(userId);
+  if (!hasAddon) return null;
+  const { data: prof } = await supabaseAdmin
+    .from("profiles")
+    .select("active_client_profile_id")
+    .eq("id", userId)
+    .maybeSingle();
+  const activeId = prof?.active_client_profile_id ?? null;
+  if (!activeId) return null;
+  // valida que o cliente pertence ao usuário
+  const { data: cli } = await supabaseAdmin
+    .from("client_profiles")
+    .select("id")
+    .eq("id", activeId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  return cli?.id ?? null;
+}
+
 export const listClientProfiles = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
