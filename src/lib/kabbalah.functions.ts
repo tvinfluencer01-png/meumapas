@@ -283,12 +283,15 @@ export const exportKabbalahPdf = createServerFn({ method: "POST" })
 export const listKabbalahMeditations = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data } = await supabaseAdmin
+    const activeClientId = await resolveActiveClientId(context.userId);
+    let q = supabaseAdmin
       .from("kabbalah_meditations")
-      .select("id, sefirah, intention, duration_min, created_at, storage_path")
-      .eq("user_id", context.userId)
-      .order("created_at", { ascending: false })
-      .limit(30);
+      .select("id, sefirah, intention, duration_min, created_at, storage_path, client_profile_id")
+      .eq("user_id", context.userId);
+    q = activeClientId
+      ? q.eq("client_profile_id", activeClientId)
+      : q.is("client_profile_id", null);
+    const { data } = await q.order("created_at", { ascending: false }).limit(30);
     return data ?? [];
   });
 
