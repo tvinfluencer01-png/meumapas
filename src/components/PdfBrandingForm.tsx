@@ -11,6 +11,9 @@ import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from "@/components/ui/dialog";
+import {
   getPdfBranding,
   savePdfBranding,
   uploadPdfLogo,
@@ -147,6 +150,7 @@ export function PdfBrandingForm() {
   const watermarkInputRef = useRef<HTMLInputElement>(null);
   const [coverPrompt, setCoverPrompt] = useState("");
   const [previewing, setPreviewing] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["pdf-branding"],
@@ -307,15 +311,33 @@ export function PdfBrandingForm() {
       const bytes = new Uint8Array(bin.length);
       for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
       const blob = new Blob([bytes], { type: "application/pdf" });
+      // Revoga URL anterior (se houver) antes de criar a nova.
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
       const url = URL.createObjectURL(blob);
-      window.open(url, "_blank", "noopener,noreferrer");
-      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      // Abre dentro de um Dialog (iframe) — evita pop-up blocker / ERR_BLOCKED_BY_CLIENT.
+      setPreviewUrl(url);
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
       setPreviewing(false);
     }
   }
+
+  function closePreview() {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+  }
+
+  function downloadPreview() {
+    if (!previewUrl) return;
+    const a = document.createElement("a");
+    a.href = previewUrl;
+    a.download = "preview-branding.pdf";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+
 
   function handleAssetFile(
     e: React.ChangeEvent<HTMLInputElement>,
@@ -840,6 +862,29 @@ export function PdfBrandingForm() {
           {saveMutation.isPending ? "Salvando…" : "Salvar personalização"}
         </Button>
       </div>
+
+      <Dialog open={!!previewUrl} onOpenChange={(o) => { if (!o) closePreview(); }}>
+        <DialogContent className="max-w-5xl w-[95vw] h-[90vh] flex flex-col p-0 gap-0">
+          <DialogHeader className="p-4 border-b">
+            <DialogTitle>Pré-visualização do PDF</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-hidden bg-muted">
+            {previewUrl && (
+              <iframe
+                src={previewUrl}
+                title="Preview do PDF"
+                className="w-full h-full border-0"
+              />
+            )}
+          </div>
+          <DialogFooter className="p-3 border-t">
+            <Button type="button" variant="outline" onClick={downloadPreview} className="gap-2">
+              <FileDown className="size-4" /> Baixar PDF
+            </Button>
+            <Button type="button" onClick={closePreview}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
