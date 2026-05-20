@@ -18,6 +18,7 @@ import {
   resolveBrandingPayload,
   isBrandingEnabledFor,
 } from "@/lib/pdf-branding.functions";
+import { resolveActiveClientId } from "@/lib/client-profiles.functions";
 
 const SefirahEnum = z.enum(SEFIROT.map((s) => s.id) as [string, ...string[]]);
 
