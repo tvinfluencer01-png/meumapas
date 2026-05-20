@@ -18,6 +18,7 @@ import {
   resolveBrandingPayload,
   isBrandingEnabledFor,
 } from "@/lib/pdf-branding.functions";
+import { resolveActiveClientId } from "@/lib/client-profiles.functions";
 
 const SpreadEnum = z.enum(["card_day", "three", "celtic"]);
 
