@@ -11,7 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
 import {
   getPdfBranding,
@@ -313,16 +313,8 @@ export function PdfBrandingForm() {
       const blob = new Blob([bytes], { type: "application/pdf" });
       if (previewUrl) URL.revokeObjectURL(previewUrl);
       const url = URL.createObjectURL(blob);
-      // Faz o download imediato (evita iframe/popup que extensões do Chrome bloqueiam — ERR_BLOCKED_BY_CLIENT).
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `preview-branding-${Date.now()}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      // Mantém a URL no estado caso o usuário queira abrir/baixar de novo pelo diálogo.
       setPreviewUrl(url);
-      toast.success("PDF gerado — verifique seus downloads.");
+      toast.success("PDF gerado — prévia visual aberta.");
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -872,18 +864,21 @@ export function PdfBrandingForm() {
       </div>
 
       <Dialog open={!!previewUrl} onOpenChange={(o) => { if (!o) closePreview(); }}>
-        <DialogContent className="max-w-5xl w-[95vw] h-[90vh] flex flex-col p-0 gap-0">
+        <DialogContent className="max-w-5xl w-[95vw] max-h-[90vh] flex flex-col p-0 gap-0">
           <DialogHeader className="p-4 border-b">
             <DialogTitle>Pré-visualização do PDF</DialogTitle>
+            <DialogDescription>
+              Amostra visual renderizada na própria página para evitar bloqueios do Chrome. Use “Baixar PDF” para abrir o arquivo real.
+            </DialogDescription>
           </DialogHeader>
-          <div className="flex-1 overflow-hidden bg-muted">
-            {previewUrl && (
-              <iframe
-                src={previewUrl}
-                title="Preview do PDF"
-                className="w-full h-full border-0"
-              />
-            )}
+          <div className="flex-1 overflow-auto bg-muted p-4 md:p-6">
+            <PdfVisualPreview
+              form={form}
+              logoUrl={data?.signedLogoUrl ?? null}
+              coverUrl={data?.signedCoverUrl ?? null}
+              pageBgUrl={data?.signedPageBgUrl ?? null}
+              watermarkUrl={data?.signedWatermarkUrl ?? null}
+            />
           </div>
           <DialogFooter className="p-3 border-t">
             <Button type="button" variant="outline" onClick={downloadPreview} className="gap-2">
