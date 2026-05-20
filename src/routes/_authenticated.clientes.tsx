@@ -478,7 +478,76 @@ function CityCombobox({
   onChange: (c: BRCity) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [remote, setRemote] = useState<BRCity[]>([]);
+  const [loading, setLoading] = useState(false);
   const label = value.state ? `${value.name} - ${value.state}` : value.name;
+
+  const norm = (s: string) =>
+    s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+  // Busca remota (Nominatim/OSM) com debounce quando não houver match local.
+  useEffect(() => {
+    const q = search.trim();
+    if (q.length < 3) { setRemote([]); return; }
+    const ns = norm(q);
+    const hasLocal = BR_CITIES.some(
+      (c) => norm(c.name).includes(ns) || norm(`${c.name} ${c.state}`).includes(ns),
+    );
+    if (hasLocal) { setRemote([]); return; }
+
+    const ctrl = new AbortController();
+    const t = setTimeout(async () => {
+      try {
+        setLoading(true);
+        const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=8&countrycodes=br&q=${encodeURIComponent(q)}`;
+        const res = await fetch(url, {
+          signal: ctrl.signal,
+          headers: { "Accept-Language": "pt-BR" },
+        });
+        if (!res.ok) throw new Error("geocode failed");
+        const data = await res.json() as Array<{
+          lat: string; lon: string; display_name: string;
+          address?: { city?: string; town?: string; village?: string; municipality?: string; state_code?: string; state?: string; "ISO3166-2-lvl4"?: string };
+        }>;
+        const stateAbbr: Record<string, string> = {
+          Acre:"AC", Alagoas:"AL", Amapá:"AP", Amazonas:"AM", Bahia:"BA", Ceará:"CE",
+          "Distrito Federal":"DF", "Espírito Santo":"ES", Goiás:"GO", Maranhão:"MA",
+          "Mato Grosso":"MT", "Mato Grosso do Sul":"MS", "Minas Gerais":"MG", Pará:"PA",
+          Paraíba:"PB", Paraná:"PR", Pernambuco:"PE", Piauí:"PI", "Rio de Janeiro":"RJ",
+          "Rio Grande do Norte":"RN", "Rio Grande do Sul":"RS", Rondônia:"RO", Roraima:"RR",
+          "Santa Catarina":"SC", "São Paulo":"SP", Sergipe:"SE", Tocantins:"TO",
+        };
+        const seen = new Set<string>();
+        const mapped: BRCity[] = [];
+        for (const r of data) {
+          const a = r.address ?? {};
+          const name = a.city ?? a.town ?? a.village ?? a.municipality;
+          if (!name) continue;
+          const iso = a["ISO3166-2-lvl4"]; // ex.: "BR-PB"
+          const uf = iso?.startsWith("BR-") ? iso.slice(3) : (a.state ? stateAbbr[a.state] ?? "" : "");
+          if (!uf) continue;
+          const key = `${name}-${uf}`;
+          if (seen.has(key)) continue;
+          seen.add(key);
+          mapped.push({
+            name,
+            state: uf,
+            latitude: Number(r.lat),
+            longitude: Number(r.lon),
+            timezone: timezoneForUF(uf),
+          });
+        }
+        setRemote(mapped);
+      } catch {
+        setRemote([]);
+      } finally {
+        setLoading(false);
+      }
+    }, 350);
+
+    return () => { ctrl.abort(); clearTimeout(t); };
+  }, [search]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -496,32 +565,45 @@ function CityCombobox({
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
         <Command
-          filter={(itemValue, search) => {
-            const norm = (s: string) =>
-              s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-            return norm(itemValue).includes(norm(search)) ? 1 : 0;
-          }}
+          shouldFilter={false}
         >
-          <CommandInput placeholder="Buscar cidade…" />
+          <CommandInput
+            placeholder="Buscar cidade…"
+            value={search}
+            onValueChange={setSearch}
+          />
           <CommandList className="max-h-64">
-            <CommandEmpty>Nenhuma cidade encontrada.</CommandEmpty>
-            <CommandGroup>
-              {BR_CITIES.map((c) => {
-                const v = `${c.name} - ${c.state}`;
-                const selected = c.name === value.name && c.state === value.state;
-                return (
-                  <CommandItem
-                    key={v}
-                    value={v}
-                    onSelect={() => { onChange(c); setOpen(false); }}
-                  >
-                    <Check className={cn("mr-2 size-4", selected ? "opacity-100" : "opacity-0")} />
-                    <span className="flex-1">{c.name}</span>
-                    <span className="text-xs text-muted-foreground ml-2">{c.state}</span>
-                  </CommandItem>
-                );
-              })}
-            </CommandGroup>
+            <CommandEmpty>
+              {loading ? "Buscando…" : "Nenhuma cidade encontrada."}
+            </CommandEmpty>
+            {(() => {
+              const ns = norm(search);
+              const local = search
+                ? BR_CITIES.filter((c) =>
+                    norm(c.name).includes(ns) || norm(`${c.name} ${c.state}`).includes(ns),
+                  )
+                : BR_CITIES;
+              const items = local.length > 0 ? local : remote;
+              return (
+                <CommandGroup heading={local.length === 0 && remote.length > 0 ? "Resultados online" : undefined}>
+                  {items.map((c) => {
+                    const v = `${c.name} - ${c.state}`;
+                    const selected = c.name === value.name && c.state === value.state;
+                    return (
+                      <CommandItem
+                        key={v}
+                        value={v}
+                        onSelect={() => { onChange(c); setOpen(false); setSearch(""); }}
+                      >
+                        <Check className={cn("mr-2 size-4", selected ? "opacity-100" : "opacity-0")} />
+                        <span className="flex-1">{c.name}</span>
+                        <span className="text-xs text-muted-foreground ml-2">{c.state}</span>
+                      </CommandItem>
+                    );
+                  })}
+                </CommandGroup>
+              );
+            })()}
           </CommandList>
         </Command>
       </PopoverContent>
