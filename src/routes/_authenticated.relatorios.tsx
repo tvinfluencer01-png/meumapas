@@ -117,14 +117,19 @@ function RelatoriosPage() {
     genMutation.mutate(kind);
   }
 
+  const activeClientId = activeSubject?.client_profile_id ?? null;
   const { data: reports } = useQuery({
-    queryKey: ["reports", user?.id],
+    queryKey: ["reports", user?.id, activeClientId],
     enabled: !!user,
     queryFn: async () => {
-      const { data } = await supabase
+      let q = supabase
         .from("reports")
         .select("*")
         .order("created_at", { ascending: false });
+      q = activeClientId
+        ? q.eq("client_profile_id", activeClientId)
+        : q.is("client_profile_id", null);
+      const { data } = await q;
       return data ?? [];
     },
   });
