@@ -202,6 +202,43 @@ export const BR_CITIES: BRCity[] = [
   { name: "Fernando de Noronha", state: "PE", latitude: -3.8536, longitude: -32.4297, timezone: TZ_NORONHA },
 ];
 
+// Mapeamento UF → timezone IANA (fallback para cidades fora do catálogo curado).
+export const UF_TIMEZONE: Record<string, string> = {
+  AC: TZ_RIO_BRANCO,
+  AL: TZ_MACEIO,
+  AP: TZ_BELEM,
+  AM: TZ_MANAUS,
+  BA: TZ_BAHIA,
+  CE: TZ_FOR,
+  DF: TZ_SP,
+  ES: TZ_SP,
+  GO: TZ_SP,
+  MA: TZ_FOR,
+  MT: TZ_CUIABA,
+  MS: TZ_CAMPO_GRANDE,
+  MG: TZ_SP,
+  PA: TZ_BELEM,
+  PB: TZ_FOR,
+  PR: TZ_SP,
+  PE: TZ_RECIFE,
+  PI: TZ_FOR,
+  RJ: TZ_SP,
+  RN: TZ_FOR,
+  RS: TZ_SP,
+  RO: TZ_PORTO_VELHO,
+  RR: TZ_BOA_VISTA,
+  SC: TZ_SP,
+  SP: TZ_SP,
+  SE: TZ_MACEIO,
+  TO: TZ_ARAGUAINA,
+};
+// alias para manter consistência
+const TZ_BAHIA = TZ_BA;
+
+export function timezoneForUF(uf: string): string {
+  return UF_TIMEZONE[uf.toUpperCase()] ?? TZ_SP;
+}
+
 export function findCity(cityLabel: string): BRCity | undefined {
   // cityLabel pode vir como "São Paulo - SP" ou só "São Paulo"
   const norm = cityLabel.trim().toLowerCase();
