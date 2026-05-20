@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
@@ -11,7 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
 import {
   getPdfBranding,
@@ -313,16 +313,8 @@ export function PdfBrandingForm() {
       const blob = new Blob([bytes], { type: "application/pdf" });
       if (previewUrl) URL.revokeObjectURL(previewUrl);
       const url = URL.createObjectURL(blob);
-      // Faz o download imediato (evita iframe/popup que extensões do Chrome bloqueiam — ERR_BLOCKED_BY_CLIENT).
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `preview-branding-${Date.now()}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      // Mantém a URL no estado caso o usuário queira abrir/baixar de novo pelo diálogo.
       setPreviewUrl(url);
-      toast.success("PDF gerado — verifique seus downloads.");
+      toast.success("PDF gerado — prévia visual aberta.");
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -872,18 +864,21 @@ export function PdfBrandingForm() {
       </div>
 
       <Dialog open={!!previewUrl} onOpenChange={(o) => { if (!o) closePreview(); }}>
-        <DialogContent className="max-w-5xl w-[95vw] h-[90vh] flex flex-col p-0 gap-0">
+        <DialogContent className="max-w-5xl w-[95vw] max-h-[90vh] flex flex-col p-0 gap-0">
           <DialogHeader className="p-4 border-b">
             <DialogTitle>Pré-visualização do PDF</DialogTitle>
+            <DialogDescription>
+              Amostra visual renderizada na própria página para evitar bloqueios do Chrome. Use “Baixar PDF” para abrir o arquivo real.
+            </DialogDescription>
           </DialogHeader>
-          <div className="flex-1 overflow-hidden bg-muted">
-            {previewUrl && (
-              <iframe
-                src={previewUrl}
-                title="Preview do PDF"
-                className="w-full h-full border-0"
-              />
-            )}
+          <div className="flex-1 overflow-auto bg-muted p-4 md:p-6">
+            <PdfVisualPreview
+              form={form}
+              logoUrl={data?.signedLogoUrl ?? null}
+              coverUrl={data?.signedCoverUrl ?? null}
+              pageBgUrl={data?.signedPageBgUrl ?? null}
+              watermarkUrl={data?.signedWatermarkUrl ?? null}
+            />
           </div>
           <DialogFooter className="p-3 border-t">
             <Button type="button" variant="outline" onClick={downloadPreview} className="gap-2">
@@ -893,6 +888,96 @@ export function PdfBrandingForm() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+function PdfVisualPreview({
+  form,
+  logoUrl,
+  coverUrl,
+  pageBgUrl,
+  watermarkUrl,
+}: {
+  form: FormState;
+  logoUrl: string | null;
+  coverUrl: string | null;
+  pageBgUrl: string | null;
+  watermarkUrl: string | null;
+}) {
+  const fontFamily =
+    form.font_family === "sans"
+      ? "Inter, ui-sans-serif, system-ui, sans-serif"
+      : form.font_family === "display"
+        ? "Georgia, 'Times New Roman', serif"
+        : "Georgia, 'Times New Roman', serif";
+  const coverTitleAlign =
+    form.cover_title_position === "top"
+      ? "items-start pt-16"
+      : form.cover_title_position === "bottom"
+        ? "items-end pb-16"
+        : "items-center";
+
+  const pageStyle: CSSProperties = {
+    backgroundColor: form.page_bg_color,
+    color: form.body_text_color,
+    fontFamily,
+    fontSize: `${form.body_font_size}px`,
+    lineHeight: form.line_height,
+    backgroundImage: pageBgUrl ? `url(${pageBgUrl})` : undefined,
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+  };
+
+  return (
+    <div className="mx-auto grid max-w-4xl gap-5 md:grid-cols-2">
+      <div
+        className={`relative flex aspect-[3/4] min-h-[420px] overflow-hidden rounded-lg border border-border p-8 shadow-2xl ${coverTitleAlign}`}
+        style={{ backgroundColor: form.cover_bg_color, color: form.cover_accent_color, fontFamily }}
+      >
+        {coverUrl && <img src={coverUrl} alt="Imagem de capa" className="absolute inset-0 size-full object-cover opacity-45" />}
+        <div className="absolute inset-5 rounded-md" style={{ border: form.frame_style === "none" ? "0" : form.frame_style === "double" ? `3px double ${form.cover_accent_color}` : `1px solid ${form.cover_accent_color}` }} />
+        <div className="relative z-10 w-full text-center">
+          {logoUrl ? (
+            <img src={logoUrl} alt="Logo" className="mx-auto mb-6 max-h-20 max-w-48 object-contain" />
+          ) : (
+            <p className="mb-6 text-sm uppercase tracking-widest">{form.display_name || "Sua marca"}</p>
+          )}
+          <h3 className="text-3xl font-semibold leading-tight">Mapa de Exemplo</h3>
+          <p className="mt-3 text-sm opacity-80">Prévia da capa personalizada</p>
+        </div>
+      </div>
+
+      <div className="relative aspect-[3/4] min-h-[420px] overflow-hidden rounded-lg border border-border p-0 shadow-2xl" style={pageStyle}>
+        {watermarkUrl && (
+          <img
+            src={watermarkUrl}
+            alt="Marca d'água"
+            className="pointer-events-none absolute left-1/2 top-1/2 max-h-52 max-w-52 -translate-x-1/2 -translate-y-1/2 object-contain"
+            style={{ opacity: form.watermark_opacity }}
+          />
+        )}
+        <div className="relative z-10 flex min-h-full flex-col">
+          <header className="px-7 py-4 text-sm font-medium" style={{ backgroundColor: form.header_bg_color, color: form.header_text_color }}>
+            {form.display_name || "Relatório personalizado"}
+          </header>
+          <main className="flex-1 space-y-4 px-7 py-6">
+            <h4 className="text-2xl font-semibold" style={{ color: form.heading_text_color }}>Conteúdo do relatório</h4>
+            <p>
+              Esta prévia mostra como as cores, fontes, cabeçalho, rodapé, fundo e marca d'água serão aplicados aos próximos PDFs gerados.
+            </p>
+            <div className="rounded-md border border-border/60 p-4">
+              <p className="font-medium" style={{ color: form.heading_text_color }}>Seção de exemplo</p>
+              <p className="mt-2 text-sm opacity-85">O arquivo PDF real pode ser baixado pelo botão abaixo.</p>
+            </div>
+          </main>
+          {form.footer_enabled && (
+            <footer className="px-7 py-3 text-xs" style={{ backgroundColor: form.footer_bg_color }}>
+              {[form.footer_name, form.footer_site, form.footer_phone].filter(Boolean).join(" • ") || "Rodapé personalizado"}
+            </footer>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
