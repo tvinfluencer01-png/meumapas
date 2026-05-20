@@ -311,17 +311,25 @@ export function PdfBrandingForm() {
       const bytes = new Uint8Array(bin.length);
       for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
       const blob = new Blob([bytes], { type: "application/pdf" });
-      // Revoga URL anterior (se houver) antes de criar a nova.
       if (previewUrl) URL.revokeObjectURL(previewUrl);
       const url = URL.createObjectURL(blob);
-      // Abre dentro de um Dialog (iframe) — evita pop-up blocker / ERR_BLOCKED_BY_CLIENT.
+      // Faz o download imediato (evita iframe/popup que extensões do Chrome bloqueiam — ERR_BLOCKED_BY_CLIENT).
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `preview-branding-${Date.now()}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      // Mantém a URL no estado caso o usuário queira abrir/baixar de novo pelo diálogo.
       setPreviewUrl(url);
+      toast.success("PDF gerado — verifique seus downloads.");
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
       setPreviewing(false);
     }
   }
+
 
   function closePreview() {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
