@@ -113,6 +113,40 @@ function RelatoriosPage() {
     report: { id: string; title: string; created_at: string };
   } | null>(null);
 
+  // Search & period filters
+  const [searchQuery, setSearchQuery] = useState("");
+  const [periodFilter, setPeriodFilter] = useState<"all" | "7d" | "30d" | "90d" | "year">("all");
+
+  const filteredReports = useMemo(() => {
+    if (!reports) return [];
+    let result = reports;
+
+    // Title search
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter((r) => r.title.toLowerCase().includes(q));
+    }
+
+    // Period filter
+    if (periodFilter !== "all") {
+      const now = new Date();
+      const cutoff = new Date();
+      if (periodFilter === "7d") {
+        cutoff.setDate(now.getDate() - 7);
+      } else if (periodFilter === "30d") {
+        cutoff.setDate(now.getDate() - 30);
+      } else if (periodFilter === "90d") {
+        cutoff.setDate(now.getDate() - 90);
+      } else if (periodFilter === "year") {
+        cutoff.setMonth(0, 1);
+        cutoff.setHours(0, 0, 0, 0);
+      }
+      result = result.filter((r) => new Date(r.created_at) >= cutoff);
+    }
+
+    return result;
+  }, [reports, searchQuery, periodFilter]);
+
   function findExistingReport(kind: Kind) {
     if (!reports) return null;
     return reports.find((r) => r.kind === kind) ?? null;
