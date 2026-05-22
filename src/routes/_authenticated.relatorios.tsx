@@ -175,6 +175,36 @@ function RelatoriosPage() {
     },
   });
 
+  const filteredReports = useMemo(() => {
+    if (!reports) return [];
+    let result = reports;
+
+    // Title search
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter((r) => r.title.toLowerCase().includes(q));
+    }
+
+    // Period filter
+    if (periodFilter !== "all") {
+      const now = new Date();
+      const cutoff = new Date();
+      if (periodFilter === "7d") {
+        cutoff.setDate(now.getDate() - 7);
+      } else if (periodFilter === "30d") {
+        cutoff.setDate(now.getDate() - 30);
+      } else if (periodFilter === "90d") {
+        cutoff.setDate(now.getDate() - 90);
+      } else if (periodFilter === "year") {
+        cutoff.setMonth(0, 1);
+        cutoff.setHours(0, 0, 0, 0);
+      }
+      result = result.filter((r) => new Date(r.created_at) >= cutoff);
+    }
+
+    return result;
+  }, [reports, searchQuery, periodFilter]);
+
   function fallbackDownload(url: string, filename: string) {
     const a = document.createElement("a");
     a.href = url;
