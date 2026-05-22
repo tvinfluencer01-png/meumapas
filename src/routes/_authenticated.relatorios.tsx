@@ -93,8 +93,21 @@ function RelatoriosPage() {
   const [loadingKind, setLoadingKind] = useState<Kind | null>(null);
   const { data: activeSubject } = useActiveSubject();
   const hasActiveClient = activeSubject?.kind === "client";
-  const [scope, setScope] = useState<"self" | "client">("client");
+  const [scope, setScope] = useState<"self" | "client">(() => {
+    try {
+      const saved = localStorage.getItem("reports-scope");
+      if (saved === "self" || saved === "client") return saved;
+    } catch { /* noop */ }
+    return "client";
+  });
   const effectiveScope: "self" | "client" = hasActiveClient ? scope : "self";
+
+  // Persist scope selection
+  useEffect(() => {
+    try {
+      localStorage.setItem("reports-scope", scope);
+    } catch { /* noop */ }
+  }, [scope]);
   const [existingPrompt, setExistingPrompt] = useState<{
     kind: Kind;
     report: { id: string; title: string; created_at: string };
