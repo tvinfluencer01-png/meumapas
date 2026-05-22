@@ -1073,9 +1073,11 @@ Regras:
       throw new Error("Falha ao salvar o PDF.");
     }
 
-    // 6) Save row — sempre vincular ao client_profile_id do contexto ativo
-    // (respeitando o add-on de Clientes); quando inativo, fica null.
-    const activeClientId = await resolveActiveClientId(userId);
+    // 6) Save row — vincula ao client_profile_id do contexto ativo
+    // (respeitando o add-on de Clientes e o escopo solicitado).
+    // Se scope="self", grava como relatório do próprio usuário (client_profile_id=null).
+    const activeClientId =
+      data.scope === "self" ? null : await resolveActiveClientId(userId);
     const summary = ai.intro.slice(0, 240);
     const { data: row, error: insErr } = await supabase
       .from("reports")
