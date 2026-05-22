@@ -71,6 +71,34 @@ function formatYearLabel(reference = new Date()) {
   return String(reference.getFullYear());
 }
 
+// Gera uma leitura horoscópica curta via IA (com fallback) usando o trio Sol/Lua/Asc.
+async function buildHoroscopeReading(params: {
+  sunSign?: string;
+  moonSign?: string;
+  ascSign?: string;
+  weekRange: { start: string; end: string };
+  monthLabel: string;
+}): Promise<string> {
+  const { sunSign, moonSign, ascSign, weekRange, monthLabel } = params;
+  const apiKey = process.env.LOVABLE_API_KEY;
+  const fallback =
+    `Esta semana (${weekRange.start} a ${weekRange.end}), em ${monthLabel}, o céu convida você a honrar o que pulsa em ${sunSign ?? "seu Sol"}, ` +
+    `acolher o que sente em ${moonSign ?? "sua Lua"} e expressar no mundo a presença de ${ascSign ?? "seu Ascendente"}. ` +
+    `Permita-se pausar, sentir os movimentos sutis e agir com intenção. Pequenos gestos de cuidado e clareza abrem portas maiores.`;
+  if (!apiKey) return fallback;
+  try {
+    const gateway = createLovableAiGatewayProvider(apiKey);
+    const model = gateway("google/gemini-3-flash-preview");
+    const prompt = `Você é um astrólogo experiente. Escreva uma leitura horoscópica em português, em prosa contínua (sem listas), entre 90 e 130 palavras, poética e prática, dirigida diretamente ao leitor ("você"). Mencione a semana atual (${weekRange.start} a ${weekRange.end}) e o mês de ${monthLabel}. Integre o trio Sol em ${sunSign ?? "—"}, Lua em ${moonSign ?? "—"} e Ascendente em ${ascSign ?? "—"}. Traga uma orientação central, um cuidado emocional e um convite de ação concreto. Não use títulos, asteriscos ou emojis.`;
+    const { text } = await generateText({ model, prompt });
+    const cleaned = text.trim();
+    return cleaned.length > 40 ? cleaned : fallback;
+  } catch (err) {
+    console.error("[buildHoroscopeReading] AI error", err);
+    return fallback;
+  }
+}
+
 // --- helpers --------------------------------------------------------------
 const SIGNS = [
   "Áries", "Touro", "Gêmeos", "Câncer", "Leão", "Virgem",
