@@ -71,6 +71,34 @@ function formatYearLabel(reference = new Date()) {
   return String(reference.getFullYear());
 }
 
+// Gera uma leitura horoscópica curta via IA (com fallback) usando o trio Sol/Lua/Asc.
+async function buildHoroscopeReading(params: {
+  sunSign?: string;
+  moonSign?: string;
+  ascSign?: string;
+  weekRange: { start: string; end: string };
+  monthLabel: string;
+}): Promise<string> {
+  const { sunSign, moonSign, ascSign, weekRange, monthLabel } = params;
+  const apiKey = process.env.LOVABLE_API_KEY;
+  const fallback =
+    `Esta semana (${weekRange.start} a ${weekRange.end}), em ${monthLabel}, o céu convida você a honrar o que pulsa em ${sunSign ?? "seu Sol"}, ` +
+    `acolher o que sente em ${moonSign ?? "sua Lua"} e expressar no mundo a presença de ${ascSign ?? "seu Ascendente"}. ` +
+    `Permita-se pausar, sentir os movimentos sutis e agir com intenção. Pequenos gestos de cuidado e clareza abrem portas maiores.`;
+  if (!apiKey) return fallback;
+  try {
+    const gateway = createLovableAiGatewayProvider(apiKey);
+    const model = gateway("google/gemini-3-flash-preview");
+    const prompt = `Você é um astrólogo experiente. Escreva uma leitura horoscópica em português, em prosa contínua (sem listas), entre 90 e 130 palavras, poética e prática, dirigida diretamente ao leitor ("você"). Mencione a semana atual (${weekRange.start} a ${weekRange.end}) e o mês de ${monthLabel}. Integre o trio Sol em ${sunSign ?? "—"}, Lua em ${moonSign ?? "—"} e Ascendente em ${ascSign ?? "—"}. Traga uma orientação central, um cuidado emocional e um convite de ação concreto. Não use títulos, asteriscos ou emojis.`;
+    const { text } = await generateText({ model, prompt });
+    const cleaned = text.trim();
+    return cleaned.length > 40 ? cleaned : fallback;
+  } catch (err) {
+    console.error("[buildHoroscopeReading] AI error", err);
+    return fallback;
+  }
+}
+
 // --- helpers --------------------------------------------------------------
 const SIGNS = [
   "Áries", "Touro", "Gêmeos", "Câncer", "Leão", "Virgem",
@@ -529,13 +557,27 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
       const week = formatWeekRange();
       const monthLabel = formatMonthLabel();
       const yearLabel = formatYearLabel();
+      const horoscope = await buildHoroscopeReading({
+        sunSign: sun?.sign,
+        moonSign: moon?.sign,
+        ascSign,
+        weekRange: { start: week.start, end: week.end },
+        monthLabel,
+      });
+      blocks.push({ type: "h2", text: "Leitura horoscópica" });
+      blocks.push({ type: "h3", text: `Semana de ${week.start} a ${week.end}` });
+      blocks.push({ type: "p", text: horoscope });
+
       blocks.push({ type: "h2", text: "Previsões para os próximos dias" });
       blocks.push({ type: "p", text: forecast.nextDays });
-      blocks.push({ type: "h2", text: `Previsões para a semana (${week.start} a ${week.end})` });
+      blocks.push({ type: "h2", text: "Previsões para a semana" });
+      blocks.push({ type: "h3", text: `${week.start} a ${week.end}` });
       blocks.push({ type: "p", text: forecast.week });
-      blocks.push({ type: "h2", text: `Previsões para o mês (${monthLabel})` });
+      blocks.push({ type: "h2", text: "Previsões para o mês" });
+      blocks.push({ type: "h3", text: monthLabel });
       blocks.push({ type: "p", text: forecast.month });
-      blocks.push({ type: "h2", text: `Previsões para o ano (${yearLabel})` });
+      blocks.push({ type: "h2", text: "Previsões para o ano" });
+      blocks.push({ type: "h3", text: yearLabel });
       blocks.push({ type: "p", text: forecast.year });
 
       // Branding opcional
@@ -625,13 +667,33 @@ export const downloadAstroForecastPdf = createServerFn({ method: "POST" })
     const week = formatWeekRange();
     const monthLabel = formatMonthLabel();
     const yearLabel = formatYearLabel();
+
+    // Trio Sol/Lua/Asc para a leitura horoscópica
+    const planets = (chart.planets ?? []) as { name: string; sign: string; degree: number }[];
+    const sun = planets.find((p) => p.name === "Sol");
+    const moon = planets.find((p) => p.name === "Lua");
+    const ascSign = chart.ascendant != null ? SIGNS[Math.floor((chart.ascendant as number) / 30)] : undefined;
+    const horoscope = await buildHoroscopeReading({
+      sunSign: sun?.sign,
+      moonSign: moon?.sign,
+      ascSign,
+      weekRange: { start: week.start, end: week.end },
+      monthLabel,
+    });
+    blocks.push({ type: "h2", text: "Leitura horoscópica" });
+    blocks.push({ type: "h3", text: `Semana de ${week.start} a ${week.end}` });
+    blocks.push({ type: "p", text: horoscope });
+
     blocks.push({ type: "h2", text: "Previsões para os próximos dias" });
     blocks.push({ type: "p", text: forecast.nextDays });
-    blocks.push({ type: "h2", text: `Previsões para a semana (${week.start} a ${week.end})` });
+    blocks.push({ type: "h2", text: "Previsões para a semana" });
+    blocks.push({ type: "h3", text: `${week.start} a ${week.end}` });
     blocks.push({ type: "p", text: forecast.week });
-    blocks.push({ type: "h2", text: `Previsões para o mês (${monthLabel})` });
+    blocks.push({ type: "h2", text: "Previsões para o mês" });
+    blocks.push({ type: "h3", text: monthLabel });
     blocks.push({ type: "p", text: forecast.month });
-    blocks.push({ type: "h2", text: `Previsões para o ano (${yearLabel})` });
+    blocks.push({ type: "h2", text: "Previsões para o ano" });
+    blocks.push({ type: "h3", text: yearLabel });
     blocks.push({ type: "p", text: forecast.year });
 
     const { data: brandRow } = await supabaseAdmin
