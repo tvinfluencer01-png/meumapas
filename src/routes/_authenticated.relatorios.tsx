@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useActiveSubject } from "@/hooks/use-active-subject";
@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import {
   FileText, Download, Sparkles, Heart, Briefcase, Flame, Loader2, Trash2, ScrollText,
-  Coins, Home, HeartPulse, Users,
+  Coins, Home, HeartPulse, Users, Search, CalendarDays, X,
 } from "lucide-react";
 import { CreditCostBadge } from "@/components/CreditCostBadge";
 
@@ -113,6 +113,10 @@ function RelatoriosPage() {
     report: { id: string; title: string; created_at: string };
   } | null>(null);
 
+  // Search & period filters
+  const [searchQuery, setSearchQuery] = useState("");
+  const [periodFilter, setPeriodFilter] = useState<"all" | "7d" | "30d" | "90d" | "year">("all");
+
   function findExistingReport(kind: Kind) {
     if (!reports) return null;
     return reports.find((r) => r.kind === kind) ?? null;
@@ -170,6 +174,36 @@ function RelatoriosPage() {
       return count ?? 0;
     },
   });
+
+  const filteredReports = useMemo(() => {
+    if (!reports) return [];
+    let result = reports;
+
+    // Title search
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter((r) => r.title.toLowerCase().includes(q));
+    }
+
+    // Period filter
+    if (periodFilter !== "all") {
+      const now = new Date();
+      const cutoff = new Date();
+      if (periodFilter === "7d") {
+        cutoff.setDate(now.getDate() - 7);
+      } else if (periodFilter === "30d") {
+        cutoff.setDate(now.getDate() - 30);
+      } else if (periodFilter === "90d") {
+        cutoff.setDate(now.getDate() - 90);
+      } else if (periodFilter === "year") {
+        cutoff.setMonth(0, 1);
+        cutoff.setHours(0, 0, 0, 0);
+      }
+      result = result.filter((r) => new Date(r.created_at) >= cutoff);
+    }
+
+    return result;
+  }, [reports, searchQuery, periodFilter]);
 
   function fallbackDownload(url: string, filename: string) {
     const a = document.createElement("a");
@@ -447,6 +481,54 @@ function RelatoriosPage() {
           )}
         </div>
 
+        {/* Filters */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Buscar por título..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-9 py-2 rounded-xl border border-gold/20 bg-night/40 text-sm text-stardust placeholder:text-muted-foreground focus:outline-none focus:border-gold/50 transition"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-stardust transition"
+                aria-label="Limpar busca"
+              >
+                <X className="size-4" />
+              </button>
+            )}
+          </div>
+          <div className="inline-flex items-center gap-2">
+            <CalendarDays className="size-4 text-muted-foreground" />
+            <div className="inline-flex rounded-xl border border-gold/20 bg-night/40 p-1 text-xs">
+              {[
+                { key: "all" as const, label: "Todos" },
+                { key: "7d" as const, label: "7 dias" },
+                { key: "30d" as const, label: "30 dias" },
+                { key: "90d" as const, label: "90 dias" },
+                { key: "year" as const, label: "Este ano" },
+              ].map((p) => (
+                <button
+                  key={p.key}
+                  type="button"
+                  onClick={() => setPeriodFilter(p.key)}
+                  className={`px-2.5 py-1.5 rounded-lg transition whitespace-nowrap ${
+                    periodFilter === p.key
+                      ? "bg-gold/15 text-gold"
+                      : "text-muted-foreground hover:text-stardust"
+                  }`}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
 
         {!reports || reports.length === 0 ? (
           scope === "client" && !hasActiveClient ? (
@@ -482,9 +564,24 @@ function RelatoriosPage() {
               </p>
             </div>
           )
+        ) : filteredReports.length === 0 ? (
+          <div className="glass-card rounded-2xl p-10 text-center">
+            <Search className="size-10 text-muted-foreground mx-auto mb-4" />
+            <p className="font-serif text-lg text-stardust">Nenhum resultado</p>
+            <p className="mt-2 text-sm text-muted-foreground max-w-md mx-auto">
+              Não encontramos relatórios para "{searchQuery}" no período selecionado.
+            </p>
+            <button
+              type="button"
+              onClick={() => { setSearchQuery(""); setPeriodFilter("all"); }}
+              className="mt-4 px-4 py-2 rounded-lg border border-gold/30 text-gold hover:bg-gold/10 transition text-sm inline-flex items-center gap-2"
+            >
+              <X className="size-4" /> Limpar filtros
+            </button>
+          </div>
         ) : (
           <div className="space-y-3">
-            {reports.map((r) => (
+            {filteredReports.map((r) => (
               <div
                 key={r.id}
                 className="glass-card rounded-xl p-4 flex items-center gap-4 hover:border-gold/40 transition"
