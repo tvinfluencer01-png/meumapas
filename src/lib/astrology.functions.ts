@@ -667,13 +667,33 @@ export const downloadAstroForecastPdf = createServerFn({ method: "POST" })
     const week = formatWeekRange();
     const monthLabel = formatMonthLabel();
     const yearLabel = formatYearLabel();
+
+    // Trio Sol/Lua/Asc para a leitura horoscópica
+    const planets = (chart.planets ?? []) as { name: string; sign: string; degree: number }[];
+    const sun = planets.find((p) => p.name === "Sol");
+    const moon = planets.find((p) => p.name === "Lua");
+    const ascSign = chart.ascendant != null ? SIGNS[Math.floor((chart.ascendant as number) / 30)] : undefined;
+    const horoscope = await buildHoroscopeReading({
+      sunSign: sun?.sign,
+      moonSign: moon?.sign,
+      ascSign,
+      weekRange: { start: week.start, end: week.end },
+      monthLabel,
+    });
+    blocks.push({ type: "h2", text: "Leitura horoscópica" });
+    blocks.push({ type: "h3", text: `Semana de ${week.start} a ${week.end}` });
+    blocks.push({ type: "p", text: horoscope });
+
     blocks.push({ type: "h2", text: "Previsões para os próximos dias" });
     blocks.push({ type: "p", text: forecast.nextDays });
-    blocks.push({ type: "h2", text: `Previsões para a semana (${week.start} a ${week.end})` });
+    blocks.push({ type: "h2", text: "Previsões para a semana" });
+    blocks.push({ type: "h3", text: `${week.start} a ${week.end}` });
     blocks.push({ type: "p", text: forecast.week });
-    blocks.push({ type: "h2", text: `Previsões para o mês (${monthLabel})` });
+    blocks.push({ type: "h2", text: "Previsões para o mês" });
+    blocks.push({ type: "h3", text: monthLabel });
     blocks.push({ type: "p", text: forecast.month });
-    blocks.push({ type: "h2", text: `Previsões para o ano (${yearLabel})` });
+    blocks.push({ type: "h2", text: "Previsões para o ano" });
+    blocks.push({ type: "h3", text: yearLabel });
     blocks.push({ type: "p", text: forecast.year });
 
     const { data: brandRow } = await supabaseAdmin
