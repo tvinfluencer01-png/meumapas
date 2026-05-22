@@ -183,7 +183,7 @@ function MapaAstral() {
       a.download = `previsoes-astrais-${new Date().toISOString().slice(0, 10)}.pdf`;
       document.body.appendChild(a); a.click(); a.remove();
       URL.revokeObjectURL(url);
-      toast.success("PDF das previsões pronto.");
+      toast.success("PDF das previsões pronto.", { description: "O download foi iniciado automaticamente." });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Falha ao gerar PDF das previsões.");
     } finally {
