@@ -41,6 +41,36 @@ async function logFnError(
   }
 }
 
+// --- date helpers ----------------------------------------------------------
+function getWeekRange(reference = new Date()) {
+  const d = new Date(reference);
+  const day = d.getDay(); // 0 = domingo, 1 = segunda...
+  const diffToMonday = (day + 6) % 7; // quantos dias para voltar à segunda
+  const monday = new Date(d);
+  monday.setDate(d.getDate() - diffToMonday);
+  monday.setHours(0, 0, 0, 0);
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  sunday.setHours(23, 59, 59, 999);
+  return { monday, sunday };
+}
+
+function formatWeekRange(reference = new Date()) {
+  const { monday, sunday } = getWeekRange(reference);
+  const opts: Intl.DateTimeFormatOptions = { day: "numeric", month: "long", year: "numeric" };
+  const start = monday.toLocaleDateString("pt-BR", opts);
+  const end = sunday.toLocaleDateString("pt-BR", opts);
+  return { start, end, monthLabel: monday.toLocaleDateString("pt-BR", { month: "long", year: "numeric" }) };
+}
+
+function formatMonthLabel(reference = new Date()) {
+  return reference.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+}
+
+function formatYearLabel(reference = new Date()) {
+  return String(reference.getFullYear());
+}
+
 // --- helpers --------------------------------------------------------------
 const SIGNS = [
   "Áries", "Touro", "Gêmeos", "Câncer", "Leão", "Virgem",
@@ -281,13 +311,21 @@ async function buildForecastWithAI(chart: {
     .map((a) => `${a.a} ${a.aspect} ${a.b} (orbe ${a.orb}°)`)
     .join("\n");
 
-  const today = new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+  const today = new Date();
+  const todayStr = today.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+  const week = formatWeekRange(today);
+  const monthLabel = formatMonthLabel(today);
+  const yearLabel = formatYearLabel(today);
 
   const system = `Você é o **Oráculo Cósmico de Astrologia**, astrólogo profissional.
 Escreve em PT-BR, tom acolhedor, claro, prático e poético. Nunca prevê eventos certos — oferece tendências e direções.
 Sem markdown, sem emojis, apenas texto corrido em parágrafos separados por linha em branco.`;
 
-  const prompt = `Data de referência: ${today}.
+  const prompt = `Data de referência: ${todayStr}.
+
+Semana atual: ${week.start} a ${week.end} (${week.monthLabel}).
+Mês atual: ${monthLabel}.
+Ano atual: ${yearLabel}.
 
 Mapa natal do consulente:
 Ascendente: ${ascSign}
@@ -301,10 +339,10 @@ ${aspectsBlock}
 Com base nesse mapa e na fase atual do céu, escreva previsões em PT-BR.
 Responda APENAS com JSON válido (sem cercas de código):
 {
-  "nextDays": "2 a 3 parágrafos sobre tendências para os próximos 5 a 7 dias, com sugestões práticas",
-  "week": "2 a 3 parágrafos sobre a semana atual: emoções, foco, relacionamentos, trabalho",
-  "month": "2 a 3 parágrafos sobre o mês atual: oportunidades, cuidados, tema central",
-  "year": "3 a 4 parágrafos sobre o ano: grandes ciclos, áreas de crescimento, riscos a evitar"
+  "nextDays": "2 a 3 parágrafos sobre tendências para os próximos 5 a 7 dias a partir de ${todayStr}, com sugestões práticas. Mencione explicitamente os dias e o mês.",
+  "week": "2 a 3 parágrafos sobre a semana atual (${week.start} a ${week.end}, ${week.monthLabel}): emoções, foco, relacionamentos, trabalho. Comece mencionando o período exato.",
+  "month": "2 a 3 parágrafos sobre o mês atual (${monthLabel}): oportunidades, cuidados, tema central. Comece mencionando o mês e o ano.",
+  "year": "3 a 4 parágrafos sobre o ano ${yearLabel}: grandes ciclos, áreas de crescimento, riscos a evitar. Comece mencionando o ano."
 }`;
 
   const { text } = await generateText({ model, system, prompt });
@@ -487,14 +525,17 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
         }
       }
 
-      // Previsões
+      // Previsões com contexto de datas
+      const week = formatWeekRange();
+      const monthLabel = formatMonthLabel();
+      const yearLabel = formatYearLabel();
       blocks.push({ type: "h2", text: "Previsões para os próximos dias" });
       blocks.push({ type: "p", text: forecast.nextDays });
-      blocks.push({ type: "h2", text: "Previsões para a semana" });
+      blocks.push({ type: "h2", text: `Previsões para a semana (${week.start} a ${week.end})` });
       blocks.push({ type: "p", text: forecast.week });
-      blocks.push({ type: "h2", text: "Previsões para o mês" });
+      blocks.push({ type: "h2", text: `Previsões para o mês (${monthLabel})` });
       blocks.push({ type: "p", text: forecast.month });
-      blocks.push({ type: "h2", text: "Previsões para o ano" });
+      blocks.push({ type: "h2", text: `Previsões para o ano (${yearLabel})` });
       blocks.push({ type: "p", text: forecast.year });
 
       // Branding opcional
@@ -581,13 +622,16 @@ export const downloadAstroForecastPdf = createServerFn({ method: "POST" })
     if (!forecast) throw new Error("Nenhuma previsão salva para este mapa.");
 
     const blocks: SimplePdfBlock[] = [];
+    const week = formatWeekRange();
+    const monthLabel = formatMonthLabel();
+    const yearLabel = formatYearLabel();
     blocks.push({ type: "h2", text: "Previsões para os próximos dias" });
     blocks.push({ type: "p", text: forecast.nextDays });
-    blocks.push({ type: "h2", text: "Previsões para a semana" });
+    blocks.push({ type: "h2", text: `Previsões para a semana (${week.start} a ${week.end})` });
     blocks.push({ type: "p", text: forecast.week });
-    blocks.push({ type: "h2", text: "Previsões para o mês" });
+    blocks.push({ type: "h2", text: `Previsões para o mês (${monthLabel})` });
     blocks.push({ type: "p", text: forecast.month });
-    blocks.push({ type: "h2", text: "Previsões para o ano" });
+    blocks.push({ type: "h2", text: `Previsões para o ano (${yearLabel})` });
     blocks.push({ type: "p", text: forecast.year });
 
     const { data: brandRow } = await supabaseAdmin
