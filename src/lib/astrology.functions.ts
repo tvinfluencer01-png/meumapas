@@ -557,13 +557,27 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
       const week = formatWeekRange();
       const monthLabel = formatMonthLabel();
       const yearLabel = formatYearLabel();
+      const horoscope = await buildHoroscopeReading({
+        sunSign: sun?.sign,
+        moonSign: moon?.sign,
+        ascSign,
+        weekRange: { start: week.start, end: week.end },
+        monthLabel,
+      });
+      blocks.push({ type: "h2", text: "Leitura horoscópica" });
+      blocks.push({ type: "h3", text: `Semana de ${week.start} a ${week.end}` });
+      blocks.push({ type: "p", text: horoscope });
+
       blocks.push({ type: "h2", text: "Previsões para os próximos dias" });
       blocks.push({ type: "p", text: forecast.nextDays });
-      blocks.push({ type: "h2", text: `Previsões para a semana (${week.start} a ${week.end})` });
+      blocks.push({ type: "h2", text: "Previsões para a semana" });
+      blocks.push({ type: "h3", text: `${week.start} a ${week.end}` });
       blocks.push({ type: "p", text: forecast.week });
-      blocks.push({ type: "h2", text: `Previsões para o mês (${monthLabel})` });
+      blocks.push({ type: "h2", text: "Previsões para o mês" });
+      blocks.push({ type: "h3", text: monthLabel });
       blocks.push({ type: "p", text: forecast.month });
-      blocks.push({ type: "h2", text: `Previsões para o ano (${yearLabel})` });
+      blocks.push({ type: "h2", text: "Previsões para o ano" });
+      blocks.push({ type: "h3", text: yearLabel });
       blocks.push({ type: "p", text: forecast.year });
 
       // Branding opcional
