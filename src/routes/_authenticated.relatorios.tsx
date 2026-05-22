@@ -133,6 +133,31 @@ function RelatoriosPage() {
     },
   });
 
+  // Counts for scope toggle badges
+  const { data: selfCount = 0 } = useQuery({
+    queryKey: ["reports-count", user?.id, "self"],
+    enabled: !!user,
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("reports")
+        .select("*", { head: true, count: "exact" })
+        .is("client_profile_id", null);
+      return count ?? 0;
+    },
+  });
+
+  const { data: clientCount = 0 } = useQuery({
+    queryKey: ["reports-count", user?.id, "client", activeClientId],
+    enabled: !!user && !!activeClientId,
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("reports")
+        .select("*", { head: true, count: "exact" })
+        .eq("client_profile_id", activeClientId!);
+      return count ?? 0;
+    },
+  });
+
   function fallbackDownload(url: string, filename: string) {
     const a = document.createElement("a");
     a.href = url;
