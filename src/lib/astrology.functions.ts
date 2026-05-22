@@ -622,13 +622,16 @@ export const downloadAstroForecastPdf = createServerFn({ method: "POST" })
     if (!forecast) throw new Error("Nenhuma previsão salva para este mapa.");
 
     const blocks: SimplePdfBlock[] = [];
+    const week = formatWeekRange();
+    const monthLabel = formatMonthLabel();
+    const yearLabel = formatYearLabel();
     blocks.push({ type: "h2", text: "Previsões para os próximos dias" });
     blocks.push({ type: "p", text: forecast.nextDays });
-    blocks.push({ type: "h2", text: "Previsões para a semana" });
+    blocks.push({ type: "h2", text: `Previsões para a semana (${week.start} a ${week.end})` });
     blocks.push({ type: "p", text: forecast.week });
-    blocks.push({ type: "h2", text: "Previsões para o mês" });
+    blocks.push({ type: "h2", text: `Previsões para o mês (${monthLabel})` });
     blocks.push({ type: "p", text: forecast.month });
-    blocks.push({ type: "h2", text: "Previsões para o ano" });
+    blocks.push({ type: "h2", text: `Previsões para o ano (${yearLabel})` });
     blocks.push({ type: "p", text: forecast.year });
 
     const { data: brandRow } = await supabaseAdmin
