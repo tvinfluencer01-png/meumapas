@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useActiveSubject } from "@/hooks/use-active-subject";
@@ -93,8 +93,21 @@ function RelatoriosPage() {
   const [loadingKind, setLoadingKind] = useState<Kind | null>(null);
   const { data: activeSubject } = useActiveSubject();
   const hasActiveClient = activeSubject?.kind === "client";
-  const [scope, setScope] = useState<"self" | "client">("client");
+  const [scope, setScope] = useState<"self" | "client">(() => {
+    try {
+      const saved = localStorage.getItem("reports-scope");
+      if (saved === "self" || saved === "client") return saved;
+    } catch { /* noop */ }
+    return "client";
+  });
   const effectiveScope: "self" | "client" = hasActiveClient ? scope : "self";
+
+  // Persist scope selection
+  useEffect(() => {
+    try {
+      localStorage.setItem("reports-scope", scope);
+    } catch { /* noop */ }
+  }, [scope]);
   const [existingPrompt, setExistingPrompt] = useState<{
     kind: Kind;
     report: { id: string; title: string; created_at: string };
