@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import {
   FileText, Download, Sparkles, Heart, Briefcase, Flame, Loader2, Trash2, ScrollText,
-  Coins, Home, HeartPulse, Users,
+  Coins, Home, HeartPulse, Users, Search, CalendarDays, X,
 } from "lucide-react";
 import { CreditCostBadge } from "@/components/CreditCostBadge";
 
