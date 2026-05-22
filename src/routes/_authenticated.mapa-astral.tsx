@@ -787,7 +787,7 @@ function ChartWheel({ chart, userId, svgRefProp, compact }: { chart: any; userId
   }, [view, isZoomed, storageKey]);
 
   return (
-    <div className="glass-card rounded-2xl p-4 relative">
+    <div className="glass-card rounded-2xl p-4 relative z-20">
       <div className="absolute top-3 right-3 z-10 flex items-center gap-1">
         <span
           className="h-7 px-2 rounded-md border border-gold/30 bg-background/70 text-gold text-[10px] font-mono inline-flex items-center tabular-nums"
@@ -1000,7 +1000,7 @@ function ChartWheel({ chart, userId, svgRefProp, compact }: { chart: any; userId
       {/* HTML hover tooltip */}
       {hover && (
         <div
-          className="pointer-events-none absolute z-10 rounded-lg border border-gold/30 bg-background/95 backdrop-blur px-3 py-2 shadow-xl w-[260px]"
+          className="pointer-events-none absolute z-50 rounded-lg border border-gold/30 bg-background/95 backdrop-blur px-3 py-2 shadow-xl w-[260px]"
           style={{ left: Math.min(hover.x + 14, 360), top: Math.max(hover.y - 8, 8) }}
         >
           <p className="font-serif text-gold text-sm leading-tight">{hover.title}</p>
