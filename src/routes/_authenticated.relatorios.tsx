@@ -436,9 +436,39 @@ function RelatoriosPage() {
 
 
         {!reports || reports.length === 0 ? (
-          <div className="glass-card rounded-2xl p-10 text-center text-muted-foreground">
-            Voce ainda nao gerou relatorios. Escolha um acima para comecar.
-          </div>
+          scope === "client" && !hasActiveClient ? (
+            <div className="glass-card rounded-2xl p-10 text-center">
+              <Users className="size-10 text-muted-foreground mx-auto mb-4" />
+              <p className="font-serif text-lg text-stardust">Nenhum cliente ativo</p>
+              <p className="mt-2 text-sm text-muted-foreground max-w-md mx-auto">
+                Você não tem um cliente selecionado no momento. Vá até a lista de clientes para escolher um perfil ativo.
+              </p>
+            </div>
+          ) : scope === "client" && hasActiveClient ? (
+            <div className="glass-card rounded-2xl p-10 text-center">
+              <FileText className="size-10 text-muted-foreground mx-auto mb-4" />
+              <p className="font-serif text-lg text-stardust">Nenhum relatório encontrado</p>
+              <p className="mt-2 text-sm text-muted-foreground max-w-md mx-auto">
+                Não há relatórios gerados para {activeSubject?.full_name ?? "este cliente"}.
+              </p>
+            </div>
+          ) : !activeSubject ? (
+            <div className="glass-card rounded-2xl p-10 text-center">
+              <Sparkles className="size-10 text-muted-foreground mx-auto mb-4" />
+              <p className="font-serif text-lg text-stardust">Dados de nascimento não encontrados</p>
+              <p className="mt-2 text-sm text-muted-foreground max-w-md mx-auto">
+                Complete seu perfil com data de nascimento para poder gerar relatórios.
+              </p>
+            </div>
+          ) : (
+            <div className="glass-card rounded-2xl p-10 text-center">
+              <FileText className="size-10 text-muted-foreground mx-auto mb-4" />
+              <p className="font-serif text-lg text-stardust">Biblioteca vazia</p>
+              <p className="mt-2 text-sm text-muted-foreground max-w-md mx-auto">
+                Você ainda não gerou relatórios. Escolha um tema acima para começar.
+              </p>
+            </div>
+          )
         ) : (
           <div className="space-y-3">
             {reports.map((r) => (
