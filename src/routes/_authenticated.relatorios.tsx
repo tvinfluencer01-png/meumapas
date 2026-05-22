@@ -133,6 +133,31 @@ function RelatoriosPage() {
     },
   });
 
+  // Counts for scope toggle badges
+  const { data: selfCount = 0 } = useQuery({
+    queryKey: ["reports-count", user?.id, "self"],
+    enabled: !!user,
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("reports")
+        .select("*", { head: true, count: "exact" })
+        .is("client_profile_id", null);
+      return count ?? 0;
+    },
+  });
+
+  const { data: clientCount = 0 } = useQuery({
+    queryKey: ["reports-count", user?.id, "client", activeClientId],
+    enabled: !!user && !!activeClientId,
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("reports")
+        .select("*", { head: true, count: "exact" })
+        .eq("client_profile_id", activeClientId!);
+      return count ?? 0;
+    },
+  });
+
   function fallbackDownload(url: string, filename: string) {
     const a = document.createElement("a");
     a.href = url;
@@ -282,13 +307,16 @@ function RelatoriosPage() {
               aria-selected={scope === "self"}
               onClick={() => setScope("self")}
               disabled={!!loadingKind}
-              className={`px-3 py-1.5 rounded-lg transition disabled:opacity-50 ${
+              className={`px-3 py-1.5 rounded-lg transition disabled:opacity-50 inline-flex items-center gap-1.5 ${
                 scope === "self"
                   ? "bg-gold/15 text-gold"
                   : "text-muted-foreground hover:text-stardust"
               }`}
             >
               Meus relatórios
+              <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${scope === "self" ? "bg-gold/25 text-gold" : "bg-muted text-muted-foreground"}`}>
+                {selfCount}
+              </span>
             </button>
             <button
               type="button"
@@ -304,6 +332,9 @@ function RelatoriosPage() {
             >
               <Users className="size-3.5" />
               {activeSubject?.full_name?.split(" ")[0] ?? "Cliente ativo"}
+              <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${scope === "client" ? "bg-gold/25 text-gold" : "bg-muted text-muted-foreground"}`}>
+                {clientCount}
+              </span>
             </button>
           </div>
         </div>
@@ -371,13 +402,16 @@ function RelatoriosPage() {
                 role="tab"
                 aria-selected={scope === "self"}
                 onClick={() => setScope("self")}
-                className={`px-3 py-1.5 rounded-lg transition ${
+                className={`px-3 py-1.5 rounded-lg transition inline-flex items-center gap-1.5 ${
                   scope === "self"
                     ? "bg-gold/15 text-gold"
                     : "text-muted-foreground hover:text-stardust"
                 }`}
               >
                 Meus relatórios
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${scope === "self" ? "bg-gold/25 text-gold" : "bg-muted text-muted-foreground"}`}>
+                  {selfCount}
+                </span>
               </button>
               <button
                 type="button"
@@ -392,6 +426,9 @@ function RelatoriosPage() {
               >
                 <Users className="size-3.5" />
                 {activeSubject?.full_name?.split(" ")[0] ?? "Cliente ativo"}
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${scope === "client" ? "bg-gold/25 text-gold" : "bg-muted text-muted-foreground"}`}>
+                  {clientCount}
+                </span>
               </button>
             </div>
           )}
