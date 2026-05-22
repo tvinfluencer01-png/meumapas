@@ -41,6 +41,36 @@ async function logFnError(
   }
 }
 
+// --- date helpers ----------------------------------------------------------
+function getWeekRange(reference = new Date()) {
+  const d = new Date(reference);
+  const day = d.getDay(); // 0 = domingo, 1 = segunda...
+  const diffToMonday = (day + 6) % 7; // quantos dias para voltar à segunda
+  const monday = new Date(d);
+  monday.setDate(d.getDate() - diffToMonday);
+  monday.setHours(0, 0, 0, 0);
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  sunday.setHours(23, 59, 59, 999);
+  return { monday, sunday };
+}
+
+function formatWeekRange(reference = new Date()) {
+  const { monday, sunday } = getWeekRange(reference);
+  const opts: Intl.DateTimeFormatOptions = { day: "numeric", month: "long", year: "numeric" };
+  const start = monday.toLocaleDateString("pt-BR", opts);
+  const end = sunday.toLocaleDateString("pt-BR", opts);
+  return { start, end, monthLabel: monday.toLocaleDateString("pt-BR", { month: "long", year: "numeric" }) };
+}
+
+function formatMonthLabel(reference = new Date()) {
+  return reference.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+}
+
+function formatYearLabel(reference = new Date()) {
+  return String(reference.getFullYear());
+}
+
 // --- helpers --------------------------------------------------------------
 const SIGNS = [
   "Áries", "Touro", "Gêmeos", "Câncer", "Leão", "Virgem",
