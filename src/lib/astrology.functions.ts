@@ -311,13 +311,21 @@ async function buildForecastWithAI(chart: {
     .map((a) => `${a.a} ${a.aspect} ${a.b} (orbe ${a.orb}°)`)
     .join("\n");
 
-  const today = new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+  const today = new Date();
+  const todayStr = today.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+  const week = formatWeekRange(today);
+  const monthLabel = formatMonthLabel(today);
+  const yearLabel = formatYearLabel(today);
 
   const system = `Você é o **Oráculo Cósmico de Astrologia**, astrólogo profissional.
 Escreve em PT-BR, tom acolhedor, claro, prático e poético. Nunca prevê eventos certos — oferece tendências e direções.
 Sem markdown, sem emojis, apenas texto corrido em parágrafos separados por linha em branco.`;
 
-  const prompt = `Data de referência: ${today}.
+  const prompt = `Data de referência: ${todayStr}.
+
+Semana atual: ${week.start} a ${week.end} (${week.monthLabel}).
+Mês atual: ${monthLabel}.
+Ano atual: ${yearLabel}.
 
 Mapa natal do consulente:
 Ascendente: ${ascSign}
@@ -331,10 +339,10 @@ ${aspectsBlock}
 Com base nesse mapa e na fase atual do céu, escreva previsões em PT-BR.
 Responda APENAS com JSON válido (sem cercas de código):
 {
-  "nextDays": "2 a 3 parágrafos sobre tendências para os próximos 5 a 7 dias, com sugestões práticas",
-  "week": "2 a 3 parágrafos sobre a semana atual: emoções, foco, relacionamentos, trabalho",
-  "month": "2 a 3 parágrafos sobre o mês atual: oportunidades, cuidados, tema central",
-  "year": "3 a 4 parágrafos sobre o ano: grandes ciclos, áreas de crescimento, riscos a evitar"
+  "nextDays": "2 a 3 parágrafos sobre tendências para os próximos 5 a 7 dias a partir de ${todayStr}, com sugestões práticas. Mencione explicitamente os dias e o mês.",
+  "week": "2 a 3 parágrafos sobre a semana atual (${week.start} a ${week.end}, ${week.monthLabel}): emoções, foco, relacionamentos, trabalho. Comece mencionando o período exato.",
+  "month": "2 a 3 parágrafos sobre o mês atual (${monthLabel}): oportunidades, cuidados, tema central. Comece mencionando o mês e o ano.",
+  "year": "3 a 4 parágrafos sobre o ano ${yearLabel}: grandes ciclos, áreas de crescimento, riscos a evitar. Comece mencionando o ano."
 }`;
 
   const { text } = await generateText({ model, system, prompt });
