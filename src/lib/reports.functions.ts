@@ -181,7 +181,7 @@ export const generateReport = createServerFn({ method: "POST" })
 
     // 1) Load active context — se scope="self", força usar o próprio usuário
     // (ignorando o cliente ativo). Caso contrário, usa o subject ativo.
-    const subjectPromise: Promise<any> =
+    const subjectPromise: PromiseLike<any> =
       data.scope === "self"
         ? supabase
             .from("birth_data")
