@@ -564,9 +564,24 @@ function RelatoriosPage() {
               </p>
             </div>
           )
+        ) : filteredReports.length === 0 ? (
+          <div className="glass-card rounded-2xl p-10 text-center">
+            <Search className="size-10 text-muted-foreground mx-auto mb-4" />
+            <p className="font-serif text-lg text-stardust">Nenhum resultado</p>
+            <p className="mt-2 text-sm text-muted-foreground max-w-md mx-auto">
+              Não encontramos relatórios para "{searchQuery}" no período selecionado.
+            </p>
+            <button
+              type="button"
+              onClick={() => { setSearchQuery(""); setPeriodFilter("all"); }}
+              className="mt-4 px-4 py-2 rounded-lg border border-gold/30 text-gold hover:bg-gold/10 transition text-sm inline-flex items-center gap-2"
+            >
+              <X className="size-4" /> Limpar filtros
+            </button>
+          </div>
         ) : (
           <div className="space-y-3">
-            {reports.map((r) => (
+            {filteredReports.map((r) => (
               <div
                 key={r.id}
                 className="glass-card rounded-xl p-4 flex items-center gap-4 hover:border-gold/40 transition"
