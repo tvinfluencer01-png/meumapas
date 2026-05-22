@@ -171,12 +171,15 @@ function RelatoriosPage() {
       const title = CARDS.find((c) => c.kind === kind)?.title ?? "Relatorio";
       showLoader({
         title: `Gerando ${title}`,
-        subtitle: "Oraculo em ação",
+        subtitle:
+          effectiveScope === "client" && activeSubject?.kind === "client"
+            ? `Para ${activeSubject.full_name}`
+            : "Oraculo em ação",
         messages: ["Iniciando a leitura cósmica..."],
         progress: 0,
         step: "Iniciando a leitura cósmica...",
       });
-      const stream = await generate({ data: { kind } });
+      const stream = await generate({ data: { kind, scope: effectiveScope } });
       let result: { signedUrl: string | null; title: string; id: string | null } | null = null;
       for await (const evt of stream) {
         if (evt.type === "progress") {
