@@ -171,12 +171,15 @@ function RelatoriosPage() {
       const title = CARDS.find((c) => c.kind === kind)?.title ?? "Relatorio";
       showLoader({
         title: `Gerando ${title}`,
-        subtitle: "Oraculo em ação",
+        subtitle:
+          effectiveScope === "client" && activeSubject?.kind === "client"
+            ? `Para ${activeSubject.full_name}`
+            : "Oraculo em ação",
         messages: ["Iniciando a leitura cósmica..."],
         progress: 0,
         step: "Iniciando a leitura cósmica...",
       });
-      const stream = await generate({ data: { kind } });
+      const stream = await generate({ data: { kind, scope: effectiveScope } });
       let result: { signedUrl: string | null; title: string; id: string | null } | null = null;
       for await (const evt of stream) {
         if (evt.type === "progress") {
@@ -256,8 +259,59 @@ function RelatoriosPage() {
         </p>
       </header>
 
+      {/* Generation target indicator + scope toggle */}
+      {hasActiveClient && (
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 -mt-4">
+          <div className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+            <Sparkles className="size-3.5 text-gold" />
+            Será salvo em:{" "}
+            <span className="text-stardust font-medium">
+              {effectiveScope === "client"
+                ? `Relatórios de ${activeSubject?.full_name ?? "cliente"}`
+                : "Meus relatórios"}
+            </span>
+          </div>
+          <div
+            role="tablist"
+            aria-label="Escopo da geração"
+            className="inline-flex rounded-xl border border-gold/30 bg-night/40 p-1 text-xs self-start sm:self-auto"
+          >
+            <button
+              type="button"
+              role="tab"
+              aria-selected={scope === "self"}
+              onClick={() => setScope("self")}
+              disabled={!!loadingKind}
+              className={`px-3 py-1.5 rounded-lg transition disabled:opacity-50 ${
+                scope === "self"
+                  ? "bg-gold/15 text-gold"
+                  : "text-muted-foreground hover:text-stardust"
+              }`}
+            >
+              Meus relatórios
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={scope === "client"}
+              onClick={() => setScope("client")}
+              disabled={!!loadingKind}
+              className={`px-3 py-1.5 rounded-lg transition inline-flex items-center gap-1.5 disabled:opacity-50 ${
+                scope === "client"
+                  ? "bg-gold/15 text-gold"
+                  : "text-muted-foreground hover:text-stardust"
+              }`}
+            >
+              <Users className="size-3.5" />
+              {activeSubject?.full_name?.split(" ")[0] ?? "Cliente ativo"}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Generate cards */}
       <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
         {CARDS.map((c) => {
           const isLoading = loadingKind === c.kind;
           return (
