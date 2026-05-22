@@ -402,13 +402,16 @@ function RelatoriosPage() {
                 role="tab"
                 aria-selected={scope === "self"}
                 onClick={() => setScope("self")}
-                className={`px-3 py-1.5 rounded-lg transition ${
+                className={`px-3 py-1.5 rounded-lg transition inline-flex items-center gap-1.5 ${
                   scope === "self"
                     ? "bg-gold/15 text-gold"
                     : "text-muted-foreground hover:text-stardust"
                 }`}
               >
                 Meus relatórios
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${scope === "self" ? "bg-gold/25 text-gold" : "bg-muted text-muted-foreground"}`}>
+                  {selfCount}
+                </span>
               </button>
               <button
                 type="button"
@@ -423,6 +426,9 @@ function RelatoriosPage() {
               >
                 <Users className="size-3.5" />
                 {activeSubject?.full_name?.split(" ")[0] ?? "Cliente ativo"}
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${scope === "client" ? "bg-gold/25 text-gold" : "bg-muted text-muted-foreground"}`}>
+                  {clientCount}
+                </span>
               </button>
             </div>
           )}
