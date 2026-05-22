@@ -481,6 +481,54 @@ function RelatoriosPage() {
           )}
         </div>
 
+        {/* Filters */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Buscar por título..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-9 py-2 rounded-xl border border-gold/20 bg-night/40 text-sm text-stardust placeholder:text-muted-foreground focus:outline-none focus:border-gold/50 transition"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-stardust transition"
+                aria-label="Limpar busca"
+              >
+                <X className="size-4" />
+              </button>
+            )}
+          </div>
+          <div className="inline-flex items-center gap-2">
+            <CalendarDays className="size-4 text-muted-foreground" />
+            <div className="inline-flex rounded-xl border border-gold/20 bg-night/40 p-1 text-xs">
+              {[
+                { key: "all" as const, label: "Todos" },
+                { key: "7d" as const, label: "7 dias" },
+                { key: "30d" as const, label: "30 dias" },
+                { key: "90d" as const, label: "90 dias" },
+                { key: "year" as const, label: "Este ano" },
+              ].map((p) => (
+                <button
+                  key={p.key}
+                  type="button"
+                  onClick={() => setPeriodFilter(p.key)}
+                  className={`px-2.5 py-1.5 rounded-lg transition whitespace-nowrap ${
+                    periodFilter === p.key
+                      ? "bg-gold/15 text-gold"
+                      : "text-muted-foreground hover:text-stardust"
+                  }`}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
 
         {!reports || reports.length === 0 ? (
           scope === "client" && !hasActiveClient ? (
