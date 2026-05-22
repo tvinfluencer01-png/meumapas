@@ -171,18 +171,49 @@ const AiOutput = z.object({
 
 export const generateReport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ kind: KIND }).parse(d))
+  .inputValidator((d) =>
+    z.object({ kind: KIND, scope: z.enum(["self", "client"]).optional() }).parse(d),
+  )
   .handler(async function* ({ data, context }) {
     const { supabase, userId } = context;
     yield { type: "progress" as const, progress: 5, step: "Carregando seus dados cósmicos..." };
 
 
-    // 1) Load active context (client selected in the system, or the user's own profile)
+    // 1) Load active context — se scope="self", força usar o próprio usuário
+    // (ignorando o cliente ativo). Caso contrário, usa o subject ativo.
+    const subjectPromise: Promise<any> =
+      data.scope === "self"
+        ? supabase
+            .from("birth_data")
+            .select("*")
+            .eq("user_id", userId)
+            .eq("is_primary", true)
+            .maybeSingle()
+            .then(({ data: b }: any) =>
+              b
+                ? {
+                    kind: "self" as const,
+                    client_profile_id: null,
+                    birth_data_id: b.id,
+                    full_name: b.full_name,
+                    birth_date: b.birth_date,
+                    birth_time: b.birth_time,
+                    time_unknown: b.time_unknown,
+                    city: b.city,
+                    country: b.country,
+                    latitude: b.latitude != null ? Number(b.latitude) : null,
+                    longitude: b.longitude != null ? Number(b.longitude) : null,
+                    timezone: b.timezone,
+                  }
+                : null,
+            )
+        : resolveActiveSubject(supabase, userId);
+
     const [{ data: settings }, { data: brandRow }, { data: brandingSub }, birth] = await Promise.all([
       supabase.from("user_settings").select("*").eq("user_id", userId).maybeSingle(),
       supabase.from("pdf_branding").select("*").eq("user_id", userId).maybeSingle(),
       supabase.from("user_subscriptions").select("status").eq("user_id", userId).eq("addon_id", "sub_branding_pdf").eq("status", "active").maybeSingle(),
-      resolveActiveSubject(supabase, userId),
+      subjectPromise,
     ]);
     const brandingAddonActive = !!brandingSub;
 
