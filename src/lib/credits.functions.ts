@@ -60,6 +60,11 @@ export const CREDIT_COST_CATALOG = {
     label: "Relatório PDF — Amizades",
     description: "Padrões sociais, vínculos de amizade e como cultivar círculos verdadeiros.",
   },
+  report_business: {
+    amount: 8,
+    label: "Relatório PDF — Mapa Empresarial",
+    description: "Análise profunda da empresa: arquétipo, sócios, dinâmicas entre sócios e previsões anuais.",
+  },
   tarot_reading: {
     amount: 2,
     label: "Leitura de Tarot",
