@@ -73,73 +73,31 @@ function BusinessMapPage() {
       return;
     }
     setBusy(true);
-    setProgress(0);
+    setProgress(10);
+    setStep("Gerando análise estratégica com IA...");
     setResult(null);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token;
-      const res = await fetch("/_serverFn/src_lib_business_functions_ts--generateBusinessReport_createServerFn_handler", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      const r: any = await generateFn({
+        data: {
+          company_name: companyName,
+          founding_date: founding,
+          industry: industry || null,
+          notes: notes || null,
+          partners: validPartners.map((p) => ({
+            full_name: p.full_name,
+            birth_date: p.birth_date,
+            role: p.role || null,
+          })),
         },
-        body: JSON.stringify({
-          data: {
-            company_name: companyName,
-            founding_date: founding,
-            industry: industry || null,
-            notes: notes || null,
-            partners: validPartners.map((p) => ({
-              full_name: p.full_name,
-              birth_date: p.birth_date,
-              role: p.role || null,
-            })),
-          },
-        }),
-      });
-      if (!res.ok || !res.body) {
-        // Fallback: useServerFn direct call (non-streaming aggregation)
-        const r: any = await generateFn({
-          data: {
-            company_name: companyName,
-            founding_date: founding,
-            industry: industry || null,
-            notes: notes || null,
-            partners: validPartners.map((p) => ({
-              full_name: p.full_name,
-              birth_date: p.birth_date,
-              role: p.role || null,
-            })),
-          },
-        } as any);
-        if (r?.result) setResult({ signedUrl: r.result.signedUrl, title: r.result.title });
-        return;
+      } as any);
+      setProgress(100);
+      const final = r?.result ?? r;
+      if (final?.signedUrl || final?.storagePath) {
+        setResult({ signedUrl: final.signedUrl ?? null, title: final.title ?? "Mapa Empresarial" });
+        toast.success("Relatório gerado!");
+      } else {
+        toast.success("Relatório gerado! Veja em Relatórios.");
       }
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buf = "";
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        buf += decoder.decode(value, { stream: true });
-        for (const line of buf.split("\n")) {
-          const trimmed = line.trim();
-          if (!trimmed) continue;
-          try {
-            const j = JSON.parse(trimmed);
-            if (j?.type === "progress") {
-              setProgress(j.progress);
-              setStep(j.step);
-            } else if (j?.type === "done") {
-              setProgress(100);
-              setResult({ signedUrl: j.result?.signedUrl ?? null, title: j.result?.title ?? "Mapa Empresarial" });
-            }
-          } catch { /* partial line */ }
-        }
-        buf = buf.endsWith("\n") ? "" : buf.split("\n").pop() ?? "";
-      }
-      toast.success("Relatório gerado!");
     } catch (e: any) {
       toast.error(e?.message ?? "Falha ao gerar");
     } finally {
