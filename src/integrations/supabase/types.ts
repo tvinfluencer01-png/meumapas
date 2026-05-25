@@ -409,6 +409,36 @@ export type Database = {
         }
         Relationships: []
       }
+      evolution_settings: {
+        Row: {
+          base_url: string | null
+          enabled: boolean
+          global_api_key: string | null
+          id: boolean
+          instance_name: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          base_url?: string | null
+          enabled?: boolean
+          global_api_key?: string | null
+          id?: boolean
+          instance_name?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          base_url?: string | null
+          enabled?: boolean
+          global_api_key?: string | null
+          id?: boolean
+          instance_name?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       horoscope_log: {
         Row: {
           channel: string
