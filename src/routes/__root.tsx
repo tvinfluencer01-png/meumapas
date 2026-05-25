@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
@@ -35,28 +36,60 @@ function NotFoundComponent() {
   );
 }
 
+function isChunkLoadError(error: unknown): boolean {
+  const msg = (error as { message?: string } | null)?.message ?? String(error ?? "");
+  return (
+    /Importing a module script failed/i.test(msg) ||
+    /Failed to fetch dynamically imported module/i.test(msg) ||
+    /Load failed/i.test(msg) ||
+    /ChunkLoadError/i.test(msg) ||
+    /error loading dynamically imported module/i.test(msg)
+  );
+}
+
+function hardReload() {
+  if (typeof window === "undefined") return;
+  const url = new URL(window.location.href);
+  url.searchParams.set("_r", Date.now().toString(36));
+  window.location.replace(url.toString());
+}
+
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
+  const chunkError = isChunkLoadError(error);
+
+  useEffect(() => {
+    if (chunkError) {
+      const t = window.setTimeout(hardReload, 600);
+      return () => window.clearTimeout(t);
+    }
+  }, [chunkError]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          This page didn't load
+          {chunkError ? "Atualizando para a versão mais recente…" : "This page didn't load"}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Something went wrong on our end. You can try refreshing or head back home.
+          {chunkError
+            ? "Detectamos uma nova versão do app. Recarregando automaticamente."
+            : "Something went wrong on our end. You can try refreshing or head back home."}
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
             onClick={() => {
+              if (chunkError) {
+                hardReload();
+                return;
+              }
               router.invalidate();
               reset();
             }}
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Try again
+            {chunkError ? "Recarregar agora" : "Try again"}
           </button>
           <a
             href="/"
