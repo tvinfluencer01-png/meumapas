@@ -8,7 +8,7 @@ import { Starfield } from "@/components/Starfield";
 import { UserProfileDialog } from "@/components/UserProfileDialog";
 import { Logo } from "@/components/Logo";
 import {
-  LayoutDashboard, CircleDot, Hash, MessageCircle, LogOut, Menu, X, ScrollText, Shield, Settings, Coins, Wand2, TreePine, Crown, Infinity as InfinityIcon, FileBadge, User as UserIcon, Palette, Users, UserCircle2, Loader2,
+  LayoutDashboard, CircleDot, Hash, MessageCircle, LogOut, Menu, X, ScrollText, Shield, Settings, Coins, Wand2, TreePine, Crown, Infinity as InfinityIcon, FileBadge, User as UserIcon, Palette, Users, UserCircle2, Loader2, Sun, Building2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -53,6 +53,8 @@ const ADDON_MENU: Record<string, { label: string; to: string; icon: typeof Layou
   sub_tarot_unlimited: { label: "Tarot Ilimitado", to: "/tarot", icon: Wand2 },
   sub_kabbalah_unlimited: { label: "Meditação Ilimitada", to: "/meditacao", icon: TreePine },
   sub_kabbalistic_numerology: { label: "Numerologia Cabalística", to: "/numerologia-cabalistica", icon: Hash },
+  sub_daily_horoscope: { label: "Horóscopo Diário", to: "/horoscopo", icon: Sun },
+  sub_business_map: { label: "Mapa Empresarial", to: "/mapa-empresarial", icon: Building2 },
 };
 
 

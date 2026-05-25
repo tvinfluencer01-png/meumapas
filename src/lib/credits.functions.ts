@@ -60,6 +60,11 @@ export const CREDIT_COST_CATALOG = {
     label: "Relatório PDF — Amizades",
     description: "Padrões sociais, vínculos de amizade e como cultivar círculos verdadeiros.",
   },
+  report_business: {
+    amount: 8,
+    label: "Relatório PDF — Mapa Empresarial",
+    description: "Análise profunda da empresa: arquétipo, sócios, dinâmicas entre sócios e previsões anuais.",
+  },
   tarot_reading: {
     amount: 2,
     label: "Leitura de Tarot",
@@ -201,6 +206,7 @@ export async function hasUnlimitedAccess(
     report_family: "sub_unlimited_family",
     report_health: "sub_unlimited_health",
     report_friendships: "sub_unlimited_friendships",
+    report_business: "sub_business_map",
   };
   const addonIds: string[] = [];
   if (action.startsWith("report_")) {

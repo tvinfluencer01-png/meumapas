@@ -1,0 +1,148 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { generateText } from "ai";
+import { createLovableAiGatewayProvider } from "@/lib/ai-gateway";
+
+/**
+ * Daily horoscope cron handler.
+ * Triggered by pg_cron at 10:00 UTC (07:00 BRT).
+ * Auth: anon apikey header (cron pattern).
+ *
+ * For each enabled subscription that has not been sent today:
+ *  - generate a personalized horoscope with Lovable AI
+ *  - deliver via WhatsApp (Twilio) if configured
+ *  - email delivery is logged as 'skipped:no_email_infra' until email infra is set up
+ *  - mark last_sent_on so next run won't re-send
+ */
+export const Route = createFileRoute("/api/public/hooks/daily-horoscope")({
+  server: {
+    handlers: {
+      POST: handler,
+      GET: handler,
+    },
+  },
+});
+
+async function handler({ request }: { request: Request }) {
+  const apikey = request.headers.get("apikey");
+  if (apikey !== process.env.SUPABASE_PUBLISHABLE_KEY && apikey !== process.env.SUPABASE_ANON_KEY) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+
+  const today = new Date().toISOString().slice(0, 10);
+  const { data: subs, error } = await supabaseAdmin
+    .from("horoscope_subscriptions")
+    .select("*")
+    .eq("enabled", true)
+    .or(`last_sent_on.is.null,last_sent_on.lt.${today}`)
+    .limit(500);
+  if (error) return new Response(error.message, { status: 500 });
+
+  const { data: twilio } = await supabaseAdmin
+    .from("twilio_settings")
+    .select("*")
+    .eq("id", true)
+    .maybeSingle();
+
+  const apiKey = process.env.LOVABLE_API_KEY;
+  if (!apiKey) return new Response("LOVABLE_API_KEY missing", { status: 500 });
+  const provider = createLovableAiGatewayProvider(apiKey);
+  const model = provider.chatModel("google/gemini-2.5-flash");
+
+  let processed = 0;
+  let delivered = 0;
+
+  for (const s of subs ?? []) {
+    if (!s.sun_sign) {
+      await supabaseAdmin.from("horoscope_log").insert({
+        user_id: s.user_id, date: today, channel: "system", status: "skipped",
+        detail: "sun_sign missing", sign: null,
+      });
+      continue;
+    }
+
+    let body = "";
+    try {
+      const prompt = `Escreva um horóscopo PERSONALIZADO em pt-BR para hoje (${today}) para o signo ${s.sun_sign}.
+Inclua, em até 6 linhas curtas e claras:
+- 💛 Amor:
+- 💼 Trabalho:
+- ⚡ Energia:
+- 🌟 Conselho do dia:
+Tom inspirador, simbólico mas prático. Não use markdown, apenas emojis e quebras de linha.`;
+      const { text } = await generateText({ model, prompt, temperature: 0.85 });
+      body = text.trim();
+    } catch (e: any) {
+      await supabaseAdmin.from("horoscope_log").insert({
+        user_id: s.user_id, date: today, channel: "ai", status: "error",
+        detail: String(e?.message ?? e).slice(0, 240), sign: s.sun_sign,
+      });
+      continue;
+    }
+
+    const message = `🌌 Horóscopo de hoje — ${s.sun_sign}\n\n${body}\n\n— Cosmic AI`;
+    processed += 1;
+
+    // WhatsApp via Twilio
+    if (s.channel_whatsapp && s.phone_e164) {
+      if (twilio?.enabled && twilio.account_sid && twilio.auth_token && twilio.whatsapp_from) {
+        try {
+          const form = new URLSearchParams();
+          form.set("From", `whatsapp:${twilio.whatsapp_from}`);
+          form.set("To", `whatsapp:${s.phone_e164}`);
+          form.set("Body", message);
+          const res = await fetch(
+            `https://api.twilio.com/2010-04-01/Accounts/${twilio.account_sid}/Messages.json`,
+            {
+              method: "POST",
+              headers: {
+                Authorization:
+                  "Basic " + btoa(`${twilio.account_sid}:${twilio.auth_token}`),
+                "Content-Type": "application/x-www-form-urlencoded",
+              },
+              body: form.toString(),
+            },
+          );
+          if (!res.ok) {
+            const t = await res.text();
+            await supabaseAdmin.from("horoscope_log").insert({
+              user_id: s.user_id, date: today, channel: "whatsapp", status: "error",
+              detail: `HTTP ${res.status}: ${t.slice(0, 200)}`, sign: s.sun_sign,
+            });
+          } else {
+            delivered += 1;
+            await supabaseAdmin.from("horoscope_log").insert({
+              user_id: s.user_id, date: today, channel: "whatsapp", status: "sent",
+              detail: null, sign: s.sun_sign,
+            });
+          }
+        } catch (e: any) {
+          await supabaseAdmin.from("horoscope_log").insert({
+            user_id: s.user_id, date: today, channel: "whatsapp", status: "error",
+            detail: String(e?.message ?? e).slice(0, 240), sign: s.sun_sign,
+          });
+        }
+      } else {
+        await supabaseAdmin.from("horoscope_log").insert({
+          user_id: s.user_id, date: today, channel: "whatsapp", status: "skipped",
+          detail: "twilio not configured", sign: s.sun_sign,
+        });
+      }
+    }
+
+    // Email: log as skipped — email delivery requires email infra (see Cloud → Emails).
+    if (s.channel_email && s.email) {
+      await supabaseAdmin.from("horoscope_log").insert({
+        user_id: s.user_id, date: today, channel: "email", status: "skipped",
+        detail: "email infra not configured", sign: s.sun_sign,
+      });
+    }
+
+    await supabaseAdmin
+      .from("horoscope_subscriptions")
+      .update({ last_sent_on: today })
+      .eq("user_id", s.user_id);
+  }
+
+  return Response.json({ ok: true, processed, delivered });
+}
