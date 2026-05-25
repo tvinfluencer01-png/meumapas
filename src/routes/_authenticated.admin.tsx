@@ -99,6 +99,9 @@ function AdminPage() {
           <TabsTrigger value="twilio" className="gap-2">
             <MessageSquare className="size-4" /> Twilio
           </TabsTrigger>
+          <TabsTrigger value="evolution" className="gap-2">
+            <Zap className="size-4" /> Evolution API
+          </TabsTrigger>
           <TabsTrigger value="mercadopago" className="gap-2">
             <Wallet className="size-4" /> Mercado Pago
           </TabsTrigger>
@@ -118,6 +121,9 @@ function AdminPage() {
         </TabsContent>
         <TabsContent value="twilio" className="mt-0">
           <TwilioForm />
+        </TabsContent>
+        <TabsContent value="evolution" className="mt-0">
+          <EvolutionForm />
         </TabsContent>
         <TabsContent value="mercadopago" className="mt-0">
           <MercadoPagoForm />
