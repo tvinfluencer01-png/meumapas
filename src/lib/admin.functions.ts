@@ -729,3 +729,212 @@ export const adminSetUserSubscription = createServerFn({ method: "POST" })
     }
     return { ok: true };
   });
+
+// --- Evolution API (WhatsApp) ---------------------------------------------
+
+function normalizeBaseUrl(url: string): string {
+  return url.trim().replace(/\/+$/, "");
+}
+
+function digitsOnly(phone: string): string {
+  return phone.replace(/\D+/g, "");
+}
+
+export const getEvolutionSettings = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.userId);
+    const { data, error } = await (supabaseAdmin as any)
+      .from("evolution_settings")
+      .select("base_url, instance_name, enabled, updated_at, global_api_key")
+      .eq("id", true)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return {
+      base_url: data?.base_url ?? "",
+      instance_name: data?.instance_name ?? "",
+      enabled: data?.enabled ?? false,
+      updated_at: data?.updated_at ?? null,
+      has_api_key: !!data?.global_api_key,
+    };
+  });
+
+const EvoSaveSchema = z.object({
+  base_url: z
+    .string()
+    .trim()
+    .url("URL base inválida (ex: https://api.seudominio.com)")
+    .or(z.literal("")),
+  global_api_key: z.string().trim().max(400).optional(),
+  instance_name: z
+    .string()
+    .trim()
+    .max(80)
+    .regex(/^[a-zA-Z0-9_-]*$/u, "Use apenas letras, números, hífen e underscore")
+    .optional()
+    .default(""),
+  enabled: z.boolean(),
+});
+
+async function evolutionFetch(
+  baseUrl: string,
+  apiKey: string,
+  path: string,
+  init?: RequestInit,
+): Promise<Response> {
+  const url = `${normalizeBaseUrl(baseUrl)}${path.startsWith("/") ? "" : "/"}${path}`;
+  return fetch(url, {
+    ...(init ?? {}),
+    headers: {
+      apikey: apiKey,
+      "Content-Type": "application/json",
+      ...(init?.headers ?? {}),
+    },
+  });
+}
+
+export const testEvolutionConnection = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({
+      base_url: z.string().trim().url(),
+      global_api_key: z.string().trim().optional().default(""),
+      instance_name: z.string().trim().optional().default(""),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    let key = data.global_api_key?.trim() || "";
+    if (!key) {
+      const { data: existing } = await (supabaseAdmin as any)
+        .from("evolution_settings")
+        .select("global_api_key")
+        .eq("id", true)
+        .maybeSingle();
+      key = existing?.global_api_key ?? "";
+    }
+    if (!key) throw new Error("Informe a API Key global para testar a conexão.");
+
+    // If instance name provided, check its connection state; otherwise list instances
+    let res: Response;
+    if (data.instance_name) {
+      res = await evolutionFetch(
+        data.base_url,
+        key,
+        `/instance/connectionState/${encodeURIComponent(data.instance_name)}`,
+        { method: "GET" },
+      );
+    } else {
+      res = await evolutionFetch(data.base_url, key, `/instance/fetchInstances`, { method: "GET" });
+    }
+    const json = await res.json().catch(() => ({} as any));
+    if (res.status === 401 || res.status === 403) {
+      throw new Error("API Key inválida ou sem permissão.");
+    }
+    if (res.status === 404 && data.instance_name) {
+      throw new Error(`Instância "${data.instance_name}" não encontrada nesta URL.`);
+    }
+    if (!res.ok) {
+      throw new Error(`Evolution recusou (HTTP ${res.status}): ${JSON.stringify(json).slice(0, 240)}`);
+    }
+    if (data.instance_name) {
+      const state =
+        json?.instance?.state ??
+        json?.state ??
+        json?.status ??
+        "unknown";
+      return { ok: true, mode: "instance" as const, state: String(state), raw: json };
+    }
+    const count = Array.isArray(json) ? json.length : 0;
+    return { ok: true, mode: "list" as const, instances: count };
+  });
+
+export const saveEvolutionSettings = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => EvoSaveSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+
+    if (data.enabled) {
+      if (!data.base_url) throw new Error("Informe a URL base para ativar a Evolution.");
+      if (!data.instance_name) throw new Error("Informe o nome da instância para ativar.");
+      let key = data.global_api_key?.trim() || "";
+      if (!key) {
+        const { data: existing } = await (supabaseAdmin as any)
+          .from("evolution_settings")
+          .select("global_api_key")
+          .eq("id", true)
+          .maybeSingle();
+        key = existing?.global_api_key ?? "";
+      }
+      if (!key) throw new Error("Informe a API Key para ativar.");
+      const res = await evolutionFetch(
+        data.base_url,
+        key,
+        `/instance/connectionState/${encodeURIComponent(data.instance_name)}`,
+        { method: "GET" },
+      );
+      if (!res.ok) {
+        throw new Error(`Não foi possível validar a instância (HTTP ${res.status}). Verifique URL, API Key e nome da instância.`);
+      }
+    }
+
+    const update: Record<string, unknown> = {
+      base_url: data.base_url ? normalizeBaseUrl(data.base_url) : null,
+      instance_name: data.instance_name || null,
+      enabled: data.enabled,
+      updated_by: context.userId,
+    };
+    if (data.global_api_key && data.global_api_key.length > 0) {
+      update.global_api_key = data.global_api_key;
+    }
+    const { error } = await (supabaseAdmin as any)
+      .from("evolution_settings")
+      .update(update)
+      .eq("id", true);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const sendEvolutionTest = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({
+      to: z
+        .string()
+        .trim()
+        .regex(/^\+?[1-9]\d{7,14}$/u, "Número em formato internacional (ex: +5511999998888)"),
+      text: z.string().trim().min(1).max(1000).optional(),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    const { data: s, error } = await (supabaseAdmin as any)
+      .from("evolution_settings")
+      .select("*")
+      .eq("id", true)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!s?.enabled) throw new Error("Ative a integração Evolution antes de testar.");
+    if (!s?.base_url || !s?.global_api_key || !s?.instance_name) {
+      throw new Error("Configure URL base, API Key e nome da instância primeiro.");
+    }
+    const res = await evolutionFetch(
+      s.base_url,
+      s.global_api_key,
+      `/message/sendText/${encodeURIComponent(s.instance_name)}`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          number: digitsOnly(data.to),
+          text: data.text ?? "✨ Cosmic AI: integração Evolution API funcionando!",
+        }),
+      },
+    );
+    const json = await res.json().catch(() => ({} as any));
+    if (!res.ok) {
+      throw new Error(`Evolution ${res.status}: ${JSON.stringify(json).slice(0, 240)}`);
+    }
+    const id = json?.key?.id ?? json?.messageId ?? json?.id ?? "ok";
+    return { ok: true, id: String(id) };
+  });

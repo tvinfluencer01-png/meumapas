@@ -44,6 +44,14 @@ async function handler({ request }: { request: Request }) {
     .eq("id", true)
     .maybeSingle();
 
+  const { data: evo } = await (supabaseAdmin as any)
+    .from("evolution_settings")
+    .select("*")
+    .eq("id", true)
+    .maybeSingle();
+  const evoReady =
+    evo?.enabled && evo?.base_url && evo?.global_api_key && evo?.instance_name;
+
   const apiKey = process.env.LOVABLE_API_KEY;
   if (!apiKey) return new Response("LOVABLE_API_KEY missing", { status: 500 });
   const provider = createLovableAiGatewayProvider(apiKey);
@@ -83,9 +91,43 @@ Tom inspirador, simbólico mas prático. Não use markdown, apenas emojis e queb
     const message = `🌌 Horóscopo de hoje — ${s.sun_sign}\n\n${body}\n\n— Cosmic AI`;
     processed += 1;
 
-    // WhatsApp via Twilio
+    // WhatsApp: prefer Evolution API when enabled, fallback to Twilio
     if (s.channel_whatsapp && s.phone_e164) {
-      if (twilio?.enabled && twilio.account_sid && twilio.auth_token && twilio.whatsapp_from) {
+      if (evoReady) {
+        try {
+          const base = String(evo.base_url).replace(/\/+$/, "");
+          const url = `${base}/message/sendText/${encodeURIComponent(evo.instance_name)}`;
+          const res = await fetch(url, {
+            method: "POST",
+            headers: {
+              apikey: evo.global_api_key,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              number: s.phone_e164.replace(/\D+/g, ""),
+              text: message,
+            }),
+          });
+          if (!res.ok) {
+            const t = await res.text();
+            await supabaseAdmin.from("horoscope_log").insert({
+              user_id: s.user_id, date: today, channel: "whatsapp", status: "error",
+              detail: `evo HTTP ${res.status}: ${t.slice(0, 180)}`, sign: s.sun_sign,
+            });
+          } else {
+            delivered += 1;
+            await supabaseAdmin.from("horoscope_log").insert({
+              user_id: s.user_id, date: today, channel: "whatsapp", status: "sent",
+              detail: "evolution", sign: s.sun_sign,
+            });
+          }
+        } catch (e: any) {
+          await supabaseAdmin.from("horoscope_log").insert({
+            user_id: s.user_id, date: today, channel: "whatsapp", status: "error",
+            detail: String(e?.message ?? e).slice(0, 240), sign: s.sun_sign,
+          });
+        }
+      } else if (twilio?.enabled && twilio.account_sid && twilio.auth_token && twilio.whatsapp_from) {
         try {
           const form = new URLSearchParams();
           form.set("From", `whatsapp:${twilio.whatsapp_from}`);
@@ -113,7 +155,7 @@ Tom inspirador, simbólico mas prático. Não use markdown, apenas emojis e queb
             delivered += 1;
             await supabaseAdmin.from("horoscope_log").insert({
               user_id: s.user_id, date: today, channel: "whatsapp", status: "sent",
-              detail: null, sign: s.sun_sign,
+              detail: "twilio", sign: s.sun_sign,
             });
           }
         } catch (e: any) {
@@ -125,7 +167,7 @@ Tom inspirador, simbólico mas prático. Não use markdown, apenas emojis e queb
       } else {
         await supabaseAdmin.from("horoscope_log").insert({
           user_id: s.user_id, date: today, channel: "whatsapp", status: "skipped",
-          detail: "twilio not configured", sign: s.sun_sign,
+          detail: "no whatsapp provider configured", sign: s.sun_sign,
         });
       }
     }

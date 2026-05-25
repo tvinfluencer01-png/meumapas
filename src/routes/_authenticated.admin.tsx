@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { Shield, MessageSquare, Save, Send, CheckCircle2, AlertTriangle, Users, Search, ShieldOff, ShieldCheck, History, RefreshCw, Settings as SettingsIcon, Wallet, Coins, MoreHorizontal, UserCog, KeyRound, Package, Trash2, Coins as CoinsIcon } from "lucide-react";
+import { Shield, MessageSquare, Save, Send, CheckCircle2, AlertTriangle, Users, Search, ShieldOff, ShieldCheck, History, RefreshCw, Settings as SettingsIcon, Wallet, Coins, MoreHorizontal, UserCog, KeyRound, Package, Trash2, Coins as CoinsIcon, Zap, Plug } from "lucide-react";
 import { MercadoPagoForm } from "@/components/MercadoPagoForm";
 import { AdminCreditsManager, CreditsDialog } from "@/components/AdminCreditsManager";
 import { AdminCreditCosts } from "@/components/AdminCreditCosts";
@@ -40,6 +40,10 @@ import {
   adminDeleteUser,
   adminListUserSubscriptions,
   adminSetUserSubscription,
+  getEvolutionSettings,
+  saveEvolutionSettings,
+  testEvolutionConnection,
+  sendEvolutionTest,
 } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -95,6 +99,9 @@ function AdminPage() {
           <TabsTrigger value="twilio" className="gap-2">
             <MessageSquare className="size-4" /> Twilio
           </TabsTrigger>
+          <TabsTrigger value="evolution" className="gap-2">
+            <Zap className="size-4" /> Evolution API
+          </TabsTrigger>
           <TabsTrigger value="mercadopago" className="gap-2">
             <Wallet className="size-4" /> Mercado Pago
           </TabsTrigger>
@@ -114,6 +121,9 @@ function AdminPage() {
         </TabsContent>
         <TabsContent value="twilio" className="mt-0">
           <TwilioForm />
+        </TabsContent>
+        <TabsContent value="evolution" className="mt-0">
+          <EvolutionForm />
         </TabsContent>
         <TabsContent value="mercadopago" className="mt-0">
           <MercadoPagoForm />
@@ -847,6 +857,201 @@ function RoleAuditLog() {
             </table>
           </div>
         )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function EvolutionForm() {
+  const qc = useQueryClient();
+  const loadFn = useServerFn(getEvolutionSettings);
+  const saveFn = useServerFn(saveEvolutionSettings);
+  const testConnFn = useServerFn(testEvolutionConnection);
+  const sendTestFn = useServerFn(sendEvolutionTest);
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["evolution-settings"],
+    queryFn: () => loadFn(),
+  });
+
+  const [form, setForm] = useState({
+    base_url: "",
+    global_api_key: "",
+    instance_name: "",
+    enabled: false,
+  });
+  const [testTo, setTestTo] = useState("");
+
+  useEffect(() => {
+    if (!data) return;
+    setForm((f) => ({
+      ...f,
+      base_url: data.base_url,
+      instance_name: data.instance_name,
+      enabled: data.enabled,
+    }));
+  }, [data]);
+
+  const saveMut = useMutation({
+    mutationFn: () => saveFn({ data: form }),
+    onSuccess: () => {
+      toast.success("Evolution API salva.");
+      setForm((f) => ({ ...f, global_api_key: "" }));
+      qc.invalidateQueries({ queryKey: ["evolution-settings"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const testConnMut = useMutation({
+    mutationFn: () =>
+      testConnFn({
+        data: {
+          base_url: form.base_url,
+          global_api_key: form.global_api_key,
+          instance_name: form.instance_name,
+        },
+      }),
+    onSuccess: (r) => {
+      if (r.mode === "instance") {
+        toast.success(`Instância "${form.instance_name}" — estado: ${r.state}`);
+      } else {
+        toast.success(`Conexão OK. ${r.instances} instância(s) disponível(is).`);
+      }
+    },
+    onError: (e: Error) => toast.error(`Falha: ${e.message}`),
+  });
+
+  const sendTestMut = useMutation({
+    mutationFn: () => sendTestFn({ data: { to: testTo } }),
+    onSuccess: (r) => toast.success(`Mensagem enviada (id ${r.id}).`),
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  if (isLoading) return <div className="text-muted-foreground">Carregando configurações…</div>;
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Zap className="size-5 text-gold" /> Evolution API (WhatsApp)
+            </CardTitle>
+            <CardDescription>
+              Integração com a{" "}
+              <a
+                href="https://doc.evolution-api.com/v2/pt/get-started/introduction"
+                target="_blank"
+                rel="noreferrer"
+                className="underline hover:text-gold"
+              >
+                Evolution API v2
+              </a>{" "}
+              para envio de WhatsApp via instância própria. Quando ativa, tem prioridade sobre a Twilio nos envios automáticos.
+            </CardDescription>
+          </div>
+          <div className="flex items-center gap-2">
+            <Label htmlFor="evo-enabled" className="text-sm">Ativa</Label>
+            <Switch
+              id="evo-enabled"
+              checked={form.enabled}
+              onCheckedChange={(v) => setForm((f) => ({ ...f, enabled: v }))}
+            />
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-5">
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-1.5 md:col-span-2">
+            <Label htmlFor="evo-url">URL base da Evolution</Label>
+            <Input
+              id="evo-url"
+              placeholder="https://api.seudominio.com"
+              value={form.base_url}
+              onChange={(e) => setForm((f) => ({ ...f, base_url: e.target.value }))}
+              autoComplete="off"
+            />
+            <p className="text-xs text-muted-foreground">
+              Domínio raiz onde sua Evolution API está hospedada — sem barra no final.
+            </p>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="evo-key">
+              API Key global{" "}
+              {data?.has_api_key && (
+                <span className="ml-2 inline-flex items-center gap-1 text-xs text-emerald-500">
+                  <CheckCircle2 className="size-3" /> salva
+                </span>
+              )}
+            </Label>
+            <Input
+              id="evo-key"
+              type="password"
+              placeholder={data?.has_api_key ? "•••••••••• (deixe vazio para manter)" : "Cole a AUTHENTICATION_API_KEY"}
+              value={form.global_api_key}
+              onChange={(e) => setForm((f) => ({ ...f, global_api_key: e.target.value }))}
+              autoComplete="new-password"
+            />
+            <p className="text-xs text-muted-foreground">
+              Definida na variável <code>AUTHENTICATION_API_KEY</code> do seu servidor Evolution.
+            </p>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="evo-inst">Nome da instância</Label>
+            <Input
+              id="evo-inst"
+              placeholder="cosmic-ai"
+              value={form.instance_name}
+              onChange={(e) => setForm((f) => ({ ...f, instance_name: e.target.value }))}
+              autoComplete="off"
+            />
+            <p className="text-xs text-muted-foreground">
+              Instância já criada e conectada ao WhatsApp via QR Code.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <Button onClick={() => saveMut.mutate()} disabled={saveMut.isPending}>
+            <Save className="size-4 mr-2" />
+            {saveMut.isPending ? "Salvando…" : "Salvar configurações"}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => testConnMut.mutate()}
+            disabled={testConnMut.isPending || !form.base_url}
+          >
+            <Plug className="size-4 mr-2" />
+            {testConnMut.isPending ? "Testando…" : "Testar conexão"}
+          </Button>
+        </div>
+
+        <div className="border-t border-border/60 pt-5 space-y-3">
+          <Label className="text-sm font-medium">Enviar mensagem de teste</Label>
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="space-y-1.5 flex-1 min-w-[220px]">
+              <Label htmlFor="evo-to" className="text-xs text-muted-foreground">Número destino (E.164)</Label>
+              <Input
+                id="evo-to"
+                placeholder="+5511999998888"
+                value={testTo}
+                onChange={(e) => setTestTo(e.target.value)}
+              />
+            </div>
+            <Button
+              variant="secondary"
+              onClick={() => sendTestMut.mutate()}
+              disabled={sendTestMut.isPending || !testTo}
+            >
+              <Send className="size-4 mr-2" />
+              {sendTestMut.isPending ? "Enviando…" : "Enviar teste"}
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Requer salvar com a integração ativa. Use seu próprio número primeiro.
+          </p>
+        </div>
       </CardContent>
     </Card>
   );
