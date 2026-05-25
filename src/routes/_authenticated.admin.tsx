@@ -40,6 +40,10 @@ import {
   adminDeleteUser,
   adminListUserSubscriptions,
   adminSetUserSubscription,
+  getEvolutionSettings,
+  saveEvolutionSettings,
+  testEvolutionConnection,
+  sendEvolutionTest,
 } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
