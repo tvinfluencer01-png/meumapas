@@ -121,21 +121,28 @@ function BusinessMapPage() {
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
             <Label>Nome da empresa</Label>
-            <Input value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
+            <Input value={companyName} onChange={(e) => setCompanyName(e.target.value.slice(0, 160))} maxLength={160} />
           </div>
           <div>
             <Label>Data de fundação</Label>
             <Input type="date" value={founding} onChange={(e) => setFounding(e.target.value)} />
           </div>
           <div className="sm:col-span-2">
-            <Label>Setor (opcional)</Label>
-            <Input value={industry} onChange={(e) => setIndustry(e.target.value)} placeholder="Ex: Tecnologia, Consultoria" />
+            <div className="flex items-center justify-between">
+              <Label>Setor (opcional)</Label>
+              <span className="text-xs text-muted-foreground">{industry.length}/500</span>
+            </div>
+            <Input value={industry} onChange={(e) => setIndustry(e.target.value.slice(0, 500))} maxLength={500} placeholder="Ex: Tecnologia, Consultoria" />
           </div>
           <div className="sm:col-span-2">
-            <Label>Notas internas (opcional)</Label>
+            <div className="flex items-center justify-between">
+              <Label>Notas internas (opcional)</Label>
+              <span className="text-xs text-muted-foreground">{notes.length}/2000</span>
+            </div>
             <Textarea
               value={notes}
-              onChange={(e) => setNotes(e.target.value)}
+              onChange={(e) => setNotes(e.target.value.slice(0, 2000))}
+              maxLength={2000}
               placeholder="Contexto estratégico, dores atuais, objetivos do ano..."
               rows={3}
             />
