@@ -53,6 +53,8 @@ const ADDON_MENU: Record<string, { label: string; to: string; icon: typeof Layou
   sub_tarot_unlimited: { label: "Tarot Ilimitado", to: "/tarot", icon: Wand2 },
   sub_kabbalah_unlimited: { label: "Meditação Ilimitada", to: "/meditacao", icon: TreePine },
   sub_kabbalistic_numerology: { label: "Numerologia Cabalística", to: "/numerologia-cabalistica", icon: Hash },
+  sub_daily_horoscope: { label: "Horóscopo Diário", to: "/horoscopo", icon: Sun },
+  sub_business_map: { label: "Mapa Empresarial", to: "/mapa-empresarial", icon: Building2 },
 };
 
 
