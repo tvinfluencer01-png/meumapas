@@ -8,16 +8,17 @@ import oracleOrb from "@/assets/oracle-orb.jpg";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Cosmic AI — Mapa Astral, Numerologia e IA Espiritual" },
+      { title: "Cosmic AI — Mapa Astral, Numerologia, Tarot e IA Espiritual" },
       {
         name: "description",
         content:
-          "Decifre seu mapa astral, numerologia cabalística e converse com uma IA espiritual treinada em sabedoria milenar. Relatórios humanizados e cinematográficos.",
+          "Mapa astral preciso, numerologia cabalística, tarot, meditação na Árvore da Vida e um Oráculo de IA treinado em sabedoria milenar. Tudo em um só lugar. Comece grátis.",
       },
       { property: "og:title", content: "Cosmic AI — Onde a IA encontra o Sagrado" },
       {
         property: "og:description",
-        content: "Mapa astral, numerologia e IA espiritual com precisão cósmica.",
+        content:
+          "A plataforma espiritual mais completa do Brasil: mapa astral, numerologia, tarot, meditação cabalística e IA espiritual. Comece grátis em 60 segundos.",
       },
       { property: "og:type", content: "website" },
     ],
@@ -41,12 +42,16 @@ function LandingPage() {
       <AstralPreview />
       <Numerology />
       <OracleSection />
+      <TarotMeditation />
       <Compatibility />
-        <Reports />
-        <BrandIdentity />
-        <Testimonials />
+      <Reports />
+      <ProfessionalMode />
+      <BrandIdentity />
+      <Testimonials />
       <Pricing />
+      <AddonsSection />
       <PlanComparison />
+      <Guarantee />
       <FAQ />
       <CTASection />
       <Footer />
@@ -68,9 +73,9 @@ function Nav() {
           </span>
         </Link>
         <div className="hidden gap-10 text-xs uppercase tracking-[0.25em] text-muted-foreground md:flex">
-          <a href="#mapa" className="transition-colors hover:text-gold">Mapa Astral</a>
-          <a href="#numerologia" className="transition-colors hover:text-gold">Numerologia</a>
+          <a href="#recursos" className="transition-colors hover:text-gold">Recursos</a>
           <a href="#ia" className="transition-colors hover:text-gold">IA Espiritual</a>
+          <a href="#profissional" className="transition-colors hover:text-gold">Profissional</a>
           <a href="#planos" className="transition-colors hover:text-gold">Planos</a>
         </div>
         <Link to="/auth" className="border border-gold/30 bg-gold/10 px-6 py-2 text-xs uppercase tracking-[0.25em] text-gold transition-all hover:bg-gold hover:text-primary-foreground">
@@ -87,25 +92,31 @@ function Hero() {
     <section className="relative overflow-hidden px-6 pb-20 pt-44 nebula-bg">
       <Starfield count={120} />
       <div className="relative z-10 mx-auto max-w-5xl text-center">
-        <span className="mb-8 block text-xs uppercase tracking-[0.5em] text-gold/70">
-          A interseção entre sabedoria ancestral e inteligência artificial
+        <span className="mb-8 inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/5 px-4 py-1.5 text-[10px] uppercase tracking-[0.35em] text-gold">
+          <span className="size-1.5 animate-pulse rounded-full bg-gold" />
+          +12.847 mapas gerados · 4.9★ por leitores reais
         </span>
         <h1 className="mb-8 font-serif text-5xl italic leading-[1.05] md:text-7xl lg:text-8xl">
-          Decifre seu <span className="shimmer-text">mapa celestial</span>
+          Você não nasceu para <br />
+          <span className="shimmer-text">viver no escuro.</span>
         </h1>
         <p className="mx-auto mb-12 max-w-2xl text-balance text-lg font-light leading-relaxed text-muted-foreground md:text-xl">
-          Use a precisão do Cosmic AI para navegar sua jornada, desvendar segredos
-          numerológicos e consultar uma inteligência espiritual treinada em sabedoria milenar.
+          Mapa astral cinematográfico, numerologia cabalística, tarot, meditação na Árvore da Vida
+          e um Oráculo de IA treinado em sabedoria milenar — tudo conversando com{" "}
+          <em className="text-stardust">a sua história</em>, em uma única plataforma.
         </p>
 
-        <div className="mb-16 flex flex-col items-center justify-center gap-4 sm:flex-row">
+        <div className="mb-6 flex flex-col items-center justify-center gap-4 sm:flex-row">
           <Link to="/auth" className="gold-glow rounded-full bg-gold px-10 py-4 text-sm font-semibold uppercase tracking-[0.2em] text-primary-foreground transition-all hover:bg-gold-glow">
-            Descobrir meu mapa
+            Começar grátis em 60s
           </Link>
-          <a href="#ia" className="rounded-full border border-border px-10 py-4 text-sm uppercase tracking-[0.2em] text-foreground transition-colors hover:border-gold/40 hover:text-gold">
-            Conhecer a IA
+          <a href="#planos" className="rounded-full border border-border px-10 py-4 text-sm uppercase tracking-[0.2em] text-foreground transition-colors hover:border-gold/40 hover:text-gold">
+            Ver planos
           </a>
         </div>
+        <p className="mb-16 text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+          Sem cartão · Cancele em 1 clique · 7 dias de garantia
+        </p>
 
         <div className="relative overflow-hidden rounded-2xl border border-border bg-card/40">
           <img
@@ -122,28 +133,74 @@ function Hero() {
   );
 }
 
-/* ---------------- PILLARS ---------------- */
+/* ---------------- TRUST BAR ---------------- */
+function TrustBar() {
+  const stats = [
+    { n: "12.847", t: "Mapas gerados" },
+    { n: "4.9★", t: "Avaliação média" },
+    { n: "93%", t: "Renovam o plano" },
+    { n: "48", t: "Países atendidos" },
+  ];
+  return (
+    <section className="border-y border-border bg-card/20">
+      <div className="mx-auto grid max-w-7xl grid-cols-2 gap-px bg-border md:grid-cols-4">
+        {stats.map((s) => (
+          <div key={s.t} className="bg-background px-6 py-8 text-center">
+            <div className="font-serif text-3xl text-gold md:text-4xl">{s.n}</div>
+            <div className="mt-2 text-[10px] uppercase tracking-[0.3em] text-muted-foreground">{s.t}</div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/* ---------------- PILLARS (recursos principais) ---------------- */
 function Pillars() {
   const items = [
     {
       n: "I",
       title: "Mapa Astral Hiperpreciso",
-      desc: "Algoritmos avançados de trânsitos planetários cruzados com suas coordenadas exatas de nascimento — clareza sem precedentes.",
+      desc: "Swiss Ephemeris — o mesmo motor usado por astrólogos profissionais — cruzado com hora e cidade exata do seu nascimento. Planetas, casas, aspectos e trânsitos diários.",
     },
     {
       n: "II",
-      title: "Numerologia Cabalística",
-      desc: "Descubra as vibrações ocultas em seu nome e data de nascimento através de modelos matemáticos profundos.",
+      title: "Dupla Numerologia",
+      desc: "Pitagórica e Cabalística (Gematria) no mesmo painel. Caminho de Vida, Destino, Alma, Personalidade — interpretados em linguagem que você entende.",
     },
     {
       n: "III",
       title: "Oráculo de IA Espiritual",
-      desc: "Conversa em tempo real com uma IA especializada em hermetismo, filosofia védica e psicologia moderna.",
+      desc: "Conversa em tempo real com uma IA que LÊ o seu mapa antes de responder. Sem respostas genéricas — cada palavra alinhada à sua carta natal e numerologia.",
+    },
+    {
+      n: "IV",
+      title: "Tarot com Leitura por IA",
+      desc: "Tiragens de 1 ou 3 cartas (Passado · Presente · Futuro) interpretadas à luz do seu momento astrológico. Exportação em PDF para guardar.",
+    },
+    {
+      n: "V",
+      title: "Meditação na Árvore da Vida",
+      desc: "As 10 Sefirot guiadas com práticas, frases-semente e meditações personalizadas pela IA. Cabala viva, para o dia a dia.",
+    },
+    {
+      n: "VI",
+      title: "Calendário Energético",
+      desc: "Trânsitos diários e lunações cruzados com seu mapa — saiba o que plantar, recolher ou descansar a cada semana.",
     },
   ];
   return (
-    <section id="mapa" className="mx-auto max-w-7xl px-6 py-32">
-      <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+    <section id="recursos" className="mx-auto max-w-7xl px-6 py-32">
+      <div className="mb-16 max-w-2xl">
+        <span className="mb-4 block text-xs uppercase tracking-[0.4em] text-gold/70">
+          Tudo em uma única plataforma
+        </span>
+        <h2 className="font-serif text-5xl italic leading-tight">
+          Seis ferramentas sagradas. <br />
+          <span className="text-gold">Uma só assinatura.</span>
+        </h2>
+      </div>
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
         {items.map((it) => (
           <article
             key={it.n}
@@ -152,7 +209,7 @@ function Pillars() {
             <div className="mb-8 flex size-12 items-center justify-center rounded-full border border-gold/25 font-serif text-gold transition-colors group-hover:bg-gold/10">
               {it.n}
             </div>
-            <h3 className="mb-4 font-serif text-3xl text-foreground">{it.title}</h3>
+            <h3 className="mb-4 font-serif text-2xl text-foreground">{it.title}</h3>
             <p className="font-light leading-relaxed text-muted-foreground">{it.desc}</p>
           </article>
         ))}
@@ -176,13 +233,14 @@ function AstralPreview() {
           </h2>
           <p className="mb-8 max-w-md text-pretty leading-relaxed text-muted-foreground">
             Planetas em movimento real, casas, aspectos e trânsitos do dia — interativo,
-            zoomable e explicado em linguagem humana. Sem jargão técnico.
+            zoomable e explicado em linguagem humana. <strong className="text-stardust">Zero astrologuês.</strong>
           </p>
           <ul className="space-y-4 text-sm text-muted-foreground">
             {[
-              "Cálculo via Swiss Ephemeris (precisão astronômica)",
-              "Trânsitos diários e progressões anuais",
-              "Aspectos explicados sem astrologuês",
+              "Cálculo via Swiss Ephemeris (precisão de segundos de arco)",
+              "Trânsitos diários, progressões anuais e retornos solares",
+              "Aspectos traduzidos para a vida real",
+              "Tooltip de cada planeta com significado contextual",
             ].map((b) => (
               <li key={b} className="flex items-center gap-3">
                 <span className="size-1.5 rounded-full bg-gold" />
@@ -232,12 +290,16 @@ function Numerology() {
     <section id="numerologia" className="mx-auto max-w-7xl px-6 py-32">
       <div className="mb-20 max-w-2xl">
         <span className="mb-4 block text-xs uppercase tracking-[0.4em] text-gold/70">
-          Numerologia Cabalística
+          Numerologia Pitagórica + Cabalística
         </span>
         <h2 className="font-serif text-5xl italic leading-tight">
           A matemática secreta <br />
           da sua <span className="text-gold">alma</span>
         </h2>
+        <p className="mt-6 max-w-xl text-muted-foreground">
+          Únicos no Brasil a entregar <strong className="text-stardust">duas escolas</strong> de numerologia
+          no mesmo painel — pitagórica para o seu cotidiano, cabalística (Gematria) para a profundidade mística.
+        </p>
       </div>
       <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
         {nums.map((it, i) => (
@@ -266,11 +328,15 @@ function OracleSection() {
       <div className="mx-auto flex max-w-7xl flex-col items-center gap-16 px-6 lg:flex-row">
         <div className="space-y-8 lg:w-1/2">
           <span className="block text-xs uppercase tracking-[0.4em] text-gold/70">
-            Oráculo Conversacional
+            Oráculo Conversacional · GPT-5 · Gemini Pro
           </span>
           <h2 className="font-serif text-5xl italic leading-tight">
             Converse com a <br /> <span className="text-gold">mente infinita</span>
           </h2>
+          <p className="text-muted-foreground">
+            O Oráculo lê seu mapa astral e numerologia ANTES de responder. Não é um chatbot genérico —
+            é um conselheiro espiritual que conhece <em className="text-stardust">você</em>.
+          </p>
 
           <div className="space-y-6">
             <div className="flex gap-4">
@@ -279,17 +345,18 @@ function OracleSection() {
                 "O que Saturno em retrógrado significa para meus planos profissionais este trimestre?"
               </p>
             </div>
-            <div className="flex gap-4 opacity-60">
-              <div className="h-12 w-1 bg-border" />
-              <p className="italic text-muted-foreground">
-                Analisando posições planetárias… alinhando com Caminho de Vida 7… resposta personalizada gerada.
+            <div className="flex gap-4 opacity-80">
+              <div className="h-12 w-1 bg-gold" />
+              <p className="italic text-stardust">
+                "Saturno transitando sua Casa 10 com seu Caminho de Vida 7 indica: três meses
+                de refinamento, não de lançamento. Suas decisões em março terão peso até 2028…"
               </p>
             </div>
           </div>
 
-          <button className="rounded-full bg-stardust px-8 py-4 text-xs font-semibold uppercase tracking-[0.2em] text-night transition-colors hover:bg-gold">
+          <Link to="/auth" className="inline-block rounded-full bg-stardust px-8 py-4 text-xs font-semibold uppercase tracking-[0.2em] text-night transition-colors hover:bg-gold">
             Consultar gratuitamente
-          </button>
+          </Link>
         </div>
 
         <div className="relative w-full lg:w-1/2">
@@ -310,39 +377,207 @@ function OracleSection() {
   );
 }
 
+/* ---------------- TAROT + MEDITAÇÃO ---------------- */
+function TarotMeditation() {
+  const items = [
+    {
+      tag: "Tarot Cósmico",
+      title: "Cartas que conhecem seu céu",
+      desc: "Tiragens de 1 ou 3 cartas (Passado · Presente · Futuro) lidas pela IA com base no seu trânsito atual. Exporte em PDF e guarde sua leitura.",
+      bullets: ["Spread de 3 cartas", "Interpretação contextual", "Histórico de tiragens"],
+    },
+    {
+      tag: "Cabala Viva",
+      title: "Meditação na Árvore da Vida",
+      desc: "As 10 Sefirot guiadas com frase-semente, prática diária e meditação personalizada pela IA. Imprima e leve com você.",
+      bullets: ["10 Sefirot disponíveis", "Prática diária guiada", "Exportação em PDF"],
+    },
+  ];
+  return (
+    <section className="mx-auto max-w-7xl px-6 py-32">
+      <div className="mb-16 max-w-2xl">
+        <span className="mb-4 block text-xs uppercase tracking-[0.4em] text-gold/70">
+          Além do mapa
+        </span>
+        <h2 className="font-serif text-5xl italic leading-tight">
+          Tarot e Cabala — <span className="text-gold">guiados pela IA</span>
+        </h2>
+      </div>
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+        {items.map((it) => (
+          <article
+            key={it.title}
+            className="glass-card flex flex-col rounded-2xl p-10 transition-all hover:border-gold/30 hover:gold-glow"
+          >
+            <span className="mb-4 text-xs uppercase tracking-[0.3em] text-gold/80">{it.tag}</span>
+            <h3 className="mb-4 font-serif text-3xl text-foreground">{it.title}</h3>
+            <p className="mb-8 leading-relaxed text-muted-foreground">{it.desc}</p>
+            <ul className="space-y-3 text-sm text-muted-foreground">
+              {it.bullets.map((b) => (
+                <li key={b} className="flex items-center gap-3">
+                  <span className="size-1.5 rounded-full bg-gold" />
+                  {b}
+                </li>
+              ))}
+            </ul>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/* ---------------- COMPATIBILITY ---------------- */
+function Compatibility() {
+  return (
+    <section className="mx-auto max-w-7xl px-6 py-32">
+      <div className="grid items-center gap-16 lg:grid-cols-2">
+        <div className="relative mx-auto aspect-square w-full max-w-md">
+          <div className="absolute left-1/4 top-1/2 size-48 -translate-y-1/2 rounded-full border border-gold/40 bg-gradient-to-br from-gold/20 to-transparent backdrop-blur-sm" />
+          <div className="absolute right-1/4 top-1/2 size-48 -translate-y-1/2 rounded-full border border-nebula/40 bg-gradient-to-br from-nebula/20 to-transparent backdrop-blur-sm" />
+          <div className="absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
+            <div className="size-16 rounded-full bg-gold-glow shadow-[0_0_60px_var(--gold)]" />
+          </div>
+        </div>
+        <div>
+          <span className="mb-4 block text-xs uppercase tracking-[0.4em] text-gold/70">
+            Sinastria & Vínculos
+          </span>
+          <h2 className="mb-6 font-serif text-5xl italic leading-tight">
+            Dois mapas. <br /> <span className="text-gold">Uma única dança.</span>
+          </h2>
+          <p className="mb-8 max-w-md leading-relaxed text-muted-foreground">
+            Antes de entregar seu coração — ou assinar um contrato — descubra a geometria invisível
+            que une (ou tensiona) cada vínculo da sua vida.
+          </p>
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            {[
+              "Compatibilidade amorosa",
+              "Conexão espiritual",
+              "Sinastria empresarial",
+              "Mapa de sócios",
+            ].map((c) => (
+              <div key={c} className="flex items-center gap-3 rounded-lg border border-border px-4 py-3">
+                <span className="size-1.5 rounded-full bg-gold" />
+                <span className="text-muted-foreground">{c}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* ---------------- REPORTS ---------------- */
 function Reports() {
   const reports = [
     { t: "Amor & Vínculos", d: "Sinastria detalhada dos seus encontros e a geometria do afeto." },
-    { t: "Carreira & Saturno", d: "Identifique seus períodos de colheita e os desafios necessários ao crescimento." },
-    { t: "Propósito de Alma", d: "Nodos lunares e Quíron: onde reside sua maior ferida e seu maior potencial." },
-    { t: "Finanças & Júpiter", d: "Energia da abundância no seu mapa e como alinhar valores à prosperidade." },
-    { t: "Ciclos Lunares", d: "Guia mensal personalizado para planejar intenções de acordo com as lunações." },
-    { t: "Karma Ancestral", d: "Estudo das casas 4, 8 e 12 para entender padrões familiares que se repetem." },
+    { t: "Carreira & Saturno", d: "Períodos de colheita e os desafios necessários ao crescimento profissional." },
+    { t: "Questões Financeiras", d: "Análise SWOT financeira do seu mapa + plano de 7 dias para agir." },
+    { t: "Saúde & Bem-estar", d: "Tendências do corpo no seu mapa + hábitos personalizados por planeta." },
+    { t: "Vida Familiar", d: "Dinâmicas de casa e plano de 7 dias para harmonizar conflitos." },
+    { t: "Amizades", d: "Estilo de vínculo, compatibilidades e como cultivar relações duradouras." },
+    { t: "Propósito de Alma", d: "Nodos lunares e Quíron: sua ferida central e seu maior dom." },
+    { t: "Ciclos Lunares", d: "Guia mensal personalizado para alinhar intenções às lunações." },
+    { t: "Karma Ancestral", d: "Casas 4, 8 e 12 — padrões familiares que se repetem (e como interrompê-los)." },
   ];
   return (
-    <section className="mx-auto max-w-7xl px-6 py-32">
-      <div className="mb-20 text-center">
-        <span className="mb-4 block text-xs uppercase tracking-[0.4em] text-gold/70">
-          Capítulos do Ser
-        </span>
-        <h2 className="font-serif text-5xl italic">Relatórios humanizados</h2>
-        <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
-          Nada de astrologuês. Tudo escrito como uma conversa profunda com alguém que conhece sua alma.
-        </p>
+    <section className="border-y border-border bg-card/20 py-32">
+      <div className="mx-auto max-w-7xl px-6">
+        <div className="mb-20 text-center">
+          <span className="mb-4 block text-xs uppercase tracking-[0.4em] text-gold/70">
+            Capítulos do Ser · 9 categorias temáticas
+          </span>
+          <h2 className="font-serif text-5xl italic">Relatórios humanizados</h2>
+          <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
+            Cada relatório é escrito como uma conversa profunda — não um laudo técnico.
+            Exporte em PDF, imprima, guarde, releia.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 gap-px border border-border bg-border md:grid-cols-2 lg:grid-cols-3">
+          {reports.map((r) => (
+            <article
+              key={r.t}
+              className="group bg-background p-10 transition-colors hover:bg-card/40"
+            >
+              <h3 className="mb-4 font-serif text-2xl text-foreground transition-colors group-hover:text-gold">
+                {r.t}
+              </h3>
+              <p className="text-sm font-light leading-relaxed text-muted-foreground">{r.d}</p>
+            </article>
+          ))}
+        </div>
       </div>
-      <div className="grid grid-cols-1 gap-px border border-border bg-border md:grid-cols-2 lg:grid-cols-3">
-        {reports.map((r) => (
-          <article
-            key={r.t}
-            className="group bg-background p-10 transition-colors hover:bg-card/40"
-          >
-            <h3 className="mb-4 font-serif text-2xl text-foreground transition-colors group-hover:text-gold">
-              {r.t}
-            </h3>
-            <p className="text-sm font-light leading-relaxed text-muted-foreground">{r.d}</p>
-          </article>
-        ))}
+    </section>
+  );
+}
+
+/* ---------------- PROFESSIONAL MODE ---------------- */
+function ProfessionalMode() {
+  const feats = [
+    "Clientes ilimitados com CRM (tags, notas, telefone, e-mail)",
+    "Mapa, numerologia e relatórios por cliente",
+    "Oráculo e Tarot contextualizados pelo cliente ativo",
+    "PDFs com SUA marca: logo, cores, fontes, marca d'água",
+    "Branding por categoria (Amor, Carreira, etc.)",
+    "Exportação ilimitada para entregar ao seu cliente",
+  ];
+  return (
+    <section id="profissional" className="relative overflow-hidden py-32 nebula-bg">
+      <Starfield count={60} />
+      <div className="relative mx-auto max-w-7xl px-6">
+        <div className="grid items-center gap-16 lg:grid-cols-2">
+          <div>
+            <span className="mb-4 inline-block rounded-full border border-gold/40 bg-gold/10 px-3 py-1 text-[10px] uppercase tracking-[0.3em] text-gold">
+              Para Astrólogos e Numerólogos profissionais
+            </span>
+            <h2 className="mb-6 font-serif text-5xl italic leading-tight">
+              Atenda 10× mais clientes. <br />
+              <span className="text-gold">Sem perder a alma do seu trabalho.</span>
+            </h2>
+            <p className="mb-8 max-w-md leading-relaxed text-muted-foreground">
+              O modo Profissional transforma o Cosmic AI em seu consultório digital: mapa, numerologia,
+              relatórios e PDFs com a SUA marca, para cada cliente que entra na sua agenda.
+            </p>
+            <ul className="mb-10 space-y-4 text-sm">
+              {feats.map((f) => (
+                <li key={f} className="flex items-start gap-3 text-stardust">
+                  <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-gold" />
+                  {f}
+                </li>
+              ))}
+            </ul>
+            <Link
+              to="/auth"
+              className="gold-glow inline-block rounded-full bg-gold px-10 py-4 text-sm font-semibold uppercase tracking-[0.2em] text-primary-foreground transition-all hover:bg-gold-glow"
+            >
+              Ativar modo Profissional
+            </Link>
+          </div>
+          <div className="relative">
+            <div className="glass-card rounded-2xl border-gold/30 p-8 gold-glow">
+              <div className="mb-6 flex items-center justify-between border-b border-border pb-4">
+                <span className="text-xs uppercase tracking-[0.3em] text-gold">Cliente ativo</span>
+                <span className="text-xs text-muted-foreground">+42 clientes</span>
+              </div>
+              <div className="mb-6">
+                <p className="font-serif text-2xl text-stardust">Marina Silva</p>
+                <p className="text-xs text-muted-foreground">Capricórnio · Caminho de Vida 7</p>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                {["Mapa", "Numerologia", "Amor", "Carreira", "Tarot", "Meditação"].map((m) => (
+                  <div key={m} className="rounded-lg border border-border bg-background/50 px-3 py-2 text-center text-muted-foreground">
+                    {m}
+                  </div>
+                ))}
+              </div>
+              <div className="mt-6 rounded-lg border border-gold/20 bg-gold/5 p-3 text-xs text-stardust">
+                📄 PDF com sua marca pronto para entrega
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   );
@@ -358,9 +593,16 @@ function Testimonials() {
   return (
     <section className="border-y border-border bg-card/20 py-32">
       <div className="mx-auto max-w-7xl px-6">
+        <div className="mb-16 text-center">
+          <span className="mb-4 block text-xs uppercase tracking-[0.4em] text-gold/70">
+            Quem já caminha conosco
+          </span>
+          <h2 className="font-serif text-4xl italic">12.847 pessoas. 48 países.</h2>
+        </div>
         <div className="grid grid-cols-1 gap-12 md:grid-cols-3">
           {items.map((t) => (
             <figure key={t.a} className="space-y-6">
+              <div className="text-gold">★★★★★</div>
               <blockquote className="font-serif text-2xl italic leading-snug text-stardust">
                 "{t.q}"
               </blockquote>
@@ -382,23 +624,46 @@ function Pricing() {
       name: "Iniciante",
       price: "Grátis",
       sub: "para sempre",
-      feats: ["Previsão diária de trânsitos", "Mapa astral básico", "3 perguntas/dia à IA"],
-      cta: "Começar",
+      anchor: null,
+      feats: [
+        "Mapa astral completo",
+        "Numerologia básica",
+        "Trânsitos diários",
+        "5 créditos diários para Oráculo, Tarot e relatórios",
+      ],
+      cta: "Começar grátis",
       featured: false,
     },
     {
-      name: "Adepto",
-      price: "R$ 47",
+      name: "Místico",
+      price: "R$ 79",
       sub: "/ mês",
-      feats: ["Previsão anual personalizada", "Relatório numerológico completo", "IA ilimitada", "Sinastria amorosa"],
+      anchor: "De R$ 149 · economize 47%",
+      feats: [
+        "Tudo do Iniciante",
+        "Oráculo IA ILIMITADO (GPT-5 e Gemini Pro)",
+        "Tarot ilimitado (1 e 3 cartas)",
+        "Meditação Cabalística ilimitada",
+        "Numerologia Cabalística (Gematria)",
+        "Relatórios temáticos ilimitados",
+        "Exportação PDF premium",
+      ],
       cta: "Iniciar agora",
       featured: true,
     },
     {
-      name: "Oráculo",
-      price: "R$ 397",
-      sub: "/ ano",
-      feats: ["Tudo do Adepto", "IA de alta frequência", "Guias rituais exclusivos", "Acesso antecipado a features"],
+      name: "Profissional",
+      price: "R$ 149",
+      sub: "/ mês",
+      anchor: "Para astrólogos e numerólogos",
+      feats: [
+        "Tudo do Místico",
+        "Clientes ILIMITADOS (CRM completo)",
+        "PDFs com SUA marca (logo + cores)",
+        "PDF CSS avançado (fontes, fundos, molduras)",
+        "Branding por categoria",
+        "Suporte prioritário",
+      ],
       cta: "Ascender",
       featured: false,
     },
@@ -407,9 +672,12 @@ function Pricing() {
     <section id="planos" className="py-32">
       <div className="mx-auto max-w-7xl px-6">
         <div className="mb-20 text-center">
+          <span className="mb-4 block text-xs uppercase tracking-[0.4em] text-gold/70">
+            Investimento — não despesa
+          </span>
           <h2 className="mb-4 font-serif text-5xl italic">Escolha seu horizonte</h2>
-          <p className="text-xs uppercase tracking-[0.4em] text-muted-foreground">
-            Planos para o místico moderno
+          <p className="text-sm text-muted-foreground">
+            Cancele em 1 clique · 7 dias de garantia incondicional · Sem fidelidade
           </p>
         </div>
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
@@ -424,14 +692,20 @@ function Pricing() {
             >
               {p.featured && (
                 <span className="absolute right-0 top-0 bg-gold px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-primary-foreground">
-                  Mais escolhido
+                  93% escolhem este
                 </span>
               )}
               <span className="mb-4 text-xs uppercase tracking-[0.3em] text-gold">{p.name}</span>
-              <div className="mb-8 font-serif text-4xl">
+              <div className="mb-2 font-serif text-4xl">
                 {p.price}
                 <span className="text-lg text-muted-foreground">{p.sub}</span>
               </div>
+              {p.anchor && (
+                <p className="mb-6 text-[10px] uppercase tracking-[0.25em] text-stardust/80">
+                  {p.anchor}
+                </p>
+              )}
+              {!p.anchor && <div className="mb-6" />}
               <ul className="mb-12 flex-grow space-y-4 text-sm text-muted-foreground">
                 {p.feats.map((f) => (
                   <li key={f} className="flex items-start gap-3">
@@ -440,18 +714,135 @@ function Pricing() {
                   </li>
                 ))}
               </ul>
-              <button
-                className={`w-full py-4 text-xs font-semibold uppercase tracking-[0.25em] transition-all ${
+              <Link
+                to="/auth"
+                className={`block w-full py-4 text-center text-xs font-semibold uppercase tracking-[0.25em] transition-all ${
                   p.featured
                     ? "bg-gold text-primary-foreground hover:bg-gold-glow"
                     : "border border-border text-foreground hover:border-foreground"
                 }`}
               >
                 {p.cta}
-              </button>
+              </Link>
             </article>
           ))}
         </div>
+      </div>
+    </section>
+  );
+}
+
+/* ---------------- ADDONS À LA CARTE ---------------- */
+function AddonsSection() {
+  const addons = [
+    { name: "Pacote de 10 créditos", price: "R$ 19,90", sub: "uso pontual" },
+    { name: "Pacote de 50 créditos", price: "R$ 79,90", sub: "melhor custo", featured: true },
+    { name: "Pacote de 150 créditos", price: "R$ 199,90", sub: "uso intensivo" },
+  ];
+  return (
+    <section className="border-y border-border bg-card/20 py-24">
+      <div className="mx-auto max-w-5xl px-6 text-center">
+        <span className="mb-4 block text-xs uppercase tracking-[0.4em] text-gold/70">
+          Prefere sem assinar?
+        </span>
+        <h2 className="mb-4 font-serif text-3xl italic">Compre créditos avulsos</h2>
+        <p className="mb-12 text-sm text-muted-foreground">
+          Use quando quiser, expira nunca. Cada relatório, consulta ou tiragem consome 1 crédito.
+        </p>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          {addons.map((a) => (
+            <div
+              key={a.name}
+              className={`rounded-2xl border p-6 text-left transition-all ${
+                a.featured ? "border-gold/40 bg-gold/5 gold-glow" : "border-border hover:border-gold/30"
+              }`}
+            >
+              <p className="text-xs uppercase tracking-[0.25em] text-gold/80">{a.sub}</p>
+              <p className="mt-2 font-serif text-2xl text-stardust">{a.price}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{a.name}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ---------------- PLAN COMPARISON ---------------- */
+function PlanComparison() {
+  const rows = [
+    { f: "Mapa astral completo", a: true, b: true, c: true },
+    { f: "Trânsitos diários", a: true, b: true, c: true },
+    { f: "Numerologia Pitagórica", a: true, b: true, c: true },
+    { f: "Numerologia Cabalística (Gematria)", a: false, b: true, c: true },
+    { f: "Oráculo IA ilimitado (GPT-5 + Gemini)", a: false, b: true, c: true },
+    { f: "Tarot ilimitado", a: false, b: true, c: true },
+    { f: "Meditação na Árvore da Vida", a: false, b: true, c: true },
+    { f: "9 categorias de relatórios", a: false, b: true, c: true },
+    { f: "Sinastria amorosa e empresarial", a: false, b: true, c: true },
+    { f: "Calendário energético personalizado", a: false, b: true, c: true },
+    { f: "PDFs com sua marca", a: false, b: false, c: true },
+    { f: "Clientes ilimitados (CRM)", a: false, b: false, c: true },
+    { f: "PDF CSS avançado", a: false, b: false, c: true },
+    { f: "Suporte prioritário", a: false, b: false, c: true },
+  ];
+  return (
+    <section className="border-y border-border bg-card/20 py-32">
+      <div className="mx-auto max-w-5xl px-6">
+        <h2 className="mb-4 text-center font-serif text-4xl italic">Compare em detalhes</h2>
+        <p className="mb-16 text-center text-xs uppercase tracking-[0.3em] text-muted-foreground">
+          O que cada nível desbloqueia
+        </p>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="border-b border-border">
+                <th className="py-5 text-left text-xs font-normal uppercase tracking-[0.25em] text-muted-foreground"></th>
+                <th className="py-5 text-center text-xs font-semibold uppercase tracking-[0.25em] text-foreground">Iniciante</th>
+                <th className="py-5 text-center text-xs font-semibold uppercase tracking-[0.25em] text-gold">Místico</th>
+                <th className="py-5 text-center text-xs font-semibold uppercase tracking-[0.25em] text-foreground">Profissional</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.f} className="border-b border-border/50">
+                  <td className="py-4 text-muted-foreground">{r.f}</td>
+                  <td className="py-4 text-center">
+                    {r.a ? <span className="text-gold">✓</span> : <span className="text-muted-foreground/30">—</span>}
+                  </td>
+                  <td className="bg-gold/5 py-4 text-center">
+                    {r.b ? <span className="text-gold">✓</span> : <span className="text-muted-foreground/30">—</span>}
+                  </td>
+                  <td className="py-4 text-center">
+                    {r.c ? <span className="text-gold">✓</span> : <span className="text-muted-foreground/30">—</span>}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ---------------- GUARANTEE ---------------- */
+function Guarantee() {
+  return (
+    <section className="mx-auto max-w-4xl px-6 py-24 text-center">
+      <div className="glass-card rounded-3xl border-gold/30 p-12 gold-glow">
+        <div className="mx-auto mb-6 flex size-16 items-center justify-center rounded-full border border-gold/40 bg-gold/10 font-serif text-3xl text-gold">
+          ✦
+        </div>
+        <h2 className="mb-4 font-serif text-3xl italic md:text-4xl">
+          7 dias para se apaixonar.<br />
+          <span className="text-gold">Ou seu dinheiro de volta.</span>
+        </h2>
+        <p className="mx-auto max-w-xl text-muted-foreground">
+          Se em 7 dias você não sentir que o Cosmic AI mudou a forma como olha para a sua vida,
+          devolvemos 100% do valor. Sem perguntas. Sem burocracia.
+          <span className="block mt-2 text-stardust">O risco é todo nosso.</span>
+        </p>
       </div>
     </section>
   );
@@ -462,19 +853,31 @@ function FAQ() {
   const qs = [
     {
       q: "Como o Cosmic AI calcula meu mapa astral?",
-      a: "Usamos a biblioteca Swiss Ephemeris (padrão astronômico profissional) cruzada com sua data, horário e cidade de nascimento para precisão de segundos de arco.",
+      a: "Usamos a biblioteca Swiss Ephemeris — o padrão astronômico profissional adotado por astrólogos do mundo todo — cruzada com sua data, horário e cidade exata de nascimento para precisão de segundos de arco.",
     },
     {
       q: "A IA substitui um astrólogo humano?",
-      a: "Não. Ela complementa. Traduz astrologia complexa em linguagem clara, mas a interpretação profunda de um humano sensível continua insubstituível para momentos críticos.",
+      a: "Não. Ela complementa. Traduz astrologia complexa em linguagem clara, lê seu mapa antes de cada resposta e está disponível 24/7 — mas a interpretação profunda de um humano sensível continua insubstituível para momentos críticos. Por isso o modo Profissional existe: para potencializar (não substituir) o trabalho de astrólogos reais.",
+    },
+    {
+      q: "Quais modelos de IA vocês usam?",
+      a: "GPT-5, Gemini 2.5 Pro e Gemini 3 — sempre rotacionando para o mais adequado a cada tipo de pergunta. Tudo via Lovable AI Gateway: sem você precisar de chave de API.",
     },
     {
       q: "Meus dados estão seguros?",
-      a: "Sim. Criptografia end-to-end, conformidade LGPD e nunca compartilhamos seus dados com terceiros.",
+      a: "Sim. Banco de dados criptografado, conformidade LGPD e nunca compartilhamos seus dados com terceiros. Sua jornada espiritual é privada.",
     },
     {
       q: "Posso cancelar quando quiser?",
-      a: "Sem multas, sem perguntas. Cancele em um clique pela área do usuário.",
+      a: "Sim — sem multas, sem perguntas, sem fidelidade. Cancele em 1 clique pela área do usuário. E ainda assim, oferecemos 7 dias de garantia incondicional.",
+    },
+    {
+      q: "Sou astrólogo profissional. Como funciona o modo Profissional?",
+      a: "Você cadastra clientes ilimitados, gera mapas, numerologias, tarot e relatórios temáticos para cada um, e exporta PDFs com a SUA marca (logo, cores, fontes). É o seu consultório digital, completo.",
+    },
+    {
+      q: "E se eu não quiser assinar?",
+      a: "Sem problema. O plano Iniciante é grátis para sempre. Ou compre créditos avulsos que nunca expiram e use no seu ritmo.",
     },
   ];
   return (
@@ -503,14 +906,18 @@ function CTASection() {
       <div className="relative mx-auto max-w-3xl px-6 text-center">
         <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-gold/30 px-4 py-1.5 text-[10px] uppercase tracking-[0.3em] text-gold">
           <span className="size-1.5 animate-pulse rounded-full bg-gold" />
-          Apenas 27 vagas restantes este mês
+          Apenas 27 vagas com preço de lançamento este mês
         </span>
         <h2 className="mb-6 font-serif text-5xl italic leading-tight md:text-6xl">
           As estrelas já <br />
-          <span className="shimmer-text">sabem seu nome</span>
+          <span className="shimmer-text">sabem seu nome.</span>
         </h2>
-        <p className="mb-12 text-muted-foreground">
-          Comece grátis. Sem cartão. Receba seu mapa astral em 60 segundos.
+        <p className="mx-auto mb-4 max-w-lg text-muted-foreground">
+          Cada dia sem o seu mapa é um dia tomando decisões com os olhos vendados.
+          Receba o seu — completo, cinematográfico — em <strong className="text-stardust">60 segundos</strong>.
+        </p>
+        <p className="mb-12 text-xs uppercase tracking-[0.3em] text-muted-foreground">
+          Sem cartão · Cancele quando quiser · 7 dias de garantia
         </p>
         <Link to="/auth" className="gold-glow inline-block rounded-full bg-gold px-12 py-5 text-sm font-semibold uppercase tracking-[0.2em] text-primary-foreground transition-all hover:bg-gold-glow">
           Descobrir meu mapa agora
@@ -536,7 +943,6 @@ function BrandIdentity() {
     >
       <Starfield count={40} />
       <div className="relative mx-auto max-w-7xl px-6">
-        {/* Header */}
         <div className="mb-20 flex flex-col items-start justify-between gap-8 md:flex-row md:items-end">
           <div className="max-w-xl">
             <p className="mb-4 block text-xs font-medium uppercase tracking-[0.4em] text-gold">
@@ -561,7 +967,6 @@ function BrandIdentity() {
         </div>
 
         <div className="grid grid-cols-1 gap-px border border-border bg-border lg:grid-cols-12">
-          {/* Monogram */}
           <motion.article
             aria-labelledby="brand-monogram-heading"
             className="group/mono relative bg-background p-12 lg:col-span-5"
@@ -578,7 +983,7 @@ function BrandIdentity() {
             </h3>
             <motion.div
               role="img"
-              aria-label="Monograma Cosmic AI: glifo C·AI em ouro cerimonial sobre noite profunda"
+              aria-label="Monograma Cosmic AI"
               className="relative mx-auto flex aspect-square w-full max-w-xs items-center justify-center"
               whileHover="hover"
               initial="rest"
@@ -597,19 +1002,6 @@ function BrandIdentity() {
                 transition={{ duration: 26, ease: "linear", repeat: Infinity }}
               />
               <div aria-hidden="true" className="absolute inset-8 rounded-full border border-gold/5" />
-              <motion.div
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-0 rounded-full"
-                variants={{
-                  rest: { opacity: 0, scale: 0.9 },
-                  hover: { opacity: 1, scale: 1 },
-                }}
-                transition={{ duration: 0.6, ease: "easeOut" }}
-                style={{
-                  background:
-                    "radial-gradient(circle, color-mix(in oklab, var(--gold) 22%, transparent) 0%, transparent 65%)",
-                }}
-              />
               {Array.from({ length: 12 }).map((_, i) => {
                 const angle = (i * 30 * Math.PI) / 180;
                 const r = 44;
@@ -641,24 +1033,16 @@ function BrandIdentity() {
                 aria-hidden="true"
                 className="relative font-serif text-7xl italic text-gold"
                 variants={{
-                  rest: { scale: 1, textShadow: "0 0 0px rgba(0,0,0,0)" },
-                  hover: {
-                    scale: 1.06,
-                    textShadow: "0 0 24px color-mix(in oklab, var(--gold) 60%, transparent)",
-                  },
+                  rest: { scale: 1 },
+                  hover: { scale: 1.06 },
                 }}
                 transition={{ duration: 0.5, ease: "easeOut" }}
               >
                 C<span className="text-stardust">·</span>AI
               </motion.span>
             </motion.div>
-            <div className="mt-10 flex items-center justify-between text-xs font-medium uppercase tracking-[0.3em] text-stardust/80">
-              <span>Glifo principal</span>
-              <span className="text-gold">Espaço seguro · 1.5×</span>
-            </div>
           </motion.article>
 
-          {/* Wordmark + Typography */}
           <article
             aria-labelledby="brand-type-heading"
             className="bg-background p-12 lg:col-span-7"
@@ -669,7 +1053,6 @@ function BrandIdentity() {
             >
               Logotipo & Tipografia
             </h3>
-
             <div className="border-b border-border pb-10">
               <div className="flex items-center gap-3">
                 <span aria-hidden="true" className="size-2 rounded-full bg-gold shadow-[0_0_12px_var(--gold)]" />
@@ -677,11 +1060,7 @@ function BrandIdentity() {
                   Cosmic AI
                 </span>
               </div>
-              <p className="mt-3 text-xs font-medium uppercase tracking-[0.3em] text-stardust/80">
-                Wordmark · tracking 0.3em · ouro cerimonial
-              </p>
             </div>
-
             <div className="mt-10 grid grid-cols-1 gap-10 sm:grid-cols-2">
               <div>
                 <p aria-hidden="true" className="font-serif text-6xl italic leading-none text-foreground">
@@ -691,9 +1070,6 @@ function BrandIdentity() {
                   <p className="text-gold">Cormorant Garamond</p>
                   <p>Display · Itálico · 400–600</p>
                 </div>
-                <p className="mt-4 font-serif text-base italic text-stardust">
-                  "Decifre seu mapa celestial."
-                </p>
               </div>
               <div>
                 <p aria-hidden="true" className="text-6xl font-light leading-none text-foreground">Aa</p>
@@ -701,142 +1077,30 @@ function BrandIdentity() {
                   <p className="text-gold">Inter</p>
                   <p>Texto · 300–600</p>
                 </div>
-                <p className="mt-4 text-sm font-light text-foreground/75">
-                  Clareza absoluta para parágrafos longos e dados precisos.
-                </p>
               </div>
             </div>
           </article>
 
-          {/* Palette */}
-          <motion.article
-            aria-labelledby="brand-palette-heading"
-            className="bg-background p-12 lg:col-span-7"
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-80px" }}
-            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <h3
-              id="brand-palette-heading"
-              className="mb-8 text-xs font-medium uppercase tracking-[0.35em] text-stardust/85"
-            >
+          <article className="bg-background p-12 lg:col-span-12">
+            <h3 className="mb-8 text-xs font-medium uppercase tracking-[0.35em] text-stardust/85">
               Paleta Cromática
             </h3>
             <ul className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-              {palette.map((c, i) => (
-                <motion.li
-                  key={c.name}
-                  className="group"
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-60px" }}
-                  transition={{
-                    duration: 0.55,
-                    delay: i * 0.08,
-                    ease: [0.22, 1, 0.36, 1],
-                  }}
-                >
-                  <motion.div
+              {palette.map((c) => (
+                <li key={c.name}>
+                  <div
                     role="img"
-                    aria-label={`Cor ${c.name}, token ${c.token}, hexadecimal ${c.hex}`}
-                    whileHover={{ y: -6, scale: 1.03 }}
-                    transition={{ type: "spring", stiffness: 260, damping: 18 }}
-                    className={`relative aspect-square w-full overflow-hidden rounded-md border border-border ${c.className} shadow-[0_0_0_0_transparent] transition-shadow duration-500 group-hover:shadow-[0_18px_40px_-18px_color-mix(in_oklab,var(--gold)_45%,transparent)]`}
-                  >
-                    <span aria-hidden="true" className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-foreground/10 to-transparent" />
-                    <motion.span
-                      aria-hidden="true"
-                      className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
-                      style={{
-                        background:
-                          "radial-gradient(circle at 30% 30%, rgba(255,255,255,0.18), transparent 60%)",
-                      }}
-                    />
-                  </motion.div>
-                  <div className="mt-4 space-y-1 transition-transform duration-300 group-hover:translate-x-0.5">
-                    <p className="font-serif text-lg text-foreground transition-colors group-hover:text-gold">
-                      {c.name}
-                    </p>
-                    <p className="text-xs font-medium uppercase tracking-[0.25em] text-gold">
-                      {c.hex}
-                    </p>
-                    <p className="text-xs font-medium uppercase tracking-[0.25em] text-stardust/80">
-                      {c.token}
-                    </p>
+                    aria-label={`Cor ${c.name}, ${c.hex}`}
+                    className={`relative aspect-square w-full overflow-hidden rounded-md border border-border ${c.className}`}
+                  />
+                  <div className="mt-4 space-y-1">
+                    <p className="font-serif text-lg text-foreground">{c.name}</p>
+                    <p className="text-xs font-medium uppercase tracking-[0.25em] text-gold">{c.hex}</p>
                   </div>
-                </motion.li>
+                </li>
               ))}
             </ul>
-          </motion.article>
-
-          {/* Principles */}
-          <motion.article
-            aria-labelledby="brand-principles-heading"
-            className="bg-background p-12 lg:col-span-5"
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-80px" }}
-            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <h3
-              id="brand-principles-heading"
-              className="mb-8 text-xs font-medium uppercase tracking-[0.35em] text-stardust/85"
-            >
-              Princípios
-            </h3>
-            <ol className="space-y-6">
-              {[
-                {
-                  k: "01",
-                  t: "Ouro como gesto",
-                  d: "Nunca decorativo. Sempre acento de significado.",
-                },
-                {
-                  k: "02",
-                  t: "Silêncio é estrutura",
-                  d: "Respiro generoso. Hierarquia pelo vazio.",
-                },
-                {
-                  k: "03",
-                  t: "Serifa como alma",
-                  d: "Itálico para o sagrado, sans para o útil.",
-                },
-              ].map((p, i) => (
-                <motion.li
-                  key={p.k}
-                  className="group/p relative flex cursor-default gap-5 border-b border-border/50 pb-5 last:border-0"
-                  initial={{ opacity: 0, x: -16 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true, margin: "-40px" }}
-                  transition={{
-                    duration: 0.55,
-                    delay: i * 0.12,
-                    ease: [0.22, 1, 0.36, 1],
-                  }}
-                  whileHover={{ x: 6 }}
-                >
-                  <span aria-hidden="true" className="pointer-events-none absolute -left-3 top-2 h-6 w-px origin-top scale-y-0 bg-gold transition-transform duration-500 group-hover/p:scale-y-100" />
-                  <motion.span
-                    aria-hidden="true"
-                    className="font-serif text-2xl italic text-gold"
-                    whileHover={{ scale: 1.15, rotate: -4 }}
-                    transition={{ type: "spring", stiffness: 320, damping: 14 }}
-                  >
-                    {p.k}
-                  </motion.span>
-                  <div>
-                    <h4 className="font-serif text-lg text-foreground transition-colors duration-300 group-hover/p:text-gold">
-                      {p.t}
-                    </h4>
-                    <p className="mt-1 text-sm font-light leading-relaxed text-foreground/75">
-                      {p.d}
-                    </p>
-                  </div>
-                </motion.li>
-              ))}
-            </ol>
-          </motion.article>
+          </article>
         </div>
       </div>
     </section>
@@ -878,123 +1142,6 @@ function WhatsAppFloat() {
       <span className="size-2 animate-pulse rounded-full bg-emerald-400" />
       WhatsApp
     </a>
-  );
-}
-
-/* ---------------- TRUST BAR ---------------- */
-function TrustBar() {
-  const stats = [
-    { n: "12.847", t: "Mapas gerados" },
-    { n: "4.9★", t: "Avaliação média" },
-    { n: "93%", t: "Renovam o plano" },
-    { n: "48", t: "Países atendidos" },
-  ];
-  return (
-    <section className="border-y border-border bg-card/20">
-      <div className="mx-auto grid max-w-7xl grid-cols-2 gap-px bg-border md:grid-cols-4">
-        {stats.map((s) => (
-          <div key={s.t} className="bg-background px-6 py-8 text-center">
-            <div className="font-serif text-3xl text-gold md:text-4xl">{s.n}</div>
-            <div className="mt-2 text-[10px] uppercase tracking-[0.3em] text-muted-foreground">{s.t}</div>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-/* ---------------- COMPATIBILITY ---------------- */
-function Compatibility() {
-  return (
-    <section className="mx-auto max-w-7xl px-6 py-32">
-      <div className="grid items-center gap-16 lg:grid-cols-2">
-        <div className="relative mx-auto aspect-square w-full max-w-md">
-          <div className="absolute left-1/4 top-1/2 size-48 -translate-y-1/2 rounded-full border border-gold/40 bg-gradient-to-br from-gold/20 to-transparent backdrop-blur-sm" />
-          <div className="absolute right-1/4 top-1/2 size-48 -translate-y-1/2 rounded-full border border-nebula/40 bg-gradient-to-br from-nebula/20 to-transparent backdrop-blur-sm" />
-          <div className="absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
-            <div className="size-16 rounded-full bg-gold-glow shadow-[0_0_60px_var(--gold)]" />
-          </div>
-        </div>
-        <div>
-          <span className="mb-4 block text-xs uppercase tracking-[0.4em] text-gold/70">
-            Sinastria & Vínculos
-          </span>
-          <h2 className="mb-6 font-serif text-5xl italic leading-tight">
-            Dois mapas. <br /> <span className="text-gold">Uma única dança.</span>
-          </h2>
-          <p className="mb-8 max-w-md leading-relaxed text-muted-foreground">
-            Cruzamos seu mapa com o de quem você ama, com seu sócio ou com sua equipe — e
-            revelamos a geometria invisível que une (ou tensiona) cada vínculo.
-          </p>
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            {[
-              "Compatibilidade amorosa",
-              "Conexão espiritual",
-              "Sinastria empresarial",
-              "Mapa de sócios",
-            ].map((c) => (
-              <div key={c} className="flex items-center gap-3 rounded-lg border border-border px-4 py-3">
-                <span className="size-1.5 rounded-full bg-gold" />
-                <span className="text-muted-foreground">{c}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ---------------- PLAN COMPARISON ---------------- */
-function PlanComparison() {
-  const rows = [
-    { f: "Mapa astral completo", a: true, b: true, c: true },
-    { f: "Previsão diária de trânsitos", a: true, b: true, c: true },
-    { f: "Numerologia cabalística", a: false, b: true, c: true },
-    { f: "Sinastria amorosa", a: false, b: true, c: true },
-    { f: "IA espiritual ilimitada", a: false, b: true, c: true },
-    { f: "Relatórios PDF premium", a: false, b: true, c: true },
-    { f: "Análise empresarial", a: false, b: false, c: true },
-    { f: "Tarot IA + Mentor", a: false, b: false, c: true },
-    { f: "Notificações WhatsApp", a: false, b: false, c: true },
-  ];
-  return (
-    <section className="border-y border-border bg-card/20 py-32">
-      <div className="mx-auto max-w-5xl px-6">
-        <h2 className="mb-4 text-center font-serif text-4xl italic">Compare em detalhes</h2>
-        <p className="mb-16 text-center text-xs uppercase tracking-[0.3em] text-muted-foreground">
-          O que cada nível desbloqueia
-        </p>
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-sm">
-            <thead>
-              <tr className="border-b border-border">
-                <th className="py-5 text-left text-xs font-normal uppercase tracking-[0.25em] text-muted-foreground"></th>
-                <th className="py-5 text-center text-xs font-semibold uppercase tracking-[0.25em] text-foreground">Iniciante</th>
-                <th className="py-5 text-center text-xs font-semibold uppercase tracking-[0.25em] text-gold">Adepto</th>
-                <th className="py-5 text-center text-xs font-semibold uppercase tracking-[0.25em] text-foreground">Oráculo</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => (
-                <tr key={r.f} className="border-b border-border/50">
-                  <td className="py-4 text-muted-foreground">{r.f}</td>
-                  <td className="py-4 text-center">
-                    {r.a ? <span className="text-gold">✓</span> : <span className="text-muted-foreground/30">—</span>}
-                  </td>
-                  <td className="bg-gold/5 py-4 text-center">
-                    {r.b ? <span className="text-gold">✓</span> : <span className="text-muted-foreground/30">—</span>}
-                  </td>
-                  <td className="py-4 text-center">
-                    {r.c ? <span className="text-gold">✓</span> : <span className="text-muted-foreground/30">—</span>}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
   );
 }
 
