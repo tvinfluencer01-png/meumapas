@@ -189,6 +189,36 @@ export const SUBSCRIPTION_ADDONS: SubscriptionAddon[] = [
       "Exportação em PDF",
     ],
   },
+  {
+    id: "sub_daily_horoscope",
+    name: "Horóscopo Diário",
+    price_cents: 1990,
+    description:
+      "Receba todos os dias, no seu WhatsApp e e-mail, uma previsão personalizada para o seu signo solar — escrita com IA premium.",
+    features: [
+      "Envio diário às 7h (horário de Brasília)",
+      "Mensagem por WhatsApp e e-mail",
+      "Texto exclusivo gerado com IA premium",
+      "Foco em amor, trabalho, energia e conselho do dia",
+      "Pause ou retome quando quiser",
+    ],
+  },
+  {
+    id: "sub_business_map",
+    name: "Mapa Empresarial",
+    price_cents: 9990,
+    highlight: true,
+    description:
+      "Análise profunda e profissional da sua empresa: arquétipo da marca, sócios, dinâmica entre sócios, ciclos do ano e previsões estratégicas em PDF cinematográfico — ativado automaticamente após o pagamento.",
+    features: [
+      "PDF completo no mesmo padrão dos relatórios premium",
+      "Numerologia empresarial (nome + data de fundação)",
+      "Análise de cada sócio (mapa + numerologia)",
+      "Dinâmica entre sócios: forças, atritos e equilíbrio",
+      "Previsões anuais para a empresa: oportunidades, ameaças e plano de 12 ciclos",
+      "Relatórios ilimitados enquanto a assinatura estiver ativa",
+    ],
+  },
 ];
 
 export function formatBRL(cents: number) {
