@@ -17,8 +17,8 @@ const PartnerSchema = z.object({
 const InputSchema = z.object({
   company_name: z.string().min(2).max(160),
   founding_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  industry: z.string().max(120).optional().nullable(),
-  notes: z.string().max(1500).optional().nullable(),
+  industry: z.string().max(500).optional().nullable(),
+  notes: z.string().max(2000).optional().nullable(),
   partners: z.array(PartnerSchema).min(1).max(8),
 });
 
