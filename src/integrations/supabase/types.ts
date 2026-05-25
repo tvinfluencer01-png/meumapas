@@ -409,6 +409,81 @@ export type Database = {
         }
         Relationships: []
       }
+      horoscope_log: {
+        Row: {
+          channel: string
+          created_at: string
+          date: string
+          detail: string | null
+          id: string
+          sign: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          channel: string
+          created_at?: string
+          date: string
+          detail?: string | null
+          id?: string
+          sign?: string | null
+          status: string
+          user_id: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          date?: string
+          detail?: string | null
+          id?: string
+          sign?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      horoscope_subscriptions: {
+        Row: {
+          channel_email: boolean
+          channel_whatsapp: boolean
+          created_at: string
+          email: string | null
+          enabled: boolean
+          last_sent_on: string | null
+          phone_e164: string | null
+          send_hour_utc: number
+          sun_sign: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          channel_email?: boolean
+          channel_whatsapp?: boolean
+          created_at?: string
+          email?: string | null
+          enabled?: boolean
+          last_sent_on?: string | null
+          phone_e164?: string | null
+          send_hour_utc?: number
+          sun_sign?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          channel_email?: boolean
+          channel_whatsapp?: boolean
+          created_at?: string
+          email?: string | null
+          enabled?: boolean
+          last_sent_on?: string | null
+          phone_e164?: string | null
+          send_hour_utc?: number
+          sun_sign?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       kabbalah_meditations: {
         Row: {
           ai_model: string | null
