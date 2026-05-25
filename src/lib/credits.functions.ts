@@ -206,6 +206,7 @@ export async function hasUnlimitedAccess(
     report_family: "sub_unlimited_family",
     report_health: "sub_unlimited_health",
     report_friendships: "sub_unlimited_friendships",
+    report_business: "sub_business_map",
   };
   const addonIds: string[] = [];
   if (action.startsWith("report_")) {
