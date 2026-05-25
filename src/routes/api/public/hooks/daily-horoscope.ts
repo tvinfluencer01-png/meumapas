@@ -44,6 +44,14 @@ async function handler({ request }: { request: Request }) {
     .eq("id", true)
     .maybeSingle();
 
+  const { data: evo } = await (supabaseAdmin as any)
+    .from("evolution_settings")
+    .select("*")
+    .eq("id", true)
+    .maybeSingle();
+  const evoReady =
+    evo?.enabled && evo?.base_url && evo?.global_api_key && evo?.instance_name;
+
   const apiKey = process.env.LOVABLE_API_KEY;
   if (!apiKey) return new Response("LOVABLE_API_KEY missing", { status: 500 });
   const provider = createLovableAiGatewayProvider(apiKey);
