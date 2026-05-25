@@ -21,13 +21,17 @@ import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authentic
 import { Route as AuthenticatedNumerologiaCabalisticaRouteImport } from './routes/_authenticated.numerologia-cabalistica'
 import { Route as AuthenticatedNumerologiaRouteImport } from './routes/_authenticated.numerologia'
 import { Route as AuthenticatedMeditacaoRouteImport } from './routes/_authenticated.meditacao'
+import { Route as AuthenticatedMapaEmpresarialRouteImport } from './routes/_authenticated.mapa-empresarial'
 import { Route as AuthenticatedMapaAstralRouteImport } from './routes/_authenticated.mapa-astral'
+import { Route as AuthenticatedHoroscopoRouteImport } from './routes/_authenticated.horoscopo'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated.dashboard'
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated.configuracoes'
 import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticated.clientes'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated.admin'
 import { Route as AuthenticatedAddonsRouteImport } from './routes/_authenticated.addons'
 import { Route as AuthenticatedAdminLogsRouteImport } from './routes/_authenticated.admin.logs'
+import { Route as ApiPublicHooksMercadopagoRouteImport } from './routes/api/public/hooks/mercadopago'
+import { Route as ApiPublicHooksDailyHoroscopeRouteImport } from './routes/api/public/hooks/daily-horoscope'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -90,9 +94,20 @@ const AuthenticatedMeditacaoRoute = AuthenticatedMeditacaoRouteImport.update({
   path: '/meditacao',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedMapaEmpresarialRoute =
+  AuthenticatedMapaEmpresarialRouteImport.update({
+    id: '/mapa-empresarial',
+    path: '/mapa-empresarial',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedMapaAstralRoute = AuthenticatedMapaAstralRouteImport.update({
   id: '/mapa-astral',
   path: '/mapa-astral',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedHoroscopoRoute = AuthenticatedHoroscopoRouteImport.update({
+  id: '/horoscopo',
+  path: '/horoscopo',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
@@ -126,6 +141,18 @@ const AuthenticatedAdminLogsRoute = AuthenticatedAdminLogsRouteImport.update({
   path: '/logs',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const ApiPublicHooksMercadopagoRoute =
+  ApiPublicHooksMercadopagoRouteImport.update({
+    id: '/api/public/hooks/mercadopago',
+    path: '/api/public/hooks/mercadopago',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksDailyHoroscopeRoute =
+  ApiPublicHooksDailyHoroscopeRouteImport.update({
+    id: '/api/public/hooks/daily-horoscope',
+    path: '/api/public/hooks/daily-horoscope',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -135,7 +162,9 @@ export interface FileRoutesByFullPath {
   '/clientes': typeof AuthenticatedClientesRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/horoscopo': typeof AuthenticatedHoroscopoRoute
   '/mapa-astral': typeof AuthenticatedMapaAstralRoute
+  '/mapa-empresarial': typeof AuthenticatedMapaEmpresarialRoute
   '/meditacao': typeof AuthenticatedMeditacaoRoute
   '/numerologia': typeof AuthenticatedNumerologiaRoute
   '/numerologia-cabalistica': typeof AuthenticatedNumerologiaCabalisticaRoute
@@ -146,6 +175,8 @@ export interface FileRoutesByFullPath {
   '/tarot': typeof AuthenticatedTarotRoute
   '/api/chat': typeof ApiChatRoute
   '/admin/logs': typeof AuthenticatedAdminLogsRoute
+  '/api/public/hooks/daily-horoscope': typeof ApiPublicHooksDailyHoroscopeRoute
+  '/api/public/hooks/mercadopago': typeof ApiPublicHooksMercadopagoRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -155,7 +186,9 @@ export interface FileRoutesByTo {
   '/clientes': typeof AuthenticatedClientesRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/horoscopo': typeof AuthenticatedHoroscopoRoute
   '/mapa-astral': typeof AuthenticatedMapaAstralRoute
+  '/mapa-empresarial': typeof AuthenticatedMapaEmpresarialRoute
   '/meditacao': typeof AuthenticatedMeditacaoRoute
   '/numerologia': typeof AuthenticatedNumerologiaRoute
   '/numerologia-cabalistica': typeof AuthenticatedNumerologiaCabalisticaRoute
@@ -166,6 +199,8 @@ export interface FileRoutesByTo {
   '/tarot': typeof AuthenticatedTarotRoute
   '/api/chat': typeof ApiChatRoute
   '/admin/logs': typeof AuthenticatedAdminLogsRoute
+  '/api/public/hooks/daily-horoscope': typeof ApiPublicHooksDailyHoroscopeRoute
+  '/api/public/hooks/mercadopago': typeof ApiPublicHooksMercadopagoRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -177,7 +212,9 @@ export interface FileRoutesById {
   '/_authenticated/clientes': typeof AuthenticatedClientesRoute
   '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/horoscopo': typeof AuthenticatedHoroscopoRoute
   '/_authenticated/mapa-astral': typeof AuthenticatedMapaAstralRoute
+  '/_authenticated/mapa-empresarial': typeof AuthenticatedMapaEmpresarialRoute
   '/_authenticated/meditacao': typeof AuthenticatedMeditacaoRoute
   '/_authenticated/numerologia': typeof AuthenticatedNumerologiaRoute
   '/_authenticated/numerologia-cabalistica': typeof AuthenticatedNumerologiaCabalisticaRoute
@@ -188,6 +225,8 @@ export interface FileRoutesById {
   '/_authenticated/tarot': typeof AuthenticatedTarotRoute
   '/api/chat': typeof ApiChatRoute
   '/_authenticated/admin/logs': typeof AuthenticatedAdminLogsRoute
+  '/api/public/hooks/daily-horoscope': typeof ApiPublicHooksDailyHoroscopeRoute
+  '/api/public/hooks/mercadopago': typeof ApiPublicHooksMercadopagoRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -199,7 +238,9 @@ export interface FileRouteTypes {
     | '/clientes'
     | '/configuracoes'
     | '/dashboard'
+    | '/horoscopo'
     | '/mapa-astral'
+    | '/mapa-empresarial'
     | '/meditacao'
     | '/numerologia'
     | '/numerologia-cabalistica'
@@ -210,6 +251,8 @@ export interface FileRouteTypes {
     | '/tarot'
     | '/api/chat'
     | '/admin/logs'
+    | '/api/public/hooks/daily-horoscope'
+    | '/api/public/hooks/mercadopago'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -219,7 +262,9 @@ export interface FileRouteTypes {
     | '/clientes'
     | '/configuracoes'
     | '/dashboard'
+    | '/horoscopo'
     | '/mapa-astral'
+    | '/mapa-empresarial'
     | '/meditacao'
     | '/numerologia'
     | '/numerologia-cabalistica'
@@ -230,6 +275,8 @@ export interface FileRouteTypes {
     | '/tarot'
     | '/api/chat'
     | '/admin/logs'
+    | '/api/public/hooks/daily-horoscope'
+    | '/api/public/hooks/mercadopago'
   id:
     | '__root__'
     | '/'
@@ -240,7 +287,9 @@ export interface FileRouteTypes {
     | '/_authenticated/clientes'
     | '/_authenticated/configuracoes'
     | '/_authenticated/dashboard'
+    | '/_authenticated/horoscopo'
     | '/_authenticated/mapa-astral'
+    | '/_authenticated/mapa-empresarial'
     | '/_authenticated/meditacao'
     | '/_authenticated/numerologia'
     | '/_authenticated/numerologia-cabalistica'
@@ -251,6 +300,8 @@ export interface FileRouteTypes {
     | '/_authenticated/tarot'
     | '/api/chat'
     | '/_authenticated/admin/logs'
+    | '/api/public/hooks/daily-horoscope'
+    | '/api/public/hooks/mercadopago'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -258,6 +309,8 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AuthRoute: typeof AuthRoute
   ApiChatRoute: typeof ApiChatRoute
+  ApiPublicHooksDailyHoroscopeRoute: typeof ApiPublicHooksDailyHoroscopeRoute
+  ApiPublicHooksMercadopagoRoute: typeof ApiPublicHooksMercadopagoRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -346,11 +399,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMeditacaoRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/mapa-empresarial': {
+      id: '/_authenticated/mapa-empresarial'
+      path: '/mapa-empresarial'
+      fullPath: '/mapa-empresarial'
+      preLoaderRoute: typeof AuthenticatedMapaEmpresarialRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/mapa-astral': {
       id: '/_authenticated/mapa-astral'
       path: '/mapa-astral'
       fullPath: '/mapa-astral'
       preLoaderRoute: typeof AuthenticatedMapaAstralRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/horoscopo': {
+      id: '/_authenticated/horoscopo'
+      path: '/horoscopo'
+      fullPath: '/horoscopo'
+      preLoaderRoute: typeof AuthenticatedHoroscopoRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/dashboard': {
@@ -395,6 +462,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminLogsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/api/public/hooks/mercadopago': {
+      id: '/api/public/hooks/mercadopago'
+      path: '/api/public/hooks/mercadopago'
+      fullPath: '/api/public/hooks/mercadopago'
+      preLoaderRoute: typeof ApiPublicHooksMercadopagoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/daily-horoscope': {
+      id: '/api/public/hooks/daily-horoscope'
+      path: '/api/public/hooks/daily-horoscope'
+      fullPath: '/api/public/hooks/daily-horoscope'
+      preLoaderRoute: typeof ApiPublicHooksDailyHoroscopeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -415,7 +496,9 @@ interface AuthenticatedRouteChildren {
   AuthenticatedClientesRoute: typeof AuthenticatedClientesRoute
   AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedHoroscopoRoute: typeof AuthenticatedHoroscopoRoute
   AuthenticatedMapaAstralRoute: typeof AuthenticatedMapaAstralRoute
+  AuthenticatedMapaEmpresarialRoute: typeof AuthenticatedMapaEmpresarialRoute
   AuthenticatedMeditacaoRoute: typeof AuthenticatedMeditacaoRoute
   AuthenticatedNumerologiaRoute: typeof AuthenticatedNumerologiaRoute
   AuthenticatedNumerologiaCabalisticaRoute: typeof AuthenticatedNumerologiaCabalisticaRoute
@@ -432,7 +515,9 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedClientesRoute: AuthenticatedClientesRoute,
   AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedHoroscopoRoute: AuthenticatedHoroscopoRoute,
   AuthenticatedMapaAstralRoute: AuthenticatedMapaAstralRoute,
+  AuthenticatedMapaEmpresarialRoute: AuthenticatedMapaEmpresarialRoute,
   AuthenticatedMeditacaoRoute: AuthenticatedMeditacaoRoute,
   AuthenticatedNumerologiaRoute: AuthenticatedNumerologiaRoute,
   AuthenticatedNumerologiaCabalisticaRoute:
@@ -453,7 +538,19 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AuthRoute: AuthRoute,
   ApiChatRoute: ApiChatRoute,
+  ApiPublicHooksDailyHoroscopeRoute: ApiPublicHooksDailyHoroscopeRoute,
+  ApiPublicHooksMercadopagoRoute: ApiPublicHooksMercadopagoRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
