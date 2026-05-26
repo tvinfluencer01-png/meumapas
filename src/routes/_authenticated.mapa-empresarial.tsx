@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,7 @@ export const Route = createFileRoute("/_authenticated/mapa-empresarial")({
 type Partner = { full_name: string; birth_date: string; role: string };
 
 function BusinessMapPage() {
+  const queryClient = useQueryClient();
   const overviewFn = useServerFn(getAddonsOverview);
   const generateFn = useServerFn(generateBusinessReport);
   const { data: overview } = useQuery({
@@ -93,9 +94,13 @@ function BusinessMapPage() {
       setProgress(100);
       const final = r?.result ?? r;
       if (final?.signedUrl || final?.storagePath) {
+        await queryClient.invalidateQueries({ queryKey: ["reports"] });
+        await queryClient.invalidateQueries({ queryKey: ["reports-count"] });
         setResult({ signedUrl: final.signedUrl ?? null, title: final.title ?? "Mapa Empresarial" });
         toast.success("Relatório gerado!");
       } else {
+        await queryClient.invalidateQueries({ queryKey: ["reports"] });
+        await queryClient.invalidateQueries({ queryKey: ["reports-count"] });
         toast.success("Relatório gerado! Veja em Relatórios.");
       }
     } catch (e: any) {
