@@ -190,18 +190,23 @@ function BusinessMapPage() {
         )}
 
         {result && (
-          <div className="rounded-lg border border-gold/30 bg-background/60 p-4 flex items-center justify-between">
-            <div>
-              <div className="font-serif text-gold">{result.title}</div>
-              <div className="text-xs text-muted-foreground">Disponível também em Relatórios.</div>
+          <div className="rounded-lg border border-gold/30 bg-background/60 p-4 space-y-3">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <div>
+                <div className="font-serif text-gold">{result.title}</div>
+                <div className="text-xs text-muted-foreground">Salvo na sua Biblioteca Cósmica.</div>
+              </div>
+              {result.signedUrl && (
+                <Button asChild>
+                  <a href={result.signedUrl} target="_blank" rel="noreferrer">
+                    <Download className="size-4 mr-2" /> Baixar PDF
+                  </a>
+                </Button>
+              )}
             </div>
-            {result.signedUrl && (
-              <Button asChild>
-                <a href={result.signedUrl} target="_blank" rel="noreferrer">
-                  <Download className="size-4 mr-2" /> Baixar PDF
-                </a>
-              </Button>
-            )}
+            <Button asChild variant="outline" className="w-full border-gold/30 text-gold hover:bg-gold/10">
+              <Link to="/relatorios">Ver em Relatórios →</Link>
+            </Button>
           </div>
         )}
       </div>
