@@ -81,7 +81,7 @@ function BusinessMapPage() {
     setResult(null);
     setShowSuccess(false);
     try {
-      const r: any = await generateFn({
+      const stream = await generateFn({
         data: {
           company_name: companyName,
           founding_date: founding,
@@ -94,8 +94,19 @@ function BusinessMapPage() {
           })),
         },
       } as any);
-      setProgress(100);
-      const final = r?.result ?? r;
+      let final: { signedUrl?: string | null; storagePath?: string | null; title?: string | null } | null = null;
+      for await (const evt of stream as AsyncIterable<any>) {
+        if (evt.type === "progress") {
+          setProgress(evt.progress);
+          setStep(evt.step);
+        } else if (evt.type === "done") {
+          setProgress(evt.progress ?? 100);
+          setStep(evt.step ?? "Pronto!");
+          final = evt.result;
+        }
+      }
+      if (!final) throw new Error("Geração interrompida antes de salvar o relatório.");
+      localStorage.setItem("reports-scope", "self");
       await queryClient.invalidateQueries({ queryKey: ["reports"] });
       await queryClient.invalidateQueries({ queryKey: ["reports-count"] });
       if (final?.signedUrl || final?.storagePath) {
