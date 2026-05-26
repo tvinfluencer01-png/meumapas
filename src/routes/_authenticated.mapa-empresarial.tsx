@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
-import { Building2, Plus, Trash2, Lock, Download, Loader2 } from "lucide-react";
+import { Building2, Plus, Trash2, Lock, Download, Loader2, FileText, ArrowRight, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getAddonsOverview } from "@/lib/addons.functions";
 import { generateBusinessReport } from "@/lib/business.functions";
@@ -42,6 +43,7 @@ function BusinessMapPage() {
   const [step, setStep] = useState("");
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<{ signedUrl: string | null; title: string } | null>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   if (!hasAddon) {
     return (
@@ -77,6 +79,7 @@ function BusinessMapPage() {
     setProgress(10);
     setStep("Gerando análise estratégica com IA...");
     setResult(null);
+    setShowSuccess(false);
     try {
       const r: any = await generateFn({
         data: {
@@ -93,16 +96,12 @@ function BusinessMapPage() {
       } as any);
       setProgress(100);
       const final = r?.result ?? r;
+      await queryClient.invalidateQueries({ queryKey: ["reports"] });
+      await queryClient.invalidateQueries({ queryKey: ["reports-count"] });
       if (final?.signedUrl || final?.storagePath) {
-        await queryClient.invalidateQueries({ queryKey: ["reports"] });
-        await queryClient.invalidateQueries({ queryKey: ["reports-count"] });
         setResult({ signedUrl: final.signedUrl ?? null, title: final.title ?? "Mapa Empresarial" });
-        toast.success("Relatório gerado!");
-      } else {
-        await queryClient.invalidateQueries({ queryKey: ["reports"] });
-        await queryClient.invalidateQueries({ queryKey: ["reports-count"] });
-        toast.success("Relatório gerado! Veja em Relatórios.");
       }
+      setShowSuccess(true);
     } catch (e: any) {
       toast.error(e?.message ?? "Falha ao gerar");
     } finally {
@@ -121,6 +120,21 @@ function BusinessMapPage() {
           Análise profunda de empresa, sócios e ciclos anuais. PDF gerado no mesmo padrão dos relatórios premium.
         </p>
       </header>
+
+      {showSuccess && (
+        <Alert className="glass-card border-gold/30 bg-gold/10 text-gold animate-in fade-in slide-in-from-top-2 duration-500">
+          <CheckCircle2 className="size-5 text-gold" />
+          <AlertTitle className="font-serif text-gold">Relatório gerado com sucesso!</AlertTitle>
+          <AlertDescription className="text-muted-foreground">
+            Seu Mapa Empresarial foi salvo na Biblioteca Cósmica.
+          </AlertDescription>
+          <Button asChild size="sm" className="mt-3 bg-gold text-night hover:bg-gold/90">
+            <Link to="/relatorios">
+              <FileText className="size-4 mr-2" /> Ver Relatórios <ArrowRight className="size-4 ml-2" />
+            </Link>
+          </Button>
+        </Alert>
+      )}
 
       <div className="rounded-lg border border-gold/20 bg-secondary/30 p-5 space-y-4">
         <div className="grid sm:grid-cols-2 gap-4">
