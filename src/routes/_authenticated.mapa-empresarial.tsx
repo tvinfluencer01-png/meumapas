@@ -79,6 +79,7 @@ function BusinessMapPage() {
     setProgress(10);
     setStep("Gerando análise estratégica com IA...");
     setResult(null);
+    setShowSuccess(false);
     try {
       const r: any = await generateFn({
         data: {
@@ -95,16 +96,12 @@ function BusinessMapPage() {
       } as any);
       setProgress(100);
       const final = r?.result ?? r;
+      await queryClient.invalidateQueries({ queryKey: ["reports"] });
+      await queryClient.invalidateQueries({ queryKey: ["reports-count"] });
       if (final?.signedUrl || final?.storagePath) {
-        await queryClient.invalidateQueries({ queryKey: ["reports"] });
-        await queryClient.invalidateQueries({ queryKey: ["reports-count"] });
         setResult({ signedUrl: final.signedUrl ?? null, title: final.title ?? "Mapa Empresarial" });
-        toast.success("Relatório gerado!");
-      } else {
-        await queryClient.invalidateQueries({ queryKey: ["reports"] });
-        await queryClient.invalidateQueries({ queryKey: ["reports-count"] });
-        toast.success("Relatório gerado! Veja em Relatórios.");
       }
+      setShowSuccess(true);
     } catch (e: any) {
       toast.error(e?.message ?? "Falha ao gerar");
     } finally {
