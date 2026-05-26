@@ -43,6 +43,7 @@ function BusinessMapPage() {
   const [step, setStep] = useState("");
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<{ signedUrl: string | null; title: string } | null>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   if (!hasAddon) {
     return (
