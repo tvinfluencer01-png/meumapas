@@ -133,7 +133,7 @@ A análise deve ser sofisticada, com linguagem executiva e simbólica equilibrad
 
       let aiJson: any = null;
       try {
-        const { text } = await generateText({ model, prompt, temperature: 0.75 });
+        const { text } = await generateText({ model, prompt });
         const m = text.match(/\{[\s\S]*\}/);
         aiJson = JSON.parse(m ? m[0] : text);
       } catch (e) {
