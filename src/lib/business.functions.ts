@@ -133,7 +133,7 @@ A análise deve ser sofisticada, com linguagem executiva e simbólica equilibrad
 
       let aiJson: any = null;
       try {
-        const { text } = await generateText({ model, prompt, temperature: 0.75 });
+        const { text } = await generateText({ model, prompt });
         const m = text.match(/\{[\s\S]*\}/);
         aiJson = JSON.parse(m ? m[0] : text);
       } catch (e) {
@@ -214,7 +214,7 @@ A análise deve ser sofisticada, com linguagem executiva e simbólica equilibrad
         .upload(path, pdfBytes, { contentType: "application/pdf", upsert: false });
       if (upErr) throw new Error("Falha ao salvar o PDF.");
 
-      const { data: row } = await supabaseAdmin
+      const { data: row, error: insErr } = await supabaseAdmin
         .from("reports")
         .insert({
           user_id: userId,
@@ -226,6 +226,10 @@ A análise deve ser sofisticada, com linguagem executiva e simbólica equilibrad
         })
         .select()
         .single();
+      if (insErr) {
+        console.error("[business] insert report error", insErr);
+        throw new Error("Falha ao salvar o relatório na biblioteca.");
+      }
 
       const { data: signed } = await supabaseAdmin.storage
         .from("reports")
