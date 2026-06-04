@@ -140,6 +140,25 @@ function HoroscopoPage() {
             onChange={(e) => setPhone(e.target.value)}
             disabled={!chWA}
           />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="w-full"
+            disabled={
+              testMutation.isPending ||
+              !chWA ||
+              !phone ||
+              !sign
+            }
+            onClick={() => testMutation.mutate()}
+          >
+            <Send className="size-4" />
+            {testMutation.isPending ? "Enviando teste..." : "Enviar teste no WhatsApp"}
+          </Button>
+          <p className="text-xs text-muted-foreground">
+            Envia agora uma mensagem de teste com o horóscopo de hoje para o número acima.
+          </p>
         </div>
 
         <div className="space-y-3 border-t border-border/60 pt-4">
