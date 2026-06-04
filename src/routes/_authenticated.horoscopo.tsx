@@ -6,16 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
 import { toast } from "sonner";
-import { Sun, Lock, Send } from "lucide-react";
+import { Sun, Lock, Send, User, AlertTriangle } from "lucide-react";
 import {
   getMyHoroscopeSubscription,
   updateMyHoroscopeSubscription,
   sendTestHoroscopeWhatsapp,
-  SUN_SIGNS,
 } from "@/lib/horoscope.functions";
 
 export const Route = createFileRoute("/_authenticated/horoscopo")({
@@ -36,7 +32,6 @@ function HoroscopoPage() {
   const [enabled, setEnabled] = useState(true);
   const [chEmail, setChEmail] = useState(true);
   const [chWA, setChWA] = useState(true);
-  const [sign, setSign] = useState<string>("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
 
@@ -46,7 +41,6 @@ function HoroscopoPage() {
     setEnabled(s?.enabled ?? true);
     setChEmail(s?.channel_email ?? true);
     setChWA(s?.channel_whatsapp ?? true);
-    setSign(s?.sun_sign ?? "");
     setEmail(s?.email ?? data.defaults.email ?? "");
     setPhone(s?.phone_e164 ?? data.defaults.phone_e164 ?? "");
   }, [data]);
@@ -58,21 +52,19 @@ function HoroscopoPage() {
           enabled,
           channel_email: chEmail,
           channel_whatsapp: chWA,
-          sun_sign: sign as any,
           email: email || null,
           phone_e164: phone || null,
         },
       }),
     onSuccess: () => {
-      toast.success("Preferências salvas!");
+      toast.success("Preferências salvas para o contexto ativo!");
       qc.invalidateQueries({ queryKey: ["horoscope-sub"] });
     },
     onError: (e: any) => toast.error(e?.message ?? "Falha ao salvar"),
   });
 
   const testMutation = useMutation({
-    mutationFn: () =>
-      testFn({ data: { sun_sign: sign as any, phone_e164: phone } }),
+    mutationFn: () => testFn({ data: { phone_e164: phone } }),
     onSuccess: (r: any) =>
       toast.success(`Teste enviado via ${r?.provider ?? "WhatsApp"}!`),
     onError: (e: any) => toast.error(e?.message ?? "Falha ao enviar teste"),
@@ -96,6 +88,9 @@ function HoroscopoPage() {
     );
   }
 
+  const ctx = data.context;
+  const detectedSign = ctx?.detectedSign ?? null;
+
   return (
     <div className="max-w-2xl mx-auto py-8 space-y-6">
       <header className="space-y-2">
@@ -104,9 +99,34 @@ function HoroscopoPage() {
           <h1 className="text-2xl font-serif text-gold">Horóscopo Diário</h1>
         </div>
         <p className="text-sm text-muted-foreground">
-          Configurações de envio. As mensagens saem todo dia às 7h (horário de Brasília).
+          Cada contexto ativo tem suas próprias preferências. As mensagens saem todo dia às 7h (BRT).
         </p>
       </header>
+
+      {/* Contexto ativo + signo detectado */}
+      <div className="rounded-lg border border-gold/30 bg-gold/5 p-4 flex items-start gap-3">
+        <User className="size-5 text-gold mt-0.5" />
+        <div className="flex-1 space-y-1">
+          <div className="text-xs uppercase tracking-wide text-muted-foreground">
+            Contexto ativo {ctx?.kind === "client" ? "(cliente)" : "(você)"}
+          </div>
+          <div className="text-base">
+            {ctx?.fullName ?? "Sem nome cadastrado"}
+            {ctx?.birthDate && (
+              <span className="text-muted-foreground"> · {new Date(ctx.birthDate + "T00:00:00").toLocaleDateString("pt-BR")}</span>
+            )}
+          </div>
+          {detectedSign ? (
+            <div className="text-sm">
+              Signo detectado: <span className="font-medium text-gold">{detectedSign}</span>
+            </div>
+          ) : (
+            <div className="text-sm text-destructive flex items-center gap-1">
+              <AlertTriangle className="size-4" /> Sem data de nascimento — cadastre no perfil ou cliente ativo.
+            </div>
+          )}
+        </div>
+      </div>
 
       <div className="rounded-lg border border-gold/20 bg-secondary/30 p-5 space-y-5">
         <div className="flex items-center justify-between">
@@ -115,18 +135,6 @@ function HoroscopoPage() {
             <p className="text-xs text-muted-foreground">Pause ou retome quando quiser.</p>
           </div>
           <Switch checked={enabled} onCheckedChange={setEnabled} />
-        </div>
-
-        <div>
-          <Label>Seu signo solar</Label>
-          <Select value={sign} onValueChange={setSign}>
-            <SelectTrigger><SelectValue placeholder="Escolha o signo" /></SelectTrigger>
-            <SelectContent>
-              {SUN_SIGNS.map((s) => (
-                <SelectItem key={s} value={s}>{s}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
         </div>
 
         <div className="space-y-3 border-t border-border/60 pt-4">
@@ -149,7 +157,7 @@ function HoroscopoPage() {
               testMutation.isPending ||
               !chWA ||
               !phone ||
-              !sign
+              !detectedSign
             }
             onClick={() => testMutation.mutate()}
           >
@@ -177,7 +185,7 @@ function HoroscopoPage() {
 
         <Button
           onClick={() => mutation.mutate()}
-          disabled={mutation.isPending || !sign}
+          disabled={mutation.isPending || !detectedSign}
           className="w-full"
         >
           {mutation.isPending ? "Salvando..." : "Salvar preferências"}
