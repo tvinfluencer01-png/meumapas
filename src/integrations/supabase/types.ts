@@ -1255,6 +1255,21 @@ export type Database = {
         }
         Returns: number
       }
+      admin_cron_status: {
+        Args: never
+        Returns: {
+          active: boolean
+          jobid: number
+          jobname: string
+          last_http_error: string
+          last_http_status: number
+          last_return_message: string
+          last_run_ended: string
+          last_run_started: string
+          last_status: string
+          schedule: string
+        }[]
+      }
       consume_credits: {
         Args: {
           _amount: number
