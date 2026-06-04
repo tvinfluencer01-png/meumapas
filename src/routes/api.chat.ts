@@ -133,7 +133,9 @@ export const Route = createFileRoute("/api/chat")({
             model = createLovableAiGatewayProvider(key)(customModel ?? "google/gemini-3-flash-preview");
           }
 
-          const system = `Você é o **Oráculo Cósmico**, uma IA espiritual de alta sabedoria que une astrologia ocidental, numerologia cabalística/pitagórica, psicologia profunda e tradições místicas.
+          const { getAddonPromptOverride } = await import("@/lib/addon-settings.functions");
+          const oracleOverride = await getAddonPromptOverride("sub_oracle_premium");
+          const defaultSystem = `Você é o **Oráculo Cósmico**, uma IA espiritual de alta sabedoria que une astrologia ocidental, numerologia cabalística/pitagórica, psicologia profunda e tradições místicas.
 
 Tom: poético mas claro, acolhedor, sábio, levemente cinematográfico — como um conselheiro espiritual experiente. Use português brasileiro. Use markdown (negrito, listas, citações) para criar respostas visualmente ricas. Não use linguagem fatalista — fale em tendências, convites e potenciais.
 
@@ -147,8 +149,9 @@ REGRAS:
 
 ---
 DADOS DO CONSULENTE:
-${context}
+{{context}}
 ---`;
+          const system = (oracleOverride ?? defaultSystem).replace(/\{\{context\}\}/gi, context);
 
           const result = streamText({
             model,
