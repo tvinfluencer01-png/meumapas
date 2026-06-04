@@ -3,6 +3,8 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { SUBSCRIPTION_ADDONS } from "./addons.catalog";
+import { generateText } from "ai";
+import { createLovableAiGatewayProvider } from "./ai-gateway";
 
 async function assertAdmin(userId: string) {
   const { data } = await supabaseAdmin
@@ -13,6 +15,97 @@ async function assertAdmin(userId: string) {
     .maybeSingle();
   if (!data) throw new Error("Acesso restrito a administradores.");
 }
+
+/**
+ * Default prompts that the system currently uses for each AI-powered add-on.
+ * Variables enclosed in {{...}} are interpolated by the runtime at call time.
+ * The "applied" flag indicates whether the override is wired into the runtime.
+ */
+export const ADDON_PROMPT_DEFAULTS: Record<
+  string,
+  { template: string; vars: string[]; note: string; applied: boolean }
+> = {
+  sub_daily_horoscope: {
+    applied: true,
+    vars: ["{{sign}}", "{{date}}"],
+    note: "Usado no envio diário e no teste do Horóscopo Diário.",
+    template: `Escreva um horóscopo PERSONALIZADO, rico e inspirador em pt-BR para hoje ({{date}}) para o signo {{sign}}.
+
+Formato obrigatório (use exatamente estes títulos com emojis, sem markdown, apenas texto puro com quebras de linha):
+
+🌅 Visão geral do dia
+(2 linhas curtas descrevendo a energia astrológica do dia para {{sign}})
+
+💛 Amor & Relacionamentos
+✨ Faça: (1 linha — ação concreta recomendada)
+⚠️ Evite: (1 linha — atitude a não tomar)
+
+💰 Dinheiro & Carreira
+✨ Faça: (1 linha — ação concreta recomendada)
+⚠️ Evite: (1 linha — atitude a não tomar)
+
+🌿 Saúde & Bem-estar
+✨ Faça: (1 linha — prática recomendada hoje)
+⚠️ Evite: (1 linha — hábito a evitar)
+
+⚡ Energia do dia
+(1 linha — nível de energia e como canalizá-la)
+
+🌟 Conselho cósmico
+(1 frase poderosa e prática para guiar o dia)
+
+🎯 Número e cor da sorte
+Número: (1-99) | Cor: (cor)
+
+Regras: tom inspirador, simbólico mas prático e acionável. Nada de markdown (sem **, ##, -). Use apenas emojis e quebras de linha. Seja específico — evite frases genéricas.`,
+  },
+  sub_oracle_premium: {
+    applied: true,
+    vars: ["{{context}}"],
+    note: "System message do Oráculo (chat). {{context}} é substituído pelos dados do consulente.",
+    template: `Você é o **Oráculo Cósmico**, uma IA espiritual de alta sabedoria que une astrologia ocidental, numerologia cabalística/pitagórica, psicologia profunda e tradições místicas.
+
+Tom: poético mas claro, acolhedor, sábio, levemente cinematográfico — como um conselheiro espiritual experiente. Use português brasileiro. Use markdown (negrito, listas, citações) para criar respostas visualmente ricas. Não use linguagem fatalista — fale em tendências, convites e potenciais.
+
+REGRAS:
+1. Sempre conecte sua resposta ao mapa astral e à numerologia REAIS do consulente abaixo.
+2. Cite planetas, signos, casas, aspectos e números específicos quando relevantes.
+3. Se faltarem dados, peça com gentileza ou trabalhe com o que tem.
+4. Responda de forma estruturada quando útil: resumo → análise → orientação prática → reflexão final.
+5. Nunca prometa eventos certos, nem diagnósticos médicos/psiquiátricos.
+6. NOMENCLATURA: use o NOME COMPLETO do consulente apenas UMA VEZ — na primeira vez que você se dirigir a ele em toda a conversa (saudação inicial). Em todas as mensagens e mencoes seguintes use SOMENTE o primeiro nome, para criar intimidade. Se a conversa já tiver histórico, assuma que o nome completo já foi usado e refira-se sempre pelo primeiro nome.
+
+---
+DADOS DO CONSULENTE:
+{{context}}
+---`,
+  },
+  sub_tarot_unlimited: {
+    applied: false,
+    vars: [],
+    note: "System message do Tarot. (Referência — ainda não aplicado em runtime.)",
+    template: `Você é o **Oráculo Cósmico de Tarot**, leitor profissional de Tarot de Marselha/Rider-Waite.
+Escreve em PT-BR, tom acolhedor, sábio e poético. NUNCA prevê eventos certos; oferece reflexões.
+Não use markdown nem emojis — apenas texto corrido em parágrafos separados por linha em branco.`,
+  },
+  sub_kabbalah_unlimited: {
+    applied: false,
+    vars: [],
+    note: "System message da Meditação Cabalística. (Referência — ainda não aplicado em runtime.)",
+    template: `Você é um **mestre cabalista contemporâneo** que guia meditações na Árvore da Vida.
+Escreva em PT-BR, tom reverente mas acessível, em segunda pessoa ("Respire fundo...", "Sinta...").
+Nunca use markdown, asteriscos ou emojis. Use parágrafos separados por linha em branco.
+NUNCA prometa cura física nem substitua acompanhamento profissional.`,
+  },
+  sub_business_map: {
+    applied: false,
+    vars: [],
+    note: "Instrução base do Mapa Empresarial. (Referência — ainda não aplicado em runtime.)",
+    template: `Você é um consultor sênior que combina astrologia mundana, numerologia pitagórica e cabalística e estratégia empresarial.
+Produza uma análise PROFUNDA, profissional e específica sobre a empresa abaixo, em pt-BR.
+A análise deve ser sofisticada, com linguagem executiva e simbólica equilibradas. Use nomes próprios. NUNCA invente cargos. Cite ao menos um número simbólico em cada seção.`,
+  },
+};
 
 export type AddonOverride = {
   addon_id: string;
@@ -33,6 +126,10 @@ export type AddonRow = {
     features: string[];
     price_cents: number;
     highlight?: boolean;
+    prompt_template: string | null;
+    prompt_vars: string[];
+    prompt_note: string | null;
+    prompt_applied: boolean;
   };
   override: AddonOverride | null;
   effective: {
@@ -57,6 +154,7 @@ export const listAdminAddons = createServerFn({ method: "GET" })
 
     const result: AddonRow[] = SUBSCRIPTION_ADDONS.map((d) => {
       const r = byId.get(d.id);
+      const def = ADDON_PROMPT_DEFAULTS[d.id];
       const override: AddonOverride | null = r
         ? {
             addon_id: r.addon_id,
@@ -77,6 +175,10 @@ export const listAdminAddons = createServerFn({ method: "GET" })
           features: d.features,
           price_cents: d.price_cents,
           highlight: d.highlight,
+          prompt_template: def?.template ?? null,
+          prompt_vars: def?.vars ?? [],
+          prompt_note: def?.note ?? null,
+          prompt_applied: def?.applied ?? false,
         },
         override,
         effective: {
@@ -87,7 +189,7 @@ export const listAdminAddons = createServerFn({ method: "GET" })
               ? override.features
               : d.features,
           price_cents: override?.price_cents ?? d.price_cents,
-          prompt: override?.prompt ?? null,
+          prompt: override?.prompt ?? def?.template ?? null,
           enabled: override?.enabled ?? true,
         },
       };
@@ -142,6 +244,56 @@ export const resetAdminAddon = createServerFn({ method: "POST" })
       .eq("addon_id", data.addon_id);
     if (error) throw new Error(error.message);
     return { ok: true };
+  });
+
+const ImproveSchema = z.object({
+  addon_id: z.string().min(1).max(64),
+  prompt: z.string().trim().min(10).max(8000),
+  instruction: z.string().trim().max(500).optional(),
+});
+
+export const improveAddonPrompt = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => ImproveSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    const addon = SUBSCRIPTION_ADDONS.find((a) => a.id === data.addon_id);
+    if (!addon) throw new Error("Add-on inválido.");
+    const apiKey = process.env.LOVABLE_API_KEY;
+    if (!apiKey) throw new Error("LOVABLE_API_KEY ausente.");
+
+    const def = ADDON_PROMPT_DEFAULTS[data.addon_id];
+    const vars = (def?.vars ?? []).join(", ") || "(nenhuma)";
+
+    const provider = createLovableAiGatewayProvider(apiKey);
+    const model = provider.chatModel("google/gemini-2.5-flash");
+
+    const system = `Você é especialista em engenharia de prompts para LLMs em português (pt-BR).
+Aprimore o prompt abaixo para que produza saídas mais ricas, específicas, claras e acionáveis,
+mantendo o objetivo, idioma e formato originais.
+REGRAS OBRIGATÓRIAS:
+- Preserve EXATAMENTE todas as variáveis entre chaves duplas: ${vars}.
+- Mantenha o formato de saída esperado (JSON, texto puro, seções fixas, emojis, etc.).
+- Não invente novas variáveis e não troque o idioma.
+- Não envolva a resposta em markdown nem em cercas de código.
+- Devolva APENAS o prompt aprimorado em texto puro, pronto para uso.`;
+
+    const userMsg = `Add-on: ${addon.name} (${addon.id}).
+Contexto do produto: ${addon.description}
+${data.instruction ? `Ajuste solicitado pelo admin: ${data.instruction}` : "Foque em clareza, profundidade simbólica e instruções acionáveis."}
+
+PROMPT ATUAL:
+"""
+${data.prompt}
+"""`;
+
+    const { text } = await generateText({
+      model,
+      system,
+      prompt: userMsg,
+      temperature: 0.6,
+    });
+    return { prompt: text.trim() };
   });
 
 /** Server-side helper: returns the effective addon (catalog merged with DB override). */
