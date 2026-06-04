@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { generateText } from "ai";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway";
+import { buildHoroscopePrompt } from "@/lib/horoscope.functions";
 
 /**
  * Daily horoscope cron handler.
