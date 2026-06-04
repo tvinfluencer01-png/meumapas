@@ -10,10 +10,11 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Sun, Lock } from "lucide-react";
+import { Sun, Lock, Send } from "lucide-react";
 import {
   getMyHoroscopeSubscription,
   updateMyHoroscopeSubscription,
+  sendTestHoroscopeWhatsapp,
   SUN_SIGNS,
 } from "@/lib/horoscope.functions";
 
