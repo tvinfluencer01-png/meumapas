@@ -58,6 +58,9 @@ async function handler({ request }: { request: Request }) {
   const provider = createLovableAiGatewayProvider(apiKey);
   const model = provider.chatModel("google/gemini-2.5-flash");
 
+  const { getAddonPromptOverride } = await import("@/lib/addon-settings.functions");
+  const promptOverride = await getAddonPromptOverride("sub_daily_horoscope");
+
   let processed = 0;
   let delivered = 0;
 
@@ -72,7 +75,9 @@ async function handler({ request }: { request: Request }) {
 
     let body = "";
     try {
-      const prompt = buildHoroscopePrompt(s.sun_sign, today);
+      const prompt = promptOverride
+        ? promptOverride.replace(/\{\{sign\}\}/gi, s.sun_sign).replace(/\{\{date\}\}/gi, today)
+        : buildHoroscopePrompt(s.sun_sign, today);
       const { text } = await generateText({ model, prompt, temperature: 0.85 });
       body = text.trim();
     } catch (e: any) {

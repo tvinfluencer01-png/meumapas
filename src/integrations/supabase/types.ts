@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      addon_settings: {
+        Row: {
+          addon_id: string
+          description: string | null
+          enabled: boolean
+          features: Json
+          name: string | null
+          price_cents: number | null
+          prompt: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          addon_id: string
+          description?: string | null
+          enabled?: boolean
+          features?: Json
+          name?: string | null
+          price_cents?: number | null
+          prompt?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          addon_id?: string
+          description?: string | null
+          enabled?: boolean
+          features?: Json
+          name?: string | null
+          price_cents?: number | null
+          prompt?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       ai_conversations: {
         Row: {
           context: Json | null

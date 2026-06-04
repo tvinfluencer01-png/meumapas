@@ -177,8 +177,12 @@ export const sendTestHoroscopeWhatsapp = createServerFn({ method: "POST" })
     const provider = createLovableAiGatewayProvider(apiKey);
     const model = provider.chatModel("google/gemini-2.5-flash");
 
+    const { getAddonPromptOverride } = await import("./addon-settings.functions");
+    const override = await getAddonPromptOverride("sub_daily_horoscope");
     const today = new Date().toISOString().slice(0, 10);
-    const prompt = buildHoroscopePrompt(data.sun_sign, today);
+    const prompt = override
+      ? override.replace(/\{\{sign\}\}/gi, data.sun_sign).replace(/\{\{date\}\}/gi, today)
+      : buildHoroscopePrompt(data.sun_sign, today);
 
     let body = "";
     try {

@@ -7,6 +7,7 @@ import { MercadoPagoForm } from "@/components/MercadoPagoForm";
 import { AdminCreditsManager, CreditsDialog } from "@/components/AdminCreditsManager";
 import { AdminCreditCosts } from "@/components/AdminCreditCosts";
 import { AdminCreditPackages } from "@/components/AdminCreditPackages";
+import { AdminAddons } from "@/components/AdminAddons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -108,6 +109,9 @@ function AdminPage() {
           <TabsTrigger value="credits" className="gap-2">
             <Coins className="size-4" /> Créditos
           </TabsTrigger>
+          <TabsTrigger value="addons" className="gap-2">
+            <Package className="size-4" /> Add-ons
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="settings" className="mt-0">
@@ -132,6 +136,9 @@ function AdminPage() {
           <AdminCreditCosts />
           <AdminCreditPackages />
           <AdminCreditsManager />
+        </TabsContent>
+        <TabsContent value="addons" className="mt-0">
+          <AdminAddons />
         </TabsContent>
       </Tabs>
     </div>

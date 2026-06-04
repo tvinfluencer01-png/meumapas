@@ -75,8 +75,13 @@ export const createMercadoPagoCheckout = createServerFn({ method: "POST" })
     } else {
       const sub = SUBSCRIPTION_ADDONS.find((s) => s.id === data.product_id);
       if (!sub) throw new Error("Assinatura inválida.");
-      title = `${sub.name} — assinatura mensal`;
-      amount_cents = sub.price_cents;
+      const { getEffectiveAddon } = await import("./addon-settings.functions");
+      const eff = await getEffectiveAddon(data.product_id);
+      if (eff && !eff.enabled) {
+        throw new Error("Esta assinatura está temporariamente indisponível.");
+      }
+      title = `${eff?.name ?? sub.name} — assinatura mensal`;
+      amount_cents = eff?.price_cents ?? sub.price_cents;
     }
 
     // Persist pending order
