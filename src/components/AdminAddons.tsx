@@ -5,6 +5,7 @@ import {
   listAdminAddons,
   upsertAdminAddon,
   resetAdminAddon,
+  improveAddonPrompt,
   type AddonRow,
 } from "@/lib/addon-settings.functions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -15,16 +16,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Save, RotateCcw, Package } from "lucide-react";
+import { Save, RotateCcw, Package, Sparkles, Undo2 } from "lucide-react";
 import { formatBRL } from "@/lib/addons.catalog";
 import { confirmDialog } from "@/components/system-feedback";
-
-const PROMPT_SUPPORTED: Record<string, { vars: string[]; note: string }> = {
-  sub_daily_horoscope: {
-    vars: ["{{sign}}", "{{date}}"],
-    note: "Aplicado no horóscopo diário (cron e teste). Variáveis disponíveis: {{sign}}, {{date}}.",
-  },
-};
 
 export function AdminAddons() {
   const listFn = useServerFn(listAdminAddons);
@@ -63,6 +57,7 @@ function AddonEditor({ row }: { row: AddonRow }) {
   const qc = useQueryClient();
   const upsertFn = useServerFn(upsertAdminAddon);
   const resetFn = useServerFn(resetAdminAddon);
+  const improveFn = useServerFn(improveAddonPrompt);
 
   const [name, setName] = useState(row.effective.name);
   const [description, setDescription] = useState(row.effective.description);
@@ -72,6 +67,7 @@ function AddonEditor({ row }: { row: AddonRow }) {
   );
   const [prompt, setPrompt] = useState(row.effective.prompt ?? "");
   const [enabled, setEnabled] = useState(row.effective.enabled);
+  const [improveInstruction, setImproveInstruction] = useState("");
 
   useEffect(() => {
     setName(row.effective.name);
@@ -82,7 +78,7 @@ function AddonEditor({ row }: { row: AddonRow }) {
     setEnabled(row.effective.enabled);
   }, [row]);
 
-  const supportsPrompt = PROMPT_SUPPORTED[row.addon_id];
+  const hasPromptDefault = !!row.defaults.prompt_template;
 
   const saveMut = useMutation({
     mutationFn: () => {
@@ -101,7 +97,7 @@ function AddonEditor({ row }: { row: AddonRow }) {
           description: description.trim() || null,
           features: featuresArr,
           price_cents: cents,
-          prompt: supportsPrompt ? (prompt.trim() || null) : undefined,
+          prompt: hasPromptDefault ? (prompt.trim() || null) : undefined,
           enabled,
         },
       });
@@ -118,6 +114,22 @@ function AddonEditor({ row }: { row: AddonRow }) {
     onSuccess: () => {
       toast.success("Restaurado para o padrão do catálogo.");
       qc.invalidateQueries({ queryKey: ["admin-addons"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const improveMut = useMutation({
+    mutationFn: () =>
+      improveFn({
+        data: {
+          addon_id: row.addon_id,
+          prompt,
+          instruction: improveInstruction.trim() || undefined,
+        },
+      }),
+    onSuccess: (res) => {
+      setPrompt(res.prompt);
+      toast.success("Prompt aprimorado. Revise e clique em Salvar.");
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -192,18 +204,72 @@ function AddonEditor({ row }: { row: AddonRow }) {
             rows={Math.min(8, Math.max(3, features.split("\n").length))}
           />
         </div>
-        {supportsPrompt ? (
-          <div>
-            <Label htmlFor={`pr-${row.addon_id}`}>Prompt de IA</Label>
+        {hasPromptDefault ? (
+          <div className="space-y-2 rounded-md border border-border/60 bg-card/40 p-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <Label htmlFor={`pr-${row.addon_id}`} className="flex items-center gap-2">
+                Prompt de IA
+                {row.defaults.prompt_applied ? (
+                  <Badge variant="secondary" className="text-[10px]">Aplicado em runtime</Badge>
+                ) : (
+                  <Badge variant="outline" className="text-[10px]">Referência</Badge>
+                )}
+              </Label>
+              {hasOverride && row.override?.prompt && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  type="button"
+                  onClick={() => setPrompt(row.defaults.prompt_template ?? "")}
+                  title="Voltar ao prompt padrão do sistema"
+                >
+                  <Undo2 className="size-3 mr-1" /> Restaurar prompt padrão
+                </Button>
+              )}
+            </div>
             <Textarea
               id={`pr-${row.addon_id}`}
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              rows={10}
-              placeholder="Deixe em branco para usar o prompt padrão."
+              rows={Math.min(20, Math.max(8, prompt.split("\n").length))}
+              placeholder="Prompt do sistema…"
               maxLength={8000}
+              className="font-mono text-xs"
             />
-            <p className="mt-1 text-xs text-muted-foreground">{supportsPrompt.note}</p>
+            {row.defaults.prompt_vars.length > 0 && (
+              <p className="text-xs text-muted-foreground">
+                Variáveis disponíveis:{" "}
+                {row.defaults.prompt_vars.map((v) => (
+                  <code key={v} className="mx-0.5 rounded bg-muted px-1">{v}</code>
+                ))}
+              </p>
+            )}
+            {row.defaults.prompt_note && (
+              <p className="text-xs text-muted-foreground">{row.defaults.prompt_note}</p>
+            )}
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end pt-1">
+              <div className="flex-1">
+                <Label htmlFor={`imp-${row.addon_id}`} className="text-xs">
+                  Instrução opcional para o aprimoramento
+                </Label>
+                <Input
+                  id={`imp-${row.addon_id}`}
+                  value={improveInstruction}
+                  onChange={(e) => setImproveInstruction(e.target.value)}
+                  placeholder="Ex: mais simbólico, foque em ações práticas…"
+                  maxLength={300}
+                />
+              </div>
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={improveMut.isPending || prompt.trim().length < 10}
+                onClick={() => improveMut.mutate()}
+              >
+                <Sparkles className="size-4 mr-1" />
+                {improveMut.isPending ? "Aprimorando…" : "Aprimorar com IA"}
+              </Button>
+            </div>
           </div>
         ) : (
           <p className="text-xs text-muted-foreground">
