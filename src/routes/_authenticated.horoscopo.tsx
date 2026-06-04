@@ -10,10 +10,11 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Sun, Lock } from "lucide-react";
+import { Sun, Lock, Send } from "lucide-react";
 import {
   getMyHoroscopeSubscription,
   updateMyHoroscopeSubscription,
+  sendTestHoroscopeWhatsapp,
   SUN_SIGNS,
 } from "@/lib/horoscope.functions";
 
@@ -24,6 +25,7 @@ export const Route = createFileRoute("/_authenticated/horoscopo")({
 function HoroscopoPage() {
   const getFn = useServerFn(getMyHoroscopeSubscription);
   const updateFn = useServerFn(updateMyHoroscopeSubscription);
+  const testFn = useServerFn(sendTestHoroscopeWhatsapp);
   const qc = useQueryClient();
 
   const { data, isLoading } = useQuery({
@@ -66,6 +68,14 @@ function HoroscopoPage() {
       qc.invalidateQueries({ queryKey: ["horoscope-sub"] });
     },
     onError: (e: any) => toast.error(e?.message ?? "Falha ao salvar"),
+  });
+
+  const testMutation = useMutation({
+    mutationFn: () =>
+      testFn({ data: { sun_sign: sign as any, phone_e164: phone } }),
+    onSuccess: (r: any) =>
+      toast.success(`Teste enviado via ${r?.provider ?? "WhatsApp"}!`),
+    onError: (e: any) => toast.error(e?.message ?? "Falha ao enviar teste"),
   });
 
   if (isLoading) return <div className="p-8 text-muted-foreground">Carregando...</div>;
@@ -130,6 +140,25 @@ function HoroscopoPage() {
             onChange={(e) => setPhone(e.target.value)}
             disabled={!chWA}
           />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="w-full"
+            disabled={
+              testMutation.isPending ||
+              !chWA ||
+              !phone ||
+              !sign
+            }
+            onClick={() => testMutation.mutate()}
+          >
+            <Send className="size-4" />
+            {testMutation.isPending ? "Enviando teste..." : "Enviar teste no WhatsApp"}
+          </Button>
+          <p className="text-xs text-muted-foreground">
+            Envia agora uma mensagem de teste com o horóscopo de hoje para o número acima.
+          </p>
         </div>
 
         <div className="space-y-3 border-t border-border/60 pt-4">
