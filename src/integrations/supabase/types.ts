@@ -512,9 +512,11 @@ export type Database = {
         Row: {
           channel_email: boolean
           channel_whatsapp: boolean
+          client_profile_id: string | null
           created_at: string
           email: string | null
           enabled: boolean
+          id: string
           last_sent_on: string | null
           phone_e164: string | null
           send_hour_utc: number
@@ -525,9 +527,11 @@ export type Database = {
         Insert: {
           channel_email?: boolean
           channel_whatsapp?: boolean
+          client_profile_id?: string | null
           created_at?: string
           email?: string | null
           enabled?: boolean
+          id?: string
           last_sent_on?: string | null
           phone_e164?: string | null
           send_hour_utc?: number
@@ -538,9 +542,11 @@ export type Database = {
         Update: {
           channel_email?: boolean
           channel_whatsapp?: boolean
+          client_profile_id?: string | null
           created_at?: string
           email?: string | null
           enabled?: boolean
+          id?: string
           last_sent_on?: string | null
           phone_e164?: string | null
           send_hour_utc?: number
@@ -548,7 +554,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "horoscope_subscriptions_client_profile_id_fkey"
+            columns: ["client_profile_id"]
+            isOneToOne: false
+            referencedRelation: "client_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       kabbalah_meditations: {
         Row: {
