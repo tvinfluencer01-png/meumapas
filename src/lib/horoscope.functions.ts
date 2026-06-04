@@ -10,6 +10,38 @@ export const SUN_SIGNS = [
   "Libra", "Escorpião", "Sagitário", "Capricórnio", "Aquário", "Peixes",
 ] as const;
 
+export function buildHoroscopePrompt(sunSign: string, today: string) {
+  return `Escreva um horóscopo PERSONALIZADO, rico e inspirador em pt-BR para hoje (${today}) para o signo ${sunSign}.
+
+Formato obrigatório (use exatamente estes títulos com emojis, sem markdown, apenas texto puro com quebras de linha):
+
+🌅 Visão geral do dia
+(2 linhas curtas descrevendo a energia astrológica do dia para ${sunSign})
+
+💛 Amor & Relacionamentos
+✨ Faça: (1 linha — ação concreta recomendada)
+⚠️ Evite: (1 linha — atitude a não tomar)
+
+💰 Dinheiro & Carreira
+✨ Faça: (1 linha — ação concreta recomendada)
+⚠️ Evite: (1 linha — atitude a não tomar)
+
+🌿 Saúde & Bem-estar
+✨ Faça: (1 linha — prática recomendada hoje)
+⚠️ Evite: (1 linha — hábito a evitar)
+
+⚡ Energia do dia
+(1 linha — nível de energia e como canalizá-la)
+
+🌟 Conselho cósmico
+(1 frase poderosa e prática para guiar o dia)
+
+🎯 Número e cor da sorte
+Número: (1-99) | Cor: (cor)
+
+Regras: tom inspirador, simbólico mas prático e acionável. Nada de markdown (sem **, ##, -). Use apenas emojis e quebras de linha. Seja específico — evite frases genéricas.`;
+}
+
 export const getMyHoroscopeSubscription = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
