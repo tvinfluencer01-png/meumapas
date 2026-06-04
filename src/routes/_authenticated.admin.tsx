@@ -7,6 +7,7 @@ import { MercadoPagoForm } from "@/components/MercadoPagoForm";
 import { AdminCreditsManager, CreditsDialog } from "@/components/AdminCreditsManager";
 import { AdminCreditCosts } from "@/components/AdminCreditCosts";
 import { AdminCreditPackages } from "@/components/AdminCreditPackages";
+import { AdminAddons } from "@/components/AdminAddons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
