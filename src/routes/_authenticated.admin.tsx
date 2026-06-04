@@ -2,12 +2,13 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { Shield, MessageSquare, Save, Send, CheckCircle2, AlertTriangle, Users, Search, ShieldOff, ShieldCheck, History, RefreshCw, Settings as SettingsIcon, Wallet, Coins, MoreHorizontal, UserCog, KeyRound, Package, Trash2, Coins as CoinsIcon, Zap, Plug } from "lucide-react";
+import { Shield, MessageSquare, Save, Send, CheckCircle2, AlertTriangle, Users, Search, ShieldOff, ShieldCheck, History, RefreshCw, Settings as SettingsIcon, Wallet, Coins, MoreHorizontal, UserCog, KeyRound, Package, Trash2, Coins as CoinsIcon, Zap, Plug, Clock } from "lucide-react";
 import { MercadoPagoForm } from "@/components/MercadoPagoForm";
 import { AdminCreditsManager, CreditsDialog } from "@/components/AdminCreditsManager";
 import { AdminCreditCosts } from "@/components/AdminCreditCosts";
 import { AdminCreditPackages } from "@/components/AdminCreditPackages";
 import { AdminAddons } from "@/components/AdminAddons";
+import { AdminCronStatus } from "@/components/AdminCronStatus";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -112,6 +113,9 @@ function AdminPage() {
           <TabsTrigger value="addons" className="gap-2">
             <Package className="size-4" /> Add-ons
           </TabsTrigger>
+          <TabsTrigger value="cron" className="gap-2">
+            <Clock className="size-4" /> Cron Jobs
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="settings" className="mt-0">
@@ -139,6 +143,9 @@ function AdminPage() {
         </TabsContent>
         <TabsContent value="addons" className="mt-0">
           <AdminAddons />
+        </TabsContent>
+        <TabsContent value="cron" className="mt-0">
+          <AdminCronStatus />
         </TabsContent>
       </Tabs>
     </div>
