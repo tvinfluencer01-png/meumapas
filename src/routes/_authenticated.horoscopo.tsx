@@ -70,6 +70,14 @@ function HoroscopoPage() {
     onError: (e: any) => toast.error(e?.message ?? "Falha ao salvar"),
   });
 
+  const testMutation = useMutation({
+    mutationFn: () =>
+      testFn({ data: { sun_sign: sign as any, phone_e164: phone } }),
+    onSuccess: (r: any) =>
+      toast.success(`Teste enviado via ${r?.provider ?? "WhatsApp"}!`),
+    onError: (e: any) => toast.error(e?.message ?? "Falha ao enviar teste"),
+  });
+
   if (isLoading) return <div className="p-8 text-muted-foreground">Carregando...</div>;
 
   if (!data?.addonActive) {
