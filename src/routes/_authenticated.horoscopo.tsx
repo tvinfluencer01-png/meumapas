@@ -25,6 +25,7 @@ export const Route = createFileRoute("/_authenticated/horoscopo")({
 function HoroscopoPage() {
   const getFn = useServerFn(getMyHoroscopeSubscription);
   const updateFn = useServerFn(updateMyHoroscopeSubscription);
+  const testFn = useServerFn(sendTestHoroscopeWhatsapp);
   const qc = useQueryClient();
 
   const { data, isLoading } = useQuery({
