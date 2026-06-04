@@ -146,13 +146,7 @@ export const sendTestHoroscopeWhatsapp = createServerFn({ method: "POST" })
     const model = provider.chatModel("google/gemini-2.5-flash");
 
     const today = new Date().toISOString().slice(0, 10);
-    const prompt = `Escreva um horóscopo PERSONALIZADO em pt-BR para hoje (${today}) para o signo ${data.sun_sign}.
-Inclua, em até 6 linhas curtas e claras:
-- 💛 Amor:
-- 💼 Trabalho:
-- ⚡ Energia:
-- 🌟 Conselho do dia:
-Tom inspirador, simbólico mas prático. Não use markdown, apenas emojis e quebras de linha.`;
+    const prompt = buildHoroscopePrompt(data.sun_sign, today);
 
     let body = "";
     try {
