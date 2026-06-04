@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { generateText } from "ai";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway";
+import { buildHoroscopePrompt } from "@/lib/horoscope.functions";
 
 /**
  * Daily horoscope cron handler.
@@ -71,13 +72,7 @@ async function handler({ request }: { request: Request }) {
 
     let body = "";
     try {
-      const prompt = `Escreva um horóscopo PERSONALIZADO em pt-BR para hoje (${today}) para o signo ${s.sun_sign}.
-Inclua, em até 6 linhas curtas e claras:
-- 💛 Amor:
-- 💼 Trabalho:
-- ⚡ Energia:
-- 🌟 Conselho do dia:
-Tom inspirador, simbólico mas prático. Não use markdown, apenas emojis e quebras de linha.`;
+      const prompt = buildHoroscopePrompt(s.sun_sign, today);
       const { text } = await generateText({ model, prompt, temperature: 0.85 });
       body = text.trim();
     } catch (e: any) {
