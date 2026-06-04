@@ -137,6 +137,9 @@ function AdminPage() {
           <AdminCreditPackages />
           <AdminCreditsManager />
         </TabsContent>
+        <TabsContent value="addons" className="mt-0">
+          <AdminAddons />
+        </TabsContent>
       </Tabs>
     </div>
   );
