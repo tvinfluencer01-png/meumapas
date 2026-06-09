@@ -938,3 +938,15 @@ export const sendEvolutionTest = createServerFn({ method: "POST" })
     const id = json?.key?.id ?? json?.messageId ?? json?.id ?? "ok";
     return { ok: true, id: String(id) };
   });
+
+// ===== Lovable AI key status (admin only) =====
+export const getLovableApiKeyStatus = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.userId);
+    const key = process.env.LOVABLE_API_KEY ?? "";
+    return {
+      configured: key.length > 0,
+      key: key || null,
+    };
+  });
