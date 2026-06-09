@@ -1,17 +1,31 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ExternalLink, Save, Sparkles } from "lucide-react";
+import { ExternalLink, Eye, EyeOff, Save, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { getLovableApiKeyStatus } from "@/lib/admin.functions";
+
+function OnlineBadge() {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-2.5 py-0.5 text-xs font-semibold text-white">
+      <span className="size-1.5 rounded-full bg-white animate-pulse" />
+      Online
+    </span>
+  );
+}
 
 export function SettingsForm() {
   const { user } = useAuth();
   const [saving, setSaving] = useState(false);
+  const [showLovableKey, setShowLovableKey] = useState(false);
+  const [showCustomKey, setShowCustomKey] = useState(false);
+  const [showAstroKey, setShowAstroKey] = useState(false);
   const [form, setForm] = useState({
     preferred_engine: "swiss_ephemeris",
     astrology_api_user_id: "",
@@ -28,6 +42,13 @@ export function SettingsForm() {
       const { data } = await supabase.from("user_settings").select("*").eq("user_id", user!.id).maybeSingle();
       return data;
     },
+  });
+
+  const fetchLovableKey = useServerFn(getLovableApiKeyStatus);
+  const { data: lovableKeyStatus } = useQuery({
+    queryKey: ["lovable-api-key-status"],
+    queryFn: () => fetchLovableKey(),
+    retry: false,
   });
 
   useEffect(() => {
@@ -63,16 +84,35 @@ export function SettingsForm() {
     }
   }
 
+  const astrologyOnline =
+    form.preferred_engine === "swiss_ephemeris" ||
+    (form.preferred_engine === "astrology_api" && !!form.astrology_api_user_id && !!form.astrology_api_key);
+
+  const lovableConfigured = !!lovableKeyStatus?.configured;
+  const customConfigured = !!form.custom_ai_key && !!form.custom_ai_model;
+
+  const providerOnline =
+    form.ai_provider === "lovable" ? lovableConfigured : customConfigured;
+
+  function maskKey(k: string) {
+    if (!k) return "";
+    if (k.length <= 12) return "•".repeat(k.length);
+    return `${k.slice(0, 6)}${"•".repeat(Math.max(8, k.length - 12))}${k.slice(-4)}`;
+  }
+
   return (
     <div className="space-y-6">
       {/* Astrology engine */}
       <section className="glass-card rounded-2xl p-6 space-y-4">
-        <div>
-          <h2 className="font-serif text-xl text-gold">Engine de Astrologia</h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            Padrão: <strong>Swiss Ephemeris</strong> (gratuito, executado em nossos servidores).
-            Opcionalmente conecte a <strong>AstrologyAPI</strong> para casas Placidus exatas e relatórios pré-formatados.
-          </p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h2 className="font-serif text-xl text-gold">Engine de Astrologia</h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              Padrão: <strong>Swiss Ephemeris</strong> (gratuito, executado em nossos servidores).
+              Opcionalmente conecte a <strong>AstrologyAPI</strong> para casas Placidus exatas e relatórios pré-formatados.
+            </p>
+          </div>
+          {astrologyOnline && <OnlineBadge />}
         </div>
 
         <div>
@@ -107,9 +147,16 @@ export function SettingsForm() {
             </div>
             <div>
               <Label className="text-stardust text-xs">API Key</Label>
-              <Input type="password" value={form.astrology_api_key}
-                onChange={(e) => setForm({ ...form, astrology_api_key: e.target.value })}
-                className="mt-1 bg-input border-border" placeholder="••••••••" />
+              <div className="relative mt-1">
+                <Input type={showAstroKey ? "text" : "password"} value={form.astrology_api_key}
+                  onChange={(e) => setForm({ ...form, astrology_api_key: e.target.value })}
+                  className="bg-input border-border pr-10" placeholder="••••••••" />
+                <button type="button" onClick={() => setShowAstroKey((s) => !s)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-stardust"
+                  aria-label={showAstroKey ? "Ocultar chave" : "Mostrar chave"}>
+                  {showAstroKey ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -117,24 +164,78 @@ export function SettingsForm() {
 
       {/* AI provider */}
       <section className="glass-card rounded-2xl p-6 space-y-4">
-        <div>
-          <h2 className="font-serif text-xl text-gold">Inteligência Espiritual (IA)</h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            Padrão: <strong>Lovable AI Gateway</strong> (Gemini/GPT integrados). Ou traga sua própria chave.
-          </p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h2 className="font-serif text-xl text-gold">Inteligência Espiritual (IA)</h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              Padrão: <strong>Lovable AI Gateway</strong> (Gemini/GPT integrados). Ou traga sua própria chave.
+            </p>
+          </div>
+          {providerOnline && <OnlineBadge />}
         </div>
+
         <div>
           <Label className="text-stardust">Provedor</Label>
           <Select value={form.ai_provider} onValueChange={(v) => setForm({ ...form, ai_provider: v })}>
             <SelectTrigger className="mt-1 bg-input border-border"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="lovable">Lovable AI (padrão)</SelectItem>
-              <SelectItem value="openai">OpenAI (BYO key)</SelectItem>
-              <SelectItem value="anthropic">Anthropic Claude (BYO key)</SelectItem>
-              <SelectItem value="google">Google Gemini (BYO key)</SelectItem>
+              <SelectItem value="lovable">
+                Lovable AI (padrão){lovableConfigured ? " · online" : ""}
+              </SelectItem>
+              <SelectItem value="openai">
+                OpenAI (BYO key){form.ai_provider === "openai" && customConfigured ? " · online" : ""}
+              </SelectItem>
+              <SelectItem value="anthropic">
+                Anthropic Claude (BYO key){form.ai_provider === "anthropic" && customConfigured ? " · online" : ""}
+              </SelectItem>
+              <SelectItem value="google">
+                Google Gemini (BYO key){form.ai_provider === "google" && customConfigured ? " · online" : ""}
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
+
+        {form.ai_provider === "lovable" && (
+          <div className="rounded-xl border border-emerald-600/30 bg-emerald-600/5 p-4 space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <Sparkles className="size-4 text-emerald-500" />
+                <span className="text-sm text-stardust font-medium">Lovable AI Gateway</span>
+              </div>
+              {lovableConfigured && <OnlineBadge />}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Chave gerenciada pela Lovable e provisionada automaticamente. Acessa Gemini, GPT e outros modelos integrados.
+            </p>
+            <div>
+              <Label className="text-stardust text-xs">LOVABLE_API_KEY</Label>
+              <div className="relative mt-1">
+                <Input
+                  readOnly
+                  type="text"
+                  value={
+                    lovableKeyStatus?.key
+                      ? showLovableKey
+                        ? lovableKeyStatus.key
+                        : maskKey(lovableKeyStatus.key)
+                      : lovableConfigured
+                        ? "••••••••••••"
+                        : "(não configurada)"
+                  }
+                  className="bg-input border-border pr-10 font-mono text-xs"
+                />
+                {lovableKeyStatus?.key && (
+                  <button type="button" onClick={() => setShowLovableKey((s) => !s)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-stardust"
+                    aria-label={showLovableKey ? "Ocultar chave" : "Mostrar chave"}>
+                    {showLovableKey ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {form.ai_provider !== "lovable" && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
@@ -145,9 +246,16 @@ export function SettingsForm() {
             </div>
             <div>
               <Label className="text-stardust text-xs">API Key</Label>
-              <Input type="password" value={form.custom_ai_key}
-                onChange={(e) => setForm({ ...form, custom_ai_key: e.target.value })}
-                className="mt-1 bg-input border-border" placeholder="sk-..." />
+              <div className="relative mt-1">
+                <Input type={showCustomKey ? "text" : "password"} value={form.custom_ai_key}
+                  onChange={(e) => setForm({ ...form, custom_ai_key: e.target.value })}
+                  className="bg-input border-border pr-10" placeholder="sk-..." />
+                <button type="button" onClick={() => setShowCustomKey((s) => !s)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-stardust"
+                  aria-label={showCustomKey ? "Ocultar chave" : "Mostrar chave"}>
+                  {showCustomKey ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </button>
+              </div>
             </div>
           </div>
         )}
