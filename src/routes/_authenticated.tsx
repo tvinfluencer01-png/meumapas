@@ -57,6 +57,11 @@ const ADDON_MENU: Record<string, { label: string; to: string; icon: typeof Layou
 const MAIN_MENU_BADGES: Record<string, { label: string; addonId: string }> = {
   "/relatorios": { label: "Relatórios Ilimitados", addonId: "sub_unlimited_reports" },
   "/oraculo": { label: "Oráculo Premium", addonId: "sub_oracle_premium" },
+  "/numerologia-cabalistica": { label: "Numerologia Cabalística", addonId: "sub_kabbalistic_numerology" },
+  "/tarot": { label: "Tarot", addonId: "sub_tarot_unlimited" },
+  "/meditacao": { label: "Meditação Cabalística", addonId: "sub_kabbalah_unlimited" },
+  "/horoscopo": { label: "Horóscopo Diário", addonId: "sub_daily_horoscope" },
+  "/mapa-empresarial": { label: "Mapa Empresarial", addonId: "sub_business_map" },
 };
 
 
