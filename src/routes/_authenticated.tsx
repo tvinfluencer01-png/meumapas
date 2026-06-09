@@ -36,25 +36,27 @@ type NavItem = {
 
 const NAV: NavItem[] = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/clientes", label: "Clientes", icon: Users, addonId: "sub_astrologer_numerologist" },
   { to: "/mapa-astral", label: "Mapa Astral", icon: CircleDot },
   { to: "/numerologia", label: "Numerologia", icon: Hash },
-  
+  { to: "/numerologia-cabalistica", label: "Numerologia Cabalística", icon: Hash, addonId: "sub_kabbalistic_numerology" },
+  { to: "/tarot", label: "Tarot", icon: Wand2, addonId: "sub_tarot_unlimited" },
+  { to: "/meditacao", label: "Meditação Cabalística", icon: TreePine, addonId: "sub_kabbalah_unlimited" },
+  { to: "/horoscopo", label: "Horóscopo Diário", icon: Sun, addonId: "sub_daily_horoscope" },
+  { to: "/mapa-empresarial", label: "Mapa Empresarial", icon: Building2, addonId: "sub_business_map" },
   { to: "/oraculo", label: "Oráculo IA", icon: MessageCircle },
   { to: "/relatorios", label: "Relatórios", icon: ScrollText },
   { to: "/addons", label: "Add-ons", icon: Coins },
 ];
 
 const ADDON_MENU: Record<string, { label: string; to: string; icon: typeof LayoutDashboard }> = {
-  sub_astrologer_numerologist: { label: "Clientes", to: "/clientes", icon: Users },
   sub_branding_pdf: { label: "Branding PDF", to: "/configuracoes", icon: FileBadge },
   sub_pdf_css: { label: "PDF CSS Avançado", to: "/pdf-css", icon: Palette },
-  sub_unlimited_reports: { label: "Relatórios Ilimitados", to: "/relatorios", icon: InfinityIcon },
-  sub_oracle_premium: { label: "Oráculo Premium", to: "/oraculo", icon: Crown },
-  sub_tarot_unlimited: { label: "Tarot Ilimitado", to: "/tarot", icon: Wand2 },
-  sub_kabbalah_unlimited: { label: "Meditação Ilimitada", to: "/meditacao", icon: TreePine },
-  sub_kabbalistic_numerology: { label: "Numerologia Cabalística", to: "/numerologia-cabalistica", icon: Hash },
-  sub_daily_horoscope: { label: "Horóscopo Diário", to: "/horoscopo", icon: Sun },
-  sub_business_map: { label: "Mapa Empresarial", to: "/mapa-empresarial", icon: Building2 },
+};
+
+const MAIN_MENU_BADGES: Record<string, { label: string; addonId: string }> = {
+  "/relatorios": { label: "Relatórios Ilimitados", addonId: "sub_unlimited_reports" },
+  "/oraculo": { label: "Oráculo Premium", addonId: "sub_oracle_premium" },
 };
 
 
@@ -171,15 +173,26 @@ function AuthedLayout() {
           </div>
           <nav className="flex-1 overflow-y-auto p-4 space-y-1 scrollbar-gold">
 
-            {NAV.filter((item) => !item.addonId || activeAddons.has(item.addonId)).map((item) => (
-              <Link
-                key={item.to} to={item.to} onClick={() => setOpen(false)}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-gold hover:bg-secondary/40 transition-colors"
-                activeProps={{ className: "bg-secondary text-gold border border-gold/20" }}
-              >
-                <item.icon className="size-4" /> {item.label}
-              </Link>
-            ))}
+            {NAV.filter((item) => !item.addonId || activeAddons.has(item.addonId)).map((item) => {
+              const badge = MAIN_MENU_BADGES[item.to];
+              const isBadgeActive = badge && activeAddons.has(badge.addonId);
+              
+              return (
+                <Link
+                  key={item.to} to={item.to} onClick={() => setOpen(false)}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-gold hover:bg-secondary/40 transition-colors"
+                  activeProps={{ className: "bg-secondary text-gold border border-gold/20" }}
+                >
+                  <item.icon className="size-4 shrink-0" />
+                  <span className="flex-1">{item.label}</span>
+                  {isBadgeActive && (
+                    <span className="text-[8px] font-bold uppercase leading-none px-1 py-0.5 rounded bg-green-600 text-white shadow-[0_0_10px_rgba(22,163,74,0.3)] animate-pulse">
+                      ATIVO
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
             {isAdmin && (
               <Link
                 to="/admin" onClick={() => setOpen(false)}
