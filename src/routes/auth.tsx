@@ -126,30 +126,6 @@ function AuthPage() {
     }
   }
 
-  const bootstrap = useServerFn(bootstrapSuperAdmin);
-  async function handleSuperAdmin() {
-    setStatusMode("signin");
-    setStatusStep(0);
-    setSubmitting(true);
-    try {
-      const creds = await bootstrap();
-      if (!creds?.ok || !creds.email || !creds.password) {
-        toast.error(creds?.message ?? "Credenciais de Super Admin indisponíveis no momento.");
-        return;
-      }
-      const { error } = await supabase.auth.signInWithPassword({
-        email: creds.email,
-        password: creds.password,
-      });
-      if (error) throw error;
-      toast.success("Bem-vindo, Super Admin.");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha no login automático");
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
   const activeSteps = statusMode === "signup" ? SIGNUP_STEPS : SIGNIN_STEPS;
 
   return (
