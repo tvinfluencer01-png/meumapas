@@ -1273,6 +1273,7 @@ export type Database = {
         Args: never
         Returns: {
           active: boolean
+          command: string
           jobid: number
           jobname: string
           last_http_error: string
