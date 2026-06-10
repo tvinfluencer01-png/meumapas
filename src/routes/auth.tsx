@@ -236,12 +236,6 @@ function AuthPage() {
             Continuar com Google
           </Button>
 
-          <Button onClick={handleSuperAdmin} disabled={submitting} variant="outline"
-            className="mt-3 w-full border-gold/40 bg-gold/10 hover:bg-gold/20 text-gold">
-            <ShieldCheck className="size-4 mr-2" />
-            Entrar como Super Admin
-          </Button>
-
           <p className="mt-6 text-center text-sm text-muted-foreground">
             {mode === "signin" ? "Não tem conta? " : "Já tem uma conta? "}
             <button onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
