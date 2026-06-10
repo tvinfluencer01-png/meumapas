@@ -114,6 +114,13 @@ export function AdminCronStatus() {
                 </div>
               </div>
 
+              <div className="text-xs">
+                <div className="text-muted-foreground mb-1">URL e Configurações</div>
+                <pre className="rounded bg-muted/40 p-2 whitespace-pre-wrap break-all font-mono">
+                  {job.command}
+                </pre>
+              </div>
+
               {(job.last_return_message || job.last_http_error) && (
                 <div className="space-y-2">
                   {job.last_return_message && (
