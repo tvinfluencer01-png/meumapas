@@ -1,6 +1,6 @@
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, AlertTriangle, RefreshCw, Clock, Edit2, Save, X } from "lucide-react";
+import { CheckCircle2, AlertTriangle, RefreshCw, Clock, Edit2, Save, X, Play } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { toast } from "sonner";
-import { getCronStatus, updateCronJob, type CronJobStatus } from "@/lib/cron-status.functions";
+import { getCronStatus, updateCronJob, testCronJob, type CronJobStatus } from "@/lib/cron-status.functions";
 
 function fmt(ts: string | null) {
   if (!ts) return "—";
@@ -55,6 +55,7 @@ function httpBadge(code: number | null) {
 function CronJobItem({ job }: { job: CronJobStatus }) {
   const qc = useQueryClient();
   const updateFn = useServerFn(updateCronJob);
+  const testFn = useServerFn(testCronJob);
   const [isEditing, setIsEditing] = useState(false);
   const [schedule, setSchedule] = useState(job.schedule);
   const [command, setCommand] = useState(job.command);
@@ -68,6 +69,19 @@ function CronJobItem({ job }: { job: CronJobStatus }) {
       qc.invalidateQueries({ queryKey: ["admin-cron-status"] });
     },
     onError: (e: Error) => toast.error(e.message),
+  });
+
+  const testMut = useMutation({
+    mutationFn: () => testFn({ data: { jobid: job.jobid } }),
+    onSuccess: (data) => {
+      if (data.status === "succeeded") {
+        toast.success(`Teste concluído com sucesso: ${data.message}`);
+      } else {
+        toast.error(`Teste falhou: ${data.message}`);
+      }
+      qc.invalidateQueries({ queryKey: ["admin-cron-status"] });
+    },
+    onError: (e: Error) => toast.error(`Erro ao disparar teste: ${e.message}`),
   });
 
   const failed = job.last_status === "failed";
@@ -129,9 +143,27 @@ function CronJobItem({ job }: { job: CronJobStatus }) {
           <div className="flex items-center gap-2">
             <span className="font-medium">{job.jobname}</span>
             {!job.active && <Badge variant="outline">desativado</Badge>}
-            <Button variant="ghost" size="icon" className="size-6 text-muted-foreground hover:text-gold" onClick={() => setIsEditing(true)}>
-              <Edit2 className="size-3" />
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="size-8 text-muted-foreground hover:text-gold" 
+                onClick={() => setIsEditing(true)}
+                title="Editar configurações"
+              >
+                <Edit2 className="size-3.5" />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className={`size-8 text-muted-foreground hover:text-emerald-500 ${testMut.isPending ? "animate-pulse" : ""}`}
+                onClick={() => testMut.mutate()}
+                disabled={testMut.isPending}
+                title="Testar execução agora"
+              >
+                <Play className="size-3.5" />
+              </Button>
+            </div>
           </div>
           <div className="text-xs text-muted-foreground font-mono">{job.schedule}</div>
         </div>

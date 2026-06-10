@@ -62,3 +62,28 @@ export const updateCronJob = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+export const testCronJob = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ jobid: z.number() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: roleRow } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .eq("role", "admin")
+      .maybeSingle();
+    if (!roleRow) throw new Error("forbidden");
+
+    const { data: result, error } = await supabaseAdmin.rpc("admin_run_cron_job_now", {
+      p_jobid: data.jobid,
+    });
+
+    if (error) throw new Error(error.message);
+    
+    const row = (result as any)?.[0];
+    return { 
+      status: row?.status || "unknown", 
+      message: row?.return_message || "No return message" 
+    };
+  });
