@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
@@ -34,12 +35,14 @@ export const getCronStatus = createServerFn({ method: "GET" })
 
 export const updateCronJob = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((data: { 
-    jobid: number; 
-    schedule?: string; 
-    command?: string; 
-    active?: boolean; 
-  }) => data)
+  .inputValidator((d: unknown) => 
+    z.object({
+      jobid: z.number(),
+      schedule: z.string().optional(),
+      command: z.string().optional(),
+      active: z.boolean().optional(),
+    }).parse(d)
+  )
   .handler(async ({ data, context }) => {
     const { data: roleRow } = await supabaseAdmin
       .from("user_roles")
