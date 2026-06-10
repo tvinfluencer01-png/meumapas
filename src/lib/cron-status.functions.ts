@@ -7,6 +7,7 @@ export type CronJobStatus = {
   jobname: string;
   schedule: string;
   active: boolean;
+  command: string;
   last_run_started: string | null;
   last_run_ended: string | null;
   last_status: string | null;
