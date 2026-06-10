@@ -591,6 +591,38 @@ export const saveMercadoPagoSettings = createServerFn({ method: "POST" })
 
 // ===== User management (admin actions) =====
 
+export const adminCreateUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({
+      full_name: z.string().trim().min(2).max(120),
+      email: z.string().trim().email().max(200),
+      password: z.string().min(8).max(100),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+
+    const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
+      email: data.email,
+      password: data.password,
+      email_confirm: true,
+      user_metadata: { full_name: data.full_name },
+    });
+
+    if (error) throw new Error(error.message);
+
+    // Profile table usually has a trigger, but we ensure full_name is set
+    if (created.user) {
+      await supabaseAdmin
+        .from("profiles")
+        .update({ full_name: data.full_name })
+        .eq("id", created.user.id);
+    }
+
+    return { ok: true, user_id: created.user!.id };
+  });
+
 export const adminUpdateUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) =>
