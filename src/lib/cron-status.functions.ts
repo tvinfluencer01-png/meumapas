@@ -31,3 +31,31 @@ export const getCronStatus = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     return (data ?? []) as CronJobStatus[];
   });
+
+export const updateCronJob = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((data: { 
+    jobid: number; 
+    schedule?: string; 
+    command?: string; 
+    active?: boolean; 
+  }) => data)
+  .handler(async ({ data, context }) => {
+    const { data: roleRow } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .eq("role", "admin")
+      .maybeSingle();
+    if (!roleRow) throw new Error("forbidden");
+
+    const { error } = await supabaseAdmin.rpc("admin_update_cron_job", {
+      p_jobid: data.jobid,
+      p_schedule: data.schedule,
+      p_command: data.command,
+      p_active: data.active,
+    });
+
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
