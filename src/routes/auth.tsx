@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Mail, Lock, User as UserIcon, ArrowLeft, Loader2 } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
+
 import { useAuth } from "@/hooks/use-auth";
 import { Starfield } from "@/components/Starfield";
 import { Button } from "@/components/ui/button";
@@ -111,21 +111,6 @@ function AuthPage() {
     }
   }
 
-  async function handleGoogle() {
-    setStatusMode("signin");
-    setStatusStep(0);
-    setSubmitting(true);
-    try {
-      const r = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin + "/dashboard",
-      });
-      if (r.error) throw r.error;
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha ao entrar com Google");
-      setSubmitting(false);
-    }
-  }
-
   const activeSteps = statusMode === "signup" ? SIGNUP_STEPS : SIGNIN_STEPS;
 
   return (
@@ -226,15 +211,6 @@ function AuthPage() {
             </Button>
           </form>
 
-          <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground">
-            <span className="h-px flex-1 bg-border" /> ou <span className="h-px flex-1 bg-border" />
-          </div>
-
-          <Button onClick={handleGoogle} disabled={submitting} variant="outline"
-            className="w-full border-border bg-secondary/40 hover:bg-secondary text-stardust">
-            <svg className="size-4 mr-2" viewBox="0 0 24 24"><path fill="#EA4335" d="M12 11v3.2h7.4c-.3 1.6-2.2 4.8-7.4 4.8-4.4 0-8-3.6-8-8s3.6-8 8-8c2.5 0 4.2 1.1 5.2 2l3.5-3.4C18.5 1.6 15.5 0 12 0 5.4 0 0 5.4 0 12s5.4 12 12 12c6.9 0 11.5-4.8 11.5-11.6 0-.8-.1-1.4-.2-2H12z"/></svg>
-            Continuar com Google
-          </Button>
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
             {mode === "signin" ? "Não tem conta? " : "Já tem uma conta? "}
