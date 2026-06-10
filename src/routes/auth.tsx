@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Mail, Lock, User as UserIcon, ArrowLeft, Loader2, ShieldCheck } from "lucide-react";
+import { Mail, Lock, User as UserIcon, ArrowLeft, Loader2 } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
@@ -11,8 +11,6 @@ import { Starfield } from "@/components/Starfield";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useServerFn } from "@tanstack/react-start";
-import { bootstrapSuperAdmin } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -128,30 +126,6 @@ function AuthPage() {
     }
   }
 
-  const bootstrap = useServerFn(bootstrapSuperAdmin);
-  async function handleSuperAdmin() {
-    setStatusMode("signin");
-    setStatusStep(0);
-    setSubmitting(true);
-    try {
-      const creds = await bootstrap();
-      if (!creds?.ok || !creds.email || !creds.password) {
-        toast.error(creds?.message ?? "Credenciais de Super Admin indisponíveis no momento.");
-        return;
-      }
-      const { error } = await supabase.auth.signInWithPassword({
-        email: creds.email,
-        password: creds.password,
-      });
-      if (error) throw error;
-      toast.success("Bem-vindo, Super Admin.");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha no login automático");
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
   const activeSteps = statusMode === "signup" ? SIGNUP_STEPS : SIGNIN_STEPS;
 
   return (
@@ -260,12 +234,6 @@ function AuthPage() {
             className="w-full border-border bg-secondary/40 hover:bg-secondary text-stardust">
             <svg className="size-4 mr-2" viewBox="0 0 24 24"><path fill="#EA4335" d="M12 11v3.2h7.4c-.3 1.6-2.2 4.8-7.4 4.8-4.4 0-8-3.6-8-8s3.6-8 8-8c2.5 0 4.2 1.1 5.2 2l3.5-3.4C18.5 1.6 15.5 0 12 0 5.4 0 0 5.4 0 12s5.4 12 12 12c6.9 0 11.5-4.8 11.5-11.6 0-.8-.1-1.4-.2-2H12z"/></svg>
             Continuar com Google
-          </Button>
-
-          <Button onClick={handleSuperAdmin} disabled={submitting} variant="outline"
-            className="mt-3 w-full border-gold/40 bg-gold/10 hover:bg-gold/20 text-gold">
-            <ShieldCheck className="size-4 mr-2" />
-            Entrar como Super Admin
           </Button>
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
