@@ -1285,6 +1285,13 @@ export type Database = {
           schedule: string
         }[]
       }
+      admin_run_cron_job_now: {
+        Args: { p_jobid: number }
+        Returns: {
+          return_message: string
+          status: string
+        }[]
+      }
       admin_update_cron_job: {
         Args: {
           p_active?: boolean
