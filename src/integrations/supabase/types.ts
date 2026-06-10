@@ -1285,6 +1285,15 @@ export type Database = {
           schedule: string
         }[]
       }
+      admin_update_cron_job: {
+        Args: {
+          p_active?: boolean
+          p_command?: string
+          p_jobid: number
+          p_schedule?: string
+        }
+        Returns: undefined
+      }
       consume_credits: {
         Args: {
           _amount: number
