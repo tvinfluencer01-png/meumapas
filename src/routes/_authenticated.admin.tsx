@@ -385,9 +385,6 @@ function UsersAdmin() {
   );
 }
 
-  );
-}
-
 function CreateUserDialog({ onDone }: { onDone: () => void }) {
   const qc = useQueryClient();
   const createFn = useServerFn(adminCreateUser);
