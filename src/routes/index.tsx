@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { motion, useReducedMotion } from "motion/react";
 import { Starfield } from "@/components/Starfield";
 import { Logo } from "@/components/Logo";
@@ -1131,10 +1132,12 @@ function Footer() {
 }
 
 /* ---------------- WHATSAPP ---------------- */
-function WhatsAppFloat() {
+function WhatsAppFloat({ number }: { number: string }) {
   return (
     <a
-      href="#"
+      href={`https://wa.me/${number}`}
+      target="_blank"
+      rel="noopener noreferrer"
       aria-label="Falar no WhatsApp"
       className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full border border-gold/30 bg-background/90 px-5 py-3 text-xs uppercase tracking-[0.2em] text-gold backdrop-blur-md transition-all hover:bg-gold hover:text-primary-foreground"
     >
