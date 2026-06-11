@@ -223,10 +223,10 @@ function AddonEditor({ row }: { row: AddonRow }) {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const resetMut = useMutation({
-    mutationFn: () => resetFn({ data: { addon_id: row.addon_id } }),
+  const deleteMut = useMutation({
+    mutationFn: () => deleteFn({ data: { addon_id: row.addon_id } }),
     onSuccess: () => {
-      toast.success("Restaurado para o padrão do catálogo.");
+      toast.success("Add-on excluído.");
       qc.invalidateQueries({ queryKey: ["admin-addons"] });
     },
     onError: (e: Error) => toast.error(e.message),
