@@ -152,7 +152,10 @@ export const listAdminAddons = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     const byId = new Map<string, any>((rows ?? []).map((r: any) => [r.addon_id, r]));
 
-    const result: AddonRow[] = SUBSCRIPTION_ADDONS.map((d) => {
+    const catalogIds = new Set(SUBSCRIPTION_ADDONS.map(s => s.id));
+    
+    // Process catalog ones
+    const catalogResults: AddonRow[] = SUBSCRIPTION_ADDONS.map((d) => {
       const r = byId.get(d.id);
       const def = ADDON_PROMPT_DEFAULTS[d.id];
       const override: AddonOverride | null = r
@@ -194,7 +197,47 @@ export const listAdminAddons = createServerFn({ method: "GET" })
         },
       };
     });
-    return result;
+
+    // Process purely custom ones (ones in DB not in catalog)
+    const customResults: AddonRow[] = (rows ?? [])
+      .filter(r => !catalogIds.has(r.addon_id))
+      .map(r => {
+        const features = Array.isArray(r.features) ? r.features.map(f => String(f)) : [];
+        return {
+          addon_id: r.addon_id,
+          defaults: {
+            name: r.name || r.addon_id,
+            description: r.description || "",
+            features,
+            price_cents: r.price_cents || 0,
+            highlight: false,
+            prompt_template: null,
+            prompt_vars: [],
+            prompt_note: null,
+            prompt_applied: false,
+          },
+          override: {
+            addon_id: r.addon_id,
+            name: r.name,
+            description: r.description,
+            features,
+            price_cents: r.price_cents,
+            prompt: r.prompt,
+            enabled: r.enabled,
+            updated_at: r.updated_at,
+          },
+          effective: {
+            name: r.name || r.addon_id,
+            description: r.description || "",
+            features,
+            price_cents: r.price_cents || 0,
+            prompt: r.prompt,
+            enabled: r.enabled,
+          }
+        };
+      });
+
+    return [...catalogResults, ...customResults];
   });
 
 const UpsertSchema = z.object({
@@ -205,6 +248,7 @@ const UpsertSchema = z.object({
   price_cents: z.number().int().min(0).max(10_000_000).nullable().optional(),
   prompt: z.string().trim().max(8000).nullable().optional(),
   enabled: z.boolean().optional(),
+  is_custom: z.boolean().optional(),
 });
 
 export const upsertAdminAddon = createServerFn({ method: "POST" })
@@ -212,9 +256,8 @@ export const upsertAdminAddon = createServerFn({ method: "POST" })
   .inputValidator((d) => UpsertSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
-    if (!SUBSCRIPTION_ADDONS.some((a) => a.id === data.addon_id)) {
-      throw new Error("Add-on inválido.");
-    }
+    
+    // Allow upserting custom ones or existing ones
     const payload: any = {
       addon_id: data.addon_id,
       updated_by: context.userId,
@@ -229,6 +272,19 @@ export const upsertAdminAddon = createServerFn({ method: "POST" })
     const { error } = await supabaseAdmin
       .from("addon_settings")
       .upsert(payload, { onConflict: "addon_id" });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const deleteAdminAddon = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ addon_id: z.string().min(1).max(64) }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    const { error } = await supabaseAdmin
+      .from("addon_settings")
+      .delete()
+      .eq("addon_id", data.addon_id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });

@@ -638,8 +638,14 @@ function Testimonials() {
 function Pricing() {
   const { user } = useAuth();
   
-  // Featured primary subscription plans
-  const mainPlans = SUBSCRIPTION_ADDONS.filter(p => p.highlight);
+  const { data: addons } = useQuery({
+    queryKey: ["admin-addons-public"],
+    queryFn: async () => {
+      const { listAdminAddons } = await import("@/lib/addon-settings.functions");
+      return listAdminAddons();
+    },
+  });
+
   const basicPlan = {
     name: "Iniciante",
     price: "Grátis",
@@ -656,16 +662,20 @@ function Pricing() {
     id: "free"
   };
 
-  const displayPlans = [basicPlan, ...mainPlans.map(p => ({
-    name: p.name,
-    price: formatBRL(p.price_cents).split(',')[0],
-    sub: "/ mês",
-    anchor: p.id === 'sub_astrologer_numerologist' ? "Para profissionais" : "O mais completo",
-    feats: p.features.slice(0, 7),
-    cta: "Ascender",
-    featured: p.id === 'sub_astrologer_numerologist',
-    id: p.id
-  }))];
+  const dynamicPlans = (addons || [])
+    .filter(a => a.effective.enabled)
+    .map(p => ({
+      name: p.effective.name,
+      price: formatBRL(p.effective.price_cents).split(',')[0],
+      sub: "/ mês",
+      anchor: p.addon_id.includes('astrologer') ? "Para profissionais" : "Plano Completo",
+      feats: p.effective.features.slice(0, 7),
+      cta: "Ascender",
+      featured: p.defaults.highlight || p.addon_id.includes('astrologer'),
+      id: p.addon_id
+    }));
+
+  const displayPlans = [basicPlan, ...dynamicPlans].slice(0, 3);
 
   return (
     <section id="planos" className="py-32">
@@ -735,6 +745,16 @@ function Pricing() {
 function AddonsSection() {
   const { user } = useAuth();
   
+  const { data: pkgsData } = useQuery({
+    queryKey: ["admin-credit-packages-public"],
+    queryFn: async () => {
+      const { listCreditPackages } = await import("@/lib/credits.functions");
+      return listCreditPackages();
+    },
+  });
+
+  const packages = pkgsData?.packages.filter(p => p.active) || [];
+
   return (
     <section className="border-y border-border bg-card/20 py-24">
       <div className="mx-auto max-w-5xl px-6 text-center">
@@ -746,12 +766,12 @@ function AddonsSection() {
           Cada relatório ou consulta consome 1 crédito. Expira nunca. Use quando sentir o chamado.
         </p>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          {CREDIT_PACKAGES.map((a) => (
+          {packages.map((a) => (
             <Link
               key={a.id}
               to={user ? "/addons" : "/auth"}
               className={`rounded-2xl border p-6 text-left transition-all ${
-                a.highlight ? "border-gold/40 bg-gold/5 gold-glow" : "border-border hover:border-gold/30"
+                a.credits > 40 ? "border-gold/40 bg-gold/5 gold-glow" : "border-border hover:border-gold/30"
               }`}
             >
               <p className="text-xs uppercase tracking-[0.25em] text-gold/80">{a.credits} créditos</p>
