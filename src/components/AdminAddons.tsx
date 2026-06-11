@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   listAdminAddons,
   upsertAdminAddon,
+  deleteAdminAddon,
   resetAdminAddon,
   improveAddonPrompt,
   type AddonRow,
