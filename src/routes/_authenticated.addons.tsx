@@ -105,7 +105,7 @@ function AddonsPage() {
   }, [refetch]);
 
   const checkoutMut = useMutation({
-    mutationFn: (vars: { kind: "credits" | "subscription"; product_id: string }) =>
+    mutationFn: (vars: { kind: "credits" | "subscription" | "landing_package"; product_id: string }) =>
       checkoutFn({ data: vars }),
     onMutate: (vars) => setPendingId(vars.product_id),
     onSuccess: (res) => {
