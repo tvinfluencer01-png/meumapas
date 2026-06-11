@@ -2,12 +2,13 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { Shield, MessageSquare, Save, Send, CheckCircle2, AlertTriangle, Users, Search, ShieldOff, ShieldCheck, History, RefreshCw, Settings as SettingsIcon, Wallet, Coins, MoreHorizontal, UserCog, KeyRound, Package, Trash2, Coins as CoinsIcon, Zap, Plug, Clock, UserPlus, Eye, EyeOff, Database, Download, Loader2, Phone, ArrowRightLeft } from "lucide-react";
+import { Shield, MessageSquare, Save, Send, CheckCircle2, AlertTriangle, Users, Search, ShieldOff, ShieldCheck, History, RefreshCw, Settings as SettingsIcon, Wallet, Coins, MoreHorizontal, UserCog, KeyRound, Package, Trash2, Coins as CoinsIcon, Zap, Plug, Clock, UserPlus, Eye, EyeOff, Database, Download, Loader2, Phone, ArrowRightLeft, Layers } from "lucide-react";
 import { MercadoPagoForm } from "@/components/MercadoPagoForm";
 import { AdminCreditsManager, CreditsDialog } from "@/components/AdminCreditsManager";
 import { AdminCreditCosts } from "@/components/AdminCreditCosts";
 import { AdminCreditPackages } from "@/components/AdminCreditPackages";
 import { AdminAddons } from "@/components/AdminAddons";
+import { AdminLandingPackages } from "@/components/AdminLandingPackages";
 import { AdminCronStatus } from "@/components/AdminCronStatus";
 import { AdminGlobalSettings } from "@/components/AdminGlobalSettings";
 import { AdminPlanMigration } from "@/components/AdminPlanMigration";
@@ -130,6 +131,9 @@ function AdminPage() {
           <TabsTrigger value="credits" className="gap-2">
             <Coins className="size-4" /> Créditos/Pacotes
           </TabsTrigger>
+          <TabsTrigger value="packages" className="gap-2">
+            <Layers className="size-4" /> Pacotes
+          </TabsTrigger>
           <TabsTrigger value="addons" className="gap-2">
             <Package className="size-4" /> Add-ons
           </TabsTrigger>
@@ -172,6 +176,9 @@ function AdminPage() {
         <TabsContent value="credits" className="mt-0 space-y-6">
           <AdminCreditPackages />
           <AdminCreditsManager />
+        </TabsContent>
+        <TabsContent value="packages" className="mt-0">
+          <AdminLandingPackages />
         </TabsContent>
         <TabsContent value="addons" className="mt-0">
           <AdminAddons />

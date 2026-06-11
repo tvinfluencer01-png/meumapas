@@ -611,6 +611,60 @@ export type Database = {
           },
         ]
       }
+      landing_packages: {
+        Row: {
+          anchor: string | null
+          created_at: string
+          cta_label: string
+          enabled: boolean
+          featured: boolean
+          features: Json
+          id: string
+          included_addons: Json
+          name: string
+          price_cents: number
+          price_label: string | null
+          slug: string
+          sort_order: number
+          sub_label: string
+          updated_at: string
+        }
+        Insert: {
+          anchor?: string | null
+          created_at?: string
+          cta_label?: string
+          enabled?: boolean
+          featured?: boolean
+          features?: Json
+          id?: string
+          included_addons?: Json
+          name: string
+          price_cents?: number
+          price_label?: string | null
+          slug: string
+          sort_order?: number
+          sub_label?: string
+          updated_at?: string
+        }
+        Update: {
+          anchor?: string | null
+          created_at?: string
+          cta_label?: string
+          enabled?: boolean
+          featured?: boolean
+          features?: Json
+          id?: string
+          included_addons?: Json
+          name?: string
+          price_cents?: number
+          price_label?: string | null
+          slug?: string
+          sort_order?: number
+          sub_label?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       mercado_pago_settings: {
         Row: {
           access_token: string | null
