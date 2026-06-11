@@ -8,13 +8,13 @@ import oracleOrb from "@/assets/oracle-orb.jpg";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Cosmic AI — Mapa Astral, Numerologia, Tarot e IA Espiritual" },
+      { title: "Código Cósmico — Mapa Astral, Numerologia, Tarot e IA Espiritual" },
       {
         name: "description",
         content:
           "Mapa astral preciso, numerologia cabalística, tarot, meditação na Árvore da Vida e um Oráculo de IA treinado em sabedoria milenar. Tudo em um só lugar. Comece grátis.",
       },
-      { property: "og:title", content: "Cosmic AI — Onde a IA encontra o Sagrado" },
+      { property: "og:title", content: "Código Cósmico — Onde a IA encontra o Sagrado" },
       {
         property: "og:description",
         content:
@@ -69,7 +69,7 @@ function Nav() {
         <Link to="/" className="flex items-center gap-3">
           <Logo sizeClassName="size-12" animation="float" />
           <span className="font-serif text-2xl uppercase tracking-[0.3em] text-gold">
-            Cosmic AI
+            Código Cósmico
           </span>
         </Link>
         <div className="hidden gap-10 text-xs uppercase tracking-[0.25em] text-muted-foreground md:flex">
