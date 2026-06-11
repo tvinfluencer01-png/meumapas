@@ -58,9 +58,23 @@ function LandingPage() {
       <CTASection />
       <Footer />
       <ChatbotFloat />
-      <WhatsAppFloat />
+      <DynamicWhatsAppFloat />
     </div>
   );
+}
+
+function DynamicWhatsAppFloat() {
+  const { data } = useQuery({
+    queryKey: ["public-system-settings"],
+    queryFn: async () => {
+      const { getPublicSystemSettings } = await import("@/lib/admin.functions");
+      return getPublicSystemSettings();
+    },
+  });
+
+  if (!data?.whatsapp_number) return null;
+
+  return <WhatsAppFloat number={data.whatsapp_number} />;
 }
 
 /* ---------------- NAV ---------------- */
