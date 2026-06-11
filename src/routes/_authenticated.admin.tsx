@@ -133,6 +133,9 @@ function AdminPage() {
           <TabsTrigger value="addons" className="gap-2">
             <Package className="size-4" /> Add-ons
           </TabsTrigger>
+          <TabsTrigger value="migration" className="gap-2">
+            <ArrowRightLeft className="size-4" /> Migração
+          </TabsTrigger>
           <TabsTrigger value="cron" className="gap-2">
             <Clock className="size-4" /> Cron Jobs
           </TabsTrigger>
