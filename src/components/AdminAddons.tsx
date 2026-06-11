@@ -170,7 +170,7 @@ function AddonCreator({ onCancel }: { onCancel: () => void }) {
 function AddonEditor({ row }: { row: AddonRow }) {
   const qc = useQueryClient();
   const upsertFn = useServerFn(upsertAdminAddon);
-  const resetFn = useServerFn(resetAdminAddon);
+  const deleteFn = useServerFn(deleteAdminAddon);
   const improveFn = useServerFn(improveAddonPrompt);
 
   const [name, setName] = useState(row.effective.name);
