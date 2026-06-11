@@ -55,7 +55,7 @@ export function exportFavoritesPDF(favs: FavRecord[]) {
   doc.setFontSize(10);
   doc.setTextColor(120, 110, 90);
   doc.text(
-    `Cosmic AI · Exportado em ${new Date().toLocaleDateString("pt-BR")} · ${favs.length} ${favs.length === 1 ? "dia" : "dias"}`,
+    `Código Cósmico · Exportado em ${new Date().toLocaleDateString("pt-BR")} · ${favs.length} ${favs.length === 1 ? "dia" : "dias"}`,
     margin, y,
   );
   y += 18;

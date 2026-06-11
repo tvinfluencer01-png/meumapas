@@ -615,7 +615,7 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
         : undefined;
 
       const pdfBytes = await buildSimplePdf({
-        brand: "Cosmic AI",
+        brand: "Código Cósmico",
         eyebrow: "Astrologia · Mapa Natal",
         title: "Seu Mapa Astral",
         subtitle: chart.summary ?? "Relatório completo do seu céu",
@@ -730,7 +730,7 @@ export const downloadAstroForecastPdf = createServerFn({ method: "POST" })
       : undefined;
 
     const pdfBytes = await buildSimplePdf({
-      brand: "Cosmic AI",
+      brand: "Código Cósmico",
       eyebrow: "Astrologia · Previsões",
       title: "Suas previsões astrais",
       subtitle: chart.summary ?? "Tendências para os próximos dias, semana, mês e ano",

@@ -20,7 +20,7 @@ import { CreditCostBadge } from "@/components/CreditCostBadge";
 
 export const Route = createFileRoute("/_authenticated/relatorios")({
   component: RelatoriosPage,
-  head: () => ({ meta: [{ title: "Relatorios Premium — Cosmic AI" }] }),
+  head: () => ({ meta: [{ title: "Relatorios Premium — Código Cósmico" }] }),
 });
 
 type Kind = "personality" | "love" | "career" | "spiritual" | "finance" | "family" | "health" | "friendships";

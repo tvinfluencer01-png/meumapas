@@ -11,13 +11,13 @@ interface LogoProps {
 }
 
 /**
- * Cosmic AI brand logo — golden astrolabe on transparent background.
+ * Código Cósmico brand logo — golden astrolabe on transparent background.
  */
 export function Logo({
   className,
   sizeClassName = "size-8",
   animation = "float",
-  alt = "Cosmic AI",
+  alt = "Código Cósmico",
 }: LogoProps) {
   const animationClass =
     animation === "spin" || animation === "loading"

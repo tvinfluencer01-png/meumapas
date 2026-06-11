@@ -55,11 +55,11 @@ import { useAuth } from "@/hooks/use-auth";
 export const Route = createFileRoute("/_authenticated/addons")({
   head: () => ({
     meta: [
-      { title: "Add-ons e Créditos — Cosmic AI" },
+      { title: "Add-ons e Créditos — Código Cósmico" },
       {
         name: "description",
         content:
-          "Compre créditos avulsos ou assine planos mensais para desbloquear recursos premium do Cosmic AI.",
+          "Compre créditos avulsos ou assine planos mensais para desbloquear recursos premium do Código Cósmico.",
       },
     ],
   }),

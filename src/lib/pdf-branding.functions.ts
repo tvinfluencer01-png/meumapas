@@ -352,7 +352,7 @@ export const generateSampleBrandingPdf = createServerFn({ method: "POST" })
     const { buildSimplePdf } = await import("@/lib/simple-pdf");
 
     const bytes = await buildSimplePdf({
-      brand: "Cosmic AI",
+      brand: "Código Cósmico",
       eyebrow: "Preview de personalização",
       title: "Exemplo de Relatório",
       subtitle: "Esta é uma capa de teste com o seu branding atual",

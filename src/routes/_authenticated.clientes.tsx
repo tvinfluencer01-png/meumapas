@@ -32,7 +32,7 @@ import {
 } from "@/lib/client-profiles.functions";
 
 export const Route = createFileRoute("/_authenticated/clientes")({
-  head: () => ({ meta: [{ title: "Clientes — Cosmic AI" }] }),
+  head: () => ({ meta: [{ title: "Clientes — Código Cósmico" }] }),
   component: ClientesPage,
 });
 

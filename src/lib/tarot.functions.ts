@@ -246,7 +246,7 @@ export const exportTarotPdf = createServerFn({ method: "POST" })
         : undefined;
 
       const pdfBytes = await buildSimplePdf({
-        brand: "Cosmic AI",
+        brand: "Código Cósmico",
         eyebrow: `Tarot · ${spreadLabel}`,
         title: "Leitura de Tarot",
         subtitle: reading.question ?? "Sem pergunta específica",

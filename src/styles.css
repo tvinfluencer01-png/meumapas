@@ -52,7 +52,7 @@
 :root {
   --radius: 0.75rem;
 
-  /* Cosmic AI — Ethereal Obsidian palette */
+  /* Código Cósmico — Ethereal Obsidian palette */
   --night: oklch(0.12 0.02 270);
   --background: oklch(0.10 0.02 270);
   --foreground: oklch(0.95 0.01 250);

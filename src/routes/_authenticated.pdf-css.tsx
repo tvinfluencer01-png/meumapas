@@ -12,7 +12,7 @@ import { PDF_CSS_TEMPLATES, type PdfCssTemplate } from "@/lib/pdf-css-templates"
 export const Route = createFileRoute("/_authenticated/pdf-css")({
   head: () => ({
     meta: [
-      { title: "PDF CSS Avançado — Cosmic AI" },
+      { title: "PDF CSS Avançado — Código Cósmico" },
       { name: "description", content: "Templates e personalização visual para seus relatórios PDF." },
     ],
   }),

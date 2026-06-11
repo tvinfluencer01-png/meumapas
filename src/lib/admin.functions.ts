@@ -394,7 +394,7 @@ export const sendTwilioTest = createServerFn({ method: "POST" })
 
     const body = new URLSearchParams({
       To: to,
-      Body: "✨ Cosmic AI: integração Twilio configurada com sucesso!",
+      Body: "✨ Código Cósmico: integração Twilio configurada com sucesso!",
     });
     if (s.messaging_service_sid) body.set("MessagingServiceSid", s.messaging_service_sid);
     else body.set("From", from);
@@ -959,7 +959,7 @@ export const sendEvolutionTest = createServerFn({ method: "POST" })
         method: "POST",
         body: JSON.stringify({
           number: digitsOnly(data.to),
-          text: data.text ?? "✨ Cosmic AI: integração Evolution API funcionando!",
+          text: data.text ?? "✨ Código Cósmico: integração Evolution API funcionando!",
         }),
       },
     );

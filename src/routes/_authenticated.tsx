@@ -159,7 +159,7 @@ function AuthedLayout() {
       <header className="lg:hidden sticky top-0 z-30 flex items-center justify-between border-b border-border bg-background/80 backdrop-blur px-4 py-3">
         <Link to="/dashboard" className="flex items-center gap-2.5">
           <Logo sizeClassName="size-10" animation="float" />
-          <span className="font-serif text-lg shimmer-text">Cosmic AI</span>
+          <span className="font-serif text-lg shimmer-text">Código Cósmico</span>
         </Link>
         <Button variant="ghost" size="icon" onClick={() => setOpen(!open)}>
           {open ? <X className="size-5" /> : <Menu className="size-5" />}
@@ -171,7 +171,7 @@ function AuthedLayout() {
         <aside className={`${open ? "flex" : "hidden"} lg:flex flex-col fixed lg:sticky inset-0 lg:inset-auto lg:top-0 z-20 lg:z-auto h-screen w-full lg:w-64 border-r border-border bg-background/90 backdrop-blur-xl`}>
           <div className="hidden lg:flex items-center gap-2.5 px-6 py-6 border-b border-border shrink-0">
             <Logo sizeClassName="size-12" animation="float" />
-            <span className="font-serif text-xl shimmer-text">Cosmic AI</span>
+            <span className="font-serif text-xl shimmer-text">Código Cósmico</span>
           </div>
           <div className="px-4 pt-3">
             <ActiveClientSwitcher />

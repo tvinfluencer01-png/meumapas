@@ -11,7 +11,7 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/numerologia-cabalistica")({
   component: NumerologiaCabalisticaPage,
-  head: () => ({ meta: [{ title: "Numerologia Cabalística — Cosmic AI" }] }),
+  head: () => ({ meta: [{ title: "Numerologia Cabalística — Código Cósmico" }] }),
 });
 
 // Tabela cabalística (tradição hebraica adaptada ao alfabeto latino).
@@ -510,7 +510,7 @@ function NumerologiaCabalisticaPage() {
 
 
       const bytes = await buildSimplePdf({
-        brand: "Cosmic AI",
+        brand: "Código Cósmico",
         eyebrow: "Numerologia Cabalística",
         title: "A vibração hebraica do seu nome",
         subtitle: "Relatório completo da tradição cabalística",

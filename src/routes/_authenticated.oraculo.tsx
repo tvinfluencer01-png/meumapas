@@ -13,7 +13,7 @@ import { emitCreditsChanged } from "@/lib/credits-events";
 
 export const Route = createFileRoute("/_authenticated/oraculo")({
   component: OraculoPage,
-  head: () => ({ meta: [{ title: "Oráculo IA — Cosmic AI" }] }),
+  head: () => ({ meta: [{ title: "Oráculo IA — Código Cósmico" }] }),
 });
 
 const SUGESTOES = [

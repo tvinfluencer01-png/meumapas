@@ -17,7 +17,7 @@ import { useActiveSubject } from "@/hooks/use-active-subject";
 
 export const Route = createFileRoute("/_authenticated/mapa-astral")({
   component: MapaAstral,
-  head: () => ({ meta: [{ title: "Mapa Astral — Cosmic AI" }] }),
+  head: () => ({ meta: [{ title: "Mapa Astral — Código Cósmico" }] }),
 });
 
 const SIGNS = ["Áries","Touro","Gêmeos","Câncer","Leão","Virgem","Libra","Escorpião","Sagitário","Capricórnio","Aquário","Peixes"];

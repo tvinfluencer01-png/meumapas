@@ -13,7 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
   component: OnboardingPage,
-  head: () => ({ meta: [{ title: "Onboarding — Cosmic AI" }] }),
+  head: () => ({ meta: [{ title: "Onboarding — Código Cósmico" }] }),
 });
 
 const schema = z.object({
