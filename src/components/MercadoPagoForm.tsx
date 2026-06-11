@@ -200,17 +200,29 @@ export function MercadoPagoForm() {
                   </span>
                 )}
               </Label>
-              <Input
-                id="mp-token"
-                type="password"
-                placeholder={data?.has_access_token ? "•••••••••• (deixe vazio para manter)" : "APP_USR-xxxx ou TEST-xxxx"}
-                value={accessToken}
-                onChange={(e) => setAccessToken(e.target.value)}
-                onKeyDown={(e) => e.stopPropagation()}
-                autoComplete="off"
-              />
+              <div className="relative">
+                <Input
+                  id="mp-token"
+                  type={showAccessToken ? "text" : "password"}
+                  placeholder={data?.has_access_token ? "••••••••••••••••" : "APP_USR-xxxx ou TEST-xxxx"}
+                  value={accessToken}
+                  onChange={(e) => setAccessToken(e.target.value)}
+                  onKeyDown={(e) => e.stopPropagation()}
+                  autoComplete="off"
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowAccessToken(!showAccessToken)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showAccessToken ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </button>
+              </div>
               <p className="text-xs text-muted-foreground">
-                Mantido apenas no servidor. Nunca é exposto ao navegador.
+                {data?.has_access_token 
+                  ? "Chave salva. Deixe vazio para manter a atual ou digite uma nova para substituir."
+                  : "Mantido apenas no servidor. Nunca é exposto ao navegador."}
               </p>
             </div>
 
@@ -223,15 +235,25 @@ export function MercadoPagoForm() {
                   </span>
                 )}
               </Label>
-              <Input
-                id="mp-webhook"
-                type="password"
-                placeholder={data?.has_webhook_secret ? "•••••••••• (deixe vazio para manter)" : "Secret de validação do webhook"}
-                value={webhookSecret}
-                onChange={(e) => setWebhookSecret(e.target.value)}
-                onKeyDown={(e) => e.stopPropagation()}
-                autoComplete="off"
-              />
+              <div className="relative">
+                <Input
+                  id="mp-webhook"
+                  type={showWebhookSecret ? "text" : "password"}
+                  placeholder={data?.has_webhook_secret ? "••••••••••••••••" : "Secret de validação do webhook"}
+                  value={webhookSecret}
+                  onChange={(e) => setWebhookSecret(e.target.value)}
+                  onKeyDown={(e) => e.stopPropagation()}
+                  autoComplete="off"
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowWebhookSecret(!showWebhookSecret)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showWebhookSecret ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </button>
+              </div>
             </div>
           </div>
 
