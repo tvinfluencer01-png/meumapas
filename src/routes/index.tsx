@@ -663,15 +663,15 @@ function Pricing() {
   };
 
   const dynamicPlans = (addons || [])
-    .filter(a => a.effective.enabled && (a.addon_id.includes('unlimited') || a.addon_id.includes('astrologer') || a.addon_id.includes('pro') || a.addon_id.includes('mistico')))
+    .filter(a => a.effective.enabled)
     .map(p => ({
       name: p.effective.name,
       price: formatBRL(p.effective.price_cents).split(',')[0],
       sub: "/ mês",
-      anchor: p.addon_id === 'sub_astrologer_numerologist' ? "Para profissionais" : "Plano Completo",
+      anchor: p.addon_id.includes('astrologer') ? "Para profissionais" : "Plano Completo",
       feats: p.effective.features.slice(0, 7),
       cta: "Ascender",
-      featured: p.addon_id === 'sub_astrologer_numerologist' || p.addon_id.includes('highlight'),
+      featured: p.defaults.highlight || p.addon_id.includes('astrologer'),
       id: p.addon_id
     }));
 
