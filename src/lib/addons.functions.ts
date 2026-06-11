@@ -42,7 +42,7 @@ export const getAddonsOverview = createServerFn({ method: "GET" })
   });
 
 const CheckoutSchema = z.object({
-  kind: z.enum(["credits", "subscription"]),
+  kind: z.enum(["credits", "subscription", "landing_package"]),
   product_id: z.string().min(1).max(64),
 });
 
@@ -72,7 +72,7 @@ export const createMercadoPagoCheckout = createServerFn({ method: "POST" })
       if (!pkg) throw new Error("Pacote de créditos inválido.");
       title = `${pkg.name} — ${pkg.credits} créditos`;
       amount_cents = pkg.price_cents;
-    } else {
+    } else if (data.kind === "subscription") {
       const sub = SUBSCRIPTION_ADDONS.find((s) => s.id === data.product_id);
       if (!sub) throw new Error("Assinatura inválida.");
       const { getEffectiveAddon } = await import("./addon-settings.functions");
@@ -82,6 +82,15 @@ export const createMercadoPagoCheckout = createServerFn({ method: "POST" })
       }
       title = `${eff?.name ?? sub.name} — assinatura mensal`;
       amount_cents = eff?.price_cents ?? sub.price_cents;
+    } else if (data.kind === "landing_package") {
+      const { data: pkg, error } = await supabaseAdmin
+        .from("landing_packages")
+        .select("*")
+        .eq("slug", data.product_id)
+        .single();
+      if (error || !pkg) throw new Error("Pacote não encontrado.");
+      title = `${pkg.name} — plano de ascensão`;
+      amount_cents = pkg.price_cents;
     }
 
     // Persist pending order
