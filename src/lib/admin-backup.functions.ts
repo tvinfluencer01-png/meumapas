@@ -19,87 +19,99 @@ export const adminExportDatabase = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     await assertAdmin(context.userId);
 
-    const tables = [
-      "profiles",
-      "user_roles",
-      "user_settings",
-      "user_credits",
-      "credit_costs",
-      "credit_packages",
-      "credit_transactions",
-      "birth_data",
-      "client_profiles",
-      "astro_charts",
-      "reports",
-      "numerology_reports",
-      "tarot_readings",
-      "kabbalah_meditations",
-      "calendar_favorites",
-      "horoscope_subscriptions",
-      "horoscope_log",
-      "notification_preferences",
-      "notification_log",
-      "system_settings",
-      "mercado_pago_settings",
-      "twilio_settings",
-      "evolution_settings",
-      "addon_settings",
-      "payment_orders",
-      "user_subscriptions",
-      "pdf_branding",
-      "role_audit_log",
-      "app_logs",
-      "ai_conversations",
-      "ai_messages",
-    ];
+    // Get all public tables dynamically
+    const { data: tableRows, error: tableError } = await supabaseAdmin.rpc("get_public_tables" as any);
+    
+    let tables: string[] = [];
+    if (tableError || !tableRows) {
+      // Fallback to hardcoded list if RPC fails or returns nothing
+      tables = [
+        "profiles", "user_roles", "user_settings", "user_credits", 
+        "credit_costs", "credit_packages", "credit_transactions",
+        "birth_data", "client_profiles", "astro_charts", "reports",
+        "numerology_reports", "tarot_readings", "kabbalah_meditations",
+        "calendar_favorites", "horoscope_subscriptions", "horoscope_log",
+        "notification_preferences", "notification_log", "system_settings",
+        "mercado_pago_settings", "twilio_settings", "evolution_settings",
+        "addon_settings", "payment_orders", "user_subscriptions",
+        "pdf_branding", "role_audit_log", "app_logs", "ai_conversations",
+        "ai_messages"
+      ];
+    } else {
+      tables = (tableRows as any[]).map(r => r.table_name);
+    }
 
     let sql = "-- Backup gerado em " + new Date().toISOString() + "\n";
-    sql += "-- Sistema: Código Cósmico\n\n";
+    sql += "-- Sistema: Código Cósmico\n";
+    sql += "-- Este arquivo contém a ESTRUTURA e os DADOS para migração completa.\n\n";
     
-    // In code mode, we can't easily extract full DDL without custom SQL queries per table.
-    // We'll focus on the data and provide instructions for the structure.
-    sql += "-- INSTRUÇÕES: Este arquivo contém os dados atuais.\n";
-    sql += "-- A estrutura das tabelas deve ser criada via migrações Supabase antes de importar os dados.\n\n";
-    
+    sql += "BEGIN;\n\n";
+
     for (const table of tables) {
-      // Use any to bypass TS error on dynamic table name
+      // 1. Get structure
+      const { data: cols, error: structError } = await supabaseAdmin.rpc("get_table_structure", { t_name: table });
+      
+      sql += `\n-- -----------------------------------------------------\n`;
+      sql += `-- Tabela public.${table}\n`;
+      sql += `-- -----------------------------------------------------\n\n`;
+
+      if (structError) {
+        sql += `-- Erro ao obter estrutura da tabela ${table}: ${structError.message}\n`;
+      } else if (cols && cols.length > 0) {
+        sql += `CREATE TABLE IF NOT EXISTS public.${table} (\n`;
+        const colLines = cols.map((c: any) => {
+          let line = `  ${c.column_name} ${c.data_type.toUpperCase()}`;
+          if (c.is_nullable === "NO") line += " NOT NULL";
+          if (c.column_default) line += ` DEFAULT ${c.column_default}`;
+          return line;
+        });
+        
+        // Add Primary Key constraint
+        const pks = cols.filter((c: any) => c.is_primary_key).map((c: any) => c.column_name);
+        if (pks.length > 0) {
+          colLines.push(`  CONSTRAINT ${table}_pkey PRIMARY KEY (${pks.join(", ")})`);
+        }
+        
+        sql += colLines.join(",\n");
+        sql += "\n);\n\n";
+        
+        sql += `TRUNCATE TABLE public.${table} CASCADE; -- Limpa dados existentes\n\n`;
+      }
+
+      // 2. Get data
       const { data, error } = await (supabaseAdmin.from(table as any) as any).select("*");
       if (error) {
-        console.error(`Error exporting ${table}:`, error);
-        sql += `-- Erro ao exportar tabela ${table}: ${error.message}\n`;
+        sql += `-- Erro ao exportar dados da tabela ${table}: ${error.message}\n`;
         continue;
       }
 
-      if (!data || data.length === 0) {
-        sql += `-- Tabela ${table} está vazia.\n`;
-        continue;
-      }
-
-      sql += `\n-- Tabela public.${table} (${data.length} registros)\n`;
-      sql += `DELETE FROM public.${table}; -- Limpa dados existentes para evitar conflitos\n`;
-      
-      const batchSize = 100;
-      for (let i = 0; i < data.length; i += batchSize) {
-        const batch = data.slice(i, i + batchSize);
-        const columns = Object.keys(batch[0]).join(", ");
-        
-        sql += `INSERT INTO public.${table} (${columns}) VALUES\n`;
-        
-        const rows = batch.map((row: any) => {
-          const values = Object.entries(row).map(([_, val]) => {
-            if (val === null) return "NULL";
-            if (typeof val === "string") return `'${val.replace(/'/g, "''")}'`;
-            if (typeof val === "boolean") return val ? "true" : "false";
-            if (typeof val === "object") return `'${JSON.stringify(val).replace(/'/g, "''")}'`;
-            return val;
+      if (data && data.length > 0) {
+        const batchSize = 100;
+        for (let i = 0; i < data.length; i += batchSize) {
+          const batch = data.slice(i, i + batchSize);
+          const columns = Object.keys(batch[0]).join(", ");
+          
+          sql += `INSERT INTO public.${table} (${columns}) VALUES\n`;
+          
+          const rows = batch.map((row: any) => {
+            const values = Object.entries(row).map(([_, val]) => {
+              if (val === null) return "NULL";
+              if (typeof val === "string") return `'${val.replace(/'/g, "''")}'`;
+              if (typeof val === "boolean") return val ? "true" : "false";
+              if (typeof val === "object") return `'${JSON.stringify(val).replace(/'/g, "''")}'`;
+              return val;
+            });
+            return `(${values.join(", ")})`;
           });
-          return `(${values.join(", ")})`;
-        });
 
-        sql += rows.join(",\n") + ";\n";
+          sql += rows.join(",\n") + ";\n";
+        }
+      } else {
+        sql += `-- Tabela ${table} não possui registros para inserção.\n`;
       }
     }
 
-    return { sql };
+    sql += "\nCOMMIT;\n";
 
+    return { sql };
   });
