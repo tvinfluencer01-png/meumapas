@@ -53,20 +53,30 @@ export const adminExportDatabase = createServerFn({ method: "POST" })
       "ai_messages",
     ];
 
-    let sql = "-- Backup gerado em " + new Date().toISOString() + "\n\n";
-    sql += "-- CRIAÇÃO DAS TABELAS\n";
+    let sql = "-- Backup gerado em " + new Date().toISOString() + "\n";
+    sql += "-- Sistema: Código Cósmico\n\n";
+    
+    // In code mode, we can't easily extract full DDL without custom SQL queries per table.
+    // We'll focus on the data and provide instructions for the structure.
+    sql += "-- INSTRUÇÕES: Este arquivo contém os dados atuais.\n";
+    sql += "-- A estrutura das tabelas deve ser criada via migrações Supabase antes de importar os dados.\n\n";
     
     for (const table of tables) {
       // Use any to bypass TS error on dynamic table name
       const { data, error } = await (supabaseAdmin.from(table as any) as any).select("*");
       if (error) {
         console.error(`Error exporting ${table}:`, error);
+        sql += `-- Erro ao exportar tabela ${table}: ${error.message}\n`;
         continue;
       }
 
-      if (!data || data.length === 0) continue;
+      if (!data || data.length === 0) {
+        sql += `-- Tabela ${table} está vazia.\n`;
+        continue;
+      }
 
-      sql += `\n-- Dados da tabela ${table}\n`;
+      sql += `\n-- Tabela public.${table} (${data.length} registros)\n`;
+      sql += `DELETE FROM public.${table}; -- Limpa dados existentes para evitar conflitos\n`;
       
       const batchSize = 100;
       for (let i = 0; i < data.length; i += batchSize) {
@@ -76,7 +86,7 @@ export const adminExportDatabase = createServerFn({ method: "POST" })
         sql += `INSERT INTO public.${table} (${columns}) VALUES\n`;
         
         const rows = batch.map((row: any) => {
-          const values = Object.values(row).map(val => {
+          const values = Object.entries(row).map(([_, val]) => {
             if (val === null) return "NULL";
             if (typeof val === "string") return `'${val.replace(/'/g, "''")}'`;
             if (typeof val === "boolean") return val ? "true" : "false";
@@ -91,4 +101,5 @@ export const adminExportDatabase = createServerFn({ method: "POST" })
     }
 
     return { sql };
+
   });
