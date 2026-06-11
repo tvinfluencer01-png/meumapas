@@ -96,6 +96,9 @@ function AdminPage() {
           <TabsTrigger value="users" className="gap-2">
             <Users className="size-4" /> Usuários
           </TabsTrigger>
+          <TabsTrigger value="costs" className="gap-2">
+            <CoinsIcon className="size-4" /> Custos por ação
+          </TabsTrigger>
           <TabsTrigger value="audit" className="gap-2">
             <History className="size-4" /> Histórico
           </TabsTrigger>
@@ -109,7 +112,7 @@ function AdminPage() {
             <Wallet className="size-4" /> Mercado Pago
           </TabsTrigger>
           <TabsTrigger value="credits" className="gap-2">
-            <Coins className="size-4" /> Créditos
+            <Coins className="size-4" /> Créditos/Pacotes
           </TabsTrigger>
           <TabsTrigger value="addons" className="gap-2">
             <Package className="size-4" /> Add-ons
@@ -125,6 +128,9 @@ function AdminPage() {
         <TabsContent value="users" className="mt-0">
           <UsersAdmin />
         </TabsContent>
+        <TabsContent value="costs" className="mt-0">
+          <AdminCreditCosts />
+        </TabsContent>
         <TabsContent value="audit" className="mt-0">
           <RoleAuditLog />
         </TabsContent>
@@ -138,7 +144,6 @@ function AdminPage() {
           <MercadoPagoForm />
         </TabsContent>
         <TabsContent value="credits" className="mt-0 space-y-6">
-          <AdminCreditCosts />
           <AdminCreditPackages />
           <AdminCreditsManager />
         </TabsContent>
