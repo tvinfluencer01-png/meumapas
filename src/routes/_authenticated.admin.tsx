@@ -48,6 +48,8 @@ import {
   testEvolutionConnection,
   sendEvolutionTest,
 } from "@/lib/admin.functions";
+import { adminExportDatabase } from "@/lib/admin-backup.functions";
+
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPage,
