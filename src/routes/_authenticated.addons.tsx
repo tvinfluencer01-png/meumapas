@@ -123,14 +123,6 @@ function AddonsPage() {
       .map((s) => s.addon_id),
   );
 
-  function handleBuy(kind: "credits" | "subscription", product_id: string) {
-    if (!data?.payments_enabled) {
-      toast.error("Pagamentos ainda não estão disponíveis. Tente novamente em breve.");
-      return;
-    }
-    checkoutMut.mutate({ kind, product_id });
-  }
-
   const { data: landingPackages } = useQuery({
     queryKey: ["public-landing-packages"],
     queryFn: async () => {
@@ -139,19 +131,19 @@ function AddonsPage() {
     },
   });
 
+  function handleBuy(kind: "credits" | "subscription" | "landing_package", product_id: string) {
+    if (!data?.payments_enabled) {
+      toast.error("Pagamentos ainda não estão disponíveis. Tente novamente em instantes.");
+      return;
+    }
+    checkoutMut.mutate({ kind, product_id });
+  }
+
   useEffect(() => {
     if (!isLoading && data && search.plan && landingPackages) {
       const pkg = landingPackages.find((p) => p.slug === search.plan);
       if (pkg) {
-        // If it's a monthly subscription package (slugs are usually for these)
-        // Check if user already has it active
-        const hasIt = activeSubIds.has(pkg.slug); // Using slug as ID for simple match if possible
-        // Actually, package slugs in landing_packages might not match SUBSCRIPTION_ADDONS IDs.
-        // But the requirement says "when selecting a package".
-        // Let's see if we can trigger a checkout for the landing package.
-        
-        // Wait, landing packages are different from add-ons. 
-        // We need a way to purchase the landing package.
+        handleBuy("landing_package", pkg.slug);
       }
     }
   }, [isLoading, data, search.plan, landingPackages]);
