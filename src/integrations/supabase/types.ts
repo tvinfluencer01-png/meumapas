@@ -1331,6 +1331,12 @@ export type Database = {
         }
         Returns: boolean
       }
+      get_public_tables: {
+        Args: never
+        Returns: {
+          table_name: string
+        }[]
+      }
       get_table_structure: {
         Args: { t_name: string }
         Returns: {
