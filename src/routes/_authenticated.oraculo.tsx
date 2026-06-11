@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useChat } from "@ai-sdk/react";
+import { useQueryClient } from "@tanstack/react-query";
+
 import { DefaultChatTransport, type UIMessage } from "ai";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
@@ -23,7 +25,9 @@ const SUGESTOES = [
 
 function OraculoPage() {
   const { user } = useAuth();
+  const qc = useQueryClient();
   const [input, setInput] = useState("");
+
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
