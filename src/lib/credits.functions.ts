@@ -167,7 +167,7 @@ export async function consumeCredits(
     _user_id: userId,
     _amount: amount,
     _kind: String(action),
-    _reference: reference ?? null,
+    _reference: reference,
   });
   if (error) {
     console.error("[credits] consume error", error);
