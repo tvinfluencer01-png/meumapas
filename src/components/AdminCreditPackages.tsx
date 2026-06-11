@@ -225,6 +225,7 @@ export function AdminCreditPackages() {
                     onChange={(e) =>
                       setEditing({ ...editing, name: e.target.value })
                     }
+                    onKeyDown={(e) => e.stopPropagation()}
                     maxLength={120}
                   />
                 </div>
@@ -237,6 +238,7 @@ export function AdminCreditPackages() {
                     onChange={(e) =>
                       setEditing({ ...editing, description: e.target.value })
                     }
+                    onKeyDown={(e) => e.stopPropagation()}
                     maxLength={500}
                   />
                 </div>
@@ -253,6 +255,7 @@ export function AdminCreditPackages() {
                           credits: parseInt(e.target.value.replace(/\D/g, "") || "0", 10),
                         })
                       }
+                      onKeyDown={(e) => e.stopPropagation()}
                     />
                   </div>
                   <div>
@@ -269,6 +272,7 @@ export function AdminCreditPackages() {
                           price_cents: Number.isFinite(n) ? Math.max(0, n) : 0,
                         });
                       }}
+                      onKeyDown={(e) => e.stopPropagation()}
                     />
                   </div>
                   <div>
@@ -283,6 +287,7 @@ export function AdminCreditPackages() {
                           sort_order: parseInt(e.target.value.replace(/\D/g, "") || "0", 10),
                         })
                       }
+                      onKeyDown={(e) => e.stopPropagation()}
                     />
                   </div>
                 </div>

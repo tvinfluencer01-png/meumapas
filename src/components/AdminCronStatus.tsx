@@ -110,6 +110,7 @@ function CronJobItem({ job }: { job: CronJobStatus }) {
             <Input 
               value={schedule} 
               onChange={(e) => setSchedule(e.target.value)} 
+              onKeyDown={(e) => e.stopPropagation()}
               placeholder="0 * * * *" 
               className="font-mono"
             />
@@ -119,6 +120,7 @@ function CronJobItem({ job }: { job: CronJobStatus }) {
             <Textarea 
               value={command} 
               onChange={(e) => setCommand(e.target.value)} 
+              onKeyDown={(e) => e.stopPropagation()}
               placeholder="SELECT ..." 
               className="font-mono min-h-[120px]"
             />

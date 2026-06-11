@@ -183,6 +183,7 @@ export function MercadoPagoForm() {
                 placeholder="APP_USR-xxxx ou TEST-xxxx"
                 value={publicKey}
                 onChange={(e) => setPublicKey(e.target.value)}
+                onKeyDown={(e) => e.stopPropagation()}
               />
               <p className="text-xs text-muted-foreground">
                 Usada no checkout (lado do navegador).
@@ -203,6 +204,7 @@ export function MercadoPagoForm() {
                 placeholder={data?.has_access_token ? "•••••••••• (deixe vazio para manter)" : "APP_USR-xxxx ou TEST-xxxx"}
                 value={accessToken}
                 onChange={(e) => setAccessToken(e.target.value)}
+                onKeyDown={(e) => e.stopPropagation()}
                 autoComplete="off"
               />
               <p className="text-xs text-muted-foreground">
@@ -225,6 +227,7 @@ export function MercadoPagoForm() {
                 placeholder={data?.has_webhook_secret ? "•••••••••• (deixe vazio para manter)" : "Secret de validação do webhook"}
                 value={webhookSecret}
                 onChange={(e) => setWebhookSecret(e.target.value)}
+                onKeyDown={(e) => e.stopPropagation()}
                 autoComplete="off"
               />
             </div>

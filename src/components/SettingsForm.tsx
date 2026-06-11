@@ -184,6 +184,7 @@ export function SettingsForm() {
                 value={form.astrology_api_user_id}
                 disabled={form.preferred_engine === "swiss_ephemeris"}
                 onChange={(e) => setForm(prev => ({ ...prev, astrology_api_user_id: e.target.value }))}
+                onKeyDown={(e) => e.stopPropagation()}
                 className="mt-1 bg-input border-border" 
                 placeholder="123456" 
               />
@@ -196,6 +197,7 @@ export function SettingsForm() {
                   value={form.astrology_api_key}
                   disabled={form.preferred_engine === "swiss_ephemeris"}
                   onChange={(e) => setForm(prev => ({ ...prev, astrology_api_key: e.target.value }))}
+                  onKeyDown={(e) => e.stopPropagation()}
                   className="bg-input border-border pr-10" 
                   placeholder="••••••••" 
                 />
@@ -317,6 +319,7 @@ export function SettingsForm() {
               <Label className="text-stardust text-xs">Modelo</Label>
               <Input value={form.custom_ai_model}
                 onChange={(e) => setForm({ ...form, custom_ai_model: e.target.value })}
+                onKeyDown={(e) => e.stopPropagation()}
                 className="mt-1 bg-input border-border" placeholder="gpt-5 / claude-opus / gemini-2.5-pro" />
             </div>
             <div>
@@ -324,6 +327,7 @@ export function SettingsForm() {
               <div className="relative mt-1">
                 <Input type={showCustomKey ? "text" : "password"} value={form.custom_ai_key}
                   onChange={(e) => setForm({ ...form, custom_ai_key: e.target.value })}
+                  onKeyDown={(e) => e.stopPropagation()}
                   className="bg-input border-border pr-10" placeholder="sk-..." />
                 <button type="button" onClick={() => setShowCustomKey((s) => !s)}
                   className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-stardust"
