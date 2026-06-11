@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { CREDIT_PACKAGES, SUBSCRIPTION_ADDONS, formatBRL } from "@/lib/addons.catalog";
 import heroAstrolabe from "@/assets/hero-astrolabe.jpg";
 import oracleOrb from "@/assets/oracle-orb.jpg";
+import zodiac3dWheel from "@/assets/zodiac-3d-wheel.png";
 
 export const Route = createFileRoute("/")({
   head: () => ({
