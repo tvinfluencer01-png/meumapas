@@ -70,7 +70,7 @@ export function MercadoPagoForm() {
       setWebhookSecret("");
       qc.invalidateQueries({ queryKey: ["mercado-pago-settings"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => showFeedback({ title: "Erro ao salvar", description: e.message, type: "error" }),
   });
 
   const testMut = useMutation({

@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/system-feedback";
 import { Mail, Lock, User as UserIcon, ArrowLeft, Loader2 } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { supabase } from "@/integrations/supabase/client";
@@ -92,7 +92,7 @@ function AuthPage() {
       if (mode === "signup") {
         const parsed = signUpSchema.safeParse(form);
         if (!parsed.success) {
-          toast.error(parsed.error.issues[0].message);
+          showFeedback({ title: "Dados inválidos", description: parsed.error.issues[0].message, type: "warning" });
           return;
         }
 
@@ -117,16 +117,16 @@ function AuthPage() {
         if (error) throw error;
         
         if (search.plan) {
-          toast.success("Conta criada! Redirecionando para o pagamento...");
+          showFeedback({ title: "Conta criada!", description: "Redirecionando para o pagamento...", type: "success" });
           // Redireciona para o onboarding que vai lidar com o checkout do plano pendente
           nav({ to: "/onboarding" });
         } else {
-          toast.success("Conta criada! Verifique seu e-mail para confirmar.");
+          showFeedback({ title: "Conta criada!", description: "Verifique seu e-mail para confirmar seu cadastro.", type: "success" });
         }
       } else {
         const parsed = signInSchema.safeParse(form);
         if (!parsed.success) {
-          toast.error(parsed.error.issues[0].message);
+          showFeedback({ title: "Erro no cadastro", description: parsed.error.issues[0].message, type: "error" });
           return;
         }
         const { error } = await supabase.auth.signInWithPassword({
@@ -136,7 +136,7 @@ function AuthPage() {
         if (error) throw error;
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha na autenticação");
+      showFeedback({ title: "Falha na autenticação", description: err instanceof Error ? err.message : "Tente novamente mais tarde.", type: "error" });
     } finally {
       setSubmitting(false);
     }
