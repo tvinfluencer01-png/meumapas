@@ -17,8 +17,8 @@ import { FavoritesImpact } from "@/components/FavoritesImpact";
 import { AIInsights } from "@/components/AIInsights";
 import { generateReport } from "@/lib/reports.functions";
 import { emitCreditsChanged } from "@/lib/credits-events";
-import { showLoader, hideLoader, updateLoader } from "@/components/system-feedback";
 import { toast } from "sonner";
+import { showFeedback, showLoader, hideLoader, updateLoader } from "@/components/system-feedback";
 import { CreditCostBadge } from "@/components/CreditCostBadge";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
