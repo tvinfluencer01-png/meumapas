@@ -4,7 +4,7 @@ import { motion, useReducedMotion } from "motion/react";
 import { Starfield } from "@/components/Starfield";
 import { Logo } from "@/components/Logo";
 import { useAuth } from "@/hooks/use-auth";
-import { CREDIT_PACKAGES, SUBSCRIPTION_ADDONS, formatBRL } from "@/lib/addons.catalog";
+import { formatBRL } from "@/lib/addons.catalog";
 import heroAstrolabe from "@/assets/hero-astrolabe.jpg";
 import oracleOrb from "@/assets/oracle-orb.jpg";
 import zodiac3dWheel from "@/assets/zodiac-3d-wheel.png";
