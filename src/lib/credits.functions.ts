@@ -747,3 +747,47 @@ export const adminApplyCreditPackage = createServerFn({ method: "POST" })
       package_name: pkg.name,
     };
   });
+
+export const getSystemSettings = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.userId);
+    const { data, error } = await supabaseAdmin
+      .from("system_settings")
+      .select("credit_value_cents")
+      .eq("id", "global")
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return { credit_value_cents: data?.credit_value_cents ?? 190 };
+  });
+
+export const updateSystemSettings = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ credit_value_cents: z.number().int().min(0) }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    
+    // Update settings
+    const { error: settingsError } = await supabaseAdmin
+      .from("system_settings")
+      .upsert({ id: "global", credit_value_cents: data.credit_value_cents, updated_by: context.userId });
+    
+    if (settingsError) throw new Error(settingsError.message);
+
+    // Sync all active packages with the new value
+    const { data: packages } = await supabaseAdmin
+      .from("credit_packages")
+      .select("id, credits");
+    
+    if (packages) {
+      for (const pkg of packages) {
+        const newPriceCents = Math.round(pkg.credits * data.credit_value_cents);
+        await supabaseAdmin
+          .from("credit_packages")
+          .update({ price_cents: newPriceCents, updated_at: new Date().toISOString() })
+          .eq("id", pkg.id);
+      }
+    }
+
+    return { ok: true };
+  });
