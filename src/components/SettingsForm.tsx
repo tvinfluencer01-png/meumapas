@@ -172,7 +172,7 @@ export function SettingsForm() {
               <ol className="list-decimal list-inside mt-1 text-muted-foreground space-y-1">
                 <li>Crie uma conta em <ExtLink href="https://astrologyapi.com">astrologyapi.com</ExtLink></li>
                 <li>No dashboard, copie seu <em>User ID</em> e <em>API Key</em></li>
-                <li>Cole abaixo e salve — o Cosmic AI usará a API quando o engine acima estiver selecionado</li>
+                <li>Cole abaixo e salve — o Código Cósmico usará a API quando o engine acima estiver selecionado</li>
               </ol>
             </div>
           </div>
