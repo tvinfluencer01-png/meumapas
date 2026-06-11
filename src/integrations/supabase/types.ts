@@ -1331,6 +1331,16 @@ export type Database = {
         }
         Returns: boolean
       }
+      get_table_structure: {
+        Args: { t_name: string }
+        Returns: {
+          column_default: string
+          column_name: string
+          data_type: string
+          is_nullable: string
+          is_primary_key: boolean
+        }[]
+      }
       has_active_addon: {
         Args: { _addon_id: string; _user_id: string }
         Returns: boolean
