@@ -52,8 +52,11 @@ export function CreditCostBadge({
   });
 
   useEffect(() => {
-    const handler = () =>
+    const handler = () => {
       qc.invalidateQueries({ queryKey: ["my-credits-overview"] });
+      qc.invalidateQueries({ queryKey: ["sidebar-credits"] });
+    };
+
     window.addEventListener(CREDITS_CHANGED_EVENT, handler);
     return () => window.removeEventListener(CREDITS_CHANGED_EVENT, handler);
   }, [qc]);

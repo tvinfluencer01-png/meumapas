@@ -59,8 +59,13 @@ function OraculoPage() {
 
   // Após cada resposta concluída (ou erro), recarrega saldo/custos.
   useEffect(() => {
-    if (status === "ready" || status === "error") emitCreditsChanged();
-  }, [status]);
+    if (status === "ready" || status === "error") {
+      emitCreditsChanged();
+      // Also invalidate sidebar/global credit query
+      qc.invalidateQueries({ queryKey: ["sidebar-credits"] });
+    }
+  }, [status, qc]);
+
 
   async function handleSubmit(e?: React.FormEvent) {
     e?.preventDefault();

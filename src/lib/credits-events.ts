@@ -9,5 +9,7 @@ export const CREDITS_CHANGED_EVENT = "credits:changed";
 
 export function emitCreditsChanged() {
   if (typeof window === "undefined") return;
+  // Trigger general event for non-react or legacy parts
   window.dispatchEvent(new CustomEvent(CREDITS_CHANGED_EVENT));
 }
+
