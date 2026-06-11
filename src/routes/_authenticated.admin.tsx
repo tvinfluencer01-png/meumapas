@@ -131,6 +131,9 @@ function AdminPage() {
           <TabsTrigger value="credits" className="gap-2">
             <Coins className="size-4" /> Créditos/Pacotes
           </TabsTrigger>
+          <TabsTrigger value="packages" className="gap-2">
+            <Layers className="size-4" /> Pacotes
+          </TabsTrigger>
           <TabsTrigger value="addons" className="gap-2">
             <Package className="size-4" /> Add-ons
           </TabsTrigger>
