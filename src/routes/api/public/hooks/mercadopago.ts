@@ -159,6 +159,45 @@ async function handler({ request }: { request: Request }) {
         }
       }
     }
+    }
+  } else if (order.product_kind === "landing_package") {
+    const { data: pkg } = await supabaseAdmin
+      .from("landing_packages")
+      .select("*")
+      .eq("slug", order.product_id)
+      .single();
+    if (pkg) {
+      const periodEnd = new Date();
+      periodEnd.setUTCMonth(periodEnd.getUTCMonth() + 1);
+      // Activate each addon included in the package
+      const addons = Array.isArray(pkg.included_addons) ? pkg.included_addons : [];
+      for (const addonId of addons) {
+        const { data: existing } = await supabaseAdmin
+          .from("user_subscriptions")
+          .select("id")
+          .eq("user_id", order.user_id)
+          .eq("addon_id", addonId)
+          .maybeSingle();
+        if (existing) {
+          await supabaseAdmin
+            .from("user_subscriptions")
+            .update({
+              status: "active",
+              current_period_end: periodEnd.toISOString(),
+              mp_preapproval_id: String(paymentId),
+            })
+            .eq("id", existing.id);
+        } else {
+          await supabaseAdmin.from("user_subscriptions").insert({
+            user_id: order.user_id,
+            addon_id: addonId,
+            status: "active",
+            current_period_end: periodEnd.toISOString(),
+            mp_preapproval_id: String(paymentId),
+          });
+        }
+      }
+    }
   }
 
   await supabaseAdmin
