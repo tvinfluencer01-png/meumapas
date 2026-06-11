@@ -205,6 +205,7 @@ const UpsertSchema = z.object({
   price_cents: z.number().int().min(0).max(10_000_000).nullable().optional(),
   prompt: z.string().trim().max(8000).nullable().optional(),
   enabled: z.boolean().optional(),
+  is_custom: z.boolean().optional(),
 });
 
 export const upsertAdminAddon = createServerFn({ method: "POST" })
@@ -212,9 +213,8 @@ export const upsertAdminAddon = createServerFn({ method: "POST" })
   .inputValidator((d) => UpsertSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
-    if (!SUBSCRIPTION_ADDONS.some((a) => a.id === data.addon_id)) {
-      throw new Error("Add-on inválido.");
-    }
+    
+    // Allow upserting custom ones or existing ones
     const payload: any = {
       addon_id: data.addon_id,
       updated_by: context.userId,
@@ -229,6 +229,19 @@ export const upsertAdminAddon = createServerFn({ method: "POST" })
     const { error } = await supabaseAdmin
       .from("addon_settings")
       .upsert(payload, { onConflict: "addon_id" });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const deleteAdminAddon = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ addon_id: z.string().min(1).max(64) }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    const { error } = await supabaseAdmin
+      .from("addon_settings")
+      .delete()
+      .eq("addon_id", data.addon_id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
