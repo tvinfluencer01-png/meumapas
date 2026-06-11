@@ -621,71 +621,53 @@ function Testimonials() {
 
 /* ---------------- PRICING ---------------- */
 function Pricing() {
-  const plans = [
-    {
-      name: "Iniciante",
-      price: "Grátis",
-      sub: "para sempre",
-      anchor: null,
-      feats: [
-        "Mapa astral completo",
-        "Numerologia básica",
-        "Trânsitos diários",
-        "5 créditos diários para Oráculo, Tarot e relatórios",
-      ],
-      cta: "Começar grátis",
-      featured: false,
-    },
-    {
-      name: "Místico",
-      price: "R$ 79",
-      sub: "/ mês",
-      anchor: "De R$ 149 · economize 47%",
-      feats: [
-        "Tudo do Iniciante",
-        "Oráculo IA ILIMITADO (GPT-5 e Gemini Pro)",
-        "Tarot ilimitado (1 e 3 cartas)",
-        "Meditação Cabalística ilimitada",
-        "Numerologia Cabalística (Gematria)",
-        "Relatórios temáticos ilimitados",
-        "Exportação PDF premium",
-      ],
-      cta: "Iniciar agora",
-      featured: true,
-    },
-    {
-      name: "Profissional",
-      price: "R$ 149",
-      sub: "/ mês",
-      anchor: "Para astrólogos e numerólogos",
-      feats: [
-        "Tudo do Místico",
-        "Clientes ILIMITADOS (CRM completo)",
-        "PDFs com SUA marca (logo + cores)",
-        "PDF CSS avançado (fontes, fundos, molduras)",
-        "Branding por categoria",
-        "Suporte prioritário",
-      ],
-      cta: "Ascender",
-      featured: false,
-    },
-  ];
+  const { user } = useAuth();
+  
+  // Featured primary subscription plans
+  const mainPlans = SUBSCRIPTION_ADDONS.filter(p => p.highlight);
+  const basicPlan = {
+    name: "Iniciante",
+    price: "Grátis",
+    sub: "para sempre",
+    anchor: null,
+    feats: [
+      "Mapa astral básico",
+      "Numerologia pitagórica",
+      "Trânsitos do dia",
+      "5 créditos de boas-vindas",
+    ],
+    cta: "Começar agora",
+    featured: false,
+    id: "free"
+  };
+
+  const displayPlans = [basicPlan, ...mainPlans.map(p => ({
+    name: p.name,
+    price: formatBRL(p.price_cents).split(',')[0],
+    sub: "/ mês",
+    anchor: p.id === 'sub_astrologer_numerologist' ? "Para profissionais" : "O mais completo",
+    feats: p.features.slice(0, 7),
+    cta: "Ascender",
+    featured: p.id === 'sub_astrologer_numerologist',
+    id: p.id
+  }))];
+
   return (
     <section id="planos" className="py-32">
       <div className="mx-auto max-w-7xl px-6">
         <div className="mb-20 text-center">
           <span className="mb-4 block text-xs uppercase tracking-[0.4em] text-gold/70">
-            Investimento — não despesa
+            A Geometria do Seu Destino
           </span>
-          <h2 className="mb-4 font-serif text-5xl italic">Escolha seu horizonte</h2>
+          <h2 className="mb-4 font-serif text-5xl italic">Escolha sua ascensão</h2>
           <p className="text-sm text-muted-foreground">
-            Cancele em 1 clique · 7 dias de garantia incondicional · Sem fidelidade
+            Acesso imediato · Cancele quando quiser · 7 dias de garantia incondicional
           </p>
         </div>
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-          {plans.map((p) => (
+          {displayPlans.map((p) => (
             <article
-              key={p.name}
+              key={p.id}
               className={`relative flex flex-col p-12 transition-all ${
                 p.featured
                   ? "gold-glow border-2 border-gold bg-gold/5"
@@ -694,7 +676,7 @@ function Pricing() {
             >
               {p.featured && (
                 <span className="absolute right-0 top-0 bg-gold px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-primary-foreground">
-                  93% escolhem este
+                  Mais Escolhido
                 </span>
               )}
               <span className="mb-4 text-xs uppercase tracking-[0.3em] text-gold">{p.name}</span>
@@ -717,7 +699,7 @@ function Pricing() {
                 ))}
               </ul>
               <Link
-                to="/auth"
+                to={user ? "/addons" : "/auth"}
                 className={`block w-full py-4 text-center text-xs font-semibold uppercase tracking-[0.25em] transition-all ${
                   p.featured
                     ? "bg-gold text-primary-foreground hover:bg-gold-glow"
