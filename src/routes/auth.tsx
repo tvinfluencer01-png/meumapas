@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -13,6 +13,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export const Route = createFileRoute("/auth")({
+  validateSearch: (search: Record<string, unknown>) => {
+    return {
+      plan: (search.plan as string) || undefined,
+    };
+  },
   head: () => ({
     meta: [
       { title: "Acesso — Código Cósmico" },
@@ -47,6 +52,7 @@ const SIGNUP_STEPS = [
 
 function AuthPage() {
   const nav = useNavigate();
+  const search = useSearch({ from: "/auth" });
   const { session, loading } = useAuth();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [submitting, setSubmitting] = useState(false);
@@ -55,7 +61,13 @@ function AuthPage() {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
 
   useEffect(() => {
-    if (!loading && session) nav({ to: "/dashboard" });
+    if (!loading && session) {
+      if (search.plan) {
+        nav({ to: "/addons", search: { plan: search.plan } });
+      } else {
+        nav({ to: "/dashboard" });
+      }
+    }
   }, [session, loading, nav]);
 
   useEffect(() => {

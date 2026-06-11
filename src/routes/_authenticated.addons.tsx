@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useSearch } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
@@ -53,6 +53,12 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/_authenticated/addons")({
+  validateSearch: (search: Record<string, unknown>) => {
+    return {
+      plan: (search.plan as string) || undefined,
+      status: (search.status as string) || undefined,
+    };
+  },
   head: () => ({
     meta: [
       { title: "Add-ons e Créditos — Código Cósmico" },
@@ -68,6 +74,7 @@ export const Route = createFileRoute("/_authenticated/addons")({
 
 function AddonsPage() {
   const { user, loading: authLoading } = useAuth();
+  const search = useSearch({ from: "/_authenticated/addons" });
   const overviewFn = useServerFn(getAddonsOverview);
   const checkoutFn = useServerFn(createMercadoPagoCheckout);
 
@@ -82,8 +89,7 @@ function AddonsPage() {
 
   // React to MP back_urls (?status=success|pending|failure)
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const status = params.get("status");
+    const status = search.status;
     if (!status) return;
     if (status === "success") {
       toast.success("Pagamento aprovado! Seu saldo será atualizado em instantes.");
@@ -99,7 +105,7 @@ function AddonsPage() {
   }, [refetch]);
 
   const checkoutMut = useMutation({
-    mutationFn: (vars: { kind: "credits" | "subscription"; product_id: string }) =>
+    mutationFn: (vars: { kind: "credits" | "subscription" | "landing_package"; product_id: string }) =>
       checkoutFn({ data: vars }),
     onMutate: (vars) => setPendingId(vars.product_id),
     onSuccess: (res) => {
@@ -117,13 +123,30 @@ function AddonsPage() {
       .map((s) => s.addon_id),
   );
 
-  function handleBuy(kind: "credits" | "subscription", product_id: string) {
+  const { data: landingPackages } = useQuery({
+    queryKey: ["public-landing-packages"],
+    queryFn: async () => {
+      const { listPublicLandingPackages } = await import("@/lib/landing-packages.functions");
+      return listPublicLandingPackages();
+    },
+  });
+
+  function handleBuy(kind: "credits" | "subscription" | "landing_package", product_id: string) {
     if (!data?.payments_enabled) {
-      toast.error("Pagamentos ainda não estão disponíveis. Tente novamente em breve.");
+      toast.error("Pagamentos ainda não estão disponíveis. Tente novamente em instantes.");
       return;
     }
     checkoutMut.mutate({ kind, product_id });
   }
+
+  useEffect(() => {
+    if (!isLoading && data && search.plan && landingPackages) {
+      const pkg = landingPackages.find((p) => p.slug === search.plan);
+      if (pkg) {
+        handleBuy("landing_package", pkg.slug);
+      }
+    }
+  }, [isLoading, data, search.plan, landingPackages]);
 
   return (
     <div className="space-y-8">
