@@ -704,7 +704,7 @@ function Pricing() {
                   ))}
                 </ul>
                 <Link
-                  to={user ? "/addons" : "/auth"}
+                  to={user ? "/addons" : `/auth?plan=${p.slug}`}
                   className={`block w-full py-4 text-center text-xs font-semibold uppercase tracking-[0.25em] transition-all ${
                     p.featured
                       ? "bg-gold text-primary-foreground hover:bg-gold-glow"
