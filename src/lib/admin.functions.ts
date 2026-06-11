@@ -1122,14 +1122,26 @@ export const adminListAllActiveSubscriptions = createServerFn({ method: "GET" })
         addon_id, 
         status, 
         current_period_end, 
-        user_id,
-        profiles (full_name)
+        user_id
       `)
       .eq("status", "active")
       .order("created_at", { ascending: false });
 
     if (error) throw new Error(error.message);
-    return data ?? [];
+    
+    // Hydrate profile names separately to avoid complex joins issues in client
+    const userIds = Array.from(new Set(data?.map(s => s.user_id) || []));
+    const { data: profs } = await supabaseAdmin
+      .from("profiles")
+      .select("id, full_name")
+      .in("id", userIds);
+    
+    const nameMap = Object.fromEntries(profs?.map(p => [p.id, p.full_name]) || []);
+
+    return (data || []).map(s => ({
+      ...s,
+      full_name: nameMap[s.user_id] || "Sem nome"
+    }));
   });
 
 export const testAstrologyCredentials = createServerFn({ method: "POST" })
