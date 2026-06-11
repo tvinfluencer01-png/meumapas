@@ -4,7 +4,7 @@ import { AlertTriangle, ShoppingCart } from "lucide-react";
 import { getMyCreditsOverview } from "@/lib/credits.functions";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/system-feedback";
 import { Sparkles, Wand2, Loader2, FileDown, Trash2, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -86,10 +86,10 @@ function TarotPage() {
     },
     onSuccess: (res) => {
       setCurrent(res);
-      toast.success("Leitura revelada.");
+      showFeedback({ title: "Leitura revelada", description: "Os arcanos falaram.", type: "success" });
       qc.invalidateQueries({ queryKey: ["tarot-readings"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => showFeedback({ title: "Erro na leitura", description: e.message, type: "error" }),
     onSettled: () => emitCreditsChanged(),
   });
 
@@ -109,11 +109,11 @@ function TarotPage() {
         a.click();
         a.remove();
         setTimeout(() => URL.revokeObjectURL(url), 60_000);
-        toast.success(res.cached ? "PDF aberto." : "PDF gerado.");
+        showFeedback({ title: res.cached ? "PDF aberto" : "PDF gerado", type: "success" });
       }
       qc.invalidateQueries({ queryKey: ["tarot-readings"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => showFeedback({ title: "Erro no PDF", description: e.message, type: "error" }),
     onSettled: () => emitCreditsChanged(),
   });
 
@@ -121,10 +121,10 @@ function TarotPage() {
   const delMut = useMutation({
     mutationFn: (id: string) => deleteFn({ data: { id } }),
     onSuccess: () => {
-      toast.success("Leitura removida.");
+      showFeedback({ title: "Leitura removida", type: "success" });
       qc.invalidateQueries({ queryKey: ["tarot-readings"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => showFeedback({ title: "Erro ao excluir", description: e.message, type: "error" }),
   });
 
   return (

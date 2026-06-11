@@ -7,8 +7,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useActiveSubject } from "@/hooks/use-active-subject";
 import { generateReport, getReportUrl, deleteReport } from "@/lib/reports.functions";
 import { emitCreditsChanged } from "@/lib/credits-events";
-import { toast } from "sonner";
-import { showLoader, hideLoader, updateLoader, confirmDialog } from "@/components/system-feedback";
+import { showFeedback, showLoader, hideLoader, updateLoader, confirmDialog } from "@/components/system-feedback";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
@@ -270,13 +269,13 @@ function RelatoriosPage() {
         try {
           updateLoader({ step: "Preparando download do PDF...", progress: 100 });
           await downloadFromUrl(res.signedUrl, `${res.title || kind}.pdf`);
-          toast.success("Relatorio pronto. Download iniciado.");
+          showFeedback({ title: "Relatório pronto", description: "Download iniciado com sucesso.", type: "success" });
         } catch {
-          toast.error("PDF gerado, mas o download falhou. Tente novamente em 'Seus relatorios'.");
+          showFeedback({ title: "Erro no download", description: "PDF gerado, mas o download falhou. Tente novamente em 'Seus relatórios'.", type: "error" });
         }
       }
     },
-    onError: (e: Error) => toast.error(e.message || "Falha ao gerar relatorio"),
+    onError: (e: Error) => showFeedback({ title: "Erro ao gerar", description: e.message || "Falha ao gerar relatório", type: "error" }),
     onSettled: () => {
       setLoadingKind(null);
       hideLoader();
@@ -294,12 +293,12 @@ function RelatoriosPage() {
     try {
       const { signedUrl } = await getUrl({ data: { id } });
       if (!signedUrl) {
-        toast.error("Nao foi possivel gerar o link");
+        showFeedback({ title: "Erro no link", description: "Não foi possível gerar o link de download.", type: "error" });
         return;
       }
       await downloadFromUrl(signedUrl, `${title || "relatorio"}.pdf`);
     } catch {
-      toast.error("Erro ao baixar o relatorio");
+      showFeedback({ title: "Erro ao baixar", description: "Falha na comunicação com o servidor.", type: "error" });
     } finally {
       hideLoader();
     }
@@ -315,7 +314,7 @@ function RelatoriosPage() {
     if (!ok) return;
     await removeFn({ data: { id } });
     qc.invalidateQueries({ queryKey: ["reports", user?.id] });
-    toast.success("Relatorio apagado");
+    showFeedback({ title: "Relatório apagado", type: "success" });
   }
 
   return (
