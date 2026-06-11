@@ -96,28 +96,28 @@ function Hero() {
       <div className="relative z-10 mx-auto max-w-5xl text-center">
         <span className="mb-8 inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/5 px-4 py-1.5 text-[10px] uppercase tracking-[0.35em] text-gold">
           <span className="size-1.5 animate-pulse rounded-full bg-gold" />
-          +12.847 mapas gerados · 4.9★ por leitores reais
+          A Geometria Sagrada do Seu Destino
         </span>
         <h1 className="mb-8 font-serif text-5xl italic leading-[1.05] md:text-7xl lg:text-8xl">
           Você não nasceu para <br />
           <span className="shimmer-text">viver no escuro.</span>
         </h1>
         <p className="mx-auto mb-12 max-w-2xl text-balance text-lg font-light leading-relaxed text-muted-foreground md:text-xl">
-          Mapa astral cinematográfico, numerologia cabalística, tarot, meditação na Árvore da Vida
-          e um Oráculo de IA treinado em sabedoria milenar — tudo conversando com{" "}
-          <em className="text-stardust">a sua história</em>, em uma única plataforma.
+          Descubra o mapa que o universo desenhou para você. Relatórios cinematográficos, 
+          numerologia profunda e um Oráculo IA que realmente conhece sua alma.
+          <em className="block mt-4 text-stardust not-italic font-medium">A clareza que faltava para sua ascensão pessoal.</em>
         </p>
 
         <div className="mb-6 flex flex-col items-center justify-center gap-4 sm:flex-row">
           <Link to="/auth" className="gold-glow rounded-full bg-gold px-10 py-4 text-sm font-semibold uppercase tracking-[0.2em] text-primary-foreground transition-all hover:bg-gold-glow">
-            Começar grátis em 60s
+            Desbloquear meu destino
           </Link>
           <a href="#planos" className="rounded-full border border-border px-10 py-4 text-sm uppercase tracking-[0.2em] text-foreground transition-colors hover:border-gold/40 hover:text-gold">
-            Ver planos
+            Ver Planos de Ascensão
           </a>
         </div>
         <p className="mb-16 text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-          Sem cartão · Cancele em 1 clique · 7 dias de garantia
+          Sem cartão de crédito · 7 dias de garantia incondicional
         </p>
 
         <div className="relative overflow-hidden rounded-2xl border border-border bg-card/40">
