@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/system-feedback";
 import { z } from "zod";
 import { Calendar, Clock, MapPin, Globe, Loader2 } from "lucide-react";
 import { Logo } from "@/components/Logo";
@@ -58,7 +58,7 @@ function OnboardingPage() {
 
       if (pending && !redirectingToPayment) {
         setRedirectingToPayment(true);
-        toast.info("Processando seu pacote escolhido...");
+        showFeedback({ title: "Processando pacote", description: "Iniciando checkout do plano escolhido...", type: "info" });
         try {
           const res = await createMercadoPagoCheckout({
             data: {
@@ -78,7 +78,7 @@ function OnboardingPage() {
           }
         } catch (err) {
           setRedirectingToPayment(false);
-          toast.error("Erro ao redirecionar para pagamento: " + (err instanceof Error ? err.message : "Erro desconhecido"));
+          showFeedback({ title: "Erro no pagamento", description: err instanceof Error ? err.message : "Erro desconhecido ao redirecionar.", type: "error" });
         }
       }
     }
@@ -103,7 +103,7 @@ function OnboardingPage() {
     if (!user) return;
     const parsed = schema.safeParse(form);
     if (!parsed.success) {
-      toast.error(parsed.error.issues[0].message);
+      showFeedback({ title: "Dados inválidos", description: parsed.error.issues[0].message, type: "warning" });
       return;
     }
     setSubmitting(true);
@@ -129,10 +129,10 @@ function OnboardingPage() {
         .eq("id", user.id);
       if (pErr) throw pErr;
 
-      toast.success("Pronto! Sua jornada cósmica começa agora.");
+      showFeedback({ title: "Cadastro concluído!", description: "Sua jornada cósmica começa agora.", type: "success" });
       nav({ to: "/dashboard" });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Erro ao salvar");
+      showFeedback({ title: "Erro ao salvar", description: err instanceof Error ? err.message : "Erro ao concluir onboarding", type: "error" });
     } finally {
       setSubmitting(false);
     }
