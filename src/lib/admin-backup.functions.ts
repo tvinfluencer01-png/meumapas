@@ -94,8 +94,23 @@ export const adminExportDatabase = createServerFn({ method: "POST" })
           sql += `INSERT INTO public.${table} (${columns}) VALUES\n`;
           
           const rows = batch.map((row: any) => {
-            const values = Object.entries(row).map(([_, val]) => {
+            const values = Object.entries(row).map(([colName, val]) => {
               if (val === null) return "NULL";
+              
+              // Find column info to check if it's an array
+              const colInfo = cols?.find((c: any) => c.column_name === colName);
+              const isArray = colInfo?.data_type?.toUpperCase().includes("ARRAY");
+
+              if (isArray && Array.isArray(val)) {
+                // Postgres array literal format: '{"val1", "val2"}'
+                const escapedValues = val.map(v => {
+                  if (v === null) return "NULL";
+                  const s = String(v).replace(/"/g, '\\"');
+                  return `"${s}"`;
+                });
+                return `'{${escapedValues.join(", ")}}'`;
+              }
+
               if (typeof val === "string") return `'${val.replace(/'/g, "''")}'`;
               if (typeof val === "boolean") return val ? "true" : "false";
               if (typeof val === "object") return `'${JSON.stringify(val).replace(/'/g, "''")}'`;
