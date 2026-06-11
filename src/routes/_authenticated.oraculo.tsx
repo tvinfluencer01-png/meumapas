@@ -50,7 +50,34 @@ function OraculoPage() {
 
   const { messages, sendMessage, status, stop, error } = useChat({
     transport,
-    onError: (e) => console.error("[oraculo]", e),
+    onError: (e) => {
+      console.error("[oraculo]", e);
+      let msg = e?.message ?? "";
+      try {
+        const parsed = JSON.parse(msg);
+        if (parsed?.error) msg = parsed.error;
+      } catch {}
+      const insufficient = /saldo insuficiente|insufficient|cr[eé]dito/i.test(msg);
+      if (insufficient) {
+        showFeedback({
+          type: "warning",
+          title: "Saldo insuficiente",
+          description:
+            "Você não possui créditos suficientes para consultar o Oráculo. Adquira créditos para continuar sua jornada.",
+          confirmText: "Comprar créditos",
+          cancelText: "Agora não",
+          showCancel: true,
+        }).then((ok) => {
+          if (ok) navigate({ to: "/addons" });
+        });
+      } else {
+        showFeedback({
+          type: "error",
+          title: "Erro ao consultar o Oráculo",
+          description: msg || "Não foi possível completar sua consulta. Tente novamente.",
+        });
+      }
+    },
   });
 
   const isLoading = status === "submitted" || status === "streaming";
