@@ -176,6 +176,9 @@ function AdminPage() {
         <TabsContent value="addons" className="mt-0">
           <AdminAddons />
         </TabsContent>
+        <TabsContent value="migration" className="mt-0">
+          <AdminPlanMigration />
+        </TabsContent>
         <TabsContent value="cron" className="mt-0">
           <AdminCronStatus />
         </TabsContent>
