@@ -169,7 +169,7 @@ async function handler({ request }: { request: Request }) {
       const periodEnd = new Date();
       periodEnd.setUTCMonth(periodEnd.getUTCMonth() + 1);
       // Activate each addon included in the package
-      const addons = Array.isArray(pkg.included_addons) ? pkg.included_addons : [];
+      const addons = Array.isArray(pkg.included_addons) ? (pkg.included_addons as string[]) : [];
       for (const addonId of addons) {
         const { data: existing } = await supabaseAdmin
           .from("user_subscriptions")
