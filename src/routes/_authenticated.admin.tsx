@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { Shield, MessageSquare, Save, Send, CheckCircle2, AlertTriangle, Users, Search, ShieldOff, ShieldCheck, History, RefreshCw, Settings as SettingsIcon, Wallet, Coins, MoreHorizontal, UserCog, KeyRound, Package, Trash2, Coins as CoinsIcon, Zap, Plug, Clock, UserPlus, Eye, EyeOff, Database, Download, Loader2, Phone } from "lucide-react";
+import { Shield, MessageSquare, Save, Send, CheckCircle2, AlertTriangle, Users, Search, ShieldOff, ShieldCheck, History, RefreshCw, Settings as SettingsIcon, Wallet, Coins, MoreHorizontal, UserCog, KeyRound, Package, Trash2, Coins as CoinsIcon, Zap, Plug, Clock, UserPlus, Eye, EyeOff, Database, Download, Loader2, Phone, ArrowRightLeft } from "lucide-react";
 import { MercadoPagoForm } from "@/components/MercadoPagoForm";
 import { AdminCreditsManager, CreditsDialog } from "@/components/AdminCreditsManager";
 import { AdminCreditCosts } from "@/components/AdminCreditCosts";
@@ -10,6 +10,7 @@ import { AdminCreditPackages } from "@/components/AdminCreditPackages";
 import { AdminAddons } from "@/components/AdminAddons";
 import { AdminCronStatus } from "@/components/AdminCronStatus";
 import { AdminGlobalSettings } from "@/components/AdminGlobalSettings";
+import { AdminPlanMigration } from "@/components/AdminPlanMigration";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -132,6 +133,9 @@ function AdminPage() {
           <TabsTrigger value="addons" className="gap-2">
             <Package className="size-4" /> Add-ons
           </TabsTrigger>
+          <TabsTrigger value="migration" className="gap-2">
+            <ArrowRightLeft className="size-4" /> Migração
+          </TabsTrigger>
           <TabsTrigger value="cron" className="gap-2">
             <Clock className="size-4" /> Cron Jobs
           </TabsTrigger>
@@ -171,6 +175,9 @@ function AdminPage() {
         </TabsContent>
         <TabsContent value="addons" className="mt-0">
           <AdminAddons />
+        </TabsContent>
+        <TabsContent value="migration" className="mt-0">
+          <AdminPlanMigration />
         </TabsContent>
         <TabsContent value="cron" className="mt-0">
           <AdminCronStatus />

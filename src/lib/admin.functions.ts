@@ -1035,6 +1035,115 @@ export const getLovableApiKeyStatus = createServerFn({ method: "GET" })
     };
   });
 
+export const migrateUserAddon = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({
+      target_user_id: z.string().uuid(),
+      old_addon_id: z.string().min(1),
+      new_addon_id: z.string().min(1),
+      preserve_dates: z.boolean().default(true),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+
+    const { data: existing } = await supabaseAdmin
+      .from("user_subscriptions")
+      .select("*")
+      .eq("user_id", data.target_user_id)
+      .eq("addon_id", data.old_addon_id)
+      .maybeSingle();
+
+    if (!existing) {
+      throw new Error("Assinatura de origem não encontrada para este usuário.");
+    }
+
+    // Check if new one already exists
+    const { data: conflict } = await supabaseAdmin
+      .from("user_subscriptions")
+      .select("id")
+      .eq("user_id", data.target_user_id)
+      .eq("addon_id", data.new_addon_id)
+      .maybeSingle();
+
+    if (conflict) {
+      throw new Error("O usuário já possui o novo plano ativo. Remova-o antes de migrar.");
+    }
+
+    // Perform migration
+    const { error: insErr } = await supabaseAdmin
+      .from("user_subscriptions")
+      .insert({
+        user_id: data.target_user_id,
+        addon_id: data.new_addon_id,
+        status: existing.status,
+        current_period_end: data.preserve_dates ? existing.current_period_end : null,
+        mp_preapproval_id: existing.mp_preapproval_id,
+        updated_at: new Date().toISOString()
+      });
+
+    if (insErr) throw new Error(`Erro ao criar nova assinatura: ${insErr.message}`);
+
+    const { error: delErr } = await supabaseAdmin
+      .from("user_subscriptions")
+      .delete()
+      .eq("id", existing.id);
+
+    if (delErr) {
+      // Cleanup partially migrated state
+      await supabaseAdmin.from("user_subscriptions").delete().eq("user_id", data.target_user_id).eq("addon_id", data.new_addon_id);
+      throw new Error(`Erro ao remover assinatura antiga: ${delErr.message}`);
+    }
+
+    // Log the migration
+    await supabaseAdmin.from("app_logs").insert({
+      event: "addon_migration",
+      user_id: context.userId,
+      payload: {
+        target_user_id: data.target_user_id,
+        from: data.old_addon_id,
+        to: data.new_addon_id,
+        preserved_dates: data.preserve_dates
+      }
+    });
+
+    return { ok: true };
+  });
+
+export const adminListAllActiveSubscriptions = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.userId);
+    const { data, error } = await supabaseAdmin
+      .from("user_subscriptions")
+      .select(`
+        id, 
+        addon_id, 
+        status, 
+        current_period_end, 
+        user_id
+      `)
+      .eq("status", "active")
+      .order("created_at", { ascending: false });
+
+    if (error) throw new Error(error.message);
+    
+    // Hydrate profile names separately to avoid complex joins issues in client
+    const userIds = Array.from(new Set(data?.map(s => s.user_id) || []));
+    const { data: profs } = await supabaseAdmin
+      .from("profiles")
+      .select("id, full_name")
+      .in("id", userIds);
+    
+    const nameMap = Object.fromEntries(profs?.map(p => [p.id, p.full_name]) || []);
+
+    return (data || []).map(s => ({
+      ...s,
+      full_name: nameMap[s.user_id] || "Sem nome"
+    }));
+  });
+
 export const testAstrologyCredentials = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) =>
