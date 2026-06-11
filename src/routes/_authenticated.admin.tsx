@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
@@ -83,11 +83,23 @@ function AdminPage() {
 
   return (
     <div className="space-y-6">
-      <header className="flex items-center gap-3">
-        <Shield className="size-6 text-gold" />
-        <div>
-          <h1 className="text-2xl font-serif shimmer-text">Painel do Super Admin</h1>
-          <p className="text-sm text-muted-foreground">Configurações sensíveis, integrações e gestão de usuários.</p>
+      <header className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <Shield className="size-6 text-gold" />
+          <div>
+            <h1 className="text-2xl font-serif shimmer-text">Painel do Super Admin</h1>
+            <p className="text-sm text-muted-foreground">Configurações sensíveis, integrações e gestão de usuários.</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            asChild
+            className="border-gold/30 hover:bg-gold/10 text-gold"
+          >
+            <Link to="/">Ver Landing Page</Link>
+          </Button>
         </div>
       </header>
 
