@@ -103,8 +103,8 @@ export const adminExportDatabase = createServerFn({ method: "POST" })
               if (val === null) return "NULL";
               
               // Find column info to check if it's an array
-              const colInfo = cols?.find((c: any) => c.column_name === colName);
-              const isArray = colInfo?.data_type?.toUpperCase().includes("ARRAY");
+              const udtType = colInfo?.data_type?.toUpperCase();
+              const isArray = udtType?.startsWith("_") || udtType?.includes("ARRAY");
 
               if (isArray && Array.isArray(val)) {
                 // Postgres array literal format: '{"val1", "val2"}'
