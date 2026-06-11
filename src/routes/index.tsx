@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion, useReducedMotion } from "motion/react";
 import { Starfield } from "@/components/Starfield";
 import { Logo } from "@/components/Logo";
+import { useAuth } from "@/hooks/use-auth";
 import heroAstrolabe from "@/assets/hero-astrolabe.jpg";
 import oracleOrb from "@/assets/oracle-orb.jpg";
 
@@ -734,11 +735,13 @@ function Pricing() {
 
 /* ---------------- ADDONS À LA CARTE ---------------- */
 function AddonsSection() {
+  const { user } = useAuth();
   const addons = [
-    { name: "Pacote de 10 créditos", price: "R$ 19,90", sub: "uso pontual" },
-    { name: "Pacote de 50 créditos", price: "R$ 79,90", sub: "melhor custo", featured: true },
-    { name: "Pacote de 150 créditos", price: "R$ 199,90", sub: "uso intensivo" },
+    { id: "credits_starter", name: "Pacote de 10 créditos", price: "R$ 19,90", sub: "uso pontual" },
+    { id: "credits_plus", name: "Pacote de 50 créditos", price: "R$ 79,90", sub: "melhor custo", featured: true },
+    { id: "credits_pro", name: "Pacote de 150 créditos", price: "R$ 199,90", sub: "uso intensivo" },
   ];
+
   return (
     <section className="border-y border-border bg-card/20 py-24">
       <div className="mx-auto max-w-5xl px-6 text-center">
@@ -751,8 +754,9 @@ function AddonsSection() {
         </p>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {addons.map((a) => (
-            <div
-              key={a.name}
+            <Link
+              key={a.id}
+              to={user ? "/addons" : "/auth"}
               className={`rounded-2xl border p-6 text-left transition-all ${
                 a.featured ? "border-gold/40 bg-gold/5 gold-glow" : "border-border hover:border-gold/30"
               }`}
@@ -760,7 +764,10 @@ function AddonsSection() {
               <p className="text-xs uppercase tracking-[0.25em] text-gold/80">{a.sub}</p>
               <p className="mt-2 font-serif text-2xl text-stardust">{a.price}</p>
               <p className="mt-1 text-sm text-muted-foreground">{a.name}</p>
-            </div>
+              <div className="mt-4 text-xs font-semibold uppercase tracking-wider text-gold flex items-center gap-1 group">
+                Comprar agora <span className="transition-transform group-hover:translate-x-1">→</span>
+              </div>
+            </Link>
           ))}
         </div>
       </div>

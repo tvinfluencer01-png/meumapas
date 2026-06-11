@@ -124,6 +124,8 @@ export const createMercadoPagoCheckout = createServerFn({ method: "POST" })
         failure: `${origin}/addons?status=failure`,
       },
       auto_return: "approved",
+      // Adicionando notificações para webhook (IPN)
+      notification_url: `${origin}/api/webhooks/mercadopago`,
     };
 
     let res: Response;
