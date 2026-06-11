@@ -1115,6 +1115,7 @@ Regras:
     };
     return;
     } catch (err) {
+
       console.error("[generateReport] error", err);
 
 
