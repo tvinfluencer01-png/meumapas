@@ -28,29 +28,142 @@ export function AdminAddons() {
     queryFn: () => listFn(),
   });
 
+  const [creating, setCreating] = useState(false);
+
   if (isLoading) {
     return <div className="text-sm text-muted-foreground">Carregando add-ons…</div>;
-  }
-  if (!data?.length) {
-    return <div className="text-sm text-muted-foreground">Nenhum add-on configurado.</div>;
   }
 
   return (
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Package className="size-5 text-gold" /> Add-ons & Assinaturas
-          </CardTitle>
-          <CardDescription>
-            Edite nome, descrição, recursos, preço, prompt de IA e disponibilidade. Mudanças se aplicam imediatamente ao checkout e às gerações que usarem o prompt customizado.
-          </CardDescription>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Package className="size-5 text-gold" /> Add-ons & Assinaturas
+              </CardTitle>
+              <CardDescription>
+                Edite nome, descrição, recursos, preço, prompt de IA e disponibilidade. Mudanças se aplicam imediatamente ao checkout e à Landing Page.
+              </CardDescription>
+            </div>
+            <Button size="sm" onClick={() => setCreating(true)} className="gap-2">
+              <Plus className="size-4" /> Novo Add-on
+            </Button>
+          </div>
         </CardHeader>
       </Card>
-      {data.map((row) => (
-        <AddonEditor key={row.addon_id} row={row} />
-      ))}
+
+      {creating && (
+        <AddonCreator onCancel={() => setCreating(false)} />
+      )}
+
+      {!data?.length ? (
+        <div className="text-sm text-muted-foreground p-4 text-center border rounded-lg bg-muted/20">
+          Nenhum add-on configurado.
+        </div>
+      ) : (
+        data.map((row) => (
+          <AddonEditor key={row.addon_id} row={row} />
+        ))
+      )}
     </div>
+  );
+}
+
+function AddonCreator({ onCancel }: { onCancel: () => void }) {
+  const qc = useQueryClient();
+  const upsertFn = useServerFn(upsertAdminAddon);
+
+  const [id, setId] = useState("");
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [features, setFeatures] = useState("");
+  const [priceReais, setPriceReais] = useState("29,90");
+
+  const saveMut = useMutation({
+    mutationFn: () => {
+      const cleanId = id.trim().toLowerCase().replace(/[^a-z0-9_]/g, "_");
+      if (!cleanId) throw new Error("Informe um ID válido.");
+      const cents = Math.round(parseFloat(priceReais.replace(",", ".")) * 100);
+      const featuresArr = features.split("\n").map(s => s.trim()).filter(Boolean);
+      
+      return upsertFn({
+        data: {
+          addon_id: cleanId,
+          name: name.trim() || cleanId,
+          description: description.trim(),
+          features: featuresArr,
+          price_cents: cents,
+          enabled: true,
+        },
+      });
+    },
+    onSuccess: () => {
+      toast.success("Add-on criado com sucesso.");
+      qc.invalidateQueries({ queryKey: ["admin-addons"] });
+      onCancel();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <Card className="border-gold/30 bg-gold/5">
+      <CardHeader>
+        <CardTitle className="text-lg">Novo Add-on / Plano</CardTitle>
+        <CardDescription>Crie um novo plano que aparecerá na Landing Page.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label>ID Único (slug)</Label>
+            <Input 
+              placeholder="ex: sub_meu_novo_plano" 
+              value={id} 
+              onChange={e => setId(e.target.value)} 
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Nome do Plano</Label>
+            <Input 
+              placeholder="Ex: Místico Pro" 
+              value={name} 
+              onChange={e => setName(e.target.value)} 
+            />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label>Preço (R$/mês)</Label>
+            <Input 
+              value={priceReais} 
+              onChange={e => setPriceReais(e.target.value)} 
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Descrição Curta</Label>
+            <Input 
+              value={description} 
+              onChange={e => setDescription(e.target.value)} 
+            />
+          </div>
+        </div>
+        <div className="space-y-1.5">
+          <Label>Recursos (um por linha)</Label>
+          <Textarea 
+            placeholder="Recurso 1&#10;Recurso 2" 
+            value={features} 
+            onChange={e => setFeatures(e.target.value)} 
+          />
+        </div>
+        <div className="flex gap-2 justify-end">
+          <Button variant="ghost" onClick={onCancel}>Cancelar</Button>
+          <Button onClick={() => saveMut.mutate()} disabled={saveMut.isPending}>
+            {saveMut.isPending ? "Criando..." : "Criar Add-on"}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
