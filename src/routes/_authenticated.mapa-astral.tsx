@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { showFeedback, showLoader, hideLoader, updateLoader } from "@/components/system-feedback";
@@ -29,6 +29,7 @@ const PLANET_GLYPH: Record<string,string> = {
 
 function MapaAstral() {
   const { user } = useAuth();
+  const qc = useQueryClient();
   const compute = useServerFn(computeNatalChart);
   const ping = useServerFn(pingAstro);
   const genForecast = useServerFn(generateAstroForecast);
