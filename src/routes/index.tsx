@@ -638,8 +638,14 @@ function Testimonials() {
 function Pricing() {
   const { user } = useAuth();
   
-  // Featured primary subscription plans
-  const mainPlans = SUBSCRIPTION_ADDONS.filter(p => p.highlight);
+  const { data: addons } = useQuery({
+    queryKey: ["admin-addons-public"],
+    queryFn: async () => {
+      const { listAdminAddons } = await import("@/lib/addon-settings.functions");
+      return listAdminAddons();
+    },
+  });
+
   const basicPlan = {
     name: "Iniciante",
     price: "Grátis",
@@ -656,16 +662,20 @@ function Pricing() {
     id: "free"
   };
 
-  const displayPlans = [basicPlan, ...mainPlans.map(p => ({
-    name: p.name,
-    price: formatBRL(p.price_cents).split(',')[0],
-    sub: "/ mês",
-    anchor: p.id === 'sub_astrologer_numerologist' ? "Para profissionais" : "O mais completo",
-    feats: p.features.slice(0, 7),
-    cta: "Ascender",
-    featured: p.id === 'sub_astrologer_numerologist',
-    id: p.id
-  }))];
+  const dynamicPlans = (addons || [])
+    .filter(a => a.effective.enabled && (a.addon_id.includes('unlimited') || a.addon_id.includes('astrologer') || a.addon_id.includes('pro') || a.addon_id.includes('mistico')))
+    .map(p => ({
+      name: p.effective.name,
+      price: formatBRL(p.effective.price_cents).split(',')[0],
+      sub: "/ mês",
+      anchor: p.addon_id === 'sub_astrologer_numerologist' ? "Para profissionais" : "Plano Completo",
+      feats: p.effective.features.slice(0, 7),
+      cta: "Ascender",
+      featured: p.addon_id === 'sub_astrologer_numerologist' || p.addon_id.includes('highlight'),
+      id: p.addon_id
+    }));
+
+  const displayPlans = [basicPlan, ...dynamicPlans].slice(0, 3);
 
   return (
     <section id="planos" className="py-32">
