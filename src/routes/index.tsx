@@ -126,9 +126,9 @@ function Hero() {
         </p>
 
         <div className="mb-6 flex flex-col items-center justify-center gap-4 sm:flex-row">
-          <Link to="/auth?mode=signup&plan=starter" className="gold-glow rounded-full bg-gold px-10 py-4 text-sm font-semibold uppercase tracking-[0.2em] text-primary-foreground transition-all hover:bg-gold-glow">
+          <a href="#planos" className="gold-glow rounded-full bg-gold px-10 py-4 text-sm font-semibold uppercase tracking-[0.2em] text-primary-foreground transition-all hover:bg-gold-glow">
             Desbloquear meu destino
-          </Link>
+          </a>
           <a href="#planos" className="rounded-full border border-border px-10 py-4 text-sm uppercase tracking-[0.2em] text-foreground transition-colors hover:border-gold/40 hover:text-gold">
             Ver Planos de Ascensão
           </a>
