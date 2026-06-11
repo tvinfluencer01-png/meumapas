@@ -216,13 +216,17 @@ function QuickReports({ hasBirth }: { hasBirth: boolean }) {
         try {
           updateLoader({ step: "Preparando download do PDF...", progress: 100 });
           await downloadFromUrl(res.signedUrl, `${res.title || kind}.pdf`);
-          toast.success("Relatório pronto. Download iniciado.");
+          showFeedback({ title: "Relatório pronto", description: "O download foi iniciado com sucesso.", type: "success" });
         } catch {
-          toast.error("PDF gerado, mas o download falhou. Veja em /relatorios.");
+          showFeedback({ 
+            title: "Download falhou", 
+            description: "O PDF foi gerado, mas não conseguimos iniciar o download automaticamente. Você pode encontrá-lo na aba de Relatórios.", 
+            type: "warning" 
+          });
         }
       }
     },
-    onError: (e: Error) => toast.error(e.message || "Falha ao gerar relatório"),
+    onError: (e: Error) => showFeedback({ title: "Erro na geração", description: e.message || "Falha ao gerar relatório", type: "error" }),
     onSettled: () => {
       setLoadingKind(null);
       hideLoader();

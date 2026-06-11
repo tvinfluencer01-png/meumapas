@@ -18,6 +18,7 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { showFeedback } from "@/components/system-feedback";
 
 import { listClientProfiles, setActiveClientProfile } from "@/lib/client-profiles.functions";
 
@@ -343,7 +344,7 @@ function ActiveClientSwitcher() {
       await qc.invalidateQueries();
       setConfirmName(name);
     },
-    onError: (e: Error) => toast.error(e.message),
+      onError: (e: Error) => showFeedback({ title: "Erro ao trocar contexto", description: e.message, type: "error" }),
   });
 
   if (profiles.length === 0 && !activeId) return null;
