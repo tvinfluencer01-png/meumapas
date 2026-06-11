@@ -169,6 +169,7 @@ function AddonEditor({ row }: { row: AddonRow }) {
               id={`n-${row.addon_id}`}
               value={name}
               onChange={(e) => setName(e.target.value)}
+              onKeyDown={(e) => e.stopPropagation()}
               maxLength={120}
             />
           </div>
@@ -180,6 +181,7 @@ function AddonEditor({ row }: { row: AddonRow }) {
               id={`p-${row.addon_id}`}
               value={priceReais}
               onChange={(e) => setPriceReais(e.target.value)}
+              onKeyDown={(e) => e.stopPropagation()}
               inputMode="decimal"
               placeholder="29,90"
             />
@@ -191,6 +193,7 @@ function AddonEditor({ row }: { row: AddonRow }) {
             id={`d-${row.addon_id}`}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
+            onKeyDown={(e) => e.stopPropagation()}
             rows={2}
             maxLength={1000}
           />
@@ -201,6 +204,7 @@ function AddonEditor({ row }: { row: AddonRow }) {
             id={`f-${row.addon_id}`}
             value={features}
             onChange={(e) => setFeatures(e.target.value)}
+            onKeyDown={(e) => e.stopPropagation()}
             rows={Math.min(8, Math.max(3, features.split("\n").length))}
           />
         </div>
@@ -231,6 +235,7 @@ function AddonEditor({ row }: { row: AddonRow }) {
               id={`pr-${row.addon_id}`}
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
+              onKeyDown={(e) => e.stopPropagation()}
               rows={Math.min(20, Math.max(8, prompt.split("\n").length))}
               placeholder="Prompt do sistema…"
               maxLength={8000}
@@ -256,6 +261,7 @@ function AddonEditor({ row }: { row: AddonRow }) {
                   id={`imp-${row.addon_id}`}
                   value={improveInstruction}
                   onChange={(e) => setImproveInstruction(e.target.value)}
+                  onKeyDown={(e) => e.stopPropagation()}
                   placeholder="Ex: mais simbólico, foque em ações práticas…"
                   maxLength={300}
                 />

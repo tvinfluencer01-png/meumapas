@@ -136,6 +136,7 @@ export function AdminCreditCosts() {
                       <Input
                         value={r.label}
                         onChange={(e) => updateRow(i, { label: e.target.value })}
+                        onKeyDown={(e) => e.stopPropagation()}
                         maxLength={120}
                       />
                     </td>
@@ -145,6 +146,7 @@ export function AdminCreditCosts() {
                         onChange={(e) =>
                           updateRow(i, { description: e.target.value })
                         }
+                        onKeyDown={(e) => e.stopPropagation()}
                         maxLength={500}
                       />
                     </td>
@@ -160,6 +162,7 @@ export function AdminCreditCosts() {
                             ),
                           })
                         }
+                        onKeyDown={(e) => e.stopPropagation()}
                         className="w-20 text-right font-mono"
                       />
                     </td>
@@ -213,6 +216,7 @@ export function AdminCreditCosts() {
                     action: e.target.value.replace(/[^a-zA-Z0-9_]/g, "").toLowerCase(),
                   }))
                 }
+                onKeyDown={(e) => e.stopPropagation()}
                 maxLength={64}
                 className="font-mono text-xs"
               />
@@ -224,6 +228,7 @@ export function AdminCreditCosts() {
                 placeholder="ex: Tarot 3 Cartas"
                 value={draft.label}
                 onChange={(e) => setDraft((d) => ({ ...d, label: e.target.value }))}
+                onKeyDown={(e) => e.stopPropagation()}
                 maxLength={120}
               />
             </div>
@@ -236,6 +241,7 @@ export function AdminCreditCosts() {
                 onChange={(e) =>
                   setDraft((d) => ({ ...d, description: e.target.value }))
                 }
+                onKeyDown={(e) => e.stopPropagation()}
                 maxLength={500}
               />
             </div>
@@ -254,6 +260,7 @@ export function AdminCreditCosts() {
                     ),
                   }))
                 }
+                onKeyDown={(e) => e.stopPropagation()}
                 className="text-right font-mono"
               />
             </div>
