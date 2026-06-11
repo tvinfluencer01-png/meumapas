@@ -12,8 +12,23 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 export const CREDIT_COST_CATALOG = {
   oracle_message: {
     amount: 1,
-    label: "Mensagem do Oráculo (IA)",
-    description: "Cobrado por cada pergunta respondida no chat com a IA (não por caractere).",
+    label: "Oráculo — Pergunta Respondida",
+    description: "Custo por cada pergunta que a IA responde no chat (modelo atual).",
+  },
+  oracle_consultation: {
+    amount: 0,
+    label: "Oráculo — Nova Consulta",
+    description: "Custo para iniciar uma nova sessão/conversa com o Oráculo.",
+  },
+  oracle_question: {
+    amount: 0,
+    label: "Oráculo — Pergunta Enviada",
+    description: "Custo cobrado no momento que o usuário envia uma pergunta.",
+  },
+  oracle_answer: {
+    amount: 0,
+    label: "Oráculo — Resposta Gerada",
+    description: "Custo cobrado para cada resposta gerada pela IA.",
   },
   astro_chart: {
     amount: 3,
@@ -99,6 +114,21 @@ export const CREDIT_COST_CATALOG = {
     amount: 2,
     label: "Meditação Cabalística — PDF",
     description: "Exporta o roteiro da meditação em PDF.",
+  },
+  report_numerology: {
+    amount: 5,
+    label: "Relatório PDF — Numerologia",
+    description: "Análise completa dos números da alma, destino e missão.",
+  },
+  weekly_reading: {
+    amount: 1,
+    label: "Leitura Semanal",
+    description: "Previsão energética personalizada para a semana.",
+  },
+  energy_calendar: {
+    amount: 2,
+    label: "Calendário Energético",
+    description: "Trânsitos e lunações cruzados com seu mapa para o mês.",
   },
 } as const satisfies Record<string, { amount: number; label: string; description: string }>;
 
@@ -489,12 +519,46 @@ export const adminListCreditCosts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context.userId);
-    const { data, error } = await supabaseAdmin
+    const { data: dbCosts, error } = await supabaseAdmin
       .from("credit_costs")
       .select("action, amount, label, description, updated_at")
       .order("action", { ascending: true });
     if (error) throw new Error(error.message);
-    return { costs: data ?? [] };
+
+    const merged: Array<{
+      action: string;
+      amount: number;
+      label: string;
+      description: string | null;
+      updated_at?: string | null;
+      isDefault: boolean;
+    }> = [];
+
+    const dbMap = new Map((dbCosts ?? []).map((c) => [c.action, c]));
+
+    // Add all from catalog
+    for (const [action, def] of Object.entries(CREDIT_COST_CATALOG)) {
+      const db = dbMap.get(action);
+      merged.push({
+        action,
+        amount: db?.amount ?? def.amount,
+        label: db?.label ?? def.label,
+        description: db?.description ?? def.description,
+        updated_at: db?.updated_at ?? null,
+        isDefault: !db,
+      });
+      dbMap.delete(action);
+    }
+
+    // Add remaining from DB (custom actions)
+    for (const db of dbMap.values()) {
+      merged.push({
+        ...db,
+        isDefault: false,
+      });
+    }
+
+    return { costs: merged };
   });
 
 const UpsertCostSchema = z.object({
