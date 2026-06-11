@@ -1064,6 +1064,27 @@ export type Database = {
         }
         Relationships: []
       }
+      system_settings: {
+        Row: {
+          credit_value_cents: number
+          id: string
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          credit_value_cents?: number
+          id?: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          credit_value_cents?: number
+          id?: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       tarot_readings: {
         Row: {
           ai_model: string | null

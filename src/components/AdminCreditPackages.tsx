@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Package, Plus, Pencil, Trash2, Save } from "lucide-react";
@@ -28,6 +28,8 @@ import {
   adminListCreditPackages,
   adminUpsertCreditPackage,
   adminDeleteCreditPackage,
+  getSystemSettings,
+  updateSystemSettings,
 } from "@/lib/credits.functions";
 
 type Pkg = {
@@ -64,6 +66,31 @@ export function AdminCreditPackages() {
   const listFn = useServerFn(adminListCreditPackages);
   const upsertFn = useServerFn(adminUpsertCreditPackage);
   const deleteFn = useServerFn(adminDeleteCreditPackage);
+  const getSettingsFn = useServerFn(getSystemSettings);
+  const updateSettingsFn = useServerFn(updateSystemSettings);
+
+  const { data: settings, isLoading: loadingSettings } = useQuery({
+    queryKey: ["system-settings"],
+    queryFn: () => getSettingsFn(),
+  });
+
+  const [creditValue, setCreditValue] = useState("");
+
+  useEffect(() => {
+    if (settings) {
+      setCreditValue((settings.credit_value_cents / 100).toFixed(2));
+    }
+  }, [settings]);
+
+  const updateSettingsMut = useMutation({
+    mutationFn: (cents: number) => updateSettingsFn({ data: { credit_value_cents: cents } }),
+    onSuccess: () => {
+      toast.success("Valor do crédito atualizado e pacotes sincronizados.");
+      qc.invalidateQueries({ queryKey: ["system-settings"] });
+      qc.invalidateQueries({ queryKey: ["admin-credit-packages"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin-credit-packages"],
@@ -108,19 +135,52 @@ export function AdminCreditPackages() {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <Package className="size-5 text-gold" /> Pacotes de créditos
-            </CardTitle>
-            <CardDescription>
-              Configure pacotes avulsos vendidos pelo super admin. O saldo é lançado
-              automaticamente no usuário escolhido em &quot;Gerenciar créditos&quot;.
-            </CardDescription>
+        <div className="space-y-4">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Package className="size-5 text-gold" /> Pacotes de créditos
+              </CardTitle>
+              <CardDescription>
+                Configure pacotes avulsos vendidos pelo super admin. O saldo é lançado
+                automaticamente no usuário escolhido em &quot;Gerenciar créditos&quot;.
+              </CardDescription>
+            </div>
+            <Button size="sm" onClick={() => setEditing({ ...empty })}>
+              <Plus className="size-4 mr-1" /> Novo pacote
+            </Button>
           </div>
-          <Button size="sm" onClick={() => setEditing({ ...empty })}>
-            <Plus className="size-4 mr-1" /> Novo pacote
-          </Button>
+
+          <div className="flex flex-col sm:flex-row items-end gap-3 p-3 bg-secondary/20 rounded-lg border border-border">
+            <div className="space-y-1.5 flex-1 max-w-[200px]">
+              <Label htmlFor="credit-value" className="text-xs">Valor por crédito (R$)</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="credit-value"
+                  value={creditValue}
+                  onChange={(e) => setCreditValue(e.target.value.replace(",", "."))}
+                  placeholder="1.90"
+                  className="h-8 font-mono"
+                />
+              </div>
+            </div>
+            <Button 
+              size="sm" 
+              variant="secondary"
+              className="h-8"
+              onClick={() => {
+                const cents = Math.round(parseFloat(creditValue) * 100);
+                if (isNaN(cents) || cents < 0) return toast.error("Valor inválido.");
+                updateSettingsMut.mutate(cents);
+              }}
+              disabled={updateSettingsMut.isPending}
+            >
+              {updateSettingsMut.isPending ? "Atualizando..." : "Atualizar valor unitário"}
+            </Button>
+            <p className="text-[10px] text-muted-foreground italic mb-2">
+              * Atualizar este valor recalcula automaticamente o preço de todos os pacotes.
+            </p>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
@@ -249,12 +309,15 @@ export function AdminCreditPackages() {
                       id="pkg-credits"
                       inputMode="numeric"
                       value={String(editing.credits)}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value.replace(/\D/g, "") || "0", 10);
+                        const cents = settings ? Math.round(val * settings.credit_value_cents) : editing.price_cents;
                         setEditing({
                           ...editing,
-                          credits: parseInt(e.target.value.replace(/\D/g, "") || "0", 10),
-                        })
-                      }
+                          credits: val,
+                          price_cents: cents,
+                        });
+                      }}
                       onKeyDown={(e) => e.stopPropagation()}
                     />
                   </div>
