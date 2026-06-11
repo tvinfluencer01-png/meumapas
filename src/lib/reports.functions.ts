@@ -250,6 +250,7 @@ export const generateReport = createServerFn({ method: "POST" })
 
     try {
 
+
     const num = computeNumerology(birth.full_name, birth.birth_date);
     const meta = REPORT_META[data.kind];
     yield { type: "progress" as const, progress: 18, step: "Calculando numerologia e mapa astral..." };
