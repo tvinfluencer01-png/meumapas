@@ -269,8 +269,9 @@ export function MercadoPagoForm() {
             <Button
               variant="outline"
               onClick={() => testMut.mutate()}
-              disabled={testMut.isPending}
+              disabled={testMut.isPending || (!accessToken && !data?.has_access_token)}
               className="gap-2"
+              title={!accessToken && !data?.has_access_token ? "Informe o Access Token para testar" : undefined}
             >
               <ShieldCheck className="size-4" />
               {testMut.isPending ? "Testando…" : "Testar credenciais"}
