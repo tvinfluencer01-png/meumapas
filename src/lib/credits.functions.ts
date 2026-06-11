@@ -115,6 +115,21 @@ export const CREDIT_COST_CATALOG = {
     label: "Meditação Cabalística — PDF",
     description: "Exporta o roteiro da meditação em PDF.",
   },
+  report_numerology: {
+    amount: 5,
+    label: "Relatório PDF — Numerologia",
+    description: "Análise completa dos números da alma, destino e missão.",
+  },
+  weekly_reading: {
+    amount: 1,
+    label: "Leitura Semanal",
+    description: "Previsão energética personalizada para a semana.",
+  },
+  energy_calendar: {
+    amount: 2,
+    label: "Calendário Energético",
+    description: "Trânsitos e lunações cruzados com seu mapa para o mês.",
+  },
 } as const satisfies Record<string, { amount: number; label: string; description: string }>;
 
 export type CreditAction = keyof typeof CREDIT_COST_CATALOG | string;
