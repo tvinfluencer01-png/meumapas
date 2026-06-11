@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Calendar, Clock, MapPin, Globe, Loader2 } from "lucide-react";
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { createMercadoPagoCheckout } from "@/lib/addons.functions";
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
   component: OnboardingPage,
@@ -32,6 +33,7 @@ function OnboardingPage() {
   const { user } = useAuth();
   const nav = useNavigate();
   const [submitting, setSubmitting] = useState(false);
+  const [redirectingToPayment, setRedirectingToPayment] = useState(false);
   const [form, setForm] = useState({
     full_name: "",
     birth_date: "",
@@ -43,6 +45,58 @@ function OnboardingPage() {
     longitude: -46.6333,
     timezone: "America/Sao_Paulo",
   });
+
+  useEffect(() => {
+    async function checkPendingPlan() {
+      if (!user?.email) return;
+
+      const { data: pending, error } = await supabase
+        .from("pending_plan_selections")
+        .select("plan_slug")
+        .eq("email", user.email.toLowerCase())
+        .maybeSingle();
+
+      if (pending && !redirectingToPayment) {
+        setRedirectingToPayment(true);
+        toast.info("Processando seu pacote escolhido...");
+        try {
+          const res = await createMercadoPagoCheckout({
+            data: {
+              kind: "landing_package",
+              product_id: pending.plan_slug,
+            }
+          });
+
+          // Remove a seleção pendente para não entrar em loop
+          await supabase
+            .from("pending_plan_selections")
+            .delete()
+            .eq("email", user.email.toLowerCase());
+
+          if (res.checkout_url) {
+            window.location.href = res.checkout_url;
+          }
+        } catch (err) {
+          setRedirectingToPayment(false);
+          toast.error("Erro ao redirecionar para pagamento: " + (err instanceof Error ? err.message : "Erro desconhecido"));
+        }
+      }
+    }
+
+    if (user) {
+      checkPendingPlan();
+    }
+  }, [user, redirectingToPayment]);
+
+  if (redirectingToPayment) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+        <Logo sizeClassName="size-20" animation="loading" />
+        <p className="text-stardust animate-pulse">Redirecionando para o ambiente de pagamento seguro...</p>
+        <Loader2 className="size-8 text-gold animate-spin" />
+      </div>
+    );
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

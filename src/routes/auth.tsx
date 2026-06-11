@@ -95,16 +95,34 @@ function AuthPage() {
           toast.error(parsed.error.issues[0].message);
           return;
         }
+
+        // Se houver um plano selecionado, salva a intenção ANTES de criar a conta
+        if (search.plan) {
+          await supabase.from("pending_plan_selections").insert({
+            email: parsed.data.email.toLowerCase(),
+            plan_slug: search.plan,
+          });
+        }
+
         const { error } = await supabase.auth.signUp({
           email: parsed.data.email,
           password: parsed.data.password,
           options: {
+            // Se tem plano, redireciona para onboarding para processar pagamento ANTES da confirmação total se necessário
+            // Ou apenas mantém o fluxo e o webhook ativa depois.
             emailRedirectTo: `${window.location.origin}/dashboard`,
             data: { full_name: parsed.data.name },
           },
         });
         if (error) throw error;
-        toast.success("Conta criada! Bem-vindo ao Código Cósmico.");
+        
+        if (search.plan) {
+          toast.success("Conta criada! Redirecionando para o pagamento...");
+          // Redireciona para o onboarding que vai lidar com o checkout do plano pendente
+          nav({ to: "/onboarding" });
+        } else {
+          toast.success("Conta criada! Verifique seu e-mail para confirmar.");
+        }
       } else {
         const parsed = signInSchema.safeParse(form);
         if (!parsed.success) {
