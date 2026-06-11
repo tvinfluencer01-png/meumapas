@@ -1117,6 +1117,7 @@ Regras:
     } catch (err) {
 
 
+
       console.error("[generateReport] error", err);
 
 
