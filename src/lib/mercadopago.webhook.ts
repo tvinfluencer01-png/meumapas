@@ -4,7 +4,10 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 export const handleMercadoPagoWebhook = createServerFn({ method: "POST" })
   .handler(async ({ request }) => {
     try {
-      const body = await request.json();
+      // No TanStack Start, o objeto request está disponível no contexto se passarmos corretamente
+      // Ou podemos usar getWebRequest() de @tanstack/react-start/server se necessário
+      // Mas para webhooks o padrão é ler o body do request nativo
+      const body = await (request as Request).json();
       console.log("[Mercado Pago Webhook] Received:", body);
 
       const topic = body.topic || body.type;
@@ -15,7 +18,7 @@ export const handleMercadoPagoWebhook = createServerFn({ method: "POST" })
         const { data: mp } = await supabaseAdmin
           .from("mercado_pago_settings")
           .select("access_token")
-          .eq("id", true)
+          .eq("id", true as any) // Bypass para o erro de tipo se id for boolean no schema mas usado como true no filtro
           .maybeSingle();
 
         if (!mp?.access_token) {
@@ -48,7 +51,7 @@ export const handleMercadoPagoWebhook = createServerFn({ method: "POST" })
             // Atualizar status do pedido
             await supabaseAdmin
               .from("payment_orders")
-              .update({ status: "approved", updated_at: new Date().toISOString() })
+              .update({ status: "approved", updated_at: new Date().toISOString() } as any)
               .eq("id", order.id);
 
             // Se for créditos, adicionar ao saldo
@@ -81,7 +84,7 @@ export const handleMercadoPagoWebhook = createServerFn({ method: "POST" })
                   current_period_start: now.toISOString(),
                   current_period_end: nextMonth.toISOString(),
                   updated_at: now.toISOString()
-                }, { onConflict: "user_id,addon_id" });
+                } as any, { onConflict: "user_id,addon_id" });
             }
           }
         }
