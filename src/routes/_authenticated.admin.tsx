@@ -159,7 +159,11 @@ function AdminPage() {
         <TabsContent value="cron" className="mt-0">
           <AdminCronStatus />
         </TabsContent>
+        <TabsContent value="backup" className="mt-0">
+          <BackupAdmin />
+        </TabsContent>
       </Tabs>
+
     </div>
   );
 }
