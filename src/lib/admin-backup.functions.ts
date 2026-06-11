@@ -19,14 +19,6 @@ export const adminExportDatabase = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     await assertAdmin(context.userId);
 
-    // 1. Get all public tables
-    const { data: tableRows, error: tableError } = await (supabaseAdmin as any).rpc("get_schema_metadata", {}).catch(async () => {
-      // Fallback if RPC doesn't exist (we'll try to use raw queries via from().select())
-      // But we can't easily do raw SQL via supabase client without a dedicated RPC or edge function
-      // So we'll use the hardcoded list but enhance it with metadata discovery if possible
-      return { data: null, error: { message: "RPC not found" } };
-    });
-
     const tables = [
       "profiles",
       "user_roles",
@@ -67,53 +59,51 @@ export const adminExportDatabase = createServerFn({ method: "POST" })
     
     sql += "BEGIN;\n\n";
 
-    // Since we can't run raw SQL easily via the client to get metadata, 
-    // we'll use a trick: query information_schema via a view or just assume standard types
-    // for the tables we know.
-    
     for (const table of tables) {
-      // Get table data
-      const { data, error } = await (supabaseAdmin.from(table as any) as any).select("*");
-      if (error) {
-        sql += `-- Erro ao exportar tabela ${table}: ${error.message}\n`;
-        continue;
-      }
-
+      // 1. Get structure
+      const { data: cols, error: structError } = await supabaseAdmin.rpc("get_table_structure", { t_name: table });
+      
       sql += `\n-- -----------------------------------------------------\n`;
       sql += `-- Tabela public.${table}\n`;
       sql += `-- -----------------------------------------------------\n\n`;
-      
-      // Attempt to construct a basic CREATE TABLE if we have at least one row
-      if (data && data.length > 0) {
-        const firstRow = data[0];
-        const columns = Object.keys(firstRow);
-        
-        sql += `CREATE TABLE IF NOT EXISTS public.${table} (\n`;
-        const colDefs = columns.map(col => {
-          const val = firstRow[col];
-          let type = "TEXT";
-          if (typeof val === "number") type = Number.isInteger(val) ? "INTEGER" : "NUMERIC";
-          if (typeof val === "boolean") type = "BOOLEAN";
-          if (val instanceof Date || (typeof val === "string" && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(val))) type = "TIMESTAMPTZ";
-          if (typeof val === "object" && val !== null) type = "JSONB";
-          
-          // Special cases for common ID columns
-          if (col === "id" && typeof val === "string" && val.length === 36) type = "UUID PRIMARY KEY DEFAULT gen_random_uuid()";
-          else if (col.endsWith("_id") && typeof val === "string" && val.length === 36) type = "UUID";
-          
-          return `  ${col} ${type}${col === "id" && !type.includes("PRIMARY KEY") ? " PRIMARY KEY" : ""}`;
-        });
-        sql += colDefs.join(",\n");
-        sql += "\n);\n\n";
 
-        sql += `TRUNCATE TABLE public.${table} CASCADE; -- Limpa dados existentes\n\n`;
+      if (structError) {
+        sql += `-- Erro ao obter estrutura da tabela ${table}: ${structError.message}\n`;
+      } else if (cols && cols.length > 0) {
+        sql += `CREATE TABLE IF NOT EXISTS public.${table} (\n`;
+        const colLines = cols.map((c: any) => {
+          let line = `  ${c.column_name} ${c.data_type.toUpperCase()}`;
+          if (c.is_nullable === "NO") line += " NOT NULL";
+          if (c.column_default) line += ` DEFAULT ${c.column_default}`;
+          return line;
+        });
         
-        const batchSize = 50;
+        // Add Primary Key constraint
+        const pks = cols.filter((c: any) => c.is_primary_key).map((c: any) => c.column_name);
+        if (pks.length > 0) {
+          colLines.push(`  CONSTRAINT ${table}_pkey PRIMARY KEY (${pks.join(", ")})`);
+        }
+        
+        sql += colLines.join(",\n");
+        sql += "\n);\n\n";
+        
+        sql += `TRUNCATE TABLE public.${table} CASCADE; -- Limpa dados existentes\n\n`;
+      }
+
+      // 2. Get data
+      const { data, error } = await (supabaseAdmin.from(table as any) as any).select("*");
+      if (error) {
+        sql += `-- Erro ao exportar dados da tabela ${table}: ${error.message}\n`;
+        continue;
+      }
+
+      if (data && data.length > 0) {
+        const batchSize = 100;
         for (let i = 0; i < data.length; i += batchSize) {
           const batch = data.slice(i, i + batchSize);
-          const cols = Object.keys(batch[0]).join(", ");
+          const columns = Object.keys(batch[0]).join(", ");
           
-          sql += `INSERT INTO public.${table} (${cols}) VALUES\n`;
+          sql += `INSERT INTO public.${table} (${columns}) VALUES\n`;
           
           const rows = batch.map((row: any) => {
             const values = Object.entries(row).map(([_, val]) => {
@@ -129,8 +119,7 @@ export const adminExportDatabase = createServerFn({ method: "POST" })
           sql += rows.join(",\n") + ";\n";
         }
       } else {
-        sql += `-- Tabela ${table} está vazia, pulando criação/inserção automática baseada em dados.\n`;
-        sql += `-- Sugerimos criar manualmente: CREATE TABLE public.${table} (...);\n`;
+        sql += `-- Tabela ${table} não possui registros para inserção.\n`;
       }
     }
 
