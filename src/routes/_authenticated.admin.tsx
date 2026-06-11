@@ -122,7 +122,11 @@ function AdminPage() {
           <TabsTrigger value="cron" className="gap-2">
             <Clock className="size-4" /> Cron Jobs
           </TabsTrigger>
+          <TabsTrigger value="backup" className="gap-2">
+            <Database className="size-4" /> Backup
+          </TabsTrigger>
         </TabsList>
+
 
         <TabsContent value="settings" className="mt-0">
           <SettingsForm />
