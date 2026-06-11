@@ -60,7 +60,12 @@ export const adminExportDatabase = createServerFn({ method: "POST" })
       } else if (cols && cols.length > 0) {
         sql += `CREATE TABLE IF NOT EXISTS public.${table} (\n`;
         const colLines = cols.map((c: any) => {
-          let line = `  ${c.column_name} ${c.data_type.toUpperCase()}`;
+          let type = c.data_type.toUpperCase();
+          // If the type starts with _, it's a native Postgres array type (e.g., _text -> text[])
+          if (type.startsWith("_")) {
+            type = type.substring(1) + "[]";
+          }
+          let line = `  ${c.column_name} ${type}`;
           if (c.is_nullable === "NO") line += " NOT NULL";
           if (c.column_default) line += ` DEFAULT ${c.column_default}`;
           return line;
@@ -75,7 +80,7 @@ export const adminExportDatabase = createServerFn({ method: "POST" })
         sql += colLines.join(",\n");
         sql += "\n);\n\n";
         
-        sql += `TRUNCATE TABLE public.${table} CASCADE; -- Limpa dados existentes\n\n`;
+        sql += `DELETE FROM public.${table}; -- Limpa dados existentes sem exigir privilégios de owner\n\n`;
       }
 
       // 2. Get data
@@ -94,11 +99,30 @@ export const adminExportDatabase = createServerFn({ method: "POST" })
           sql += `INSERT INTO public.${table} (${columns}) VALUES\n`;
           
           const rows = batch.map((row: any) => {
-            const values = Object.entries(row).map(([_, val]) => {
+            const values = Object.entries(row).map(([colName, val]) => {
               if (val === null) return "NULL";
+              
+              // Find column info to check if it's an array
+              const colInfo = cols?.find((c: any) => c.column_name === colName);
+              const udtType = colInfo?.data_type?.toUpperCase();
+              const isArray = udtType?.startsWith("_") || udtType?.includes("ARRAY");
+
+              if (isArray && Array.isArray(val)) {
+                // Postgres array literal format: '{"val1", "val2"}'
+                const escapedValues = val.map(v => {
+                  if (v === null) return "NULL";
+                  const s = String(v).replace(/"/g, '\\"');
+                  return `"${s}"`;
+                });
+                return `'{${escapedValues.join(", ")}}'`;
+              }
+
               if (typeof val === "string") return `'${val.replace(/'/g, "''")}'`;
               if (typeof val === "boolean") return val ? "true" : "false";
-              if (typeof val === "object") return `'${JSON.stringify(val).replace(/'/g, "''")}'`;
+              if (typeof val === "object") {
+                // If it's an object but not caught by isArray above, it's likely JSONB
+                return `'${JSON.stringify(val).replace(/'/g, "''")}'::jsonb`;
+              }
               return val;
             });
             return `(${values.join(", ")})`;
