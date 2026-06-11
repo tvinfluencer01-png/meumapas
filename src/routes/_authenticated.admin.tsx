@@ -126,6 +126,9 @@ function AdminPage() {
           <TabsTrigger value="backup" className="gap-2">
             <Database className="size-4" /> Backup
           </TabsTrigger>
+          <TabsTrigger value="global" className="gap-2">
+            <Phone className="size-4" /> Landing Page
+          </TabsTrigger>
         </TabsList>
 
 
@@ -162,6 +165,9 @@ function AdminPage() {
         </TabsContent>
         <TabsContent value="backup" className="mt-0">
           <BackupAdmin />
+        </TabsContent>
+        <TabsContent value="global" className="mt-0">
+          <AdminGlobalSettings />
         </TabsContent>
       </Tabs>
 
