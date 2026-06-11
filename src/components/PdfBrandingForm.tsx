@@ -519,6 +519,7 @@ export function PdfBrandingForm() {
             maxLength={80}
             placeholder="Ex: Studio Aurora — Astrologia"
             onChange={(e) => setForm((p) => ({ ...p, display_name: e.target.value }))}
+            onKeyDown={(e) => e.stopPropagation()}
           />
           <p className="text-xs text-muted-foreground mt-1">
             Usado no topo da capa quando não houver logo configurado.
@@ -548,6 +549,7 @@ export function PdfBrandingForm() {
               maxLength={80}
               placeholder="Maria Astróloga"
               onChange={(e) => setForm((p) => ({ ...p, footer_name: e.target.value }))}
+              onKeyDown={(e) => e.stopPropagation()}
             />
           </div>
           <div>
@@ -558,6 +560,7 @@ export function PdfBrandingForm() {
               maxLength={120}
               placeholder="www.seusite.com"
               onChange={(e) => setForm((p) => ({ ...p, footer_site: e.target.value }))}
+              onKeyDown={(e) => e.stopPropagation()}
             />
           </div>
           <div>
@@ -568,6 +571,7 @@ export function PdfBrandingForm() {
               maxLength={40}
               placeholder="+55 11 99999-9999"
               onChange={(e) => setForm((p) => ({ ...p, footer_phone: e.target.value }))}
+              onKeyDown={(e) => e.stopPropagation()}
             />
           </div>
         </div>
@@ -676,6 +680,7 @@ export function PdfBrandingForm() {
                 value={coverPrompt}
                 placeholder="Descreva uma capa (ex: nebulosa púrpura com runas douradas)"
                 onChange={(e) => setCoverPrompt(e.target.value)}
+                onKeyDown={(e) => e.stopPropagation()}
               />
               <Button type="button" variant="outline" size="sm"
                 onClick={() => generateCoverMutation.mutate()}
