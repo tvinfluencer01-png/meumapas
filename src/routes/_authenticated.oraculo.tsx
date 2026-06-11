@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useChat } from "@ai-sdk/react";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Sparkles, Send, MessageCircle, Loader2, Stars, Square } from "lucide-react";
 import { CreditCostBadge } from "@/components/CreditCostBadge";
 import { emitCreditsChanged } from "@/lib/credits-events";
+import { showFeedback } from "@/components/system-feedback";
 
 export const Route = createFileRoute("/_authenticated/oraculo")({
   component: OraculoPage,
