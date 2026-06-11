@@ -47,6 +47,30 @@ export const adminExportDatabase = createServerFn({ method: "POST" })
     
     sql += "BEGIN;\n\n";
 
+    // 0. Export Enums
+    const { data: enums, error: enumError } = await supabaseAdmin.rpc("get_public_enums" as any);
+    if (!enumError && enums && enums.length > 0) {
+      sql += "-- -----------------------------------------------------\n";
+      sql += "-- Tipos ENUM\n";
+      sql += "-- -----------------------------------------------------\n\n";
+      
+      // Group by type name
+      const groupedEnums: Record<string, string[]> = {};
+      enums.forEach((e: any) => {
+        if (!groupedEnums[e.type_name]) groupedEnums[e.type_name] = [];
+        groupedEnums[e.type_name].push(e.enum_label);
+      });
+
+      for (const [typeName, labels] of Object.entries(groupedEnums)) {
+        sql += `DO $$\nBEGIN\n`;
+        sql += `  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = '${typeName}') THEN\n`;
+        sql += `    CREATE TYPE public.${typeName} AS ENUM (${labels.map(l => `'${l}'`).join(", ")});\n`;
+        sql += `  END IF;\n`;
+        sql += `END $$;\n\n`;
+      }
+    }
+
+
     for (const table of tables) {
       // 1. Get structure
       const { data: cols, error: structError } = await supabaseAdmin.rpc("get_table_structure", { t_name: table });
