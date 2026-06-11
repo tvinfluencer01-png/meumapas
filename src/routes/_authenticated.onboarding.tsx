@@ -61,8 +61,10 @@ function OnboardingPage() {
         toast.info("Processando seu pacote escolhido...");
         try {
           const res = await createMercadoPagoCheckout({
-            kind: "landing_package",
-            product_id: pending.plan_slug,
+            data: {
+              kind: "landing_package",
+              product_id: pending.plan_slug,
+            }
           });
 
           // Remove a seleção pendente para não entrar em loop
