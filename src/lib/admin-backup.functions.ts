@@ -61,10 +61,9 @@ export const adminExportDatabase = createServerFn({ method: "POST" })
         sql += `CREATE TABLE IF NOT EXISTS public.${table} (\n`;
         const colLines = cols.map((c: any) => {
           let type = c.data_type.toUpperCase();
-          if (type === "ARRAY") {
-            // If it's just 'ARRAY', we need to check udt_name or similar, 
-            // but for simplicity in Supabase it's often better to try and guess or use text[]
-            type = "TEXT[]"; 
+          // If the type starts with _, it's a native Postgres array type (e.g., _text -> text[])
+          if (type.startsWith("_")) {
+            type = type.substring(1) + "[]";
           }
           let line = `  ${c.column_name} ${type}`;
           if (c.is_nullable === "NO") line += " NOT NULL";
