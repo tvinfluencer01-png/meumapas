@@ -80,7 +80,7 @@ export const adminExportDatabase = createServerFn({ method: "POST" })
         sql += colLines.join(",\n");
         sql += "\n);\n\n";
         
-        sql += `TRUNCATE TABLE public.${table} CASCADE; -- Limpa dados existentes\n\n`;
+        sql += `DELETE FROM public.${table}; -- Limpa dados existentes sem exigir privilégios de owner\n\n`;
       }
 
       // 2. Get data
