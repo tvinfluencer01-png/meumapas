@@ -268,29 +268,22 @@ function AstralPreview() {
           </ul>
         </div>
 
-        {/* Zodiac wheel */}
+        {/* Zodiac wheel 3D */}
         <div className="relative mx-auto aspect-square w-full max-w-md">
           <div className="absolute inset-0 animate-slow-spin rounded-full border border-gold/20" />
           <div className="absolute inset-6 rounded-full border border-gold/10" />
           <div className="absolute inset-12 rounded-full border border-gold/5" />
+          <img
+            src={zodiac3dWheel}
+            alt="Mapa astrológico 3D com os 12 signos do zodíaco"
+            width={1024}
+            height={1024}
+            loading="lazy"
+            className="absolute inset-0 size-full animate-slow-spin object-contain drop-shadow-[0_0_40px_color-mix(in_oklab,var(--gold)_45%,transparent)]"
+          />
           <div className="absolute inset-0 grid place-items-center">
             <div className="size-3 rounded-full bg-gold-glow shadow-[0_0_30px_var(--gold)]" />
           </div>
-          {Array.from({ length: 12 }).map((_, i) => {
-            const angle = (i * 30 * Math.PI) / 180;
-            const r = 46;
-            return (
-              <span
-                key={i}
-                className="absolute size-2 rounded-full bg-gold/60"
-                style={{
-                  top: `${50 + Math.sin(angle) * r}%`,
-                  left: `${50 - Math.cos(angle) * r}%`,
-                  transform: "translate(-50%, -50%)",
-                }}
-              />
-            );
-          })}
         </div>
       </div>
     </section>
