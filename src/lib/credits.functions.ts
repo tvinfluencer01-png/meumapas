@@ -166,7 +166,7 @@ export async function consumeCredits(
   const { data, error } = await supabaseAdmin.rpc("consume_credits", {
     _user_id: userId,
     _amount: amount,
-    _kind: action,
+    _kind: String(action),
     _reference: reference,
   });
   if (error) {
@@ -240,6 +240,10 @@ export async function hasUnlimitedAccess(
     report_business: "sub_business_map",
   };
   const addonIds: string[] = [];
+
+  // Check for the "master" unlimited everything addon first
+  addonIds.push("sub_astrologer_numerologist");
+
   if (action.startsWith("report_") || action === "energy_calendar") {
     addonIds.push("sub_unlimited_reports");
     const specific = perReportAddon[action];
