@@ -136,10 +136,10 @@ function wrap(text: string, font: PdfFontRef, size: number, maxWidth: number): s
 export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
   const pdf = await PDFDocument.create();
   pdf.setTitle(safe(data.title));
-  pdf.setAuthor("Cosmic AI");
+  pdf.setAuthor("Código Cósmico");
   pdf.setSubject(safe(data.subtitle));
-  pdf.setCreator("Cosmic AI — Oraculo");
-  pdf.setProducer("Cosmic AI");
+  pdf.setCreator("Código Cósmico — Oraculo");
+  pdf.setProducer("Código Cósmico");
 
   const serif = await pdf.embedFont(StandardFonts.TimesRoman);
   const serifBold = await pdf.embedFont(StandardFonts.TimesRomanBold);
@@ -195,9 +195,9 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
     }
   }
 
-  // Branding (add-on): logo image OR custom display name replaces "COSMIC AI"
+  // Branding (add-on): logo image OR custom display name replaces "CÓDIGO CÓSMICO"
   const branding = brandingForCover;
-  let topLabel = "COSMIC AI  -  RELATORIO PREMIUM";
+  let topLabel = "CÓDIGO CÓSMICO  -  RELATORIO PREMIUM";
   if (branding?.displayName && !branding.logoBytes) {
     topLabel = branding.displayName.toUpperCase();
   }
@@ -312,7 +312,7 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
       x: PAGE_W - MARGIN - nw, y: PAGE_H - MARGIN + 30, size: 8, font: sans, color: GOLD,
     });
     // footer (branding add-on overrides when enabled + footerEnabled + any field)
-    let footerText = "Cosmic AI - Inteligencia espiritual personalizada";
+    let footerText = "Código Cósmico - Inteligencia espiritual personalizada";
     if (branding && branding.footerEnabled !== false) {
       const parts = [branding.footerName, branding.footerSite, branding.footerPhone]
         .map((s) => (s ?? "").trim())
@@ -707,7 +707,7 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
     color: GOLD, thickness: 0.6,
   });
   cursor.y -= 14;
-  cursor.page.drawText(safe("Oraculo Cosmic AI"), {
+  cursor.page.drawText(safe("Oraculo Código Cósmico"), {
     x: MARGIN, y: cursor.y - 9, size: 9, font: sans, color: MUTED,
   });
 

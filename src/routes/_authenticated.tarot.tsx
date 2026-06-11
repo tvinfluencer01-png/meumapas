@@ -34,7 +34,7 @@ import {
 
 export const Route = createFileRoute("/_authenticated/tarot")({
   component: TarotPage,
-  head: () => ({ meta: [{ title: "Tarot — Cosmic AI" }] }),
+  head: () => ({ meta: [{ title: "Tarot — Código Cósmico" }] }),
 });
 
 const COST_BY_SPREAD: Record<SpreadId, string> = {

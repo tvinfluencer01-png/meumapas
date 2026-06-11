@@ -15,8 +15,8 @@ import { Label } from "@/components/ui/label";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Acesso — Cosmic AI" },
-      { name: "description", content: "Acesse sua jornada cósmica. Entre ou crie sua conta no Cosmic AI." },
+      { title: "Acesso — Código Cósmico" },
+      { name: "description", content: "Acesse sua jornada cósmica. Entre ou crie sua conta no Código Cósmico." },
     ],
   }),
   component: AuthPage,
@@ -91,7 +91,7 @@ function AuthPage() {
           },
         });
         if (error) throw error;
-        toast.success("Conta criada! Bem-vindo ao Cosmic AI.");
+        toast.success("Conta criada! Bem-vindo ao Código Cósmico.");
       } else {
         const parsed = signInSchema.safeParse(form);
         if (!parsed.success) {
@@ -158,7 +158,7 @@ function AuthPage() {
         <div className="w-full max-w-md glass-card rounded-2xl p-8 gold-glow">
           <div className="flex flex-col items-center text-center">
             <Logo sizeClassName="size-20" animation="float" className="mb-3" />
-            <h1 className="font-serif text-3xl shimmer-text">Cosmic AI</h1>
+            <h1 className="font-serif text-3xl shimmer-text">Código Cósmico</h1>
             <p className="mt-2 text-sm text-muted-foreground">
               {mode === "signin" ? "Reconecte-se à sua jornada." : "Comece sua jornada cósmica."}
             </p>

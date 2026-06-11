@@ -236,7 +236,7 @@ export const exportKabbalahPdf = createServerFn({ method: "POST" })
         : undefined;
 
       const pdfBytes = await buildSimplePdf({
-        brand: "Cosmic AI",
+        brand: "Código Cósmico",
         eyebrow: `Meditação Cabalística · ${sef?.name ?? row.sefirah}`,
         title: `Roteiro: ${sef?.translation ?? row.sefirah}`,
         subtitle: sef?.prayer,

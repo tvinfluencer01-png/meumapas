@@ -32,7 +32,7 @@ import {
 
 export const Route = createFileRoute("/_authenticated/meditacao")({
   component: MeditacaoPage,
-  head: () => ({ meta: [{ title: "Meditação Cabalística — Cosmic AI" }] }),
+  head: () => ({ meta: [{ title: "Meditação Cabalística — Código Cósmico" }] }),
 });
 
 function MeditacaoPage() {

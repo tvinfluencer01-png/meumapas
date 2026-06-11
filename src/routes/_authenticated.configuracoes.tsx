@@ -4,7 +4,7 @@ import { PdfBrandingForm } from "@/components/PdfBrandingForm";
 
 export const Route = createFileRoute("/_authenticated/configuracoes")({
   component: ConfiguracoesPage,
-  head: () => ({ meta: [{ title: "Configurações — Cosmic AI" }] }),
+  head: () => ({ meta: [{ title: "Configurações — Código Cósmico" }] }),
 });
 
 function ConfiguracoesPage() {
@@ -16,7 +16,7 @@ function ConfiguracoesPage() {
           <SettingsIcon className="size-7 text-gold" /> Preferências da sua conta
         </h1>
         <p className="mt-2 text-muted-foreground max-w-2xl">
-          Personalize a experiência do Cosmic AI. Add-ons ficam desativados por
+          Personalize a experiência do Código Cósmico. Add-ons ficam desativados por
           padrão — ative apenas o que você quiser usar.
         </p>
       </header>

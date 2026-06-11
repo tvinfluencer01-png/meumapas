@@ -581,7 +581,7 @@ export function PdfBrandingForm() {
       <section className="space-y-3">
         <h3 className="text-sm uppercase tracking-widest text-gold">Aplicar em quais relatórios</h3>
         <p className="text-xs text-muted-foreground">
-          Escolha as categorias que devem usar seu branding. As desativadas continuam com o branding padrão do Cosmic AI, mesmo com o add-on ativo.
+          Escolha as categorias que devem usar seu branding. As desativadas continuam com o branding padrão do Código Cósmico, mesmo com o add-on ativo.
         </p>
         <div className="grid sm:grid-cols-2 gap-3">
           {KIND_TOGGLES.map((k) => {

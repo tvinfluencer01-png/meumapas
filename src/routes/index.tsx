@@ -538,7 +538,7 @@ function ProfessionalMode() {
               <span className="text-gold">Sem perder a alma do seu trabalho.</span>
             </h2>
             <p className="mb-8 max-w-md leading-relaxed text-muted-foreground">
-              O modo Profissional transforma o Cosmic AI em seu consultório digital: mapa, numerologia,
+              O modo Profissional transforma o Código Cósmico em seu consultório digital: mapa, numerologia,
               relatórios e PDFs com a SUA marca, para cada cliente que entra na sua agenda.
             </p>
             <ul className="mb-10 space-y-4 text-sm">
@@ -846,7 +846,7 @@ function Guarantee() {
           <span className="text-gold">Ou seu dinheiro de volta.</span>
         </h2>
         <p className="mx-auto max-w-xl text-muted-foreground">
-          Se em 7 dias você não sentir que o Cosmic AI mudou a forma como olha para a sua vida,
+          Se em 7 dias você não sentir que o Código Cósmico mudou a forma como olha para a sua vida,
           devolvemos 100% do valor. Sem perguntas. Sem burocracia.
           <span className="block mt-2 text-stardust">O risco é todo nosso.</span>
         </p>
@@ -859,7 +859,7 @@ function Guarantee() {
 function FAQ() {
   const qs = [
     {
-      q: "Como o Cosmic AI calcula meu mapa astral?",
+      q: "Como o Código Cósmico calcula meu mapa astral?",
       a: "Usamos a biblioteca Swiss Ephemeris — o padrão astronômico profissional adotado por astrólogos do mundo todo — cruzada com sua data, horário e cidade exata de nascimento para precisão de segundos de arco.",
     },
     {
@@ -990,7 +990,7 @@ function BrandIdentity() {
             </h3>
             <motion.div
               role="img"
-              aria-label="Monograma Cosmic AI"
+              aria-label="Monograma Código Cósmico"
               className="relative mx-auto flex aspect-square w-full max-w-xs items-center justify-center"
               whileHover="hover"
               initial="rest"
@@ -1064,7 +1064,7 @@ function BrandIdentity() {
               <div className="flex items-center gap-3">
                 <span aria-hidden="true" className="size-2 rounded-full bg-gold shadow-[0_0_12px_var(--gold)]" />
                 <span className="font-serif text-4xl uppercase tracking-[0.3em] text-gold">
-                  Cosmic AI
+                  Código Cósmico
                 </span>
               </div>
             </div>
@@ -1122,11 +1122,11 @@ function Footer() {
         <div className="flex items-center gap-2">
           <span className="size-2 rounded-full bg-gold" />
           <span className="font-serif text-xl uppercase tracking-[0.3em] text-gold">
-            Cosmic AI
+            Código Cósmico
           </span>
         </div>
         <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-          © 2026 Cosmic AI · Todas as estrelas alinhadas
+          © 2026 Código Cósmico · Todas as estrelas alinhadas
         </p>
         <div className="flex gap-6 text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
           <a href="#" className="transition-colors hover:text-gold">Privacidade</a>

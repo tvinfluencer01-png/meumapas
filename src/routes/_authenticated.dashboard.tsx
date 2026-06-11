@@ -23,7 +23,7 @@ import { CreditCostBadge } from "@/components/CreditCostBadge";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
-  head: () => ({ meta: [{ title: "Dashboard — Cosmic AI" }] }),
+  head: () => ({ meta: [{ title: "Dashboard — Código Cósmico" }] }),
 });
 
 const SIGNS = ["Áries","Touro","Gêmeos","Câncer","Leão","Virgem","Libra","Escorpião","Sagitário","Capricórnio","Aquário","Peixes"];

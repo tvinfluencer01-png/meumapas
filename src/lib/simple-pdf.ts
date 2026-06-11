@@ -167,9 +167,9 @@ export async function buildSimplePdf(data: SimplePdfData): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
   doc.registerFontkit(fontkit);
   doc.setTitle(safe(data.title));
-  doc.setAuthor("Cosmic AI");
+  doc.setAuthor("Código Cósmico");
   doc.setSubject(safe(data.subtitle ?? data.eyebrow));
-  doc.setCreator("Cosmic AI - Oraculo");
+  doc.setCreator("Código Cósmico - Oraculo");
 
   // Famílias possíveis para o branding
   const timesRegular = await doc.embedFont(StandardFonts.TimesRoman);

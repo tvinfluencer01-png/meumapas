@@ -5,7 +5,7 @@ import { Hash, Heart, Eye, User as UserIcon, Cake, Sparkles, Users } from "lucid
 
 export const Route = createFileRoute("/_authenticated/numerologia")({
   component: NumerologiaPage,
-  head: () => ({ meta: [{ title: "Numerologia — Cosmic AI" }] }),
+  head: () => ({ meta: [{ title: "Numerologia — Código Cósmico" }] }),
 });
 
 const CARDS = [
