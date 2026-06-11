@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { Shield, MessageSquare, Save, Send, CheckCircle2, AlertTriangle, Users, Search, ShieldOff, ShieldCheck, History, RefreshCw, Settings as SettingsIcon, Wallet, Coins, MoreHorizontal, UserCog, KeyRound, Package, Trash2, Coins as CoinsIcon, Zap, Plug, Clock, UserPlus, Eye, EyeOff } from "lucide-react";
+import { Shield, MessageSquare, Save, Send, CheckCircle2, AlertTriangle, Users, Search, ShieldOff, ShieldCheck, History, RefreshCw, Settings as SettingsIcon, Wallet, Coins, MoreHorizontal, UserCog, KeyRound, Package, Trash2, Coins as CoinsIcon, Zap, Plug, Clock, UserPlus, Eye, EyeOff, Database, Download, Loader2 } from "lucide-react";
 import { MercadoPagoForm } from "@/components/MercadoPagoForm";
 import { AdminCreditsManager, CreditsDialog } from "@/components/AdminCreditsManager";
 import { AdminCreditCosts } from "@/components/AdminCreditCosts";
@@ -48,6 +48,8 @@ import {
   testEvolutionConnection,
   sendEvolutionTest,
 } from "@/lib/admin.functions";
+import { adminExportDatabase } from "@/lib/admin-backup.functions";
+
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPage,
@@ -120,7 +122,11 @@ function AdminPage() {
           <TabsTrigger value="cron" className="gap-2">
             <Clock className="size-4" /> Cron Jobs
           </TabsTrigger>
+          <TabsTrigger value="backup" className="gap-2">
+            <Database className="size-4" /> Backup
+          </TabsTrigger>
         </TabsList>
+
 
         <TabsContent value="settings" className="mt-0">
           <SettingsForm />
@@ -153,7 +159,11 @@ function AdminPage() {
         <TabsContent value="cron" className="mt-0">
           <AdminCronStatus />
         </TabsContent>
+        <TabsContent value="backup" className="mt-0">
+          <BackupAdmin />
+        </TabsContent>
       </Tabs>
+
     </div>
   );
 }
@@ -1179,3 +1189,73 @@ function EvolutionForm() {
     </Card>
   );
 }
+
+function BackupAdmin() {
+  const exportFn = useServerFn(adminExportDatabase);
+  
+  const exportMut = useMutation({
+    mutationFn: () => exportFn(),
+    onSuccess: (res) => {
+      const blob = new Blob([res.sql], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `backup-cosmic-ai-${new Date().toISOString().slice(0, 10)}.sql`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast.success("Backup gerado e download iniciado.");
+    },
+    onError: (e: Error) => toast.error(`Erro ao gerar backup: ${e.message}`),
+  });
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Database className="size-5 text-gold" /> Backup e Exportação
+        </CardTitle>
+        <CardDescription>
+          Gere um arquivo SQL completo com a estrutura e dados de todas as tabelas do sistema.
+          Este arquivo pode ser usado para restaurar o sistema em outro servidor.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-4 text-sm text-amber-200">
+          <p className="font-medium flex items-center gap-2">
+            <AlertTriangle className="size-4" /> Importante
+          </p>
+          <p className="mt-1 opacity-80">
+            A exportação inclui dados sensíveis como configurações de API, logs de usuários e transações. 
+            Mantenha este arquivo em local seguro.
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-4">
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium">Backup Completo (SQL)</h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Gera um script SQL contendo comandos INSERT para todas as tabelas do banco de dados public.
+              O arquivo resultante conterá todos os dados atuais do sistema imbutidos.
+            </p>
+          </div>
+
+          <Button 
+            onClick={() => exportMut.mutate()} 
+            disabled={exportMut.isPending}
+            className="w-fit"
+          >
+            {exportMut.isPending ? (
+              <Loader2 className="size-4 mr-2 animate-spin" />
+            ) : (
+              <Download className="size-4 mr-2" />
+            )}
+            Gerar Backup Agora
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
