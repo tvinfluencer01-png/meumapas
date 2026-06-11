@@ -159,7 +159,6 @@ async function handler({ request }: { request: Request }) {
         }
       }
     }
-    }
   } else if (order.product_kind === "landing_package") {
     const { data: pkg } = await supabaseAdmin
       .from("landing_packages")
