@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useChat } from "@ai-sdk/react";
+import { useQueryClient } from "@tanstack/react-query";
+
 import { DefaultChatTransport, type UIMessage } from "ai";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
@@ -23,7 +25,9 @@ const SUGESTOES = [
 
 function OraculoPage() {
   const { user } = useAuth();
+  const qc = useQueryClient();
   const [input, setInput] = useState("");
+
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -59,8 +63,13 @@ function OraculoPage() {
 
   // Após cada resposta concluída (ou erro), recarrega saldo/custos.
   useEffect(() => {
-    if (status === "ready" || status === "error") emitCreditsChanged();
-  }, [status]);
+    if (status === "ready" || status === "error") {
+      emitCreditsChanged();
+      // Also invalidate sidebar/global credit query
+      qc.invalidateQueries({ queryKey: ["sidebar-credits"] });
+    }
+  }, [status, qc]);
+
 
   async function handleSubmit(e?: React.FormEvent) {
     e?.preventDefault();

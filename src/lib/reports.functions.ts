@@ -247,7 +247,9 @@ export const generateReport = createServerFn({ method: "POST" })
       charged = true;
     }
 
+
     try {
+
 
     const num = computeNumerology(birth.full_name, birth.birth_date);
     const meta = REPORT_META[data.kind];
@@ -1113,6 +1115,10 @@ Regras:
     };
     return;
     } catch (err) {
+      console.error("[generateReport] error", err);
+
+
+
       // Auto-refund on failure so user does not lose credits for a broken PDF.
       if (charged) {
         try {

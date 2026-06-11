@@ -26,7 +26,7 @@ export const CREDIT_COST_CATALOG = {
     description: "Custo cobrado no momento que o usuário envia uma pergunta.",
   },
   oracle_answer: {
-    amount: 0,
+    amount: 1,
     label: "Oráculo — Resposta Gerada",
     description: "Custo cobrado para cada resposta gerada pela IA.",
   },
@@ -131,6 +131,7 @@ export const CREDIT_COST_CATALOG = {
     description: "Trânsitos e lunações cruzados com seu mapa para o mês.",
   },
 } as const satisfies Record<string, { amount: number; label: string; description: string }>;
+
 
 export type CreditAction = keyof typeof CREDIT_COST_CATALOG | string;
 
@@ -239,11 +240,11 @@ export async function hasUnlimitedAccess(
     report_business: "sub_business_map",
   };
   const addonIds: string[] = [];
-  if (action.startsWith("report_")) {
+  if (action.startsWith("report_") || action === "energy_calendar") {
     addonIds.push("sub_unlimited_reports");
     const specific = perReportAddon[action];
     if (specific) addonIds.push(specific);
-  } else if (action === "oracle_message") {
+  } else if (action === "oracle_message" || action === "oracle_answer") {
     addonIds.push("sub_oracle_premium");
   } else if (
     action === "tarot_card_day" ||
@@ -254,7 +255,10 @@ export async function hasUnlimitedAccess(
     addonIds.push("sub_tarot_unlimited");
   } else if (action === "kabbalah_meditation" || action === "kabbalah_pdf") {
     addonIds.push("sub_kabbalah_unlimited");
+  } else if (action === "weekly_reading") {
+    addonIds.push("sub_daily_horoscope");
   }
+
   if (addonIds.length === 0) return false;
   const { data } = await supabaseAdmin
     .from("user_subscriptions")

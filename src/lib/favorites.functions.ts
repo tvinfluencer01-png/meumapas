@@ -104,6 +104,19 @@ export const generateFavoriteNote = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const { consumeCredits, getCreditCost, hasUnlimitedAccess } = await import("./credits.functions");
+
+    // Cobrança: 1 crédito por nota (oracle_message)
+    const action = "oracle_message";
+    const unlimited = await hasUnlimitedAccess(userId, action);
+    const cost = unlimited ? 0 : await getCreditCost(action);
+    if (!unlimited && cost > 0) {
+      const ok = await consumeCredits(userId, action, `Nota personalizada ${data.date}`);
+      if (!ok) {
+        throw new Error(`Saldo insuficiente. Gerar nota custa ${cost} créditos.`);
+      }
+    }
+
 
     const birth = await resolveActiveSubject(supabase, userId);
 

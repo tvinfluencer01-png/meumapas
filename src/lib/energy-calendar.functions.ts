@@ -55,6 +55,19 @@ export const getEnergyCalendar = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const { consumeCredits, getCreditCost, hasUnlimitedAccess } = await import("./credits.functions");
+
+    // Cobrança: 2 créditos por consulta, a menos que tenha sub ilimitada (via sub_unlimited_reports ou sub_energy_calendar)
+    const action = "energy_calendar";
+    const unlimited = await hasUnlimitedAccess(userId, action);
+    const cost = unlimited ? 0 : await getCreditCost(action);
+    if (!unlimited && cost > 0) {
+      const ok = await consumeCredits(userId, action, `Calendário ${data.month}/${data.year}`);
+      if (!ok) {
+        throw new Error(`Saldo insuficiente. Consultar o calendário custa ${cost} créditos.`);
+      }
+    }
+
 
     // Active context: selected client or user's own profile
     const birth = await resolveActiveSubject(supabase, userId);

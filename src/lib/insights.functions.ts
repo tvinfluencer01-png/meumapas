@@ -73,6 +73,19 @@ export const getAIInsights = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<AIInsightResult> => {
     const { supabase, userId } = context;
+    const { consumeCredits, getCreditCost, hasUnlimitedAccess } = await import("./credits.functions");
+
+    // Cobrança: 1 crédito por consulta (oracle_answer ou oracle_message)
+    const action = "oracle_answer";
+    const unlimited = await hasUnlimitedAccess(userId, action);
+    const cost = unlimited ? 0 : await getCreditCost(action);
+    if (!unlimited && cost > 0) {
+      const ok = await consumeCredits(userId, action, "Insights da IA");
+      if (!ok) {
+        throw new Error(`Saldo insuficiente. Gerar insights custa ${cost} créditos.`);
+      }
+    }
+
 
     const birth = await resolveActiveSubject(supabase, userId);
     const chartQuery = supabase

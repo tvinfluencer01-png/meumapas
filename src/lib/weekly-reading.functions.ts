@@ -40,6 +40,19 @@ export const getWeeklyReading = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
+    const { consumeCredits, getCreditCost, hasUnlimitedAccess } = await import("./credits.functions");
+
+    // Cobrança: 1 crédito por leitura, a menos que tenha sub ilimitada
+    const action = "weekly_reading";
+    const unlimited = await hasUnlimitedAccess(userId, action);
+    const cost = unlimited ? 0 : await getCreditCost(action);
+    if (!unlimited && cost > 0) {
+      const ok = await consumeCredits(userId, action, "Leitura Semanal");
+      if (!ok) {
+        throw new Error(`Saldo insuficiente. A leitura semanal custa ${cost} créditos.`);
+      }
+    }
+
 
     const birth = await resolveActiveSubject(supabase, userId);
 

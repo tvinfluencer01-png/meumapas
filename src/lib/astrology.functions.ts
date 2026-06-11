@@ -229,7 +229,23 @@ export const computeNatalChart = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => ChartInput.parse(d))
   .handler(async ({ data, context }) => {
+    const { userId } = context;
+    
+    // Charge credits for chart calculation
+    const action: CreditAction = "astro_chart";
+    const unlimited = await hasUnlimitedAccess(userId, action);
+    const cost = unlimited ? 0 : await getCreditCost(action);
+    let charged = false;
+    if (!unlimited) {
+      const ok = await consumeCredits(userId, action, "Cálculo de Mapa Astral");
+      if (!ok) {
+        throw new Error(`Saldo insuficiente. Gerar o mapa custa ${cost} créditos.`);
+      }
+      charged = cost > 0;
+    }
+
     try {
+
       const time = data.timeUnknown ? "12:00:00" : (data.birthTime ?? "12:00:00");
       const [h, mi, s] = time.split(":").map(Number);
       const [y, mo, d] = data.birthDate.split("-").map(Number);
@@ -298,7 +314,15 @@ export const computeNatalChart = createServerFn({ method: "POST" })
         summary,
       };
     } catch (err) {
+      if (charged) {
+        await refundCredits(userId, "astro_chart", {
+          reason: err instanceof Error ? `Falha no mapa: ${err.message}`.slice(0, 200) : "Falha no mapa",
+          actorLabel: "system:astro",
+          originalReference: "Cálculo de Mapa Astral",
+        }).catch(() => {});
+      }
       await logFnError("computeNatalChart", err, context.userId, {
+
         birthDataId: data.birthDataId ?? null,
         birthDate: data.birthDate,
       });
