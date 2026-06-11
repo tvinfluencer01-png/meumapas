@@ -16,6 +16,7 @@ export const Route = createFileRoute("/auth")({
   validateSearch: (search: Record<string, unknown>) => {
     return {
       plan: (search.plan as string) || undefined,
+      mode: (search.mode as "signin" | "signup") || undefined,
     };
   },
   head: () => ({
@@ -54,7 +55,7 @@ function AuthPage() {
   const nav = useNavigate();
   const search = useSearch({ from: "/auth" });
   const { session, loading } = useAuth();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [mode, setMode] = useState<"signin" | "signup">(search.mode || "signin");
   const [submitting, setSubmitting] = useState(false);
   const [statusStep, setStatusStep] = useState(0);
   const [statusMode, setStatusMode] = useState<"signin" | "signup">("signin");
