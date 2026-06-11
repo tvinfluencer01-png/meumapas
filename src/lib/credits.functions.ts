@@ -166,8 +166,8 @@ export async function consumeCredits(
   const { data, error } = await supabaseAdmin.rpc("consume_credits", {
     _user_id: userId,
     _amount: amount,
-    _kind: action,
-    _reference: reference,
+    _kind: String(action),
+    _reference: reference ?? null,
   });
   if (error) {
     console.error("[credits] consume error", error);
