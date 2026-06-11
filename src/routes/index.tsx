@@ -920,9 +920,9 @@ function CTASection() {
         <p className="mb-12 text-xs uppercase tracking-[0.3em] text-muted-foreground">
           Sem cartão · Cancele quando quiser · 7 dias de garantia
         </p>
-        <Link to="/auth" className="gold-glow inline-block rounded-full bg-gold px-12 py-5 text-sm font-semibold uppercase tracking-[0.2em] text-primary-foreground transition-all hover:bg-gold-glow">
-          Descobrir meu mapa agora
-        </Link>
+        <a href="#planos" className="gold-glow inline-block rounded-full bg-gold px-12 py-5 text-sm font-semibold uppercase tracking-[0.2em] text-primary-foreground transition-all hover:bg-gold-glow">
+          Escolha sua ascensão
+        </a>
       </div>
     </section>
   );
@@ -1151,16 +1151,16 @@ function WhatsAppFloat({ number }: { number: string }) {
 /* ---------------- CHATBOT FLOAT ---------------- */
 function ChatbotFloat() {
   return (
-    <Link
-      to="/auth?plan=starter"
-      aria-label="Abrir oráculo IA"
+    <a
+      href="#planos"
+      aria-label="Escolha sua ascensão"
       className="group fixed bottom-24 right-6 z-50 flex items-center gap-3 rounded-full border border-gold/40 bg-background/90 px-5 py-3 text-xs uppercase tracking-[0.2em] text-gold backdrop-blur-md transition-all hover:bg-gold hover:text-primary-foreground"
     >
       <span className="relative flex size-2">
         <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-gold opacity-75" />
         <span className="relative inline-flex size-2 rounded-full bg-gold" />
       </span>
-      Falar com o Oráculo
-    </Link>
+      Escolha sua ascensão
+    </a>
   );
 }
