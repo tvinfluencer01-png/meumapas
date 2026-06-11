@@ -17,7 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Save, RotateCcw, Package, Sparkles, Undo2 } from "lucide-react";
+import { Save, RotateCcw, Package, Sparkles, Undo2, Plus, Trash2 } from "lucide-react";
 import { formatBRL } from "@/lib/addons.catalog";
 import { confirmDialog } from "@/components/system-feedback";
 
