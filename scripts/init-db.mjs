@@ -8,8 +8,8 @@ async function initDatabase() {
   const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-    console.error('❌ Erro: SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY não configurados no ambiente.');
-    process.exit(1);
+    console.log('ℹ️ SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY não configurados. Pulando inicialização do banco (normal durante build no Lovable).');
+    return;
   }
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
