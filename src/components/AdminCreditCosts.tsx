@@ -26,6 +26,7 @@ type Row = {
   label: string;
   description: string | null;
   updated_at?: string | null;
+  isDefault?: boolean;
 };
 
 export function AdminCreditCosts() {
@@ -123,14 +124,21 @@ export function AdminCreditCosts() {
                   <th className="px-3 py-2 font-medium">Nome</th>
                   <th className="px-3 py-2 font-medium">Descrição</th>
                   <th className="px-3 py-2 font-medium w-24">Custo</th>
-                  <th className="px-3 py-2 font-medium text-right w-40">Ações</th>
+                  <th className="px-3 py-2 font-medium text-right w-44">Ações</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map((r, i) => (
                   <tr key={r.action} className="border-t border-border align-top">
-                    <td className="px-3 py-2 font-mono text-xs text-muted-foreground">
-                      {r.action}
+                    <td className="px-3 py-2">
+                      <div className="font-mono text-[10px] text-muted-foreground uppercase tracking-tighter">
+                        {r.action}
+                      </div>
+                      {r.isDefault && (
+                        <span className="inline-block mt-1 px-1 py-0.5 rounded bg-muted text-[8px] uppercase tracking-wider text-muted-foreground">
+                          Padrão do sistema
+                        </span>
+                      )}
                     </td>
                     <td className="px-3 py-2">
                       <Input
@@ -172,17 +180,22 @@ export function AdminCreditCosts() {
                           size="sm"
                           onClick={() => upsertMut.mutate(r)}
                           disabled={upsertMut.isPending}
+                          variant={r.isDefault ? "secondary" : "default"}
                         >
-                          <Save className="size-3 mr-1" /> Salvar
+                          <Save className="size-3 mr-1" /> {r.isDefault ? "Personalizar" : "Salvar"}
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => removeRow(r.action)}
-                          disabled={deleteMut.isPending}
-                        >
-                          <Trash2 className="size-3" />
-                        </Button>
+                        {!r.isDefault && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => removeRow(r.action)}
+                            disabled={deleteMut.isPending}
+                            title="Remover personalização e voltar ao padrão"
+                          >
+                            <RefreshCw className="size-3" />
+                          </Button>
+                        )}
+                        {/* Only allow deleting if it's NOT in the catalog (we can't easily know here but we can assume if it has no isDefault it might be custom, though our server fn now adds isDefault to all catalog items) */}
                       </div>
                     </td>
                   </tr>
