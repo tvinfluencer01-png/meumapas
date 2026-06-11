@@ -1070,18 +1070,21 @@ export type Database = {
           id: string
           updated_at: string | null
           updated_by: string | null
+          whatsapp_number: string | null
         }
         Insert: {
           credit_value_cents?: number
           id?: string
           updated_at?: string | null
           updated_by?: string | null
+          whatsapp_number?: string | null
         }
         Update: {
           credit_value_cents?: number
           id?: string
           updated_at?: string | null
           updated_by?: string | null
+          whatsapp_number?: string | null
         }
         Relationships: []
       }
