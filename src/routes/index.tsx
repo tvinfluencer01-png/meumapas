@@ -3,6 +3,7 @@ import { motion, useReducedMotion } from "motion/react";
 import { Starfield } from "@/components/Starfield";
 import { Logo } from "@/components/Logo";
 import { useAuth } from "@/hooks/use-auth";
+import { CREDIT_PACKAGES, SUBSCRIPTION_ADDONS, formatBRL } from "@/lib/addons.catalog";
 import heroAstrolabe from "@/assets/hero-astrolabe.jpg";
 import oracleOrb from "@/assets/oracle-orb.jpg";
 
@@ -13,13 +14,13 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Mapa astral preciso, numerologia cabalística, tarot, meditação na Árvore da Vida e um Oráculo de IA treinado em sabedoria milenar. Tudo em um só lugar. Comece grátis.",
+          "Descubra o que o universo reservou para você. Mapas astrais cinematográficos, numerologia cabalística e o Oráculo IA mais preciso do Brasil. Comece sua jornada agora.",
       },
-      { property: "og:title", content: "Código Cósmico — Onde a IA encontra o Sagrado" },
+      { property: "og:title", content: "Código Cósmico — A Geometria Sagrada do Seu Destino" },
       {
         property: "og:description",
         content:
-          "A plataforma espiritual mais completa do Brasil: mapa astral, numerologia, tarot, meditação cabalística e IA espiritual. Comece grátis em 60 segundos.",
+          "Transforme sua vida com a sabedoria das estrelas. Mapa astral, numerologia e IA espiritual em uma única plataforma cinematográfica. Comece grátis.",
       },
       { property: "og:type", content: "website" },
     ],
