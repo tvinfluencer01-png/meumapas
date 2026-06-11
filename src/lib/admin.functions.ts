@@ -215,6 +215,58 @@ async function assertAdmin(userId: string) {
   if (!data) throw new Error("Forbidden: admin only");
 }
 
+export const getSystemGlobalSettings = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.userId);
+    const { data, error } = await supabaseAdmin
+      .from("system_settings")
+      .select("*")
+      .eq("id", "global")
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return {
+      whatsapp_number: data?.whatsapp_number ?? "",
+      credit_value_cents: data?.credit_value_cents ?? 0,
+    };
+  });
+
+export const saveSystemGlobalSettings = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({
+      whatsapp_number: z.string().trim().max(30).optional(),
+      credit_value_cents: z.number().int().min(0).optional(),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    const { error } = await supabaseAdmin
+      .from("system_settings")
+      .upsert(
+        {
+          id: "global",
+          whatsapp_number: data.whatsapp_number,
+          credit_value_cents: data.credit_value_cents,
+          updated_by: context.userId,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "id" }
+      );
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const getPublicSystemSettings = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const { data } = await supabaseAdmin
+      .from("system_settings")
+      .select("whatsapp_number")
+      .eq("id", "global")
+      .maybeSingle();
+    return { whatsapp_number: data?.whatsapp_number ?? "" };
+  });
+
 export const checkIsAdmin = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
