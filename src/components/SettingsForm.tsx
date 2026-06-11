@@ -2,14 +2,16 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ExternalLink, Eye, EyeOff, Save, Sparkles } from "lucide-react";
+import { CheckCircle2, ExternalLink, Eye, EyeOff, Save, Sparkles, RefreshCw, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getLovableApiKeyStatus } from "@/lib/admin.functions";
+import { getLovableApiKeyStatus, testAstrologyCredentials } from "@/lib/admin.functions";
+
+
 
 function OnlineBadge() {
   return (
@@ -23,6 +25,8 @@ function OnlineBadge() {
 export function SettingsForm() {
   const { user } = useAuth();
   const [saving, setSaving] = useState(false);
+  const [testingAstro, setTestingAstro] = useState(false);
+  const [astroStatus, setAstroStatus] = useState<{ ok: boolean; message: string } | null>(null);
   const [showLovableKey, setShowLovableKey] = useState(false);
   const [showCustomKey, setShowCustomKey] = useState(false);
   const [showAstroKey, setShowAstroKey] = useState(false);
@@ -45,6 +49,8 @@ export function SettingsForm() {
   });
 
   const fetchLovableKey = useServerFn(getLovableApiKeyStatus);
+  const testAstroFn = useServerFn(testAstrologyCredentials);
+
   const { data: lovableKeyStatus } = useQuery({
     queryKey: ["lovable-api-key-status"],
     queryFn: () => fetchLovableKey(),
@@ -84,9 +90,34 @@ export function SettingsForm() {
     }
   }
 
+  async function testAstro() {
+    if (!form.astrology_api_user_id || !form.astrology_api_key) {
+      toast.error("Informe User ID e API Key para testar.");
+      return;
+    }
+    setTestingAstro(true);
+    setAstroStatus(null);
+    try {
+      const res = await testAstroFn({
+        data: {
+          userId: form.astrology_api_user_id,
+          apiKey: form.astrology_api_key,
+        },
+      });
+      setAstroStatus({ ok: true, message: res.message });
+      toast.success(res.message);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Erro ao testar";
+      setAstroStatus({ ok: false, message: msg });
+      toast.error(msg);
+    } finally {
+      setTestingAstro(false);
+    }
+  }
+
   const astrologyOnline =
     form.preferred_engine === "swiss_ephemeris" ||
-    (form.preferred_engine === "astrology_api" && !!form.astrology_api_user_id && !!form.astrology_api_key);
+    (form.preferred_engine === "astrology_api" && astroStatus?.ok);
 
   const lovableConfigured = !!lovableKeyStatus?.configured;
   const customConfigured = !!form.custom_ai_key && !!form.custom_ai_model;
@@ -117,7 +148,10 @@ export function SettingsForm() {
 
         <div>
           <Label className="text-stardust">Engine preferido</Label>
-          <Select value={form.preferred_engine} onValueChange={(v) => setForm({ ...form, preferred_engine: v })}>
+          <Select 
+            value={form.preferred_engine} 
+            onValueChange={(v) => setForm(prev => ({ ...prev, preferred_engine: v }))}
+          >
             <SelectTrigger className="mt-1 bg-input border-border"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="swiss_ephemeris">Swiss Ephemeris (padrão, grátis)</SelectItem>
@@ -126,7 +160,11 @@ export function SettingsForm() {
           </Select>
         </div>
 
-        <div className="rounded-xl border border-gold/20 bg-gold/5 p-4 space-y-3">
+        <div className={`rounded-xl border p-4 space-y-4 transition-colors ${
+          form.preferred_engine === "astrology_api" 
+            ? "border-gold/40 bg-gold/10" 
+            : "border-gold/20 bg-gold/5 opacity-60"
+        }`}>
           <div className="flex items-start gap-2">
             <Sparkles className="size-4 text-gold mt-0.5 shrink-0" />
             <div className="text-sm text-stardust">
@@ -138,29 +176,66 @@ export function SettingsForm() {
               </ol>
             </div>
           </div>
+          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <Label className="text-stardust text-xs">User ID</Label>
-              <Input value={form.astrology_api_user_id}
-                onChange={(e) => setForm({ ...form, astrology_api_user_id: e.target.value })}
-                className="mt-1 bg-input border-border" placeholder="123456" />
+              <Input 
+                value={form.astrology_api_user_id}
+                disabled={form.preferred_engine === "swiss_ephemeris"}
+                onChange={(e) => setForm(prev => ({ ...prev, astrology_api_user_id: e.target.value }))}
+                className="mt-1 bg-input border-border" 
+                placeholder="123456" 
+              />
             </div>
             <div>
               <Label className="text-stardust text-xs">API Key</Label>
               <div className="relative mt-1">
-                <Input type={showAstroKey ? "text" : "password"} value={form.astrology_api_key}
-                  onChange={(e) => setForm({ ...form, astrology_api_key: e.target.value })}
-                  className="bg-input border-border pr-10" placeholder="••••••••" />
-                <button type="button" onClick={() => setShowAstroKey((s) => !s)}
+                <Input 
+                  type={showAstroKey ? "text" : "password"} 
+                  value={form.astrology_api_key}
+                  disabled={form.preferred_engine === "swiss_ephemeris"}
+                  onChange={(e) => setForm(prev => ({ ...prev, astrology_api_key: e.target.value }))}
+                  className="bg-input border-border pr-10" 
+                  placeholder="••••••••" 
+                />
+                <button 
+                  type="button" 
+                  onClick={() => setShowAstroKey((s) => !s)}
+                  disabled={form.preferred_engine === "swiss_ephemeris"}
                   className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-stardust"
-                  aria-label={showAstroKey ? "Ocultar chave" : "Mostrar chave"}>
+                  aria-label={showAstroKey ? "Ocultar chave" : "Mostrar chave"}
+                >
                   {showAstroKey ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                 </button>
               </div>
             </div>
           </div>
+
+          <div className="flex items-center justify-between gap-4 pt-2">
+            <div className="text-xs">
+              {astroStatus && (
+                <div className={`flex items-center gap-1.5 ${astroStatus.ok ? "text-emerald-500" : "text-destructive"}`}>
+                  {astroStatus.ok ? <CheckCircle2 className="size-3" /> : <AlertTriangle className="size-3" />}
+                  {astroStatus.message}
+                </div>
+              )}
+            </div>
+            <Button 
+              type="button"
+              variant="outline" 
+              size="sm"
+              disabled={testingAstro || form.preferred_engine === "swiss_ephemeris"}
+              onClick={testAstro}
+              className="gap-2 border-gold/30 hover:bg-gold/10"
+            >
+              <RefreshCw className={`size-3 ${testingAstro ? "animate-spin" : ""}`} />
+              {testingAstro ? "Testando..." : "Testar conexão"}
+            </Button>
+          </div>
         </div>
       </section>
+
 
       {/* AI provider */}
       <section className="glass-card rounded-2xl p-6 space-y-4">

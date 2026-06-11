@@ -982,3 +982,42 @@ export const getLovableApiKeyStatus = createServerFn({ method: "GET" })
       key: key || null,
     };
   });
+
+export const testAstrologyCredentials = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({
+      userId: z.string().trim().min(1, "User ID é obrigatório"),
+      apiKey: z.string().trim().min(1, "API Key é obrigatória"),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    
+    const auth = btoa(`${data.userId}:${data.apiKey}`);
+    
+    try {
+      const res = await fetch("https://json.astrologyapi.com/v1/sun_sign_prediction/daily/aries", {
+        method: "POST",
+        headers: {
+          "Authorization": `Basic ${auth}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ timezone: 5.5 })
+      });
+
+      if (res.status === 401) {
+        throw new Error("Credenciais inválidas: User ID ou API Key incorretos.");
+      }
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Erro na AstrologyAPI (HTTP ${res.status}): ${text || "Erro desconhecido"}`);
+      }
+
+      return { ok: true, message: "Conexão estabelecida com sucesso!" };
+    } catch (e) {
+      throw new Error(e instanceof Error ? e.message : "Erro ao conectar com AstrologyAPI");
+    }
+  });
+
