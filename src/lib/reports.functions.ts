@@ -1117,6 +1117,7 @@ Regras:
     } catch (err) {
 
 
+
       console.error("[generateReport] error", err);
 
       // Auto-refund on failure so user does not lose credits for a broken PDF.
