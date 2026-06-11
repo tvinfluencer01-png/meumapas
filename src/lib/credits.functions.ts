@@ -504,12 +504,46 @@ export const adminListCreditCosts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context.userId);
-    const { data, error } = await supabaseAdmin
+    const { data: dbCosts, error } = await supabaseAdmin
       .from("credit_costs")
       .select("action, amount, label, description, updated_at")
       .order("action", { ascending: true });
     if (error) throw new Error(error.message);
-    return { costs: data ?? [] };
+
+    const merged: Array<{
+      action: string;
+      amount: number;
+      label: string;
+      description: string | null;
+      updated_at?: string | null;
+      isDefault: boolean;
+    }> = [];
+
+    const dbMap = new Map((dbCosts ?? []).map((c) => [c.action, c]));
+
+    // Add all from catalog
+    for (const [action, def] of Object.entries(CREDIT_COST_CATALOG)) {
+      const db = dbMap.get(action);
+      merged.push({
+        action,
+        amount: db?.amount ?? def.amount,
+        label: db?.label ?? def.label,
+        description: db?.description ?? def.description,
+        updated_at: db?.updated_at ?? null,
+        isDefault: !db,
+      });
+      dbMap.delete(action);
+    }
+
+    // Add remaining from DB (custom actions)
+    for (const db of dbMap.values()) {
+      merged.push({
+        ...db,
+        isDefault: false,
+      });
+    }
+
+    return { costs: merged };
   });
 
 const UpsertCostSchema = z.object({
