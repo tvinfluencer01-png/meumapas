@@ -401,22 +401,22 @@ function AddonEditor({ row }: { row: AddonRow }) {
             <Save className="size-4 mr-1" />
             {saveMut.isPending ? "Salvando…" : "Salvar alterações"}
           </Button>
-          {hasOverride && (
-            <Button
-              variant="outline"
-              disabled={resetMut.isPending}
-              onClick={async () => {
-                const ok = await confirmDialog({
-                  title: "Restaurar padrão?",
-                  description: "As personalizações deste add-on serão removidas.",
-                  confirmText: "Restaurar",
-                });
-                if (ok) resetMut.mutate();
-              }}
-            >
-              <RotateCcw className="size-4 mr-1" /> Restaurar padrão
-            </Button>
-          )}
+          <Button
+            variant="outline"
+            className="text-destructive hover:bg-destructive/10"
+            disabled={deleteMut.isPending}
+            onClick={async () => {
+              const ok = await confirmDialog({
+                title: "Excluir add-on?",
+                description: `O add-on "${name}" será removido permanentemente.`,
+                confirmText: "Excluir",
+                destructive: true,
+              });
+              if (ok) deleteMut.mutate();
+            }}
+          >
+            <Trash2 className="size-4 mr-1" /> Excluir plano
+          </Button>
           {row.override?.updated_at && (
             <span className="text-xs text-muted-foreground">
               Última edição: {new Date(row.override.updated_at).toLocaleString("pt-BR")}
