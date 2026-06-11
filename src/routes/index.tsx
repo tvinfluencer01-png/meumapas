@@ -639,45 +639,16 @@ function Testimonials() {
 /* ---------------- PRICING ---------------- */
 function Pricing() {
   const { user } = useAuth();
-  
-  const { data: addons } = useQuery({
-    queryKey: ["admin-addons-public"],
+
+  const { data: packages } = useQuery({
+    queryKey: ["public-landing-packages"],
     queryFn: async () => {
-      const { listAdminAddons } = await import("@/lib/addon-settings.functions");
-      return listAdminAddons();
+      const { listPublicLandingPackages } = await import("@/lib/landing-packages.functions");
+      return listPublicLandingPackages();
     },
   });
 
-  const basicPlan = {
-    name: "Iniciante",
-    price: "Grátis",
-    sub: "para sempre",
-    anchor: null,
-    feats: [
-      "Mapa astral básico",
-      "Numerologia pitagórica",
-      "Trânsitos do dia",
-      "5 créditos de boas-vindas",
-    ],
-    cta: "Começar agora",
-    featured: false,
-    id: "free"
-  };
-
-  const dynamicPlans = (addons || [])
-    .filter(a => a.effective.enabled)
-    .map(p => ({
-      name: p.effective.name,
-      price: formatBRL(p.effective.price_cents).split(',')[0],
-      sub: "/ mês",
-      anchor: p.addon_id.includes('astrologer') ? "Para profissionais" : "Plano Completo",
-      feats: p.effective.features.slice(0, 7),
-      cta: "Ascender",
-      featured: p.defaults.highlight || p.addon_id.includes('astrologer'),
-      id: p.addon_id
-    }));
-
-  const displayPlans = [basicPlan, ...dynamicPlans].slice(0, 3);
+  const displayPlans = packages ?? [];
 
   return (
     <section id="planos" className="py-32">
@@ -692,51 +663,59 @@ function Pricing() {
           </p>
         </div>
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-          {displayPlans.map((p) => (
-            <article
-              key={p.id}
-              className={`relative flex flex-col p-12 transition-all ${
-                p.featured
-                  ? "gold-glow border-2 border-gold bg-gold/5"
-                  : "border border-border hover:border-gold/30"
-              }`}
-            >
-              {p.featured && (
-                <span className="absolute right-0 top-0 bg-gold px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-primary-foreground">
-                  Mais Escolhido
-                </span>
-              )}
-              <span className="mb-4 text-xs uppercase tracking-[0.3em] text-gold">{p.name}</span>
-              <div className="mb-2 font-serif text-4xl">
-                {p.price}
-                <span className="text-lg text-muted-foreground">{p.sub}</span>
-              </div>
-              {p.anchor && (
-                <p className="mb-6 text-[10px] uppercase tracking-[0.25em] text-stardust/80">
-                  {p.anchor}
-                </p>
-              )}
-              {!p.anchor && <div className="mb-6" />}
-              <ul className="mb-12 flex-grow space-y-4 text-sm text-muted-foreground">
-                {p.feats.map((f) => (
-                  <li key={f} className="flex items-start gap-3">
-                    <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-gold" />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <Link
-                to={user ? "/addons" : "/auth"}
-                className={`block w-full py-4 text-center text-xs font-semibold uppercase tracking-[0.25em] transition-all ${
+          {displayPlans.map((p) => {
+            const priceDisplay = p.price_label?.trim()
+              ? p.price_label
+              : p.price_cents === 0
+                ? "Grátis"
+                : formatBRL(p.price_cents).split(",")[0];
+            return (
+              <article
+                key={p.id}
+                className={`relative flex flex-col p-12 transition-all ${
                   p.featured
-                    ? "bg-gold text-primary-foreground hover:bg-gold-glow"
-                    : "border border-border text-foreground hover:border-foreground"
+                    ? "gold-glow border-2 border-gold bg-gold/5"
+                    : "border border-border hover:border-gold/30"
                 }`}
               >
-                {p.cta}
-              </Link>
-            </article>
-          ))}
+                {p.featured && (
+                  <span className="absolute right-0 top-0 bg-gold px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-primary-foreground">
+                    Mais Escolhido
+                  </span>
+                )}
+                <span className="mb-4 text-xs uppercase tracking-[0.3em] text-gold">{p.name}</span>
+                <div className="mb-2 font-serif text-4xl">
+                  {priceDisplay}
+                  <span className="text-lg text-muted-foreground">{p.sub_label}</span>
+                </div>
+                {p.anchor ? (
+                  <p className="mb-6 text-[10px] uppercase tracking-[0.25em] text-stardust/80">
+                    {p.anchor}
+                  </p>
+                ) : (
+                  <div className="mb-6" />
+                )}
+                <ul className="mb-12 flex-grow space-y-4 text-sm text-muted-foreground">
+                  {p.features.map((f) => (
+                    <li key={f} className="flex items-start gap-3">
+                      <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-gold" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  to={user ? "/addons" : "/auth"}
+                  className={`block w-full py-4 text-center text-xs font-semibold uppercase tracking-[0.25em] transition-all ${
+                    p.featured
+                      ? "bg-gold text-primary-foreground hover:bg-gold-glow"
+                      : "border border-border text-foreground hover:border-foreground"
+                  }`}
+                >
+                  {p.cta_label}
+                </Link>
+              </article>
+            );
+          })}
         </div>
       </div>
     </section>
