@@ -126,7 +126,7 @@ function Hero() {
         </p>
 
         <div className="mb-6 flex flex-col items-center justify-center gap-4 sm:flex-row">
-          <Link to="/auth" className="gold-glow rounded-full bg-gold px-10 py-4 text-sm font-semibold uppercase tracking-[0.2em] text-primary-foreground transition-all hover:bg-gold-glow">
+          <Link to="/auth?plan=starter" className="gold-glow rounded-full bg-gold px-10 py-4 text-sm font-semibold uppercase tracking-[0.2em] text-primary-foreground transition-all hover:bg-gold-glow">
             Desbloquear meu destino
           </Link>
           <a href="#planos" className="rounded-full border border-border px-10 py-4 text-sm uppercase tracking-[0.2em] text-foreground transition-colors hover:border-gold/40 hover:text-gold">
@@ -366,7 +366,7 @@ function OracleSection() {
             </div>
           </div>
 
-          <Link to="/auth" className="inline-block rounded-full bg-stardust px-8 py-4 text-xs font-semibold uppercase tracking-[0.2em] text-night transition-colors hover:bg-gold">
+          <Link to="/auth?plan=starter" className="inline-block rounded-full bg-stardust px-8 py-4 text-xs font-semibold uppercase tracking-[0.2em] text-night transition-colors hover:bg-gold">
             Consultar gratuitamente
           </Link>
         </div>
@@ -750,7 +750,7 @@ function AddonsSection() {
           {packages.map((a) => (
             <Link
               key={a.id}
-              to={user ? "/addons" : "/auth"}
+              to={user ? "/addons" : `/auth?plan=${a.id}`}
               className={`rounded-2xl border p-6 text-left transition-all ${
                 a.credits > 40 ? "border-gold/40 bg-gold/5 gold-glow" : "border-border hover:border-gold/30"
               }`}
@@ -1152,7 +1152,7 @@ function WhatsAppFloat({ number }: { number: string }) {
 function ChatbotFloat() {
   return (
     <Link
-      to="/auth"
+      to="/auth?plan=starter"
       aria-label="Abrir oráculo IA"
       className="group fixed bottom-24 right-6 z-50 flex items-center gap-3 rounded-full border border-gold/40 bg-background/90 px-5 py-3 text-xs uppercase tracking-[0.2em] text-gold backdrop-blur-md transition-all hover:bg-gold hover:text-primary-foreground"
     >
