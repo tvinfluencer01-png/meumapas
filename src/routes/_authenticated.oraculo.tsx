@@ -27,6 +27,7 @@ const SUGESTOES = [
 function OraculoPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [input, setInput] = useState("");
 
   const endRef = useRef<HTMLDivElement>(null);
