@@ -8,6 +8,7 @@ import { CREDIT_PACKAGES, SUBSCRIPTION_ADDONS, formatBRL } from "@/lib/addons.ca
 import heroAstrolabe from "@/assets/hero-astrolabe.jpg";
 import oracleOrb from "@/assets/oracle-orb.jpg";
 import zodiac3dWheel from "@/assets/zodiac-3d-wheel.png";
+import synastry3d from "@/assets/synastry-3d.png";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -444,10 +445,17 @@ function Compatibility() {
     <section className="mx-auto max-w-7xl px-6 py-32">
       <div className="grid items-center gap-16 lg:grid-cols-2">
         <div className="relative mx-auto aspect-square w-full max-w-md">
-          <div className="absolute left-1/4 top-1/2 size-48 -translate-y-1/2 rounded-full border border-gold/40 bg-gradient-to-br from-gold/20 to-transparent backdrop-blur-sm" />
-          <div className="absolute right-1/4 top-1/2 size-48 -translate-y-1/2 rounded-full border border-nebula/40 bg-gradient-to-br from-nebula/20 to-transparent backdrop-blur-sm" />
+          <div className="absolute inset-0 animate-slow-spin rounded-full border border-gold/15" />
+          <img
+            src={synastry3d}
+            alt="Sinastria: dois mapas astrais entrelaçados em geometria sagrada"
+            width={1024}
+            height={1024}
+            loading="lazy"
+            className="absolute inset-0 size-full animate-logo-float object-contain drop-shadow-[0_0_50px_color-mix(in_oklab,var(--gold)_45%,transparent)]"
+          />
           <div className="absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
-            <div className="size-16 rounded-full bg-gold-glow shadow-[0_0_60px_var(--gold)]" />
+            <div className="size-10 rounded-full bg-gold-glow animate-logo-pulse shadow-[0_0_60px_var(--gold)]" />
           </div>
         </div>
         <div>
