@@ -247,6 +247,7 @@ export const generateReport = createServerFn({ method: "POST" })
       charged = true;
     }
 
+
     try {
 
     const num = computeNumerology(birth.full_name, birth.birth_date);
