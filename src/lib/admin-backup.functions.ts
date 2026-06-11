@@ -119,7 +119,10 @@ export const adminExportDatabase = createServerFn({ method: "POST" })
 
               if (typeof val === "string") return `'${val.replace(/'/g, "''")}'`;
               if (typeof val === "boolean") return val ? "true" : "false";
-              if (typeof val === "object") return `'${JSON.stringify(val).replace(/'/g, "''")}'`;
+              if (typeof val === "object") {
+                // If it's an object but not caught by isArray above, it's likely JSONB
+                return `'${JSON.stringify(val).replace(/'/g, "''")}'::jsonb`;
+              }
               return val;
             });
             return `(${values.join(", ")})`;
