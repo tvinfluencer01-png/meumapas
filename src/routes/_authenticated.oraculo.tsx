@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useChat } from "@ai-sdk/react";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Sparkles, Send, MessageCircle, Loader2, Stars, Square } from "lucide-react";
 import { CreditCostBadge } from "@/components/CreditCostBadge";
 import { emitCreditsChanged } from "@/lib/credits-events";
+import { showFeedback } from "@/components/system-feedback";
 
 export const Route = createFileRoute("/_authenticated/oraculo")({
   component: OraculoPage,
@@ -26,6 +27,7 @@ const SUGESTOES = [
 function OraculoPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [input, setInput] = useState("");
 
   const endRef = useRef<HTMLDivElement>(null);
@@ -48,7 +50,34 @@ function OraculoPage() {
 
   const { messages, sendMessage, status, stop, error } = useChat({
     transport,
-    onError: (e) => console.error("[oraculo]", e),
+    onError: (e) => {
+      console.error("[oraculo]", e);
+      let msg = e?.message ?? "";
+      try {
+        const parsed = JSON.parse(msg);
+        if (parsed?.error) msg = parsed.error;
+      } catch {}
+      const insufficient = /saldo insuficiente|insufficient|cr[eé]dito/i.test(msg);
+      if (insufficient) {
+        showFeedback({
+          type: "warning",
+          title: "Saldo insuficiente",
+          description:
+            "Você não possui créditos suficientes para consultar o Oráculo. Adquira créditos para continuar sua jornada.",
+          confirmText: "Comprar créditos",
+          cancelText: "Agora não",
+          showCancel: true,
+        }).then((ok) => {
+          if (ok) navigate({ to: "/addons" });
+        });
+      } else {
+        showFeedback({
+          type: "error",
+          title: "Erro ao consultar o Oráculo",
+          description: msg || "Não foi possível completar sua consulta. Tente novamente.",
+        });
+      }
+    },
   });
 
   const isLoading = status === "submitted" || status === "streaming";
@@ -136,11 +165,6 @@ function OraculoPage() {
             </div>
           )}
 
-          {error && (
-            <div className="text-sm text-destructive border border-destructive/30 bg-destructive/10 rounded-lg p-3">
-              Ocorreu um erro: {error.message}
-            </div>
-          )}
 
           <div ref={endRef} />
         </div>
