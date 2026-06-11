@@ -48,7 +48,7 @@ export function AdminPlanMigration() {
 
   const filteredSubs = (subs || []).filter(s => 
     s.addon_id.toLowerCase().includes(search.toLowerCase()) || 
-    (s.profiles?.full_name || "").toLowerCase().includes(search.toLowerCase())
+    (s.full_name || "").toLowerCase().includes(search.toLowerCase())
   );
 
   async function handleMigrate() {
@@ -58,7 +58,7 @@ export function AdminPlanMigration() {
 
     const ok = await confirmDialog({
       title: "Confirmar migração de plano?",
-      description: `O usuário ${selectedSub.profiles?.full_name || selectedSub.user_id} será movido de "${selectedSub.addon_id}" para "${newAddonName}".`,
+      description: `O usuário ${selectedSub.full_name || selectedSub.user_id} será movido de "${selectedSub.addon_id}" para "${newAddonName}".`,
       confirmText: "Migrar Agora",
     });
 
@@ -107,7 +107,7 @@ export function AdminPlanMigration() {
                 <tbody className="divide-y divide-border">
                   {filteredSubs.map(s => (
                     <tr key={s.id} className={selectedSub?.id === s.id ? "bg-gold/5" : ""}>
-                      <td className="px-3 py-2 font-medium">{s.profiles?.full_name || "Sem nome"}</td>
+                      <td className="px-3 py-2 font-medium">{s.full_name || "Sem nome"}</td>
                       <td className="px-3 py-2 text-xs font-mono">{s.addon_id}</td>
                       <td className="px-3 py-2 text-right">
                         <Button 
@@ -142,7 +142,7 @@ export function AdminPlanMigration() {
               <AlertCircle className="size-5 text-gold shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm font-medium">Migrando usuário:</p>
-                <p className="text-xs text-muted-foreground">{selectedSub.profiles?.full_name} ({selectedSub.user_id})</p>
+                <p className="text-xs text-muted-foreground">{selectedSub.full_name} ({selectedSub.user_id})</p>
                 <p className="text-xs text-muted-foreground mt-1">Plano de origem: <span className="font-mono">{selectedSub.addon_id}</span></p>
               </div>
             </div>
