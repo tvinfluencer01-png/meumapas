@@ -165,11 +165,6 @@ function OraculoPage() {
             </div>
           )}
 
-          {error && (
-            <div className="text-sm text-destructive border border-destructive/30 bg-destructive/10 rounded-lg p-3">
-              Ocorreu um erro: {error.message}
-            </div>
-          )}
 
           <div ref={endRef} />
         </div>
