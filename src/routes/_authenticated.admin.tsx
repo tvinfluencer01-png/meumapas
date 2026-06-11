@@ -1,14 +1,15 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { Shield, MessageSquare, Save, Send, CheckCircle2, AlertTriangle, Users, Search, ShieldOff, ShieldCheck, History, RefreshCw, Settings as SettingsIcon, Wallet, Coins, MoreHorizontal, UserCog, KeyRound, Package, Trash2, Coins as CoinsIcon, Zap, Plug, Clock, UserPlus, Eye, EyeOff, Database, Download, Loader2 } from "lucide-react";
+import { Shield, MessageSquare, Save, Send, CheckCircle2, AlertTriangle, Users, Search, ShieldOff, ShieldCheck, History, RefreshCw, Settings as SettingsIcon, Wallet, Coins, MoreHorizontal, UserCog, KeyRound, Package, Trash2, Coins as CoinsIcon, Zap, Plug, Clock, UserPlus, Eye, EyeOff, Database, Download, Loader2, Phone } from "lucide-react";
 import { MercadoPagoForm } from "@/components/MercadoPagoForm";
 import { AdminCreditsManager, CreditsDialog } from "@/components/AdminCreditsManager";
 import { AdminCreditCosts } from "@/components/AdminCreditCosts";
 import { AdminCreditPackages } from "@/components/AdminCreditPackages";
 import { AdminAddons } from "@/components/AdminAddons";
 import { AdminCronStatus } from "@/components/AdminCronStatus";
+import { AdminGlobalSettings } from "@/components/AdminGlobalSettings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -82,11 +83,23 @@ function AdminPage() {
 
   return (
     <div className="space-y-6">
-      <header className="flex items-center gap-3">
-        <Shield className="size-6 text-gold" />
-        <div>
-          <h1 className="text-2xl font-serif shimmer-text">Painel do Super Admin</h1>
-          <p className="text-sm text-muted-foreground">Configurações sensíveis, integrações e gestão de usuários.</p>
+      <header className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <Shield className="size-6 text-gold" />
+          <div>
+            <h1 className="text-2xl font-serif shimmer-text">Painel do Super Admin</h1>
+            <p className="text-sm text-muted-foreground">Configurações sensíveis, integrações e gestão de usuários.</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            asChild
+            className="border-gold/30 hover:bg-gold/10 text-gold"
+          >
+            <Link to="/">Ver Landing Page</Link>
+          </Button>
         </div>
       </header>
 
@@ -125,6 +138,9 @@ function AdminPage() {
           <TabsTrigger value="backup" className="gap-2">
             <Database className="size-4" /> Backup
           </TabsTrigger>
+          <TabsTrigger value="global" className="gap-2">
+            <Phone className="size-4" /> Landing Page
+          </TabsTrigger>
         </TabsList>
 
 
@@ -161,6 +177,9 @@ function AdminPage() {
         </TabsContent>
         <TabsContent value="backup" className="mt-0">
           <BackupAdmin />
+        </TabsContent>
+        <TabsContent value="global" className="mt-0">
+          <AdminGlobalSettings />
         </TabsContent>
       </Tabs>
 
