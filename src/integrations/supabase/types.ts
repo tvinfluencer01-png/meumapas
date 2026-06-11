@@ -1331,6 +1331,13 @@ export type Database = {
         }
         Returns: boolean
       }
+      get_public_enums: {
+        Args: never
+        Returns: {
+          enum_label: string
+          type_name: string
+        }[]
+      }
       get_public_tables: {
         Args: never
         Returns: {
