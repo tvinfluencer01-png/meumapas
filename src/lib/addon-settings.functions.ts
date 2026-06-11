@@ -201,38 +201,41 @@ export const listAdminAddons = createServerFn({ method: "GET" })
     // Process purely custom ones (ones in DB not in catalog)
     const customResults: AddonRow[] = (rows ?? [])
       .filter(r => !catalogIds.has(r.addon_id))
-      .map(r => ({
-        addon_id: r.addon_id,
-        defaults: {
-          name: r.name || r.addon_id,
-          description: r.description || "",
-          features: Array.isArray(r.features) ? r.features : [],
-          price_cents: r.price_cents || 0,
-          highlight: false,
-          prompt_template: null,
-          prompt_vars: [],
-          prompt_note: null,
-          prompt_applied: false,
-        },
-        override: {
+      .map(r => {
+        const features = Array.isArray(r.features) ? r.features.map(f => String(f)) : [];
+        return {
           addon_id: r.addon_id,
-          name: r.name,
-          description: r.description,
-          features: Array.isArray(r.features) ? r.features : [],
-          price_cents: r.price_cents,
-          prompt: r.prompt,
-          enabled: r.enabled,
-          updated_at: r.updated_at,
-        },
-        effective: {
-          name: r.name || r.addon_id,
-          description: r.description || "",
-          features: Array.isArray(r.features) ? r.features : [],
-          price_cents: r.price_cents || 0,
-          prompt: r.prompt,
-          enabled: r.enabled,
-        }
-      }));
+          defaults: {
+            name: r.name || r.addon_id,
+            description: r.description || "",
+            features,
+            price_cents: r.price_cents || 0,
+            highlight: false,
+            prompt_template: null,
+            prompt_vars: [],
+            prompt_note: null,
+            prompt_applied: false,
+          },
+          override: {
+            addon_id: r.addon_id,
+            name: r.name,
+            description: r.description,
+            features,
+            price_cents: r.price_cents,
+            prompt: r.prompt,
+            enabled: r.enabled,
+            updated_at: r.updated_at,
+          },
+          effective: {
+            name: r.name || r.addon_id,
+            description: r.description || "",
+            features,
+            price_cents: r.price_cents || 0,
+            prompt: r.prompt,
+            enabled: r.enabled,
+          }
+        };
+      });
 
     return [...catalogResults, ...customResults];
   });
