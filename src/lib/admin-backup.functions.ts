@@ -103,6 +103,7 @@ export const adminExportDatabase = createServerFn({ method: "POST" })
               if (val === null) return "NULL";
               
               // Find column info to check if it's an array
+              const colInfo = cols?.find((c: any) => c.column_name === colName);
               const udtType = colInfo?.data_type?.toUpperCase();
               const isArray = udtType?.startsWith("_") || udtType?.includes("ARRAY");
 
