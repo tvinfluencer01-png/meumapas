@@ -668,7 +668,7 @@ function Pricing() {
               ? p.price_label
               : p.price_cents === 0
                 ? "Grátis"
-                : formatBRL(p.price_cents).split(",")[0];
+                : formatBRL(p.price_cents);
             return (
               <article
                 key={p.id}
