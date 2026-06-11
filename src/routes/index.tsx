@@ -3,6 +3,7 @@ import { motion, useReducedMotion } from "motion/react";
 import { Starfield } from "@/components/Starfield";
 import { Logo } from "@/components/Logo";
 import { useAuth } from "@/hooks/use-auth";
+import { CREDIT_PACKAGES, SUBSCRIPTION_ADDONS, formatBRL } from "@/lib/addons.catalog";
 import heroAstrolabe from "@/assets/hero-astrolabe.jpg";
 import oracleOrb from "@/assets/oracle-orb.jpg";
 
@@ -13,13 +14,13 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Mapa astral preciso, numerologia cabalística, tarot, meditação na Árvore da Vida e um Oráculo de IA treinado em sabedoria milenar. Tudo em um só lugar. Comece grátis.",
+          "Descubra o que o universo reservou para você. Mapas astrais cinematográficos, numerologia cabalística e o Oráculo IA mais preciso do Brasil. Comece sua jornada agora.",
       },
-      { property: "og:title", content: "Código Cósmico — Onde a IA encontra o Sagrado" },
+      { property: "og:title", content: "Código Cósmico — A Geometria Sagrada do Seu Destino" },
       {
         property: "og:description",
         content:
-          "A plataforma espiritual mais completa do Brasil: mapa astral, numerologia, tarot, meditação cabalística e IA espiritual. Comece grátis em 60 segundos.",
+          "Transforme sua vida com a sabedoria das estrelas. Mapa astral, numerologia e IA espiritual em uma única plataforma cinematográfica. Comece grátis.",
       },
       { property: "og:type", content: "website" },
     ],
@@ -95,28 +96,28 @@ function Hero() {
       <div className="relative z-10 mx-auto max-w-5xl text-center">
         <span className="mb-8 inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/5 px-4 py-1.5 text-[10px] uppercase tracking-[0.35em] text-gold">
           <span className="size-1.5 animate-pulse rounded-full bg-gold" />
-          +12.847 mapas gerados · 4.9★ por leitores reais
+          A Geometria Sagrada do Seu Destino
         </span>
         <h1 className="mb-8 font-serif text-5xl italic leading-[1.05] md:text-7xl lg:text-8xl">
           Você não nasceu para <br />
           <span className="shimmer-text">viver no escuro.</span>
         </h1>
         <p className="mx-auto mb-12 max-w-2xl text-balance text-lg font-light leading-relaxed text-muted-foreground md:text-xl">
-          Mapa astral cinematográfico, numerologia cabalística, tarot, meditação na Árvore da Vida
-          e um Oráculo de IA treinado em sabedoria milenar — tudo conversando com{" "}
-          <em className="text-stardust">a sua história</em>, em uma única plataforma.
+          Descubra o mapa que o universo desenhou para você. Relatórios cinematográficos, 
+          numerologia profunda e um Oráculo IA que realmente conhece sua alma.
+          <em className="block mt-4 text-stardust not-italic font-medium">A clareza que faltava para sua ascensão pessoal.</em>
         </p>
 
         <div className="mb-6 flex flex-col items-center justify-center gap-4 sm:flex-row">
           <Link to="/auth" className="gold-glow rounded-full bg-gold px-10 py-4 text-sm font-semibold uppercase tracking-[0.2em] text-primary-foreground transition-all hover:bg-gold-glow">
-            Começar grátis em 60s
+            Desbloquear meu destino
           </Link>
           <a href="#planos" className="rounded-full border border-border px-10 py-4 text-sm uppercase tracking-[0.2em] text-foreground transition-colors hover:border-gold/40 hover:text-gold">
-            Ver planos
+            Ver Planos de Ascensão
           </a>
         </div>
         <p className="mb-16 text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-          Sem cartão · Cancele em 1 clique · 7 dias de garantia
+          Sem cartão de crédito · 7 dias de garantia incondicional
         </p>
 
         <div className="relative overflow-hidden rounded-2xl border border-border bg-card/40">
@@ -620,71 +621,53 @@ function Testimonials() {
 
 /* ---------------- PRICING ---------------- */
 function Pricing() {
-  const plans = [
-    {
-      name: "Iniciante",
-      price: "Grátis",
-      sub: "para sempre",
-      anchor: null,
-      feats: [
-        "Mapa astral completo",
-        "Numerologia básica",
-        "Trânsitos diários",
-        "5 créditos diários para Oráculo, Tarot e relatórios",
-      ],
-      cta: "Começar grátis",
-      featured: false,
-    },
-    {
-      name: "Místico",
-      price: "R$ 79",
-      sub: "/ mês",
-      anchor: "De R$ 149 · economize 47%",
-      feats: [
-        "Tudo do Iniciante",
-        "Oráculo IA ILIMITADO (GPT-5 e Gemini Pro)",
-        "Tarot ilimitado (1 e 3 cartas)",
-        "Meditação Cabalística ilimitada",
-        "Numerologia Cabalística (Gematria)",
-        "Relatórios temáticos ilimitados",
-        "Exportação PDF premium",
-      ],
-      cta: "Iniciar agora",
-      featured: true,
-    },
-    {
-      name: "Profissional",
-      price: "R$ 149",
-      sub: "/ mês",
-      anchor: "Para astrólogos e numerólogos",
-      feats: [
-        "Tudo do Místico",
-        "Clientes ILIMITADOS (CRM completo)",
-        "PDFs com SUA marca (logo + cores)",
-        "PDF CSS avançado (fontes, fundos, molduras)",
-        "Branding por categoria",
-        "Suporte prioritário",
-      ],
-      cta: "Ascender",
-      featured: false,
-    },
-  ];
+  const { user } = useAuth();
+  
+  // Featured primary subscription plans
+  const mainPlans = SUBSCRIPTION_ADDONS.filter(p => p.highlight);
+  const basicPlan = {
+    name: "Iniciante",
+    price: "Grátis",
+    sub: "para sempre",
+    anchor: null,
+    feats: [
+      "Mapa astral básico",
+      "Numerologia pitagórica",
+      "Trânsitos do dia",
+      "5 créditos de boas-vindas",
+    ],
+    cta: "Começar agora",
+    featured: false,
+    id: "free"
+  };
+
+  const displayPlans = [basicPlan, ...mainPlans.map(p => ({
+    name: p.name,
+    price: formatBRL(p.price_cents).split(',')[0],
+    sub: "/ mês",
+    anchor: p.id === 'sub_astrologer_numerologist' ? "Para profissionais" : "O mais completo",
+    feats: p.features.slice(0, 7),
+    cta: "Ascender",
+    featured: p.id === 'sub_astrologer_numerologist',
+    id: p.id
+  }))];
+
   return (
     <section id="planos" className="py-32">
       <div className="mx-auto max-w-7xl px-6">
         <div className="mb-20 text-center">
           <span className="mb-4 block text-xs uppercase tracking-[0.4em] text-gold/70">
-            Investimento — não despesa
+            A Geometria do Seu Destino
           </span>
-          <h2 className="mb-4 font-serif text-5xl italic">Escolha seu horizonte</h2>
+          <h2 className="mb-4 font-serif text-5xl italic">Escolha sua ascensão</h2>
           <p className="text-sm text-muted-foreground">
-            Cancele em 1 clique · 7 dias de garantia incondicional · Sem fidelidade
+            Acesso imediato · Cancele quando quiser · 7 dias de garantia incondicional
           </p>
         </div>
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-          {plans.map((p) => (
+          {displayPlans.map((p) => (
             <article
-              key={p.name}
+              key={p.id}
               className={`relative flex flex-col p-12 transition-all ${
                 p.featured
                   ? "gold-glow border-2 border-gold bg-gold/5"
@@ -693,7 +676,7 @@ function Pricing() {
             >
               {p.featured && (
                 <span className="absolute right-0 top-0 bg-gold px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-primary-foreground">
-                  93% escolhem este
+                  Mais Escolhido
                 </span>
               )}
               <span className="mb-4 text-xs uppercase tracking-[0.3em] text-gold">{p.name}</span>
@@ -716,7 +699,7 @@ function Pricing() {
                 ))}
               </ul>
               <Link
-                to="/auth"
+                to={user ? "/addons" : "/auth"}
                 className={`block w-full py-4 text-center text-xs font-semibold uppercase tracking-[0.25em] transition-all ${
                   p.featured
                     ? "bg-gold text-primary-foreground hover:bg-gold-glow"
@@ -736,36 +719,31 @@ function Pricing() {
 /* ---------------- ADDONS À LA CARTE ---------------- */
 function AddonsSection() {
   const { user } = useAuth();
-  const addons = [
-    { id: "credits_starter", name: "Pacote de 10 créditos", price: "R$ 19,90", sub: "uso pontual" },
-    { id: "credits_plus", name: "Pacote de 50 créditos", price: "R$ 79,90", sub: "melhor custo", featured: true },
-    { id: "credits_pro", name: "Pacote de 150 créditos", price: "R$ 199,90", sub: "uso intensivo" },
-  ];
-
+  
   return (
     <section className="border-y border-border bg-card/20 py-24">
       <div className="mx-auto max-w-5xl px-6 text-center">
         <span className="mb-4 block text-xs uppercase tracking-[0.4em] text-gold/70">
-          Prefere sem assinar?
+          Uso pontual & Sem compromisso
         </span>
-        <h2 className="mb-4 font-serif text-3xl italic">Compre créditos avulsos</h2>
+        <h2 className="mb-4 font-serif text-3xl italic">Créditos de Ascensão</h2>
         <p className="mb-12 text-sm text-muted-foreground">
-          Use quando quiser, expira nunca. Cada relatório, consulta ou tiragem consome 1 crédito.
+          Cada relatório ou consulta consome 1 crédito. Expira nunca. Use quando sentir o chamado.
         </p>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          {addons.map((a) => (
+          {CREDIT_PACKAGES.map((a) => (
             <Link
               key={a.id}
               to={user ? "/addons" : "/auth"}
               className={`rounded-2xl border p-6 text-left transition-all ${
-                a.featured ? "border-gold/40 bg-gold/5 gold-glow" : "border-border hover:border-gold/30"
+                a.highlight ? "border-gold/40 bg-gold/5 gold-glow" : "border-border hover:border-gold/30"
               }`}
             >
-              <p className="text-xs uppercase tracking-[0.25em] text-gold/80">{a.sub}</p>
-              <p className="mt-2 font-serif text-2xl text-stardust">{a.price}</p>
+              <p className="text-xs uppercase tracking-[0.25em] text-gold/80">{a.credits} créditos</p>
+              <p className="mt-2 font-serif text-2xl text-stardust">{formatBRL(a.price_cents)}</p>
               <p className="mt-1 text-sm text-muted-foreground">{a.name}</p>
               <div className="mt-4 text-xs font-semibold uppercase tracking-wider text-gold flex items-center gap-1 group">
-                Comprar agora <span className="transition-transform group-hover:translate-x-1">→</span>
+                Obter agora <span className="transition-transform group-hover:translate-x-1">→</span>
               </div>
             </Link>
           ))}
