@@ -345,7 +345,30 @@ function MapaAstral() {
         <div className="flex flex-col items-end gap-2">
           <div className="flex flex-wrap items-center gap-2 justify-end">
             <Button
-              onClick={handleGenerate}
+              onClick={() => {
+                if (!birth) return;
+                if (backendDown) return;
+                
+                const overview = qc.getQueryData(["my-credits-overview"]) as any;
+                const balance = overview?.balance ?? 0;
+                const costs = overview?.costs ?? {};
+                const cost = costs["astro_chart"]?.amount ?? 0;
+                
+                if (cost > 0 && balance < cost) {
+                  showFeedback({
+                    title: "Créditos Insuficientes",
+                    description: `Você tem ${balance} e precisa de ${cost} créditos para gerar o mapa astral. Deseja adquirir mais?`,
+                    type: "warning",
+                    confirmText: "Comprar Créditos",
+                    cancelText: "Agora não",
+                    showCancel: true,
+                  }).then(confirmed => {
+                    if (confirmed) window.location.href = "/addons";
+                  });
+                  return;
+                }
+                handleGenerate();
+              }}
               disabled={loading || !birth || backendDown || health.isLoading}
               className="bg-gold text-primary-foreground hover:bg-gold-glow"
             >
@@ -353,7 +376,27 @@ function MapaAstral() {
               {backendDown ? "Indisponível" : current ? "Recalcular" : "Gerar mapa"}
             </Button>
             <Button
-              onClick={handleExportPdf}
+              onClick={() => {
+                const overview = qc.getQueryData(["my-credits-overview"]) as any;
+                const balance = overview?.balance ?? 0;
+                const costs = overview?.costs ?? {};
+                const cost = costs["astro_pdf"]?.amount ?? 0;
+
+                if (cost > 0 && balance < cost) {
+                  showFeedback({
+                    title: "Créditos Insuficientes",
+                    description: `Você tem ${balance} e precisa de ${cost} créditos para exportar o PDF. Deseja adquirir mais?`,
+                    type: "warning",
+                    confirmText: "Comprar Créditos",
+                    cancelText: "Agora não",
+                    showCancel: true,
+                  }).then(confirmed => {
+                    if (confirmed) window.location.href = "/addons";
+                  });
+                  return;
+                }
+                handleExportPdf();
+              }}
               disabled={pdfLoading || !currentChartId || backendDown}
               variant="outline"
               className="border-gold/40 text-gold hover:bg-gold/10"
