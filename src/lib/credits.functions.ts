@@ -12,8 +12,23 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 export const CREDIT_COST_CATALOG = {
   oracle_message: {
     amount: 1,
-    label: "Mensagem do Oráculo (IA)",
-    description: "Cobrado por cada pergunta respondida no chat com a IA (não por caractere).",
+    label: "Oráculo — Pergunta Respondida",
+    description: "Custo por cada pergunta que a IA responde no chat (modelo atual).",
+  },
+  oracle_consultation: {
+    amount: 0,
+    label: "Oráculo — Nova Consulta",
+    description: "Custo para iniciar uma nova sessão/conversa com o Oráculo.",
+  },
+  oracle_question: {
+    amount: 0,
+    label: "Oráculo — Pergunta Enviada",
+    description: "Custo cobrado no momento que o usuário envia uma pergunta.",
+  },
+  oracle_answer: {
+    amount: 0,
+    label: "Oráculo — Resposta Gerada",
+    description: "Custo cobrado para cada resposta gerada pela IA.",
   },
   astro_chart: {
     amount: 3,
