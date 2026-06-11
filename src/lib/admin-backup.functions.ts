@@ -19,43 +19,31 @@ export const adminExportDatabase = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     await assertAdmin(context.userId);
 
-    const tables = [
-      "profiles",
-      "user_roles",
-      "user_settings",
-      "user_credits",
-      "credit_costs",
-      "credit_packages",
-      "credit_transactions",
-      "birth_data",
-      "client_profiles",
-      "astro_charts",
-      "reports",
-      "numerology_reports",
-      "tarot_readings",
-      "kabbalah_meditations",
-      "calendar_favorites",
-      "horoscope_subscriptions",
-      "horoscope_log",
-      "notification_preferences",
-      "notification_log",
-      "system_settings",
-      "mercado_pago_settings",
-      "twilio_settings",
-      "evolution_settings",
-      "addon_settings",
-      "payment_orders",
-      "user_subscriptions",
-      "pdf_branding",
-      "role_audit_log",
-      "app_logs",
-      "ai_conversations",
-      "ai_messages",
-    ];
+    // Get all public tables dynamically
+    const { data: tableRows, error: tableError } = await supabaseAdmin.rpc("get_public_tables" as any);
+    
+    let tables: string[] = [];
+    if (tableError || !tableRows) {
+      // Fallback to hardcoded list if RPC fails or returns nothing
+      tables = [
+        "profiles", "user_roles", "user_settings", "user_credits", 
+        "credit_costs", "credit_packages", "credit_transactions",
+        "birth_data", "client_profiles", "astro_charts", "reports",
+        "numerology_reports", "tarot_readings", "kabbalah_meditations",
+        "calendar_favorites", "horoscope_subscriptions", "horoscope_log",
+        "notification_preferences", "notification_log", "system_settings",
+        "mercado_pago_settings", "twilio_settings", "evolution_settings",
+        "addon_settings", "payment_orders", "user_subscriptions",
+        "pdf_branding", "role_audit_log", "app_logs", "ai_conversations",
+        "ai_messages"
+      ];
+    } else {
+      tables = (tableRows as any[]).map(r => r.table_name);
+    }
 
     let sql = "-- Backup gerado em " + new Date().toISOString() + "\n";
     sql += "-- Sistema: Código Cósmico\n";
-    sql += "-- Este arquivo contém a ESTRUTURA e os DADOS para migração.\n\n";
+    sql += "-- Este arquivo contém a ESTRUTURA e os DADOS para migração completa.\n\n";
     
     sql += "BEGIN;\n\n";
 
