@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { showLoader, hideLoader, updateLoader } from "@/components/system-feedback";
-import { Loader2, Sparkles, Wand2, AlertTriangle, FileDown, CalendarClock, Trash2, Download } from "lucide-react";
+import { showFeedback, showLoader, hideLoader, updateLoader } from "@/components/system-feedback";
+import { Loader2, Sparkles, Wand2, AlertTriangle, FileDown, CalendarClock, Trash2, Download, ShoppingCart } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { computeNatalChart, pingAstro, generateAstroForecast, exportAstroPdf, deleteAstroForecast, downloadAstroForecastPdf } from "@/lib/astrology.functions";
@@ -29,6 +29,7 @@ const PLANET_GLYPH: Record<string,string> = {
 
 function MapaAstral() {
   const { user } = useAuth();
+  const qc = useQueryClient();
   const compute = useServerFn(computeNatalChart);
   const ping = useServerFn(pingAstro);
   const genForecast = useServerFn(generateAstroForecast);
@@ -157,9 +158,9 @@ function MapaAstral() {
     try {
       const f = await genForecast({ data: { chartId: currentChartId } });
       setForecast(f);
-      toast.success("Previsões reveladas.");
+      showFeedback({ title: "Previsões reveladas", type: "success" });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Falha ao gerar previsões.");
+      showFeedback({ title: "Erro nas previsões", description: e instanceof Error ? e.message : "Falha ao gerar previsões.", type: "error" });
     } finally {
       setForecastLoading(false);
       hideLoader();
@@ -183,9 +184,9 @@ function MapaAstral() {
       a.download = `previsoes-astrais-${new Date().toISOString().slice(0, 10)}.pdf`;
       document.body.appendChild(a); a.click(); a.remove();
       URL.revokeObjectURL(url);
-      toast.success("PDF das previsões pronto.", { description: "O download foi iniciado automaticamente." });
+      showFeedback({ title: "PDF pronto", description: "O download foi iniciado automaticamente.", type: "success" });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Falha ao gerar PDF das previsões.");
+      showFeedback({ title: "Erro no PDF", description: e instanceof Error ? e.message : "Falha ao gerar PDF das previsões.", type: "error" });
     } finally {
       setForecastPdfLoading(false);
       hideLoader();
@@ -199,9 +200,9 @@ function MapaAstral() {
     try {
       await deleteForecastFn({ data: { chartId: currentChartId } });
       setForecast(null);
-      toast.success("Previsões apagadas.");
+      showFeedback({ title: "Previsões apagadas", type: "success" });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Falha ao apagar previsões.");
+      showFeedback({ title: "Erro ao apagar", description: e instanceof Error ? e.message : "Falha ao apagar previsões.", type: "error" });
     } finally {
       setForecastDeleting(false);
     }
@@ -223,9 +224,9 @@ function MapaAstral() {
       a.download = `mapa-astral-${new Date().toISOString().slice(0, 10)}.pdf`;
       document.body.appendChild(a); a.click(); a.remove();
       URL.revokeObjectURL(url);
-      toast.success("PDF gerado.");
+      showFeedback({ title: "PDF gerado", type: "success" });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Falha ao gerar PDF.");
+      showFeedback({ title: "Erro no PDF", description: e instanceof Error ? e.message : "Falha ao gerar PDF.", type: "error" });
     } finally {
       setPdfLoading(false);
       hideLoader();
@@ -235,7 +236,7 @@ function MapaAstral() {
 
   async function handleGenerate() {
     if (!birth) {
-      toast.error("Complete seus dados de nascimento primeiro.");
+      showFeedback({ title: "Dados incompletos", description: "Complete seus dados de nascimento primeiro.", type: "warning" });
       return;
     }
     // Backend health gate — re-probe right before computing to avoid
@@ -246,7 +247,7 @@ function MapaAstral() {
     } catch {
       const msg = "Serviço astrológico indisponível. Tente novamente em instantes.";
       setGenError(msg);
-      toast.error(msg);
+      showFeedback({ title: "Serviço indisponível", description: msg, type: "error" });
       health.refetch();
       return;
     }
@@ -294,7 +295,7 @@ function MapaAstral() {
           }
           setChart(result);
           setRetryInfo(null);
-          toast.success(attempt > 1 ? `Mapa astral revelado (tentativa ${attempt}).` : "Mapa astral revelado.");
+          showFeedback({ title: "Mapa revelado", description: attempt > 1 ? `Mapa astral revelado (tentativa ${attempt}).` : "Seu mapa astral foi calculado com sucesso.", type: "success" });
           return;
         } catch (e) {
           lastError = e;
@@ -315,7 +316,7 @@ function MapaAstral() {
         ? `Não foi possível gerar o mapa após ${MAX_ATTEMPTS} tentativas. O serviço astrológico está temporariamente indisponível — tente novamente em instantes.`
         : (raw || "Erro ao calcular o mapa.");
       setGenError(friendly);
-      toast.error(friendly);
+      showFeedback({ title: "Erro no mapa", description: friendly, type: "error" });
     } finally {
       setRetryInfo(null);
       setLoading(false);
@@ -345,7 +346,30 @@ function MapaAstral() {
         <div className="flex flex-col items-end gap-2">
           <div className="flex flex-wrap items-center gap-2 justify-end">
             <Button
-              onClick={handleGenerate}
+              onClick={() => {
+                if (!birth) return;
+                if (backendDown) return;
+                
+                const overview = qc.getQueryData(["my-credits-overview"]) as any;
+                const balance = overview?.balance ?? 0;
+                const costs = overview?.costs ?? {};
+                const cost = costs["astro_chart"]?.amount ?? 0;
+                
+                if (cost > 0 && balance < cost) {
+                  showFeedback({
+                    title: "Créditos Insuficientes",
+                    description: `Você tem ${balance} e precisa de ${cost} créditos para gerar o mapa astral. Deseja adquirir mais?`,
+                    type: "warning",
+                    confirmText: "Comprar Créditos",
+                    cancelText: "Agora não",
+                    showCancel: true,
+                  }).then(confirmed => {
+                    if (confirmed) window.location.href = "/addons";
+                  });
+                  return;
+                }
+                handleGenerate();
+              }}
               disabled={loading || !birth || backendDown || health.isLoading}
               className="bg-gold text-primary-foreground hover:bg-gold-glow"
             >
@@ -353,7 +377,27 @@ function MapaAstral() {
               {backendDown ? "Indisponível" : current ? "Recalcular" : "Gerar mapa"}
             </Button>
             <Button
-              onClick={handleExportPdf}
+              onClick={() => {
+                const overview = qc.getQueryData(["my-credits-overview"]) as any;
+                const balance = overview?.balance ?? 0;
+                const costs = overview?.costs ?? {};
+                const cost = costs["astro_pdf"]?.amount ?? 0;
+
+                if (cost > 0 && balance < cost) {
+                  showFeedback({
+                    title: "Créditos Insuficientes",
+                    description: `Você tem ${balance} e precisa de ${cost} créditos para exportar o PDF. Deseja adquirir mais?`,
+                    type: "warning",
+                    confirmText: "Comprar Créditos",
+                    cancelText: "Agora não",
+                    showCancel: true,
+                  }).then(confirmed => {
+                    if (confirmed) window.location.href = "/addons";
+                  });
+                  return;
+                }
+                handleExportPdf();
+              }}
               disabled={pdfLoading || !currentChartId || backendDown}
               variant="outline"
               className="border-gold/40 text-gold hover:bg-gold/10"

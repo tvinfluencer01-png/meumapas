@@ -158,13 +158,29 @@ export function CreditCostBadge({
             )}
             <Info className="size-3 opacity-70" />
             {insufficient && (
-              <Link
-                to="/addons"
+              <button
+                type="button"
                 className="inline-flex items-center gap-1 underline underline-offset-2"
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  import("@/components/system-feedback").then(({ showFeedback }) => {
+                    showFeedback({
+                      title: "Créditos Insuficientes",
+                      description: `Você tem ${balance} e precisa de ${cost} créditos para realizar esta ação. Deseja adquirir mais créditos agora?`,
+                      type: "warning",
+                      confirmText: "Comprar Créditos",
+                      cancelText: "Agora não",
+                      showCancel: true,
+                    }).then((confirmed) => {
+                      if (confirmed) {
+                        window.location.href = "/addons";
+                      }
+                    });
+                  });
+                }}
               >
                 <AlertTriangle className="size-3" /> comprar créditos
-              </Link>
+              </button>
             )}
           </span>
         </TooltipTrigger>
