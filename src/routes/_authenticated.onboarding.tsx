@@ -46,6 +46,56 @@ function OnboardingPage() {
     timezone: "America/Sao_Paulo",
   });
 
+  useEffect(() => {
+    async function checkPendingPlan() {
+      if (!user?.email) return;
+
+      const { data: pending, error } = await supabase
+        .from("pending_plan_selections")
+        .select("plan_slug")
+        .eq("email", user.email.toLowerCase())
+        .maybeSingle();
+
+      if (pending && !redirectingToPayment) {
+        setRedirectingToPayment(true);
+        toast.info("Processando seu pacote escolhido...");
+        try {
+          const res = await createMercadoPagoCheckout({
+            kind: "landing_package",
+            product_id: pending.plan_slug,
+          });
+
+          // Remove a seleção pendente para não entrar em loop
+          await supabase
+            .from("pending_plan_selections")
+            .delete()
+            .eq("email", user.email.toLowerCase());
+
+          if (res.checkout_url) {
+            window.location.href = res.checkout_url;
+          }
+        } catch (err) {
+          setRedirectingToPayment(false);
+          toast.error("Erro ao redirecionar para pagamento: " + (err instanceof Error ? err.message : "Erro desconhecido"));
+        }
+      }
+    }
+
+    if (user) {
+      checkPendingPlan();
+    }
+  }, [user, redirectingToPayment]);
+
+  if (redirectingToPayment) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+        <Logo sizeClassName="size-20" animation="loading" />
+        <p className="text-stardust animate-pulse">Redirecionando para o ambiente de pagamento seguro...</p>
+        <Loader2 className="size-8 text-gold animate-spin" />
+      </div>
+    );
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!user) return;
