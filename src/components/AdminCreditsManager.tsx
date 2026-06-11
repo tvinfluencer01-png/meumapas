@@ -27,7 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/system-feedback";
 import { listAdminUsers } from "@/lib/admin.functions";
 import {
   adminAdjustCredits,
@@ -188,9 +188,11 @@ export function CreditsDialog({
         },
       }),
     onSuccess: (res: { package_name: string; credits: number; balance: number }) => {
-      toast.success(
-        `Pacote "${res.package_name}" aplicado: +${res.credits} créditos (saldo ${res.balance}).`,
-      );
+      showFeedback({
+        title: "Pacote aplicado",
+        description: `Pacote "${res.package_name}" aplicado: +${res.credits} créditos (saldo ${res.balance}).`,
+        type: "success"
+      });
       setPackageId("");
       setPackageNote("");
       refetch();
@@ -198,7 +200,7 @@ export function CreditsDialog({
       qc.invalidateQueries({ queryKey: ["addons-overview"] });
       emitCreditsChanged();
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => showFeedback({ title: "Erro ao aplicar pacote", description: e.message, type: "error" }),
   });
 
   const mut = useMutation({
@@ -211,11 +213,11 @@ export function CreditsDialog({
         },
       }),
     onSuccess: (res: { balance: number }, sign) => {
-      toast.success(
-        sign > 0
-          ? `Créditos adicionados. Novo saldo: ${res.balance}`
-          : `Créditos removidos. Novo saldo: ${res.balance}`,
-      );
+      showFeedback({
+        title: sign > 0 ? "Créditos adicionados" : "Créditos removidos",
+        description: `Operação realizada com sucesso. Novo saldo: ${res.balance}`,
+        type: "success"
+      });
       setAmount("");
       setReason("");
       refetch();
@@ -223,13 +225,13 @@ export function CreditsDialog({
       qc.invalidateQueries({ queryKey: ["addons-overview"] });
       emitCreditsChanged();
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => showFeedback({ title: "Erro no ajuste", description: e.message, type: "error" }),
   });
 
   function submit(sign: 1 | -1) {
     const n = parseInt(amount || "0", 10);
-    if (!n || n <= 0) return toast.error("Informe uma quantidade positiva.");
-    if (!reason.trim()) return toast.error("Informe um motivo.");
+    if (!n || n <= 0) return showFeedback({ title: "Valor inválido", description: "Informe uma quantidade positiva.", type: "warning" });
+    if (!reason.trim()) return showFeedback({ title: "Motivo obrigatório", description: "Informe um motivo para o ajuste.", type: "warning" });
     mut.mutate(sign);
   }
 
@@ -246,13 +248,13 @@ export function CreditsDialog({
         },
       }),
     onSuccess: (res: { amount: number }) => {
-      toast.success(`Estorno realizado: +${res.amount} créditos`);
+      showFeedback({ title: "Estorno realizado", description: `+${res.amount} créditos devolvidos ao usuário.`, type: "success" });
       refetch();
       refetchHistory();
       qc.invalidateQueries({ queryKey: ["addons-overview"] });
       emitCreditsChanged();
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => showFeedback({ title: "Erro no estorno", description: e.message, type: "error" }),
   });
 
   function handleRefund(tx: {
@@ -370,7 +372,7 @@ export function CreditsDialog({
           </div>
           <Button
             onClick={() => {
-              if (!packageId) return toast.error("Selecione um pacote.");
+              if (!packageId) return showFeedback({ title: "Seleção pendente", description: "Selecione um pacote antes de aplicar.", type: "warning" });
               applyMut.mutate();
             }}
             disabled={applyMut.isPending || !packageId}

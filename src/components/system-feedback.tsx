@@ -1,5 +1,5 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { Loader2, AlertTriangle } from "lucide-react";
+import { Loader2, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import {
   AlertDialog,
@@ -160,83 +160,105 @@ export function CosmicLoaderOverlay() {
 }
 
 /* =========================================================================
- * Confirm Dialog — substitui window.confirm com o CSS do sistema.
+ * Feedback Dialog (Alert/Confirm) — substitui toast/window.alert/confirm.
  * ========================================================================= */
 
-type ConfirmOptions = {
+type FeedbackType = "info" | "success" | "warning" | "error";
+
+type FeedbackOptions = {
   title: string;
   description?: string;
+  type?: FeedbackType;
   confirmText?: string;
   cancelText?: string;
   destructive?: boolean;
+  showCancel?: boolean;
 };
 
-type ConfirmState = {
+type FeedbackState = {
   open: boolean;
-  opts: ConfirmOptions;
+  opts: FeedbackOptions;
   resolve?: (v: boolean) => void;
 };
 
-let confirmState: ConfirmState = {
+let feedbackState: FeedbackState = {
   open: false,
   opts: { title: "" },
 };
-const confirmListeners = new Set<() => void>();
-function emitConfirm() {
-  for (const l of confirmListeners) l();
+const feedbackListeners = new Set<() => void>();
+function emitFeedback() {
+  for (const l of feedbackListeners) l();
 }
 
-export function confirmDialog(opts: ConfirmOptions): Promise<boolean> {
+/** Mostra um popup de aviso/erro (similar ao alert ou toast, mas modal). */
+export function showFeedback(opts: FeedbackOptions | string): Promise<boolean> {
+  const options = typeof opts === "string" ? { title: opts } : opts;
   return new Promise((resolve) => {
-    confirmState = { open: true, opts, resolve };
-    emitConfirm();
+    feedbackState = { open: true, opts: { ...options, showCancel: options.showCancel ?? !!options.cancelText }, resolve };
+    emitFeedback();
   });
 }
 
-function subscribeConfirm(cb: () => void) {
-  confirmListeners.add(cb);
-  return () => confirmListeners.delete(cb);
-}
-function getConfirmSnapshot() {
-  return confirmState;
+/** Atalho para confirmação (similar ao confirm). */
+export function confirmDialog(opts: FeedbackOptions): Promise<boolean> {
+  return showFeedback({ ...opts, showCancel: true });
 }
 
-export function ConfirmDialogHost() {
-  const state = useSyncExternalStore(subscribeConfirm, getConfirmSnapshot, getConfirmSnapshot);
+function subscribeFeedback(cb: () => void) {
+  feedbackListeners.add(cb);
+  return () => feedbackListeners.delete(cb);
+}
+function getFeedbackSnapshot() {
+  return feedbackState;
+}
+
+export function FeedbackDialogHost() {
+  const state = useSyncExternalStore(subscribeFeedback, getFeedbackSnapshot, getFeedbackSnapshot);
 
   function close(value: boolean) {
     state.resolve?.(value);
-    confirmState = { open: false, opts: state.opts };
-    emitConfirm();
+    feedbackState = { ...feedbackState, open: false };
+    emitFeedback();
   }
+
+  const typeIcons: Record<FeedbackType, React.ReactNode> = {
+    info: <Logo sizeClassName="size-6" animation="pulse" />,
+    success: <CheckCircle2 className="size-6 text-emerald-500" />,
+    warning: <AlertTriangle className="size-6 text-amber-500" />,
+    error: <AlertTriangle className="size-6 text-destructive" />,
+  };
+
+  const type = state.opts.type ?? "info";
 
   return (
     <AlertDialog open={state.open} onOpenChange={(o) => !o && close(false)}>
       <AlertDialogContent className="glass-card gold-glow border-gold/30">
         <AlertDialogHeader>
-          <AlertDialogTitle className="font-serif text-2xl text-stardust flex items-center gap-2">
-            {state.opts.destructive && <AlertTriangle className="size-5 text-destructive" />}
+          <AlertDialogTitle className="font-serif text-2xl text-stardust flex items-center gap-3">
+            {state.opts.destructive ? <AlertTriangle className="size-6 text-destructive" /> : typeIcons[type]}
             {state.opts.title}
           </AlertDialogTitle>
           {state.opts.description && (
-            <AlertDialogDescription className="text-muted-foreground">
+            <AlertDialogDescription className="text-muted-foreground mt-2">
               {state.opts.description}
             </AlertDialogDescription>
           )}
         </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel onClick={() => close(false)}>
-            {state.opts.cancelText ?? "Cancelar"}
-          </AlertDialogCancel>
+        <AlertDialogFooter className="mt-6">
+          {state.opts.showCancel && (
+            <AlertDialogCancel onClick={() => close(false)}>
+              {state.opts.cancelText ?? "Cancelar"}
+            </AlertDialogCancel>
+          )}
           <AlertDialogAction
             onClick={() => close(true)}
             className={
               state.opts.destructive
                 ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                : ""
+                : "bg-gold text-primary-foreground hover:bg-gold-glow"
             }
           >
-            {state.opts.confirmText ?? "Confirmar"}
+            {state.opts.confirmText ?? "OK"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -248,7 +270,7 @@ export function SystemFeedbackHost() {
   return (
     <>
       <CosmicLoaderOverlay />
-      <ConfirmDialogHost />
+      <FeedbackDialogHost />
     </>
   );
 }

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/system-feedback";
 import { CheckCircle2, ExternalLink, Save, ShieldCheck, Wallet, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -65,7 +65,7 @@ export function MercadoPagoForm() {
         },
       }),
     onSuccess: () => {
-      toast.success("Configurações do Mercado Pago salvas.");
+      showFeedback({ title: "Configurações salvas", description: "As credenciais do Mercado Pago foram atualizadas.", type: "success" });
       setAccessToken("");
       setWebhookSecret("");
       qc.invalidateQueries({ queryKey: ["mercado-pago-settings"] });
@@ -76,9 +76,9 @@ export function MercadoPagoForm() {
   const testMut = useMutation({
     mutationFn: () => testFn({ data: { access_token: accessToken } }),
     onSuccess: (r) => {
-      toast.success(`Conectado como ${r.nickname || r.email || "conta verificada"}.`);
+      showFeedback({ title: "Conexão bem-sucedida", description: `Conectado como ${r.nickname || r.email || "conta verificada"}.`, type: "success" });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => showFeedback({ title: "Erro nas credenciais", description: e.message, type: "error" }),
   });
 
   if (isLoading) return <div className="text-muted-foreground">Carregando…</div>;

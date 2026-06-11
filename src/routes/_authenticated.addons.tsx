@@ -30,7 +30,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { toast } from "sonner";
+import { showFeedback } from "@/components/system-feedback";
 import {
   getAddonsOverview,
   createMercadoPagoCheckout,
@@ -92,11 +92,11 @@ function AddonsPage() {
     const status = search.status;
     if (!status) return;
     if (status === "success") {
-      toast.success("Pagamento aprovado! Seu saldo será atualizado em instantes.");
+      showFeedback({ title: "Pagamento aprovado!", description: "Seu saldo será atualizado em instantes.", type: "success" });
     } else if (status === "pending") {
-      toast.info("Pagamento pendente. Avisaremos quando for confirmado.");
+      showFeedback({ title: "Pagamento pendente", description: "Avisaremos quando for confirmado.", type: "info" });
     } else if (status === "failure") {
-      toast.error("Pagamento não concluído. Tente novamente.");
+      showFeedback({ title: "Pagamento não concluído", description: "Tente novamente mais tarde.", type: "error" });
     }
     window.history.replaceState({}, "", window.location.pathname);
     refetch();
@@ -112,7 +112,7 @@ function AddonsPage() {
       window.location.href = res.checkout_url;
     },
     onError: (e: Error) => {
-      toast.error(e.message);
+      showFeedback({ title: "Erro no checkout", description: e.message, type: "error" });
       setPendingId(null);
     },
   });
@@ -133,7 +133,7 @@ function AddonsPage() {
 
   function handleBuy(kind: "credits" | "subscription" | "landing_package", product_id: string) {
     if (!data?.payments_enabled) {
-      toast.error("Pagamentos ainda não estão disponíveis. Tente novamente em instantes.");
+      showFeedback({ title: "Pagamentos indisponíveis", description: "Tente novamente em instantes.", type: "warning" });
       return;
     }
     checkoutMut.mutate({ kind, product_id });
