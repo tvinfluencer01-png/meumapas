@@ -1000,6 +1000,27 @@ export type Database = {
         }
         Relationships: []
       }
+      pending_plan_selections: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          plan_slug: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          plan_slug: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          plan_slug?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           active_client_profile_id: string | null
