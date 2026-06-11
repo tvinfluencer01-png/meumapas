@@ -73,6 +73,7 @@ export function AdminCreditsManager() {
             placeholder="Buscar por e-mail ou nome…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={(e) => e.stopPropagation()}
             className="pl-9"
             maxLength={120}
           />
@@ -297,6 +298,7 @@ export function CreditsDialog({
             inputMode="numeric"
             value={amount}
             onChange={(e) => setAmount(e.target.value.replace(/[^0-9]/g, ""))}
+            onKeyDown={(e) => e.stopPropagation()}
             placeholder="Ex: 10"
           />
         </div>
@@ -306,6 +308,7 @@ export function CreditsDialog({
             id="rsn"
             value={reason}
             onChange={(e) => setReason(e.target.value)}
+            onKeyDown={(e) => e.stopPropagation()}
             placeholder="Ex: cortesia, ajuste manual"
             maxLength={240}
           />
@@ -360,6 +363,7 @@ export function CreditsDialog({
             <Input
               value={packageNote}
               onChange={(e) => setPackageNote(e.target.value)}
+              onKeyDown={(e) => e.stopPropagation()}
               placeholder="Ex: pago via Pix, recibo #123"
               maxLength={240}
             />
