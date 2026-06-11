@@ -26,7 +26,7 @@ export const CREDIT_COST_CATALOG = {
     description: "Custo cobrado no momento que o usuário envia uma pergunta.",
   },
   oracle_answer: {
-    amount: 0,
+    amount: 1,
     label: "Oráculo — Resposta Gerada",
     description: "Custo cobrado para cada resposta gerada pela IA.",
   },
@@ -131,6 +131,7 @@ export const CREDIT_COST_CATALOG = {
     description: "Trânsitos e lunações cruzados com seu mapa para o mês.",
   },
 } as const satisfies Record<string, { amount: number; label: string; description: string }>;
+
 
 export type CreditAction = keyof typeof CREDIT_COST_CATALOG | string;
 
