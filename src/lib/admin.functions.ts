@@ -1078,9 +1078,9 @@ export const migrateUserAddon = createServerFn({ method: "POST" })
         user_id: data.target_user_id,
         addon_id: data.new_addon_id,
         status: existing.status,
-        current_period_start: data.preserve_dates ? existing.current_period_start : new Date().toISOString(),
         current_period_end: data.preserve_dates ? existing.current_period_end : null,
         mp_preapproval_id: existing.mp_preapproval_id,
+        updated_at: new Date().toISOString()
       });
 
     if (insErr) throw new Error(`Erro ao criar nova assinatura: ${insErr.message}`);
