@@ -12,6 +12,7 @@ import { AdminLandingPackages } from "@/components/AdminLandingPackages";
 import { AdminCronStatus } from "@/components/AdminCronStatus";
 import { AdminGlobalSettings } from "@/components/AdminGlobalSettings";
 import { AdminPlanMigration } from "@/components/AdminPlanMigration";
+import { AdminMarketing } from "@/components/AdminMarketing";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
