@@ -186,7 +186,7 @@ export function AdminMarketing() {
                         const ok = await confirmDialog({
                           title: "Remover mensagem?",
                           description: `"${m.title}" será excluída.`,
-                          confirmLabel: "Remover",
+                          confirmText: "Remover",
                           destructive: true,
                         });
                         if (ok) remove.mutate(m.id);
