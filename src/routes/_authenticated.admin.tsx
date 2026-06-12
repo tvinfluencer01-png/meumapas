@@ -777,6 +777,7 @@ function TwilioForm() {
   });
   const [testTo, setTestTo] = useState("");
   const [testChannel, setTestChannel] = useState<"whatsapp" | "sms">("whatsapp");
+  const [showAuthToken, setShowAuthToken] = useState(false);
 
   useEffect(() => {
     if (!data) return;
@@ -872,12 +873,21 @@ function TwilioForm() {
             </Label>
             <Input
               id="token"
-              type="password"
+              type={showAuthToken ? "text" : "password"}
               placeholder={data?.has_auth_token ? "•••••••••• (deixe vazio para manter)" : "Cole o Auth Token"}
               value={form.auth_token}
               onChange={(e) => setForm((f) => ({ ...f, auth_token: e.target.value }))}
               autoComplete="new-password"
+              className="pr-10"
             />
+            <button
+              type="button"
+              tabIndex={-1}
+              className="absolute right-3 top-[1.6rem] text-muted-foreground hover:text-foreground"
+              onClick={() => setShowAuthToken((s) => !s)}
+            >
+              {showAuthToken ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+            </button>
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="wpp">Número WhatsApp remetente</Label>
