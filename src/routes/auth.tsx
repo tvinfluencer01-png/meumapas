@@ -97,6 +97,10 @@ function AuthPage() {
           showFeedback({ title: "Dados inválidos", description: parsed.error.issues[0].message, type: "warning" });
           return;
         }
+        if (form.password !== form.confirmPassword) {
+          showFeedback({ title: "Senhas diferentes", description: "A senha e a confirmação não coincidem.", type: "warning" });
+          return;
+        }
 
         // Se houver um plano selecionado, salva a intenção ANTES de criar a conta
         if (search.plan) {
@@ -229,14 +233,45 @@ function AuthPage() {
               <div className="relative mt-1">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                 <Input
-                  id="password" type="password" value={form.password}
+                  id="password" type={showPassword ? "text" : "password"} value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
-                  className="pl-9 bg-input border-border" placeholder="••••••••"
+                  className="pl-9 pr-10 bg-input border-border" placeholder="••••••••"
                   required autoComplete={mode === "signup" ? "new-password" : "current-password"}
                   minLength={mode === "signup" ? 8 : 1} maxLength={72}
                 />
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  onClick={() => setShowPassword((s) => !s)}
+                >
+                  {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </button>
               </div>
             </div>
+            {mode === "signup" && (
+              <div>
+                <Label htmlFor="confirmPassword" className="text-stardust">Confirmar senha</Label>
+                <div className="relative mt-1">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                  <Input
+                    id="confirmPassword" type={showConfirmPassword ? "text" : "password"} value={form.confirmPassword}
+                    onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
+                    className="pl-9 pr-10 bg-input border-border" placeholder="••••••••"
+                    required autoComplete="new-password"
+                    minLength={8} maxLength={72}
+                  />
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    onClick={() => setShowConfirmPassword((s) => !s)}
+                  >
+                    {showConfirmPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                  </button>
+                </div>
+              </div>
+            )}
 
             <Button type="submit" disabled={submitting}
               className="w-full bg-gold text-primary-foreground hover:bg-gold-glow transition-all font-medium">
