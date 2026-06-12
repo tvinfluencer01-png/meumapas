@@ -338,9 +338,15 @@ export const sendTestHoroscopeWhatsapp = createServerFn({ method: "POST" })
     const { getAddonPromptOverride } = await import("./addon-settings.functions");
     const override = await getAddonPromptOverride("sub_daily_horoscope");
     const today = new Date().toISOString().slice(0, 10);
+    const lucky = computeLuckyForDay(ctx.birthDate, sign, today);
     const prompt = override
-      ? override.replace(/\{\{sign\}\}/gi, sign).replace(/\{\{date\}\}/gi, today)
-      : buildHoroscopePrompt(sign, today);
+      ? override
+          .replace(/\{\{sign\}\}/gi, sign)
+          .replace(/\{\{date\}\}/gi, today)
+          .replace(/\{\{lucky_number\}\}/gi, String(lucky.number))
+          .replace(/\{\{lucky_color\}\}/gi, lucky.color) +
+        `\n\nIMPORTANTE: na seção "🎯 Número e cor da sorte", use EXATAMENTE: "Número: ${lucky.number} | Cor: ${lucky.color}". Não invente outros valores.`
+      : buildHoroscopePrompt(sign, today, lucky);
 
     let body = "";
     try {
