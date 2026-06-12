@@ -113,7 +113,9 @@ async function handler({ request }: { request: Request }) {
       continue;
     }
 
-    const message = `🌌 Horóscopo de hoje — ${s.sun_sign}\n\n${body}\n\n— Cosmic AI`;
+    const { pickMarketingFooter } = await import("@/lib/marketing.functions");
+    const footer = await pickMarketingFooter("horoscope_daily");
+    const message = `🌌 Horóscopo de hoje — ${s.sun_sign}\n\n${body}\n\n${footer}`;
     processed += 1;
 
     // WhatsApp: prefer Evolution API when enabled, fallback to Twilio
