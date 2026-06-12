@@ -109,6 +109,49 @@ export default defineConfig({
     server: { entry: "server" },
   },
   vite: {
-    plugins: [parseErrorReporter()],
+    plugins: [
+      parseErrorReporter(),
+      VitePWA({
+        registerType: "autoUpdate",
+        injectRegister: null,
+        filename: "sw.js",
+        strategies: "generateSW",
+        devOptions: { enabled: false },
+        workbox: {
+          navigateFallbackDenylist: [/^\/~oauth/, /^\/api\//],
+          globPatterns: ["**/*.{js,css,html,svg,png,ico,webp,woff,woff2}"],
+          runtimeCaching: [
+            {
+              urlPattern: ({ request }) => request.mode === "navigate",
+              handler: "NetworkFirst",
+              options: {
+                cacheName: "html-pages",
+                networkTimeoutSeconds: 5,
+                expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 },
+              },
+            },
+            {
+              urlPattern: ({ url, sameOrigin }) =>
+                sameOrigin && /\.[a-f0-9]{8,}\.(?:js|css|woff2?)$/i.test(url.pathname),
+              handler: "CacheFirst",
+              options: {
+                cacheName: "hashed-assets",
+                expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              },
+            },
+            {
+              urlPattern: ({ request, sameOrigin }) =>
+                sameOrigin && (request.destination === "image" || request.destination === "font"),
+              handler: "CacheFirst",
+              options: {
+                cacheName: "media-assets",
+                expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              },
+            },
+          ],
+        },
+        manifest: false,
+      }),
+    ],
   },
 });
