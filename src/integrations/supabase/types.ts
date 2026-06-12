@@ -1098,6 +1098,57 @@ export type Database = {
           },
         ]
       }
+      pwa_settings: {
+        Row: {
+          background_color: string
+          created_at: string
+          description: string
+          display: string
+          enabled: boolean
+          icon_512_url: string
+          icon_url: string
+          id: string
+          name: string
+          orientation: string
+          short_name: string
+          start_url: string
+          theme_color: string
+          updated_at: string
+        }
+        Insert: {
+          background_color?: string
+          created_at?: string
+          description?: string
+          display?: string
+          enabled?: boolean
+          icon_512_url?: string
+          icon_url?: string
+          id?: string
+          name?: string
+          orientation?: string
+          short_name?: string
+          start_url?: string
+          theme_color?: string
+          updated_at?: string
+        }
+        Update: {
+          background_color?: string
+          created_at?: string
+          description?: string
+          display?: string
+          enabled?: boolean
+          icon_512_url?: string
+          icon_url?: string
+          id?: string
+          name?: string
+          orientation?: string
+          short_name?: string
+          start_url?: string
+          theme_color?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       reports: {
         Row: {
           ai_model: string | null
