@@ -626,13 +626,19 @@ function PasswordDialog({ user, onDone }: { user: AdminUserRow; onDone: () => vo
         </DialogDescription>
       </DialogHeader>
       <div className="space-y-3">
-        <div>
+        <div className="relative">
           <Label htmlFor="np">Nova senha</Label>
-          <Input id="np" type="password" value={pwd} onChange={(e) => setPwd(e.target.value)} autoComplete="new-password" />
+          <Input id="np" type={showPwd ? "text" : "password"} value={pwd} onChange={(e) => setPwd(e.target.value)} autoComplete="new-password" className="pr-10" />
+          <button type="button" tabIndex={-1} className="absolute right-3 top-[1.6rem] text-muted-foreground hover:text-foreground" onClick={() => setShowPwd((s) => !s)}>
+            {showPwd ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+          </button>
         </div>
-        <div>
+        <div className="relative">
           <Label htmlFor="cp">Confirmar senha</Label>
-          <Input id="cp" type="password" value={confirmPwd} onChange={(e) => setConfirmPwd(e.target.value)} autoComplete="new-password" />
+          <Input id="cp" type={showConfirmPwd ? "text" : "password"} value={confirmPwd} onChange={(e) => setConfirmPwd(e.target.value)} autoComplete="new-password" className="pr-10" />
+          <button type="button" tabIndex={-1} className="absolute right-3 top-[1.6rem] text-muted-foreground hover:text-foreground" onClick={() => setShowConfirmPwd((s) => !s)}>
+            {showConfirmPwd ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+          </button>
         </div>
       </div>
       <DialogFooter>
