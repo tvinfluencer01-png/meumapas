@@ -73,11 +73,36 @@ async function handler({ request }: { request: Request }) {
       continue;
     }
 
+    // Resolve birth_date do contexto (client_profile ativo > birth_data primário)
+    let birthDate: string | null = null;
+    if (s.client_profile_id) {
+      const { data: cp } = await supabaseAdmin
+        .from("client_profiles")
+        .select("birth_date")
+        .eq("id", s.client_profile_id)
+        .maybeSingle();
+      birthDate = (cp?.birth_date as string | null) ?? null;
+    } else {
+      const { data: bd } = await supabaseAdmin
+        .from("birth_data")
+        .select("birth_date")
+        .eq("user_id", s.user_id)
+        .eq("is_primary", true)
+        .maybeSingle();
+      birthDate = (bd?.birth_date as string | null) ?? null;
+    }
+    const lucky = computeLuckyForDay(birthDate, s.sun_sign, today);
+
     let body = "";
     try {
       const prompt = promptOverride
-        ? promptOverride.replace(/\{\{sign\}\}/gi, s.sun_sign).replace(/\{\{date\}\}/gi, today)
-        : buildHoroscopePrompt(s.sun_sign, today);
+        ? promptOverride
+            .replace(/\{\{sign\}\}/gi, s.sun_sign)
+            .replace(/\{\{date\}\}/gi, today)
+            .replace(/\{\{lucky_number\}\}/gi, String(lucky.number))
+            .replace(/\{\{lucky_color\}\}/gi, lucky.color) +
+          `\n\nIMPORTANTE: na seção "🎯 Número e cor da sorte", use EXATAMENTE: "Número: ${lucky.number} | Cor: ${lucky.color}". Não invente outros valores.`
+        : buildHoroscopePrompt(s.sun_sign, today, lucky);
       const { text } = await generateText({ model, prompt, temperature: 0.85 });
       body = text.trim();
     } catch (e: any) {
