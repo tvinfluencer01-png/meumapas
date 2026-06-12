@@ -45,15 +45,17 @@ export function UserProfileDialog({ open, onOpenChange }: Props) {
     queryKey: ["user-profile-dialog", user?.id],
     enabled: !!user && open,
     queryFn: async () => {
-      const [{ data: profile }, { data: birth }] = await Promise.all([
+      const [{ data: profile }, { data: births }] = await Promise.all([
         supabase.from("profiles").select("full_name").eq("id", user!.id).maybeSingle(),
         supabase
           .from("birth_data")
-          .select("id, full_name, birth_date, birth_time")
+          .select("id, full_name, birth_date, birth_time, is_primary, created_at")
           .eq("user_id", user!.id)
-          .eq("is_primary", true)
-          .maybeSingle(),
+          .order("is_primary", { ascending: false })
+          .order("created_at", { ascending: false })
+          .limit(1),
       ]);
+      const birth = births?.[0] ?? null;
       return { profile, birth };
     },
   });
@@ -93,10 +95,22 @@ export function UserProfileDialog({ open, onOpenChange }: Props) {
             full_name: parsed.data.full_name,
             birth_date: parsed.data.birth_date,
             birth_time: parsed.data.birth_time || null,
+            is_primary: true,
           })
           .eq("id", data.birth.id);
         if (bErr) throw bErr;
+        // Garante apenas um registro primário
+        await supabase
+          .from("birth_data")
+          .update({ is_primary: false })
+          .eq("user_id", user.id)
+          .neq("id", data.birth.id);
       } else {
+        // Desmarca quaisquer outros primários antes de inserir
+        await supabase
+          .from("birth_data")
+          .update({ is_primary: false })
+          .eq("user_id", user.id);
         const { error: bErr } = await supabase.from("birth_data").insert({
           user_id: user.id,
           full_name: parsed.data.full_name,
