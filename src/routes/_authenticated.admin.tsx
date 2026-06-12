@@ -597,6 +597,8 @@ function PasswordDialog({ user, onDone }: { user: AdminUserRow; onDone: () => vo
   const setPwdFn = useServerFn(adminSetUserPassword);
   const [pwd, setPwd] = useState("");
   const [confirmPwd, setConfirmPwd] = useState("");
+  const [showPwd, setShowPwd] = useState(false);
+  const [showConfirmPwd, setShowConfirmPwd] = useState(false);
 
   const mut = useMutation({
     mutationFn: () => setPwdFn({ data: { user_id: user.id, password: pwd } }),
@@ -624,13 +626,19 @@ function PasswordDialog({ user, onDone }: { user: AdminUserRow; onDone: () => vo
         </DialogDescription>
       </DialogHeader>
       <div className="space-y-3">
-        <div>
+        <div className="relative">
           <Label htmlFor="np">Nova senha</Label>
-          <Input id="np" type="password" value={pwd} onChange={(e) => setPwd(e.target.value)} autoComplete="new-password" />
+          <Input id="np" type={showPwd ? "text" : "password"} value={pwd} onChange={(e) => setPwd(e.target.value)} autoComplete="new-password" className="pr-10" />
+          <button type="button" tabIndex={-1} className="absolute right-3 top-[1.6rem] text-muted-foreground hover:text-foreground" onClick={() => setShowPwd((s) => !s)}>
+            {showPwd ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+          </button>
         </div>
-        <div>
+        <div className="relative">
           <Label htmlFor="cp">Confirmar senha</Label>
-          <Input id="cp" type="password" value={confirmPwd} onChange={(e) => setConfirmPwd(e.target.value)} autoComplete="new-password" />
+          <Input id="cp" type={showConfirmPwd ? "text" : "password"} value={confirmPwd} onChange={(e) => setConfirmPwd(e.target.value)} autoComplete="new-password" className="pr-10" />
+          <button type="button" tabIndex={-1} className="absolute right-3 top-[1.6rem] text-muted-foreground hover:text-foreground" onClick={() => setShowConfirmPwd((s) => !s)}>
+            {showConfirmPwd ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+          </button>
         </div>
       </div>
       <DialogFooter>
@@ -769,6 +777,7 @@ function TwilioForm() {
   });
   const [testTo, setTestTo] = useState("");
   const [testChannel, setTestChannel] = useState<"whatsapp" | "sms">("whatsapp");
+  const [showAuthToken, setShowAuthToken] = useState(false);
 
   useEffect(() => {
     if (!data) return;
@@ -854,7 +863,7 @@ function TwilioForm() {
               autoComplete="off"
             />
           </div>
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 relative">
             <Label htmlFor="token">
               Auth Token {data?.has_auth_token && (
                 <span className="ml-2 inline-flex items-center gap-1 text-xs text-emerald-500">
@@ -864,12 +873,21 @@ function TwilioForm() {
             </Label>
             <Input
               id="token"
-              type="password"
+              type={showAuthToken ? "text" : "password"}
               placeholder={data?.has_auth_token ? "•••••••••• (deixe vazio para manter)" : "Cole o Auth Token"}
               value={form.auth_token}
               onChange={(e) => setForm((f) => ({ ...f, auth_token: e.target.value }))}
               autoComplete="new-password"
+              className="pr-10"
             />
+            <button
+              type="button"
+              tabIndex={-1}
+              className="absolute right-3 top-[1.85rem] text-muted-foreground hover:text-foreground"
+              onClick={() => setShowAuthToken((s) => !s)}
+            >
+              {showAuthToken ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+            </button>
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="wpp">Número WhatsApp remetente</Label>
@@ -1061,6 +1079,7 @@ function EvolutionForm() {
     enabled: false,
   });
   const [testTo, setTestTo] = useState("");
+  const [showApiKey, setShowApiKey] = useState(false);
 
   useEffect(() => {
     if (!data) return;
@@ -1156,7 +1175,7 @@ function EvolutionForm() {
             </p>
           </div>
 
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 relative">
             <Label htmlFor="evo-key">
               API Key global{" "}
               {data?.has_api_key && (
@@ -1167,12 +1186,21 @@ function EvolutionForm() {
             </Label>
             <Input
               id="evo-key"
-              type="password"
+              type={showApiKey ? "text" : "password"}
               placeholder={data?.has_api_key ? "•••••••••• (deixe vazio para manter)" : "Cole a AUTHENTICATION_API_KEY"}
               value={form.global_api_key}
               onChange={(e) => setForm((f) => ({ ...f, global_api_key: e.target.value }))}
               autoComplete="new-password"
+              className="pr-10"
             />
+            <button
+              type="button"
+              tabIndex={-1}
+              className="absolute right-3 top-[1.85rem] text-muted-foreground hover:text-foreground"
+              onClick={() => setShowApiKey((s) => !s)}
+            >
+              {showApiKey ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+            </button>
             <p className="text-xs text-muted-foreground">
               Definida na variável <code>AUTHENTICATION_API_KEY</code> do seu servidor Evolution.
             </p>
