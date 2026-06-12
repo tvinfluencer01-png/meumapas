@@ -8,6 +8,7 @@ import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 import { readFileSync, appendFileSync, mkdirSync } from "node:fs";
 import { dirname, relative } from "node:path";
 import type { Plugin } from "vite";
+import { VitePWA } from "vite-plugin-pwa";
 
 const LOG_FILE = "/tmp/dev-server-logs/parse-errors.log";
 
