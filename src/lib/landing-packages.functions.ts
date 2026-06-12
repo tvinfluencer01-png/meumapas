@@ -16,6 +16,7 @@ export type LandingPackage = {
   featured: boolean;
   enabled: boolean;
   sort_order: number;
+  credits_per_month: number;
 };
 
 function normalize(row: any): LandingPackage {
@@ -33,6 +34,7 @@ function normalize(row: any): LandingPackage {
     featured: !!row.featured,
     enabled: !!row.enabled,
     sort_order: row.sort_order ?? 0,
+    credits_per_month: row.credits_per_month ?? 0,
   };
 }
 
@@ -89,6 +91,7 @@ const UpsertSchema = z.object({
   featured: z.boolean().default(false),
   enabled: z.boolean().default(true),
   sort_order: z.number().int().min(0).max(9999).default(0),
+  credits_per_month: z.number().int().min(0).max(100000).default(0),
 });
 
 export const upsertLandingPackage = createServerFn({ method: "POST" })
@@ -117,6 +120,7 @@ export const upsertLandingPackage = createServerFn({ method: "POST" })
       featured: data.featured,
       enabled: data.enabled,
       sort_order: data.sort_order,
+      credits_per_month: data.credits_per_month,
     };
 
     if (data.id) {
