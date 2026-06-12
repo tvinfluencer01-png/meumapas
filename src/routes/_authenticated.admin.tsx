@@ -1175,7 +1175,7 @@ function EvolutionForm() {
             </p>
           </div>
 
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 relative">
             <Label htmlFor="evo-key">
               API Key global{" "}
               {data?.has_api_key && (
@@ -1186,12 +1186,21 @@ function EvolutionForm() {
             </Label>
             <Input
               id="evo-key"
-              type="password"
+              type={showApiKey ? "text" : "password"}
               placeholder={data?.has_api_key ? "•••••••••• (deixe vazio para manter)" : "Cole a AUTHENTICATION_API_KEY"}
               value={form.global_api_key}
               onChange={(e) => setForm((f) => ({ ...f, global_api_key: e.target.value }))}
               autoComplete="new-password"
+              className="pr-10"
             />
+            <button
+              type="button"
+              tabIndex={-1}
+              className="absolute right-3 top-[1.85rem] text-muted-foreground hover:text-foreground"
+              onClick={() => setShowApiKey((s) => !s)}
+            >
+              {showApiKey ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+            </button>
             <p className="text-xs text-muted-foreground">
               Definida na variável <code>AUTHENTICATION_API_KEY</code> do seu servidor Evolution.
             </p>
