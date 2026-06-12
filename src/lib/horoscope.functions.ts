@@ -33,7 +33,53 @@ export function sunSignFromBirthDate(birthDate: string | null | undefined): SunS
   return "Peixes";
 }
 
-export function buildHoroscopePrompt(sunSign: string, today: string) {
+// Paleta ampla de cores da sorte (evita repetição entre signos/dias)
+const LUCKY_COLORS = [
+  "Vermelho rubi", "Carmim", "Coral", "Laranja queimado", "Âmbar",
+  "Dourado", "Amarelo solar", "Verde-limão", "Verde esmeralda", "Verde jade",
+  "Turquesa", "Ciano", "Azul-céu", "Azul royal", "Azul marinho",
+  "Índigo", "Violeta", "Lilás", "Magenta", "Rosa-pink",
+  "Rosa-quartzo", "Pêssego", "Bordô", "Cobre", "Bronze",
+  "Prata", "Cinza-chumbo", "Branco-pérola", "Preto-ônix", "Marrom-café",
+];
+
+function hashStr(s: string): number {
+  let h = 2166136261 >>> 0;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619) >>> 0;
+  }
+  return h >>> 0;
+}
+
+/**
+ * Calcula número (1-99) e cor da sorte de forma determinística baseando-se
+ * em data de nascimento + signo + data de hoje. Garante variedade diária e
+ * personalização por mapa do contexto ativo.
+ */
+export function computeLuckyForDay(
+  birthDate: string | null | undefined,
+  sunSign: string,
+  today: string,
+): { number: number; color: string } {
+  const seed = `${birthDate ?? "anon"}|${sunSign}|${today}`;
+  const h = hashStr(seed);
+  const number = (h % 99) + 1;
+  const color = LUCKY_COLORS[(h >>> 8) % LUCKY_COLORS.length];
+  return { number, color };
+}
+
+export function buildHoroscopePrompt(
+  sunSign: string,
+  today: string,
+  lucky?: { number: number; color: string },
+) {
+  const luckyLine = lucky
+    ? `Número: ${lucky.number} | Cor: ${lucky.color}`
+    : `Número: (1-99) | Cor: (cor)`;
+  const luckyRule = lucky
+    ? `\n\nIMPORTANTE: na seção "🎯 Número e cor da sorte", use EXATAMENTE: "${luckyLine}". Não invente outros valores.`
+    : "";
   return `Escreva um horóscopo PERSONALIZADO, rico e inspirador em pt-BR para hoje (${today}) para o signo ${sunSign}.
 
 Formato obrigatório (use exatamente estes títulos com emojis, sem markdown, apenas texto puro com quebras de linha):
@@ -60,9 +106,9 @@ Formato obrigatório (use exatamente estes títulos com emojis, sem markdown, ap
 (1 frase poderosa e prática para guiar o dia)
 
 🎯 Número e cor da sorte
-Número: (1-99) | Cor: (cor)
+${luckyLine}
 
-Regras: tom inspirador, simbólico mas prático e acionável. Nada de markdown (sem **, ##, -). Use apenas emojis e quebras de linha. Seja específico — evite frases genéricas.`;
+Regras: tom inspirador, simbólico mas prático e acionável. Nada de markdown (sem **, ##, -). Use apenas emojis e quebras de linha. Seja específico — evite frases genéricas.${luckyRule}`;
 }
 
 /**
