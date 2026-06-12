@@ -199,6 +199,9 @@ function AdminPage() {
         <TabsContent value="global" className="mt-0">
           <AdminGlobalSettings />
         </TabsContent>
+        <TabsContent value="marketing" className="mt-0">
+          <AdminMarketing />
+        </TabsContent>
       </Tabs>
 
     </div>
