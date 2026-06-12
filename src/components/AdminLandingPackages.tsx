@@ -196,6 +196,9 @@ function PackageCard({
             </span>{" "}
             <span>{row.sub_label}</span>
             {row.anchor && <span className="ml-2 italic">· {row.anchor}</span>}
+            <Badge variant="outline" className="ml-2 border-gold/30 text-gold bg-gold/5">
+              {row.credits_per_month} créditos/mês
+            </Badge>
           </div>
           <div className="mt-2 flex flex-wrap gap-1">
             {addonNames.length > 0 ? (
