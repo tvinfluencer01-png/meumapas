@@ -597,6 +597,8 @@ function PasswordDialog({ user, onDone }: { user: AdminUserRow; onDone: () => vo
   const setPwdFn = useServerFn(adminSetUserPassword);
   const [pwd, setPwd] = useState("");
   const [confirmPwd, setConfirmPwd] = useState("");
+  const [showPwd, setShowPwd] = useState(false);
+  const [showConfirmPwd, setShowConfirmPwd] = useState(false);
 
   const mut = useMutation({
     mutationFn: () => setPwdFn({ data: { user_id: user.id, password: pwd } }),
