@@ -615,6 +615,7 @@ export type Database = {
         Row: {
           anchor: string | null
           created_at: string
+          credits_per_month: number
           cta_label: string
           enabled: boolean
           featured: boolean
@@ -632,6 +633,7 @@ export type Database = {
         Insert: {
           anchor?: string | null
           created_at?: string
+          credits_per_month?: number
           cta_label?: string
           enabled?: boolean
           featured?: boolean
@@ -649,6 +651,7 @@ export type Database = {
         Update: {
           anchor?: string | null
           created_at?: string
+          credits_per_month?: number
           cta_label?: string
           enabled?: boolean
           featured?: boolean

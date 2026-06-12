@@ -35,6 +35,7 @@ type FormState = {
   featured: boolean;
   enabled: boolean;
   sort_order: number;
+  credits_per_month: number;
 };
 
 const EMPTY: FormState = {
@@ -51,6 +52,7 @@ const EMPTY: FormState = {
   featured: false,
   enabled: true,
   sort_order: 0,
+  credits_per_month: 0,
 };
 
 function fromRow(r: LandingPackage): FormState {
@@ -68,6 +70,7 @@ function fromRow(r: LandingPackage): FormState {
     featured: r.featured,
     enabled: r.enabled,
     sort_order: r.sort_order,
+    credits_per_month: r.credits_per_month,
   };
 }
 
@@ -268,6 +271,7 @@ function PackageForm({
           featured: s.featured,
           enabled: s.enabled,
           sort_order: Number(s.sort_order) || 0,
+          credits_per_month: Number(s.credits_per_month) || 0,
         },
       });
     },
@@ -410,6 +414,15 @@ function PackageForm({
           <div className="flex items-center justify-between gap-2 p-2 rounded-md border">
             <Label className="text-sm">Ativo na Landing Page</Label>
             <Switch checked={s.enabled} onCheckedChange={(v) => setS({ ...s, enabled: v })} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Créditos Mensais</Label>
+            <Input
+              type="number"
+              value={s.credits_per_month}
+              onChange={(e) => setS({ ...s, credits_per_month: Number(e.target.value) })}
+              placeholder="0"
+            />
           </div>
           <div className="space-y-1.5">
             <Label>Ordem (menor = primeiro)</Label>
