@@ -150,6 +150,9 @@ function AdminPage() {
           <TabsTrigger value="global" className="gap-2">
             <Phone className="size-4" /> Landing Page
           </TabsTrigger>
+          <TabsTrigger value="marketing" className="gap-2">
+            <Megaphone className="size-4" /> Marketing
+          </TabsTrigger>
         </TabsList>
 
 
