@@ -59,7 +59,9 @@ function AuthPage() {
   const [submitting, setSubmitting] = useState(false);
   const [statusStep, setStatusStep] = useState(0);
   const [statusMode, setStatusMode] = useState<"signin" | "signup">("signin");
-  const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [form, setForm] = useState({ name: "", email: "", password: "", confirmPassword: "" });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     if (!loading && session) {
