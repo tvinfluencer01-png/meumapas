@@ -30,6 +30,7 @@ import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated.admin'
 import { Route as AuthenticatedAddonsRouteImport } from './routes/_authenticated.addons'
 import { Route as AuthenticatedAdminLogsRouteImport } from './routes/_authenticated.admin.logs'
+import { Route as ApiPublicManifestWebmanifestRouteImport } from './routes/api/public/manifest.webmanifest'
 import { Route as ApiPublicHooksMercadopagoRouteImport } from './routes/api/public/hooks/mercadopago'
 import { Route as ApiPublicHooksDailyHoroscopeRouteImport } from './routes/api/public/hooks/daily-horoscope'
 
@@ -141,6 +142,12 @@ const AuthenticatedAdminLogsRoute = AuthenticatedAdminLogsRouteImport.update({
   path: '/logs',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const ApiPublicManifestWebmanifestRoute =
+  ApiPublicManifestWebmanifestRouteImport.update({
+    id: '/api/public/manifest/webmanifest',
+    path: '/api/public/manifest/webmanifest',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksMercadopagoRoute =
   ApiPublicHooksMercadopagoRouteImport.update({
     id: '/api/public/hooks/mercadopago',
@@ -177,6 +184,7 @@ export interface FileRoutesByFullPath {
   '/admin/logs': typeof AuthenticatedAdminLogsRoute
   '/api/public/hooks/daily-horoscope': typeof ApiPublicHooksDailyHoroscopeRoute
   '/api/public/hooks/mercadopago': typeof ApiPublicHooksMercadopagoRoute
+  '/api/public/manifest/webmanifest': typeof ApiPublicManifestWebmanifestRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -201,6 +209,7 @@ export interface FileRoutesByTo {
   '/admin/logs': typeof AuthenticatedAdminLogsRoute
   '/api/public/hooks/daily-horoscope': typeof ApiPublicHooksDailyHoroscopeRoute
   '/api/public/hooks/mercadopago': typeof ApiPublicHooksMercadopagoRoute
+  '/api/public/manifest/webmanifest': typeof ApiPublicManifestWebmanifestRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -227,6 +236,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/logs': typeof AuthenticatedAdminLogsRoute
   '/api/public/hooks/daily-horoscope': typeof ApiPublicHooksDailyHoroscopeRoute
   '/api/public/hooks/mercadopago': typeof ApiPublicHooksMercadopagoRoute
+  '/api/public/manifest/webmanifest': typeof ApiPublicManifestWebmanifestRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -253,6 +263,7 @@ export interface FileRouteTypes {
     | '/admin/logs'
     | '/api/public/hooks/daily-horoscope'
     | '/api/public/hooks/mercadopago'
+    | '/api/public/manifest/webmanifest'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -277,6 +288,7 @@ export interface FileRouteTypes {
     | '/admin/logs'
     | '/api/public/hooks/daily-horoscope'
     | '/api/public/hooks/mercadopago'
+    | '/api/public/manifest/webmanifest'
   id:
     | '__root__'
     | '/'
@@ -302,6 +314,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/logs'
     | '/api/public/hooks/daily-horoscope'
     | '/api/public/hooks/mercadopago'
+    | '/api/public/manifest/webmanifest'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -311,6 +324,7 @@ export interface RootRouteChildren {
   ApiChatRoute: typeof ApiChatRoute
   ApiPublicHooksDailyHoroscopeRoute: typeof ApiPublicHooksDailyHoroscopeRoute
   ApiPublicHooksMercadopagoRoute: typeof ApiPublicHooksMercadopagoRoute
+  ApiPublicManifestWebmanifestRoute: typeof ApiPublicManifestWebmanifestRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -462,6 +476,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminLogsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/api/public/manifest/webmanifest': {
+      id: '/api/public/manifest/webmanifest'
+      path: '/api/public/manifest/webmanifest'
+      fullPath: '/api/public/manifest/webmanifest'
+      preLoaderRoute: typeof ApiPublicManifestWebmanifestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/mercadopago': {
       id: '/api/public/hooks/mercadopago'
       path: '/api/public/hooks/mercadopago'
@@ -540,6 +561,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiChatRoute: ApiChatRoute,
   ApiPublicHooksDailyHoroscopeRoute: ApiPublicHooksDailyHoroscopeRoute,
   ApiPublicHooksMercadopagoRoute: ApiPublicHooksMercadopagoRoute,
+  ApiPublicManifestWebmanifestRoute: ApiPublicManifestWebmanifestRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

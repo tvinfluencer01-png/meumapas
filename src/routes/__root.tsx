@@ -122,10 +122,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/41a4d552-240e-4c67-9b8d-c52663ce0277/id-preview-dfdf7967--4f283795-23ae-4277-a648-a3d236f5b58f.lovable.app-1778993373692.png" },
     ],
     links: [
-      {
-        rel: "stylesheet",
-        href: appCss,
-      },
+      { rel: "stylesheet", href: appCss },
+      { rel: "manifest", href: "/api/public/manifest/webmanifest" },
+      { rel: "apple-touch-icon", href: "/api/public/manifest/icon" },
     ],
   }),
   shellComponent: RootShell,
