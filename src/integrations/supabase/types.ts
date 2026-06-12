@@ -1172,6 +1172,54 @@ export type Database = {
         }
         Relationships: []
       }
+      smtp_settings: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          from_email: string
+          from_name: string
+          host: string
+          id: string
+          password: string
+          port: number
+          provider: string
+          reply_to: string | null
+          secure: boolean
+          updated_at: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          from_email?: string
+          from_name?: string
+          host?: string
+          id?: string
+          password?: string
+          port?: number
+          provider?: string
+          reply_to?: string | null
+          secure?: boolean
+          updated_at?: string
+          username?: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          from_email?: string
+          from_name?: string
+          host?: string
+          id?: string
+          password?: string
+          port?: number
+          provider?: string
+          reply_to?: string | null
+          secure?: boolean
+          updated_at?: string
+          username?: string
+        }
+        Relationships: []
+      }
       system_settings: {
         Row: {
           credit_value_cents: number
