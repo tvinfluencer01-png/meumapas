@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { Shield, MessageSquare, Save, Send, CheckCircle2, AlertTriangle, Users, Search, ShieldOff, ShieldCheck, History, RefreshCw, Settings as SettingsIcon, Wallet, Coins, MoreHorizontal, UserCog, KeyRound, Package, Trash2, Coins as CoinsIcon, Zap, Plug, Clock, UserPlus, Eye, EyeOff, Database, Download, Loader2, Phone, ArrowRightLeft, Layers } from "lucide-react";
+import { Shield, MessageSquare, Save, Send, CheckCircle2, AlertTriangle, Users, Search, ShieldOff, ShieldCheck, History, RefreshCw, Settings as SettingsIcon, Wallet, Coins, MoreHorizontal, UserCog, KeyRound, Package, Trash2, Coins as CoinsIcon, Zap, Plug, Clock, UserPlus, Eye, EyeOff, Database, Download, Loader2, Phone, ArrowRightLeft, Layers, Megaphone } from "lucide-react";
 import { MercadoPagoForm } from "@/components/MercadoPagoForm";
 import { AdminCreditsManager, CreditsDialog } from "@/components/AdminCreditsManager";
 import { AdminCreditCosts } from "@/components/AdminCreditCosts";
@@ -12,6 +12,7 @@ import { AdminLandingPackages } from "@/components/AdminLandingPackages";
 import { AdminCronStatus } from "@/components/AdminCronStatus";
 import { AdminGlobalSettings } from "@/components/AdminGlobalSettings";
 import { AdminPlanMigration } from "@/components/AdminPlanMigration";
+import { AdminMarketing } from "@/components/AdminMarketing";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -149,6 +150,9 @@ function AdminPage() {
           <TabsTrigger value="global" className="gap-2">
             <Phone className="size-4" /> Landing Page
           </TabsTrigger>
+          <TabsTrigger value="marketing" className="gap-2">
+            <Megaphone className="size-4" /> Marketing
+          </TabsTrigger>
         </TabsList>
 
 
@@ -194,6 +198,9 @@ function AdminPage() {
         </TabsContent>
         <TabsContent value="global" className="mt-0">
           <AdminGlobalSettings />
+        </TabsContent>
+        <TabsContent value="marketing" className="mt-0">
+          <AdminMarketing />
         </TabsContent>
       </Tabs>
 

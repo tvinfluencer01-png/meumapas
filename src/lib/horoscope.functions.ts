@@ -357,7 +357,9 @@ export const sendTestHoroscopeWhatsapp = createServerFn({ method: "POST" })
     }
 
     const who = ctx.fullName ? ` (${ctx.fullName})` : "";
-    const message = `🧪 TESTE — Horóscopo de hoje — ${sign}${who}\n\n${body}\n\n— Código Cósmico`;
+    const { pickMarketingFooter } = await import("./marketing.functions");
+    const footer = await pickMarketingFooter("horoscope_test");
+    const message = `🧪 TESTE — Horóscopo de hoje — ${sign}${who}\n\n${body}\n\n${footer}`;
 
     if (evoReady) {
       const base = String(evo.base_url).replace(/\/+$/, "");

@@ -665,6 +665,39 @@ export type Database = {
         }
         Relationships: []
       }
+      marketing_messages: {
+        Row: {
+          body: string
+          created_at: string
+          enabled: boolean
+          id: string
+          services: string[]
+          title: string
+          updated_at: string
+          weight: number
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          services?: string[]
+          title: string
+          updated_at?: string
+          weight?: number
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          services?: string[]
+          title?: string
+          updated_at?: string
+          weight?: number
+        }
+        Relationships: []
+      }
       mercado_pago_settings: {
         Row: {
           access_token: string | null
