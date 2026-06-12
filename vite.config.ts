@@ -106,7 +106,6 @@ function parseErrorReporter(): Plugin {
 export default defineConfig({
   tanstackStart: {
     server: { entry: "server" },
-    },
   },
   vite: {
     plugins: [parseErrorReporter()],
