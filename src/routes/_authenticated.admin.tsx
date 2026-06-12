@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { Shield, MessageSquare, Save, Send, CheckCircle2, AlertTriangle, Users, Search, ShieldOff, ShieldCheck, History, RefreshCw, Settings as SettingsIcon, Wallet, Coins, MoreHorizontal, UserCog, KeyRound, Package, Trash2, Coins as CoinsIcon, Zap, Plug, Clock, UserPlus, Eye, EyeOff, Database, Download, Loader2, Phone, ArrowRightLeft, Layers, Megaphone, Mail } from "lucide-react";
+import { Shield, MessageSquare, Save, Send, CheckCircle2, AlertTriangle, Users, Search, ShieldOff, ShieldCheck, History, RefreshCw, Settings as SettingsIcon, Wallet, Coins, MoreHorizontal, UserCog, KeyRound, Package, Trash2, Coins as CoinsIcon, Zap, Plug, Clock, UserPlus, Eye, EyeOff, Database, Download, Loader2, Phone, ArrowRightLeft, Layers, Megaphone, Mail, Smartphone } from "lucide-react";
 import { MercadoPagoForm } from "@/components/MercadoPagoForm";
 import { AdminCreditsManager, CreditsDialog } from "@/components/AdminCreditsManager";
 import { AdminCreditCosts } from "@/components/AdminCreditCosts";
@@ -14,6 +14,7 @@ import { AdminGlobalSettings } from "@/components/AdminGlobalSettings";
 import { AdminPlanMigration } from "@/components/AdminPlanMigration";
 import { AdminMarketing } from "@/components/AdminMarketing";
 import { AdminSmtp } from "@/components/AdminSmtp";
+import { AdminPwa } from "@/components/AdminPwa";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -157,6 +158,9 @@ function AdminPage() {
           <TabsTrigger value="smtp" className="gap-2">
             <Mail className="size-4" /> E-mail SMTP
           </TabsTrigger>
+          <TabsTrigger value="pwa" className="gap-2">
+            <Smartphone className="size-4" /> PWA
+          </TabsTrigger>
         </TabsList>
 
 
@@ -208,6 +212,9 @@ function AdminPage() {
         </TabsContent>
         <TabsContent value="smtp" className="mt-0">
           <AdminSmtp />
+        </TabsContent>
+        <TabsContent value="pwa" className="mt-0">
+          <AdminPwa />
         </TabsContent>
       </Tabs>
 
