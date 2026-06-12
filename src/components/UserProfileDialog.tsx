@@ -95,10 +95,22 @@ export function UserProfileDialog({ open, onOpenChange }: Props) {
             full_name: parsed.data.full_name,
             birth_date: parsed.data.birth_date,
             birth_time: parsed.data.birth_time || null,
+            is_primary: true,
           })
           .eq("id", data.birth.id);
         if (bErr) throw bErr;
+        // Garante apenas um registro primário
+        await supabase
+          .from("birth_data")
+          .update({ is_primary: false })
+          .eq("user_id", user.id)
+          .neq("id", data.birth.id);
       } else {
+        // Desmarca quaisquer outros primários antes de inserir
+        await supabase
+          .from("birth_data")
+          .update({ is_primary: false })
+          .eq("user_id", user.id);
         const { error: bErr } = await supabase.from("birth_data").insert({
           user_id: user.id,
           full_name: parsed.data.full_name,
