@@ -863,7 +863,7 @@ function TwilioForm() {
               autoComplete="off"
             />
           </div>
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 relative">
             <Label htmlFor="token">
               Auth Token {data?.has_auth_token && (
                 <span className="ml-2 inline-flex items-center gap-1 text-xs text-emerald-500">
@@ -883,7 +883,7 @@ function TwilioForm() {
             <button
               type="button"
               tabIndex={-1}
-              className="absolute right-3 top-[1.6rem] text-muted-foreground hover:text-foreground"
+              className="absolute right-3 top-[1.85rem] text-muted-foreground hover:text-foreground"
               onClick={() => setShowAuthToken((s) => !s)}
             >
               {showAuthToken ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
@@ -1079,6 +1079,7 @@ function EvolutionForm() {
     enabled: false,
   });
   const [testTo, setTestTo] = useState("");
+  const [showApiKey, setShowApiKey] = useState(false);
 
   useEffect(() => {
     if (!data) return;
