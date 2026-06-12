@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { Shield, MessageSquare, Save, Send, CheckCircle2, AlertTriangle, Users, Search, ShieldOff, ShieldCheck, History, RefreshCw, Settings as SettingsIcon, Wallet, Coins, MoreHorizontal, UserCog, KeyRound, Package, Trash2, Coins as CoinsIcon, Zap, Plug, Clock, UserPlus, Eye, EyeOff, Database, Download, Loader2, Phone, ArrowRightLeft, Layers, Megaphone } from "lucide-react";
+import { Shield, MessageSquare, Save, Send, CheckCircle2, AlertTriangle, Users, Search, ShieldOff, ShieldCheck, History, RefreshCw, Settings as SettingsIcon, Wallet, Coins, MoreHorizontal, UserCog, KeyRound, Package, Trash2, Coins as CoinsIcon, Zap, Plug, Clock, UserPlus, Eye, EyeOff, Database, Download, Loader2, Phone, ArrowRightLeft, Layers, Megaphone, Mail } from "lucide-react";
 import { MercadoPagoForm } from "@/components/MercadoPagoForm";
 import { AdminCreditsManager, CreditsDialog } from "@/components/AdminCreditsManager";
 import { AdminCreditCosts } from "@/components/AdminCreditCosts";
@@ -13,6 +13,7 @@ import { AdminCronStatus } from "@/components/AdminCronStatus";
 import { AdminGlobalSettings } from "@/components/AdminGlobalSettings";
 import { AdminPlanMigration } from "@/components/AdminPlanMigration";
 import { AdminMarketing } from "@/components/AdminMarketing";
+import { AdminSmtp } from "@/components/AdminSmtp";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -153,6 +154,9 @@ function AdminPage() {
           <TabsTrigger value="marketing" className="gap-2">
             <Megaphone className="size-4" /> Marketing
           </TabsTrigger>
+          <TabsTrigger value="smtp" className="gap-2">
+            <Mail className="size-4" /> E-mail SMTP
+          </TabsTrigger>
         </TabsList>
 
 
@@ -201,6 +205,9 @@ function AdminPage() {
         </TabsContent>
         <TabsContent value="marketing" className="mt-0">
           <AdminMarketing />
+        </TabsContent>
+        <TabsContent value="smtp" className="mt-0">
+          <AdminSmtp />
         </TabsContent>
       </Tabs>
 
