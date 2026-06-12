@@ -108,12 +108,16 @@ export async function pickMarketingFooter(
       .contains("services", [service]);
     const rows = (data ?? []) as Array<{ body: string; weight: number }>;
     if (rows.length === 0) return `— ${MARKETING_SIGNATURE}`;
-    const total = rows.reduce((a, r) => a + Math.max(1, r.weight), 0);
+
+    // Sorteio aleatório ponderado: probabilidade ∝ weight.
+    // Ex.: pesos [3,1] → 75% / 25%. Pesos <1 são tratados como 1.
+    const weights = rows.map((r) => Math.max(1, Number(r.weight) || 1));
+    const total = weights.reduce((a, w) => a + w, 0);
     let pick = Math.random() * total;
-    let chosen = rows[0]!.body;
-    for (const r of rows) {
-      pick -= Math.max(1, r.weight);
-      if (pick <= 0) { chosen = r.body; break; }
+    let chosen = rows[rows.length - 1]!.body; // fallback p/ último (evita perda por float)
+    for (let i = 0; i < rows.length; i++) {
+      pick -= weights[i]!;
+      if (pick < 0) { chosen = rows[i]!.body; break; }
     }
     return `${chosen}\n\n— ${MARKETING_SIGNATURE}`;
   } catch {
