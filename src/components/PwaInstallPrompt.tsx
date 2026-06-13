@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download, Sparkles, Share } from "lucide-react";
+import { Download, Menu, Sparkles, Share } from "lucide-react";
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -43,7 +43,7 @@ function isIOS() {
 export function PwaInstallPrompt() {
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
   const [open, setOpen] = useState(false);
-  const [showIosHint, setShowIosHint] = useState(false);
+  const [hintMode, setHintMode] = useState<"ios" | "browser" | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -56,6 +56,7 @@ export function PwaInstallPrompt() {
     const onBeforeInstall = (e: Event) => {
       e.preventDefault();
       setDeferred(e as BeforeInstallPromptEvent);
+      setHintMode(null);
       setTimeout(() => setOpen(true), 1200);
     };
     window.addEventListener("beforeinstallprompt", onBeforeInstall);
@@ -63,7 +64,7 @@ export function PwaInstallPrompt() {
     // iOS doesn't fire beforeinstallprompt — show manual instructions
     if (isIOS()) {
       const t = setTimeout(() => {
-        setShowIosHint(true);
+        setHintMode("ios");
         setOpen(true);
       }, 1500);
       return () => {
@@ -72,10 +73,18 @@ export function PwaInstallPrompt() {
       };
     }
 
+    // Some browsers/incognito sessions don't expose the native prompt.
+    // Still show clear install instructions so visitors know what to do.
+    const fallbackTimer = setTimeout(() => {
+      setHintMode("browser");
+      setOpen(true);
+    }, 2200);
+
     const onInstalled = () => setOpen(false);
     window.addEventListener("appinstalled", onInstalled);
 
     return () => {
+      clearTimeout(fallbackTimer);
       window.removeEventListener("beforeinstallprompt", onBeforeInstall);
       window.removeEventListener("appinstalled", onInstalled);
     };
@@ -115,7 +124,7 @@ export function PwaInstallPrompt() {
           </DialogDescription>
         </DialogHeader>
 
-        {showIosHint ? (
+        {hintMode === "ios" ? (
           <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-4 text-sm">
             <p className="font-semibold text-foreground">No iPhone / iPad:</p>
             <ol className="list-decimal space-y-1 pl-5 text-muted-foreground">
@@ -126,11 +135,22 @@ export function PwaInstallPrompt() {
           </div>
         ) : null}
 
+        {hintMode === "browser" ? (
+          <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-4 text-sm">
+            <p className="font-semibold text-foreground">No Android / Chrome:</p>
+            <ol className="list-decimal space-y-1 pl-5 text-muted-foreground">
+              <li>Toque no menu <Menu className="inline size-4 align-middle text-gold" /> do navegador.</li>
+              <li>Escolha <b>“Instalar app”</b> ou <b>“Adicionar à tela inicial”</b>.</li>
+              <li>Confirme a instalação.</li>
+            </ol>
+          </div>
+        ) : null}
+
         <DialogFooter className="gap-2 sm:gap-2">
           <Button variant="ghost" onClick={handleDismiss}>
             Agora não
           </Button>
-          {!showIosHint && (
+          {!hintMode && (
             <Button
               onClick={handleInstall}
               disabled={!deferred}
