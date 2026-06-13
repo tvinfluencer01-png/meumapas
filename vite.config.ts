@@ -119,7 +119,8 @@ export default defineConfig({
         devOptions: { enabled: false },
         workbox: {
           navigateFallbackDenylist: [/^\/~oauth/, /^\/api\//],
-          globPatterns: ["**/*.{js,css,html,svg,png,ico,webp,woff,woff2}"],
+          globPatterns: ["**/*.{js,css,html,svg,ico,woff,woff2}"],
+          maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
           runtimeCaching: [
             {
               urlPattern: ({ request }) => request.mode === "navigate",
