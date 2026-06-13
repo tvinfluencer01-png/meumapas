@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { AuthProvider } from "@/hooks/use-auth";
 import { Toaster } from "@/components/ui/sonner";
 import { SystemFeedbackHost } from "@/components/system-feedback";
+import { PwaInstallPrompt } from "@/components/PwaInstallPrompt";
 
 function NotFoundComponent() {
   return (
