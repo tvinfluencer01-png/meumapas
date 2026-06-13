@@ -619,11 +619,11 @@ export const adminDeleteCreditCost = createServerFn({ method: "POST" })
 // =========== Credit packages (compra avulsa) ===========
 
 export const listCreditPackages = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
   .handler(async () => {
     const { data, error } = await supabaseAdmin
       .from("credit_packages")
       .select("id, name, description, credits, price_cents, currency, active, sort_order, updated_at")
+      .eq("active", true)
       .order("sort_order", { ascending: true })
       .order("created_at", { ascending: true });
     if (error) throw new Error(error.message);
