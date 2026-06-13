@@ -63,7 +63,7 @@ function LandingPage() {
       <Footer />
       <ChatbotFloat />
       <DynamicWhatsAppFloat />
-      <PwaInstallPrompt />
+      
     </div>
   );
 }
