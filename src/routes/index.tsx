@@ -9,7 +9,7 @@ import heroAstrolabe from "@/assets/hero-astrolabe.jpg";
 import oracleOrb from "@/assets/oracle-orb.jpg";
 import zodiac3dWheel from "@/assets/zodiac-3d-wheel.png";
 import synastry3d from "@/assets/synastry-3d.png";
-import { PwaInstallPrompt } from "@/components/PwaInstallPrompt";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
