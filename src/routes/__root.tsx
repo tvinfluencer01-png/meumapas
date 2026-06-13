@@ -166,6 +166,7 @@ function RootComponent() {
         <Outlet />
         <Toaster theme="dark" position="top-center" />
         <SystemFeedbackHost />
+        <PwaInstallPrompt />
       </AuthProvider>
     </QueryClientProvider>
   );
