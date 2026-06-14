@@ -124,16 +124,32 @@ function AuthedLayout() {
         supabase.from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle(),
         supabase.from("user_subscriptions").select("addon_id, status, current_period_end").eq("user_id", user.id).eq("status", "active"),
       ]);
-      setIsAdmin(!!role);
+      const userIsAdmin = !!role;
+      setIsAdmin(userIsAdmin);
       const now = Date.now();
-      setActiveAddons(new Set(
-        (subs ?? [])
-          .filter((s) => !s.current_period_end || new Date(s.current_period_end).getTime() > now)
-          .map((s) => s.addon_id),
-      ));
+      const activeSubs = (subs ?? []).filter(
+        (s) => !s.current_period_end || new Date(s.current_period_end).getTime() > now,
+      );
+      setActiveAddons(new Set(activeSubs.map((s) => s.addon_id)));
       const path = router.state.location.pathname;
       if (profile && !profile.onboarding_completed && path !== "/onboarding") {
         router.navigate({ to: "/onboarding" });
+        return;
+      }
+      // Gate de pacote: só libera o sistema se houver pacote ativo.
+      // Permitido sem pacote: onboarding, addons, admin (apenas admins).
+      const allowedWithoutPackage =
+        path === "/onboarding" ||
+        path.startsWith("/addons") ||
+        (userIsAdmin && path.startsWith("/admin"));
+      if (
+        profile?.onboarding_completed &&
+        activeSubs.length === 0 &&
+        !userIsAdmin &&
+        !allowedWithoutPackage
+      ) {
+        window.location.href = "/#planos";
+        return;
       }
       setProfileChecked(true);
     })();
