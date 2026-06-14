@@ -65,24 +65,24 @@ export function SplashScreen({ onComplete, minimumDuration = 4500 }: SplashScree
         ))}
       </div>
 
-      <div className="relative z-10 flex flex-col items-center gap-6 animate-splash-rise">
+      <div className="relative z-10 flex flex-col items-center justify-center text-center gap-5 animate-splash-rise px-4">
         <div className="relative">
           <span className="absolute inset-0 -m-6 rounded-full bg-gold/20 blur-2xl animate-splash-halo" aria-hidden />
-          <Logo sizeClassName="size-28" animation="pulse" className="relative" />
+          <Logo sizeClassName="size-24" animation="pulse" className="relative" />
         </div>
 
-        <h1 className="font-serif text-4xl italic tracking-wide shimmer-text">
+        <h1 className="font-serif text-3xl italic tracking-wide shimmer-text leading-tight">
           Código Cósmico
         </h1>
 
-        <p className="text-xs sm:text-sm tracking-micro uppercase text-muted-foreground">
+        <p className="text-[11px] sm:text-xs tracking-micro uppercase text-muted-foreground">
           Onde a sabedoria ancestral encontra o sagrado
         </p>
 
-        <div className="mt-4 w-60">
+        <div className="mt-3 w-56">
           <div className="h-1 w-full overflow-hidden rounded-full bg-muted/40">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-gold via-stardust to-gold bg-[length:200%_100%] animate-splash-shimmer transition-[width] duration-100 ease-out"
+              className="h-full rounded-full bg-gradient-to-r from-gold via-stardust to-gold bg-[length:200%_100%] animate-splash-shimmer transition-[width] duration-300 ease-out"
               style={{ width: `${progress}%` }}
             />
           </div>
