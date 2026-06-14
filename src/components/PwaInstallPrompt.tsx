@@ -37,7 +37,13 @@ function isInPreviewOrIframe() {
 
 function isIOS() {
   if (typeof navigator === "undefined") return false;
-  return /iphone|ipad|ipod/i.test(navigator.userAgent) && !/crios|fxios/i.test(navigator.userAgent);
+  return /iphone|ipad|ipod/i.test(navigator.userAgent);
+}
+
+function isIOSSafari() {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent;
+  return /iphone|ipad|ipod/i.test(ua) && !/crios|fxios|edgios|opios|yabrowser/i.test(ua);
 }
 
 export function PwaInstallPrompt() {
