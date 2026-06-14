@@ -15,11 +15,15 @@ export function SplashScreen({ onComplete, minimumDuration = 4500 }: SplashScree
     const start = performance.now();
     let raf = 0;
 
+    const easeInOutCubic = (t: number) =>
+      t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
     const tick = () => {
       const elapsed = performance.now() - start;
-      const pct = Math.min((elapsed / minimumDuration) * 100, 100);
+      const raw = Math.min(elapsed / minimumDuration, 1);
+      const pct = easeInOutCubic(raw) * 100;
       setProgress(pct);
-      if (pct < 100) {
+      if (raw < 1) {
         raf = requestAnimationFrame(tick);
       } else {
         setPhase("exit");
