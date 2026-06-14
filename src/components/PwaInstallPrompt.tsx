@@ -56,7 +56,9 @@ export function PwaInstallPrompt() {
     const onBeforeInstall = (e: Event) => {
       e.preventDefault();
       setDeferred(e as BeforeInstallPromptEvent);
-      setHintMode(null);
+      // Keep browser hint visible alongside the native install button so users
+      // see clear instructions if they dismiss the system prompt.
+      setHintMode((prev) => (prev === "ios" ? prev : "browser"));
       setTimeout(() => setOpen(true), 1200);
     };
     window.addEventListener("beforeinstallprompt", onBeforeInstall);
@@ -150,14 +152,14 @@ export function PwaInstallPrompt() {
           <Button variant="ghost" onClick={handleDismiss}>
             Agora não
           </Button>
-          {!hintMode && (
+          {hintMode !== "ios" && (
             <Button
               onClick={handleInstall}
               disabled={!deferred}
               className="bg-gold text-primary-foreground hover:bg-gold-glow gap-2"
             >
               <Download className="size-4" />
-              Instalar app
+              {deferred ? "Instalar app" : "Aguardando navegador…"}
             </Button>
           )}
         </DialogFooter>
