@@ -37,7 +37,13 @@ function isInPreviewOrIframe() {
 
 function isIOS() {
   if (typeof navigator === "undefined") return false;
-  return /iphone|ipad|ipod/i.test(navigator.userAgent) && !/crios|fxios/i.test(navigator.userAgent);
+  return /iphone|ipad|ipod/i.test(navigator.userAgent);
+}
+
+function isIOSSafari() {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent;
+  return /iphone|ipad|ipod/i.test(ua) && !/crios|fxios|edgios|opios|yabrowser/i.test(ua);
 }
 
 export function PwaInstallPrompt() {
@@ -129,7 +135,13 @@ export function PwaInstallPrompt() {
         {hintMode === "ios" ? (
           <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-4 text-sm">
             <p className="font-semibold text-foreground">No iPhone / iPad:</p>
+            {!isIOSSafari() ? (
+              <p className="rounded-md border border-gold/40 bg-gold/10 p-2 text-foreground">
+                A instalação no iOS <b>só funciona pelo Safari</b>. Abra este site no Safari para continuar.
+              </p>
+            ) : null}
             <ol className="list-decimal space-y-1 pl-5 text-muted-foreground">
+              <li>Abra esta página no <b>Safari</b>.</li>
               <li>Toque no ícone <Share className="inline size-4 align-middle text-gold" /> <b>Compartilhar</b> na barra do Safari.</li>
               <li>Escolha <b>“Adicionar à Tela de Início”</b>.</li>
               <li>Confirme em <b>Adicionar</b>.</li>
@@ -150,16 +162,15 @@ export function PwaInstallPrompt() {
 
         <DialogFooter className="gap-2 sm:gap-2">
           <Button variant="ghost" onClick={handleDismiss}>
-            Agora não
+            {deferred || hintMode === "ios" ? "Agora não" : "Entendi"}
           </Button>
-          {hintMode !== "ios" && (
+          {deferred && hintMode !== "ios" && (
             <Button
               onClick={handleInstall}
-              disabled={!deferred}
               className="bg-gold text-primary-foreground hover:bg-gold-glow gap-2"
             >
               <Download className="size-4" />
-              {deferred ? "Instalar app" : "Aguardando navegador…"}
+              Instalar app
             </Button>
           )}
         </DialogFooter>
