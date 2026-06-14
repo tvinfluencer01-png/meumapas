@@ -6,62 +6,88 @@ interface SplashScreenProps {
   minimumDuration?: number;
 }
 
-export function SplashScreen({ onComplete, minimumDuration = 2200 }: SplashScreenProps) {
+export function SplashScreen({ onComplete, minimumDuration = 4500 }: SplashScreenProps) {
   const [progress, setProgress] = useState(0);
-  const [phase, setPhase] = useState<"enter" | "hold" | "exit">("enter");
+  const [phase, setPhase] = useState<"enter" | "exit">("enter");
   const [visible, setVisible] = useState(true);
 
   useEffect(() => {
     const start = performance.now();
+    let raf = 0;
 
-    const raf = () => {
+    const tick = () => {
       const elapsed = performance.now() - start;
       const pct = Math.min((elapsed / minimumDuration) * 100, 100);
       setProgress(pct);
       if (pct < 100) {
-        requestAnimationFrame(raf);
+        raf = requestAnimationFrame(tick);
       } else {
         setPhase("exit");
         setTimeout(() => {
           setVisible(false);
           onComplete?.();
-        }, 700);
+        }, 800);
       }
     };
-    requestAnimationFrame(raf);
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
   }, [minimumDuration, onComplete]);
 
   if (!visible) return null;
 
   return (
     <div
-      className={`fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background transition-opacity duration-700 ${
+      className={`fixed inset-0 z-[100] flex flex-col items-center justify-center overflow-hidden bg-background transition-opacity duration-700 ${
         phase === "exit" ? "opacity-0 pointer-events-none" : "opacity-100"
       }`}
       aria-hidden={phase === "exit"}
     >
-      <div className="relative flex flex-col items-center gap-6">
-        <Logo sizeClassName="size-24" animation="pulse" />
+      {/* Animated nebula layers */}
+      <div className="pointer-events-none absolute inset-0 nebula-bg opacity-70 animate-splash-nebula" />
+      <div className="pointer-events-none absolute -inset-1/2 splash-rays animate-splash-rotate" aria-hidden />
 
-        <h1 className="font-serif text-3xl italic tracking-wide shimmer-text">
+      {/* Floating stardust particles */}
+      <div className="pointer-events-none absolute inset-0" aria-hidden>
+        {Array.from({ length: 24 }).map((_, i) => (
+          <span
+            key={i}
+            className="absolute block rounded-full bg-stardust animate-splash-drift"
+            style={{
+              top: `${(i * 37) % 100}%`,
+              left: `${(i * 53) % 100}%`,
+              width: `${(i % 3) + 1}px`,
+              height: `${(i % 3) + 1}px`,
+              animationDelay: `${(i % 8) * 0.3}s`,
+              animationDuration: `${4 + (i % 5)}s`,
+              opacity: 0.6,
+            }}
+          />
+        ))}
+      </div>
+
+      <div className="relative z-10 flex flex-col items-center gap-6 animate-splash-rise">
+        <div className="relative">
+          <span className="absolute inset-0 -m-6 rounded-full bg-gold/20 blur-2xl animate-splash-halo" aria-hidden />
+          <Logo sizeClassName="size-28" animation="pulse" className="relative" />
+        </div>
+
+        <h1 className="font-serif text-4xl italic tracking-wide shimmer-text">
           Código Cósmico
         </h1>
 
-        <p className="text-sm tracking-micro uppercase text-muted-foreground">
-          Onde a inteligência artificial encontra o sagrado
+        <p className="text-xs sm:text-sm tracking-micro uppercase text-muted-foreground">
+          Onde a sabedoria ancestral encontra o sagrado
         </p>
 
-        <div className="mt-4 w-56">
+        <div className="mt-4 w-60">
           <div className="h-1 w-full overflow-hidden rounded-full bg-muted/40">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-gold to-stardust transition-all duration-100 ease-out"
+              className="h-full rounded-full bg-gradient-to-r from-gold via-stardust to-gold bg-[length:200%_100%] animate-splash-shimmer transition-[width] duration-100 ease-out"
               style={{ width: `${progress}%` }}
             />
           </div>
         </div>
       </div>
-
-      <div className="pointer-events-none absolute inset-0 nebula-bg opacity-60" />
     </div>
   );
 }
