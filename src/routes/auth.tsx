@@ -186,7 +186,7 @@ function AuthPage() {
 
       <Link
         to="/"
-        className="absolute left-4 top-4 z-10 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-gold transition-colors"
+        className="absolute left-4 top-4 z-[60] inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-gold transition-colors"
       >
         <ArrowLeft className="size-4" /> Voltar
       </Link>
