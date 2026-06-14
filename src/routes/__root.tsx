@@ -14,6 +14,7 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { Toaster } from "@/components/ui/sonner";
 import { SystemFeedbackHost } from "@/components/system-feedback";
 import { PwaInstallPrompt } from "@/components/PwaInstallPrompt";
+import { SplashScreen } from "@/components/SplashScreen";
 
 function NotFoundComponent() {
   return (
@@ -167,6 +168,7 @@ function RootComponent() {
         <Toaster theme="dark" position="top-center" />
         <SystemFeedbackHost />
         <PwaInstallPrompt />
+        <SplashScreen minimumDuration={2500} />
       </AuthProvider>
     </QueryClientProvider>
   );
