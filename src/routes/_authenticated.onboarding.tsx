@@ -129,8 +129,28 @@ function OnboardingPage() {
         .eq("id", user.id);
       if (pErr) throw pErr;
 
-      showFeedback({ title: "Cadastro concluído!", description: "Sua jornada cósmica começa agora.", type: "success" });
-      nav({ to: "/dashboard" });
+      // Verifica se já existe um pacote pago e ativo na conta
+      const { data: subs } = await supabase
+        .from("user_subscriptions")
+        .select("addon_id, status, current_period_end")
+        .eq("user_id", user.id)
+        .eq("status", "active");
+      const now = Date.now();
+      const hasActivePackage = (subs ?? []).some(
+        (s) => !s.current_period_end || new Date(s.current_period_end).getTime() > now,
+      );
+
+      if (hasActivePackage) {
+        showFeedback({ title: "Cadastro concluído!", description: "Sua jornada cósmica começa agora.", type: "success" });
+        nav({ to: "/dashboard" });
+      } else {
+        showFeedback({
+          title: "Quase lá!",
+          description: "Escolha um pacote para liberar o acesso ao sistema.",
+          type: "info",
+        });
+        window.location.href = "/#planos";
+      }
     } catch (err) {
       showFeedback({ title: "Erro ao salvar", description: err instanceof Error ? err.message : "Erro ao concluir onboarding", type: "error" });
     } finally {
