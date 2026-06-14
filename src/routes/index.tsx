@@ -96,7 +96,7 @@ function Nav() {
         <div className="hidden gap-10 text-xs uppercase tracking-[0.25em] text-muted-foreground md:flex">
           <a href="#recursos" className="transition-colors hover:text-gold">Recursos</a>
           <a href="#ia" className="transition-colors hover:text-gold">IA Espiritual</a>
-          <a href="#profissional" className="transition-colors hover:text-gold">Profissional</a>
+          <Link to="/profissionais" className="transition-colors hover:text-gold">Profissionais</Link>
           <a href="#planos" className="transition-colors hover:text-gold">Planos</a>
         </div>
         <Link to="/auth" className="border border-gold/30 bg-gold/10 px-6 py-2 text-xs uppercase tracking-[0.25em] text-gold transition-all hover:bg-gold hover:text-primary-foreground">
