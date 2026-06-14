@@ -152,14 +152,14 @@ export function PwaInstallPrompt() {
           <Button variant="ghost" onClick={handleDismiss}>
             Agora não
           </Button>
-          {!hintMode && (
+          {hintMode !== "ios" && (
             <Button
               onClick={handleInstall}
               disabled={!deferred}
               className="bg-gold text-primary-foreground hover:bg-gold-glow gap-2"
             >
               <Download className="size-4" />
-              Instalar app
+              {deferred ? "Instalar app" : "Aguardando navegador…"}
             </Button>
           )}
         </DialogFooter>
