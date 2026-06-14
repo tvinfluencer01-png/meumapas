@@ -56,7 +56,9 @@ export function PwaInstallPrompt() {
     const onBeforeInstall = (e: Event) => {
       e.preventDefault();
       setDeferred(e as BeforeInstallPromptEvent);
-      setHintMode(null);
+      // Keep browser hint visible alongside the native install button so users
+      // see clear instructions if they dismiss the system prompt.
+      setHintMode((prev) => (prev === "ios" ? prev : "browser"));
       setTimeout(() => setOpen(true), 1200);
     };
     window.addEventListener("beforeinstallprompt", onBeforeInstall);
