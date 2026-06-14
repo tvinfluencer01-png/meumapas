@@ -168,7 +168,7 @@ function RootComponent() {
         <Toaster theme="dark" position="top-center" />
         <SystemFeedbackHost />
         <PwaInstallPrompt />
-        <SplashScreen minimumDuration={2500} />
+        <SplashScreen minimumDuration={4500} />
       </AuthProvider>
     </QueryClientProvider>
   );
