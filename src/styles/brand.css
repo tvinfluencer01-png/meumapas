@@ -215,4 +215,55 @@
     50%      { box-shadow: 0 0 28px 4px color-mix(in oklab, var(--gold) 55%, transparent); }
   }
   .animate-tarot-glow { animation: tarot-glow 2.4s ease-in-out infinite; }
+
+  /* ---------- Splash screen animations ---------- */
+  @keyframes splash-rise {
+    0%   { opacity: 0; transform: translateY(20px) scale(0.96); filter: blur(8px); }
+    100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+  }
+  .animate-splash-rise { animation: splash-rise 1.2s var(--ease-cinematic) both; }
+
+  @keyframes splash-halo {
+    0%, 100% { opacity: 0.5; transform: scale(0.95); }
+    50%      { opacity: 1;   transform: scale(1.15); }
+  }
+  .animate-splash-halo { animation: splash-halo 3s ease-in-out infinite; }
+
+  @keyframes splash-shimmer {
+    0%   { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+  }
+  .animate-splash-shimmer { animation: splash-shimmer 2s linear infinite; }
+
+  @keyframes splash-rotate {
+    to { transform: rotate(360deg); }
+  }
+  .animate-splash-rotate { animation: splash-rotate 40s linear infinite; }
+
+  @keyframes splash-nebula {
+    0%, 100% { opacity: 0.55; transform: scale(1); }
+    50%      { opacity: 0.85; transform: scale(1.08); }
+  }
+  .animate-splash-nebula { animation: splash-nebula 6s ease-in-out infinite; }
+
+  @keyframes splash-drift {
+    0%   { transform: translateY(0) translateX(0); opacity: 0.2; }
+    50%  { opacity: 1; }
+    100% { transform: translateY(-30px) translateX(10px); opacity: 0.2; }
+  }
+  .animate-splash-drift { animation: splash-drift 5s ease-in-out infinite; }
+
+  .splash-rays {
+    background: conic-gradient(
+      from 0deg,
+      transparent 0deg,
+      color-mix(in oklab, var(--gold) 8%, transparent) 30deg,
+      transparent 60deg,
+      color-mix(in oklab, var(--nebula) 12%, transparent) 180deg,
+      transparent 240deg,
+      color-mix(in oklab, var(--gold) 6%, transparent) 300deg,
+      transparent 360deg
+    );
+    filter: blur(40px);
+  }
 }
