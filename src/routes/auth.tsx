@@ -143,7 +143,7 @@ function AuthPage() {
         if (error) throw error;
       }
     } catch (err) {
-      showFeedback({ title: "Falha na autenticação", description: err instanceof Error ? err.message : "Tente novamente mais tarde.", type: "error" });
+      showFeedback({ title: "Falha na autenticação", description: translateError(err) || "Tente novamente mais tarde.", type: "error" });
     } finally {
       setSubmitting(false);
     }
