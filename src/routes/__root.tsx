@@ -12,6 +12,7 @@ import {
 import appCss from "../styles.css?url";
 import { AuthProvider } from "@/hooks/use-auth";
 import { Toaster } from "@/components/ui/sonner";
+import "@/lib/toast-i18n";
 import { SystemFeedbackHost } from "@/components/system-feedback";
 import { PwaInstallPrompt } from "@/components/PwaInstallPrompt";
 import { SplashScreen } from "@/components/SplashScreen";
