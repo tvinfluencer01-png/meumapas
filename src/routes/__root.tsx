@@ -40,13 +40,35 @@ function NotFoundComponent() {
 
 function isChunkLoadError(error: unknown): boolean {
   const msg = (error as { message?: string } | null)?.message ?? String(error ?? "");
+  const name = (error as { name?: string } | null)?.name ?? "";
   return (
     /Importing a module script failed/i.test(msg) ||
     /Failed to fetch dynamically imported module/i.test(msg) ||
     /Load failed/i.test(msg) ||
     /ChunkLoadError/i.test(msg) ||
-    /error loading dynamically imported module/i.test(msg)
+    /ChunkLoadError/i.test(name) ||
+    /error loading dynamically imported module/i.test(msg) ||
+    /Unable to preload CSS/i.test(msg) ||
+    /Loading chunk \d+ failed/i.test(msg) ||
+    /Loading CSS chunk/i.test(msg) ||
+    /dynamically imported module/i.test(msg)
   );
+}
+
+async function clearAppCachesAndSW() {
+  if (typeof window === "undefined") return;
+  try {
+    if ("serviceWorker" in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map((r) => r.unregister().catch(() => {})));
+    }
+  } catch {}
+  try {
+    if ("caches" in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((k) => caches.delete(k).catch(() => false)));
+    }
+  } catch {}
 }
 
 function hardReload() {
@@ -56,6 +78,11 @@ function hardReload() {
   window.location.replace(url.toString());
 }
 
+async function recoverAndReload() {
+  await clearAppCachesAndSW();
+  hardReload();
+}
+
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
@@ -63,8 +90,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 
   useEffect(() => {
     if (chunkError) {
-      const t = window.setTimeout(hardReload, 600);
-      return () => window.clearTimeout(t);
+      void recoverAndReload();
     }
   }, [chunkError]);
 
@@ -72,18 +98,18 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          {chunkError ? "Atualizando para a versão mais recente…" : "This page didn't load"}
+          {chunkError ? "Atualizando para a versão mais recente…" : "Ops, algo deu errado"}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
           {chunkError
             ? "Detectamos uma nova versão do app. Recarregando automaticamente."
-            : "Something went wrong on our end. You can try refreshing or head back home."}
+            : "Tente recarregar a página. Se o problema persistir, limpe o cache do app abaixo."}
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
             onClick={() => {
               if (chunkError) {
-                hardReload();
+                void recoverAndReload();
                 return;
               }
               router.invalidate();
@@ -91,19 +117,26 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
             }}
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            {chunkError ? "Recarregar agora" : "Try again"}
+            {chunkError ? "Recarregar agora" : "Tentar novamente"}
+          </button>
+          <button
+            onClick={() => void recoverAndReload()}
+            className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+          >
+            Limpar cache e recarregar
           </button>
           <a
             href="/"
             className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
           >
-            Go home
+            Ir para o início
           </a>
         </div>
       </div>
     </div>
   );
 }
+
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
