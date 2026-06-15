@@ -10,8 +10,12 @@ async function refreshStoredSession(): Promise<Session | null> {
       const { data: refreshed, error } = await supabase.auth.refreshSession();
 
       if (error) {
-        await supabase.auth.signOut();
-        return null;
+        // Do NOT sign the user out on a transient refresh failure
+        // (network blip, rate limit, etc). Supabase will retry on its own.
+        // Falling back to the currently stored session avoids kicking the
+        // user back to the login screen on every flaky network.
+        const { data } = await supabase.auth.getSession();
+        return data.session;
       }
 
       return refreshed.session;

@@ -3,7 +3,7 @@ import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useRouter } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { getFreshSession } from "@/lib/auth-session";
+
 
 type AuthCtx = {
   session: Session | null;
@@ -28,48 +28,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, s) => {
+      // Ignore noisy events that fire on every tab focus / hourly refresh.
+      // Only act on real identity transitions to avoid thrashing the router
+      // and the query cache (which can cause the app to appear to "restart").
+      if (
+        event !== "SIGNED_IN" &&
+        event !== "SIGNED_OUT" &&
+        event !== "USER_UPDATED" &&
+        event !== "INITIAL_SESSION"
+      ) {
+        // TOKEN_REFRESHED / PASSWORD_RECOVERY / etc.: just update the session.
+        setSession(s);
+        return;
+      }
+
       setSession(s);
       const shouldReleaseLoading = bootstrappedRef.current || event !== "INITIAL_SESSION";
 
       if (shouldReleaseLoading) {
         setLoading(false);
         router.invalidate();
-        qc.invalidateQueries();
+        // Never invalidate queries on SIGNED_OUT — they would refetch against
+        // a cleared session and produce a 401 storm.
+        if (event !== "SIGNED_OUT") {
+          qc.invalidateQueries();
+        }
       }
 
-      if (bootstrappedRef.current && (event === "SIGNED_OUT" || (!s && event !== "INITIAL_SESSION"))) {
+      if (bootstrappedRef.current && event === "SIGNED_OUT") {
         router.navigate({ to: "/auth", replace: true });
       }
     });
 
     (async () => {
       try {
-        const current = await getFreshSession();
-        setSession(current);
+        const { data } = await supabase.auth.getSession();
+        setSession(data.session);
       } finally {
         bootstrappedRef.current = true;
         setLoading(false);
       }
     })();
 
-    // Proactively keep the cached session fresh so the auth-attacher
-    // middleware never sends an expired bearer token to server functions.
-    const refresh = () => {
-      getFreshSession().catch(() => {});
-    };
-    const interval = window.setInterval(refresh, 30_000);
-    const onFocus = () => refresh();
-    const onVisibility = () => {
-      if (document.visibilityState === "visible") refresh();
-    };
-    window.addEventListener("focus", onFocus);
-    document.addEventListener("visibilitychange", onVisibility);
-
     return () => {
       subscription.unsubscribe();
-      window.clearInterval(interval);
-      window.removeEventListener("focus", onFocus);
-      document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [router, qc]);
 
