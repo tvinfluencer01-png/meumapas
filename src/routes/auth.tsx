@@ -5,6 +5,7 @@ import { showFeedback } from "@/components/system-feedback";
 import { Mail, Lock, User as UserIcon, ArrowLeft, Loader2, Eye, EyeOff } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { supabase } from "@/integrations/supabase/client";
+import { translateError } from "@/lib/translate-error";
 
 import { useAuth } from "@/hooks/use-auth";
 import { Starfield } from "@/components/Starfield";
@@ -142,7 +143,7 @@ function AuthPage() {
         if (error) throw error;
       }
     } catch (err) {
-      showFeedback({ title: "Falha na autenticação", description: err instanceof Error ? err.message : "Tente novamente mais tarde.", type: "error" });
+      showFeedback({ title: "Falha na autenticação", description: translateError(err) || "Tente novamente mais tarde.", type: "error" });
     } finally {
       setSubmitting(false);
     }
