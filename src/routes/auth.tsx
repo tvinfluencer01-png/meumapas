@@ -5,6 +5,7 @@ import { showFeedback } from "@/components/system-feedback";
 import { Mail, Lock, User as UserIcon, ArrowLeft, Loader2, Eye, EyeOff } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { supabase } from "@/integrations/supabase/client";
+import { translateError } from "@/lib/translate-error";
 
 import { useAuth } from "@/hooks/use-auth";
 import { Starfield } from "@/components/Starfield";
