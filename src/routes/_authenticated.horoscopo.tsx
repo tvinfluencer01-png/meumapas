@@ -100,6 +100,7 @@ function HoroscopoPage() {
           <h1 className="text-2xl font-serif text-gold inline-flex items-center gap-3 flex-wrap">
             Horóscopo Diário
             <SectionLamp
+              sectionKey="horoscopo"
               title="Horóscopo Diário"
               why="Pequenas leituras diárias mantêm você sintonizado com a energia do dia sem precisar abrir o sistema."
               how="Ative o add-on, defina seu WhatsApp/e-mail e signo. Toda manhã às 7h (BRT) chega sua previsão personalizada."

@@ -66,6 +66,7 @@ function Dashboard() {
         <h1 className="font-serif text-3xl lg:text-5xl mt-2 shimmer-text inline-flex items-center gap-3 flex-wrap">
           Bem-vindo, {birth?.full_name?.split(" ")[0] ?? "viajante"}
           <SectionLamp
+              sectionKey="dashboard"
             title="Dashboard"
             why="O painel reúne em um só lugar a energia do dia, sua vibração numérica, leituras rápidas e atalhos para as principais áreas do sistema."
             how="Leia a vibração do dia, confira insights da IA e a leitura da semana, e use os atalhos para gerar relatórios ou abrir cada módulo."

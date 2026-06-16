@@ -129,6 +129,7 @@ function ClientesPage() {
             <h1 className="text-2xl font-serif shimmer-text inline-flex items-center gap-3 flex-wrap">
               Clientes
               <SectionLamp
+              sectionKey="clientes"
                 title="Clientes"
                 why="Astrólogos e numerólogos atendem várias pessoas. Centralizar os perfis evita retrabalho e mantém o histórico organizado."
                 how="Cadastre nome, data e local de nascimento. Marque o cliente ativo para gerar mapa, numerologia, oráculo e relatórios voltados a ele."

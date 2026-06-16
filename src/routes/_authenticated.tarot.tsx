@@ -135,6 +135,7 @@ function TarotPage() {
         <h1 className="font-serif text-3xl lg:text-5xl shimmer-text flex items-center gap-3 flex-wrap">
           <Sparkles className="size-7 text-gold" /> Tarot dos Arcanos
           <SectionLamp
+              sectionKey="tarot"
             title="Tarot dos Arcanos"
             why="Cada arcano é um arquétipo — uma chave simbólica que ilumina onde sua atenção é mais necessária agora."
             how="Escolha o tipo de tiragem, formule uma intenção clara e sorteie. A IA interpreta as cartas conectando ao seu mapa e numerologia."

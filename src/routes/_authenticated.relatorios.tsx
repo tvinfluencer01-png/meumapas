@@ -325,6 +325,7 @@ function RelatoriosPage() {
         <h1 className="font-serif text-3xl lg:text-5xl mt-2 shimmer-text flex items-center gap-3 flex-wrap">
           <ScrollText className="size-8 text-gold" /> Sua Biblioteca Cosmica
           <SectionLamp
+              sectionKey="relatorios"
             title="Relatórios Premium"
             why="Relatórios reúnem em PDF o que sua leitura tem de mais importante — pensado para guardar, imprimir e reler com calma."
             how="Escolha o tipo de relatório (amor, carreira, ciclo, etc.), gere com IA, baixe e arquive. Cada relatório fica salvo na sua biblioteca."

@@ -115,6 +115,7 @@ function MeditacaoPage() {
         <h1 className="font-serif text-3xl lg:text-5xl shimmer-text flex items-center gap-3 flex-wrap">
           <TreePine className="size-7 text-gold" /> Meditação Cabalística
           <SectionLamp
+              sectionKey="meditacao"
             title="Meditação Cabalística"
             why="As 10 Sefirot da Árvore da Vida funcionam como portais energéticos. Meditar em cada uma reorganiza áreas específicas da vida."
             how="Escolha a sefirá, descreva sua intenção e gere um roteiro guiado por IA com abertura, mantra, prática e integração."

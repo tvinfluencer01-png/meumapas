@@ -31,6 +31,7 @@ function NumerologiaPage() {
         <h1 className="font-serif text-3xl lg:text-5xl mt-2 shimmer-text inline-flex items-center gap-3 flex-wrap">
           Os números da sua alma
           <SectionLamp
+              sectionKey="numerologia"
             title="Numerologia Pitagórica"
             why="Os números traduzem padrões vibracionais da sua essência: o porquê de você ter vindo, como você se expressa e como o mundo te enxerga."
             how="Veja seu Caminho de Vida, Destino, Alma e Personalidade. Toque em cada card para entender o significado e como aplicar no dia a dia."

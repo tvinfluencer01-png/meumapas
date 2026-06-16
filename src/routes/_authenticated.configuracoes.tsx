@@ -16,6 +16,7 @@ function ConfiguracoesPage() {
         <h1 className="font-serif text-3xl lg:text-4xl mt-2 shimmer-text flex items-center gap-3 flex-wrap">
           <SettingsIcon className="size-7 text-gold" /> Preferências da sua conta
           <SectionLamp
+              sectionKey="configuracoes"
             title="Configurações"
             why="Aqui você ajusta a identidade dos seus PDFs e ativa só os add-ons que deseja usar — tudo começa desligado por padrão."
             how="Personalize logo e marca dos relatórios, gerencie seus dados de conta e revise as preferências de cada add-on contratado."

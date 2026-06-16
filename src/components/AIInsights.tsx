@@ -35,6 +35,7 @@ export function AIInsights() {
             <p className="text-xs uppercase tracking-[0.3em] text-gold flex items-center gap-2">
               <Sparkles className="size-3.5" /> Insights da IA
               <SectionLamp
+              sectionKey="ai-insights"
                 title="Insights da IA"
                 why="Cada dia traz uma combinação única de trânsitos, fases lunares e vibrações numéricas. A IA conecta tudo isso ao seu mapa pessoal para gerar um resumo prático aplicável agora."
                 how="Leia o texto de abertura, depois os três cards por área (Trabalho, Relacionamentos, Energia). Em cada um, observe 'Como está agora', 'Faça agora' e 'Evite'. Use 'Atualizar' para regerar quando quiser uma nova leitura."

@@ -159,6 +159,7 @@ function AddonsPage() {
             <h1 className="text-2xl font-serif shimmer-text inline-flex items-center gap-3 flex-wrap">
               Add-ons & Créditos
               <SectionLamp
+              sectionKey="addons"
                 title="Add-ons & Créditos"
                 why="A IA tem custo. Os créditos garantem uso justo e os add-ons habilitam recursos extras (Clientes, Horóscopo, Mapa Empresarial etc.)."
                 how="Compre pacotes avulsos para usar quando quiser ou assine add-ons mensais. Acompanhe o saldo, o histórico e as renovações nesta página."
