@@ -8,6 +8,7 @@ import ReactMarkdown from "react-markdown";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Sparkles, Send, MessageCircle, Loader2, Stars, Square } from "lucide-react";
+import { SectionLamp } from "@/components/SectionLamp";
 import { CreditCostBadge } from "@/components/CreditCostBadge";
 import { emitCreditsChanged } from "@/lib/credits-events";
 import { showFeedback } from "@/components/system-feedback";
