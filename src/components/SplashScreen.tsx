@@ -79,8 +79,10 @@ export function SplashScreen({ onComplete, minimumDuration = 4500 }: SplashScree
           Código Cósmico
         </h1>
 
-        <p className="text-[11px] sm:text-xs tracking-micro uppercase text-muted-foreground">
-          Onde a sabedoria ancestral encontra o sagrado
+        <p className="text-[11px] sm:text-xs tracking-micro uppercase text-muted-foreground text-center">
+          Onde a sabedoria ancestral
+          <br />
+          encontra o sagrado
         </p>
 
         <div className="mt-3 w-56">
