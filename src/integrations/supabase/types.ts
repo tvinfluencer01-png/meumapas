@@ -1420,6 +1420,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_section_guides: {
+        Row: {
+          created_at: string
+          id: string
+          section_key: string
+          seen_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          section_key: string
+          seen_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          section_key?: string
+          seen_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_settings: {
         Row: {
           ai_provider: string
