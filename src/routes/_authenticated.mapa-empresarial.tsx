@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { Building2, Plus, Trash2, Lock, Download, Loader2, FileText, ArrowRight, CheckCircle2 } from "lucide-react";
+import { SectionLamp } from "@/components/SectionLamp";
 import { supabase } from "@/integrations/supabase/client";
 import { getAddonsOverview } from "@/lib/addons.functions";
 import { generateBusinessReport } from "@/lib/business.functions";
