@@ -123,6 +123,7 @@ function OraculoPage() {
           <h1 className="font-serif text-3xl lg:text-5xl mt-2 shimmer-text flex items-center gap-3 flex-wrap">
             <Stars className="size-8 text-gold" /> Oráculo
             <SectionLamp
+              sectionKey="oraculo"
               title="Oráculo IA"
               why="Uma voz arquetípica que conecta sua pergunta ao seu mapa astral e numerológico — não dá respostas prontas, abre reflexões."
               how="Pergunte com clareza, leia com calma, retorne com novas perguntas. Use as sugestões quando não souber por onde começar."

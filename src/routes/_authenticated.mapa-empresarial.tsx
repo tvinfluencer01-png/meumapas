@@ -129,6 +129,7 @@ function BusinessMapPage() {
           <h1 className="text-2xl font-serif text-gold inline-flex items-center gap-3 flex-wrap">
             Mapa Empresarial
             <SectionLamp
+              sectionKey="mapa-empresarial"
               title="Mapa Empresarial"
               why="Empresas têm uma carta — fundação, sócios, ciclos. Compreendê-la ajuda a tomar decisões estratégicas no tempo certo."
               how="Cadastre dados da empresa e sócios, gere o PDF. Receba análise profunda de identidade, sócios e ciclos do ano vigente."

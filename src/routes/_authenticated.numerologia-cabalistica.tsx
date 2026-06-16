@@ -550,6 +550,7 @@ function NumerologiaCabalisticaPage() {
         <h1 className="font-serif text-3xl lg:text-5xl mt-2 shimmer-text inline-flex items-center gap-3 flex-wrap">
           A vibração hebraica do seu nome
           <SectionLamp
+              sectionKey="numerologia-cabalistica"
             title="Numerologia Cabalística"
             why="O alfabeto hebraico atribui valores específicos a cada letra. Essa numerologia revela camadas espirituais que a pitagórica não alcança."
             how="Veja a tradução do seu nome para letras hebraicas, observe os números de 1 a 8 (o 9 é sagrado) e leia o significado completo no PDF."

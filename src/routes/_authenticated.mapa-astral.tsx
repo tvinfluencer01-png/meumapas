@@ -342,6 +342,7 @@ function MapaAstral() {
           <h1 className="font-serif text-3xl lg:text-5xl mt-2 shimmer-text inline-flex items-center gap-3 flex-wrap">
             Seu Mapa Astral
             <SectionLamp
+              sectionKey="mapa-astral"
               title="Mapa Astral"
               why="O mapa é a fotografia do céu no seu nascimento. Cada planeta, signo e casa descreve uma área da sua vida e do seu temperamento."
               how="Confira sua síntese (Sol, Lua, Ascendente, Meio do Céu), explore os planetas e os aspectos. Use as previsões para ver os próximos dias."

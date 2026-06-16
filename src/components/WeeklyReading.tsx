@@ -27,6 +27,7 @@ export function WeeklyReading() {
           <p className="text-xs uppercase tracking-[0.3em] text-gold flex items-center gap-2">
             <TrendingUp className="size-3.5" /> Leitura da Semana
             <SectionLamp
+              sectionKey="weekly-reading"
               title="Leitura da Semana"
               why="A energia muda dia a dia conforme a Lua, os trânsitos e seu dia pessoal numerológico. Visualizar a semana inteira ajuda a planejar com consciência."
               how="Leia o resumo no topo, observe a tira de 7 dias (o dia destacado é hoje) e desça para ver os detalhes de cada dia: tendência, fase da Lua e dia pessoal."
