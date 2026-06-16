@@ -6,12 +6,21 @@ interface SplashScreenProps {
   minimumDuration?: number;
 }
 
+const SPLASH_SHOWN_KEY = "splash_shown_session";
+
 export function SplashScreen({ onComplete, minimumDuration = 4500 }: SplashScreenProps) {
   const [progress, setProgress] = useState(0);
   const [phase, setPhase] = useState<"enter" | "exit">("enter");
-  const [visible, setVisible] = useState(true);
+  const [visible, setVisible] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return sessionStorage.getItem(SPLASH_SHOWN_KEY) !== "1";
+  });
 
   useEffect(() => {
+    if (!visible) return;
+    try {
+      sessionStorage.setItem(SPLASH_SHOWN_KEY, "1");
+    } catch {}
     const start = performance.now();
     let raf = 0;
 
@@ -35,7 +44,7 @@ export function SplashScreen({ onComplete, minimumDuration = 4500 }: SplashScree
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [minimumDuration, onComplete]);
+  }, [minimumDuration, onComplete, visible]);
 
   if (!visible) return null;
 
