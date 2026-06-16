@@ -126,7 +126,15 @@ function ClientesPage() {
         <div className="flex items-center gap-3">
           <Users className="size-6 text-gold" />
           <div>
-            <h1 className="text-2xl font-serif shimmer-text">Clientes</h1>
+            <h1 className="text-2xl font-serif shimmer-text inline-flex items-center gap-3 flex-wrap">
+              Clientes
+              <SectionLamp
+                title="Clientes"
+                why="Astrólogos e numerólogos atendem várias pessoas. Centralizar os perfis evita retrabalho e mantém o histórico organizado."
+                how="Cadastre nome, data e local de nascimento. Marque o cliente ativo para gerar mapa, numerologia, oráculo e relatórios voltados a ele."
+                purpose="Profissionalizar o atendimento e oferecer leituras personalizadas com dados sempre à mão."
+              />
+            </h1>
             <p className="text-sm text-muted-foreground">
               Cadastre os perfis dos seus clientes e gere mapa, numerologia, oráculo e relatórios para cada um.
             </p>
