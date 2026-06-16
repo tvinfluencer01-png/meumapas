@@ -14,6 +14,7 @@ import { PLANET_MEANING, SIGN_MEANING, ASPECT_MEANING, SIGN_GUIDANCE } from "@/l
 import { CreditCostBadge } from "@/components/CreditCostBadge";
 import { emitCreditsChanged } from "@/lib/credits-events";
 import { useActiveSubject } from "@/hooks/use-active-subject";
+import { SectionLamp } from "@/components/SectionLamp";
 
 export const Route = createFileRoute("/_authenticated/mapa-astral")({
   component: MapaAstral,
