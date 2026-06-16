@@ -126,7 +126,15 @@ function BusinessMapPage() {
       <header className="space-y-2">
         <div className="flex items-center gap-3">
           <Building2 className="size-7 text-gold" />
-          <h1 className="text-2xl font-serif text-gold">Mapa Empresarial</h1>
+          <h1 className="text-2xl font-serif text-gold inline-flex items-center gap-3 flex-wrap">
+            Mapa Empresarial
+            <SectionLamp
+              title="Mapa Empresarial"
+              why="Empresas têm uma carta — fundação, sócios, ciclos. Compreendê-la ajuda a tomar decisões estratégicas no tempo certo."
+              how="Cadastre dados da empresa e sócios, gere o PDF. Receba análise profunda de identidade, sócios e ciclos do ano vigente."
+              purpose="Apoiar decisões de negócio com leitura astrológica e numerológica em formato cinematográfico e prático."
+            />
+          </h1>
         </div>
         <p className="text-sm text-muted-foreground">
           Análise profunda de empresa, sócios e ciclos anuais. PDF gerado no mesmo padrão dos relatórios premium.
