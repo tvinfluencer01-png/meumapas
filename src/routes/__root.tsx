@@ -16,7 +16,7 @@ import "@/lib/toast-i18n";
 import { SystemFeedbackHost } from "@/components/system-feedback";
 import { PwaInstallPrompt } from "@/components/PwaInstallPrompt";
 import { SplashScreen } from "@/components/SplashScreen";
-import { SectionGuide } from "@/components/SectionGuide";
+
 
 function NotFoundComponent() {
   return (
@@ -204,7 +204,6 @@ function RootComponent() {
         <SystemFeedbackHost />
         <PwaInstallPrompt />
         <SplashScreen minimumDuration={6500} />
-        <SectionGuide />
       </AuthProvider>
     </QueryClientProvider>
   );

@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { getAIInsights } from "@/lib/insights.functions";
 import { Sparkles, Loader2, RefreshCw, Briefcase, Heart, Flame, Compass } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SectionLamp } from "@/components/SectionLamp";
 
 const AREA_ICON: Record<string, React.ComponentType<{ className?: string }>> = {
   "Trabalho & Propósito": Briefcase,
@@ -33,6 +34,12 @@ export function AIInsights() {
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-gold flex items-center gap-2">
               <Sparkles className="size-3.5" /> Insights da IA
+              <SectionLamp
+                title="Insights da IA"
+                why="Cada dia traz uma combinação única de trânsitos, fases lunares e vibrações numéricas. A IA conecta tudo isso ao seu mapa pessoal para gerar um resumo prático aplicável agora."
+                how="Leia o texto de abertura, depois os três cards por área (Trabalho, Relacionamentos, Energia). Em cada um, observe 'Como está agora', 'Faça agora' e 'Evite'. Use 'Atualizar' para regerar quando quiser uma nova leitura."
+                purpose="Transformar a complexidade do céu e dos números em ações concretas para o seu dia."
+              />
             </p>
             <h2 className="font-serif text-2xl lg:text-3xl text-stardust mt-2">
               Como aplicar seu resumo prático <span className="text-gold">no agora</span>
