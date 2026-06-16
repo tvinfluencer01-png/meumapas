@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Sun, Lock, Send, User, AlertTriangle } from "lucide-react";
+import { SectionLamp } from "@/components/SectionLamp";
 import {
   getMyHoroscopeSubscription,
   updateMyHoroscopeSubscription,
