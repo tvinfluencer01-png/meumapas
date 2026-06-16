@@ -15,6 +15,7 @@ import { WeeklyReading } from "@/components/WeeklyReading";
 import { FavoritesSummary } from "@/components/FavoritesSummary";
 import { FavoritesImpact } from "@/components/FavoritesImpact";
 import { AIInsights } from "@/components/AIInsights";
+import { SectionLamp } from "@/components/SectionLamp";
 import { generateReport } from "@/lib/reports.functions";
 import { emitCreditsChanged } from "@/lib/credits-events";
 import { toast } from "sonner";
