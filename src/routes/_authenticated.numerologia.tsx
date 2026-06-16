@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useActiveSubject } from "@/hooks/use-active-subject";
 import { computeNumerology, NUMBER_MEANINGS, formatBirthDateBR, numLabel } from "@/lib/numerology";
 import { Hash, Heart, Eye, User as UserIcon, Cake, Sparkles, Users } from "lucide-react";
+import { SectionLamp } from "@/components/SectionLamp";
 
 export const Route = createFileRoute("/_authenticated/numerologia")({
   component: NumerologiaPage,
