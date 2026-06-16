@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { formatBirthDateBR } from "@/lib/numerology";
 import { Hash, Heart, Eye, Sparkles, TreePine, Download, Loader2 } from "lucide-react";
+import { SectionLamp } from "@/components/SectionLamp";
 import { Button } from "@/components/ui/button";
 import { buildSimplePdf, type SimplePdfBlock } from "@/lib/simple-pdf";
 import { toast } from "sonner";
