@@ -12,6 +12,7 @@ import {
   CalendarClock,
   History,
 } from "lucide-react";
+import { SectionLamp } from "@/components/SectionLamp";
 import { Button } from "@/components/ui/button";
 import {
   Card,
