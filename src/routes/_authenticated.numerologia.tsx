@@ -28,7 +28,15 @@ function NumerologiaPage() {
     <div className="space-y-8">
       <header>
         <p className="text-xs uppercase tracking-[0.3em] text-gold">Numerologia Pitagórica</p>
-        <h1 className="font-serif text-3xl lg:text-5xl mt-2 shimmer-text">Os números da sua alma</h1>
+        <h1 className="font-serif text-3xl lg:text-5xl mt-2 shimmer-text inline-flex items-center gap-3 flex-wrap">
+          Os números da sua alma
+          <SectionLamp
+            title="Numerologia Pitagórica"
+            why="Os números traduzem padrões vibracionais da sua essência: o porquê de você ter vindo, como você se expressa e como o mundo te enxerga."
+            how="Veja seu Caminho de Vida, Destino, Alma e Personalidade. Toque em cada card para entender o significado e como aplicar no dia a dia."
+            purpose="Decodificar talentos, missões e desafios para alinhar suas escolhas com a sua frequência natural."
+          />
+        </h1>
         {birth && (
           <p className="mt-2 text-muted-foreground">{birth.full_name} — nascido em {formatBirthDateBR(birth.birth_date)}</p>
         )}
