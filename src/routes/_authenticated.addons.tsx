@@ -12,6 +12,7 @@ import {
   CalendarClock,
   History,
 } from "lucide-react";
+import { SectionLamp } from "@/components/SectionLamp";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -155,7 +156,15 @@ function AddonsPage() {
         <div className="flex items-center gap-3">
           <Sparkles className="size-6 text-gold" />
           <div>
-            <h1 className="text-2xl font-serif shimmer-text">Add-ons & Créditos</h1>
+            <h1 className="text-2xl font-serif shimmer-text inline-flex items-center gap-3 flex-wrap">
+              Add-ons & Créditos
+              <SectionLamp
+                title="Add-ons & Créditos"
+                why="A IA tem custo. Os créditos garantem uso justo e os add-ons habilitam recursos extras (Clientes, Horóscopo, Mapa Empresarial etc.)."
+                how="Compre pacotes avulsos para usar quando quiser ou assine add-ons mensais. Acompanhe o saldo, o histórico e as renovações nesta página."
+                purpose="Você controla quanto investir em IA: paga só pelo que usa e ativa apenas os módulos que fazem sentido para o seu trabalho."
+              />
+            </h1>
             <p className="text-sm text-muted-foreground">
               Amplie sua experiência com créditos avulsos ou assinaturas mensais.
             </p>

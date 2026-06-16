@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { showFeedback } from "@/components/system-feedback";
 import { Sparkles, Wand2, Loader2, FileDown, Trash2, History } from "lucide-react";
+import { SectionLamp } from "@/components/SectionLamp";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -131,8 +132,14 @@ function TarotPage() {
     <div className="space-y-8">
       <header className="space-y-2">
         <p className="text-xs uppercase tracking-[0.3em] text-gold">Oráculo</p>
-        <h1 className="font-serif text-3xl lg:text-5xl shimmer-text flex items-center gap-3">
+        <h1 className="font-serif text-3xl lg:text-5xl shimmer-text flex items-center gap-3 flex-wrap">
           <Sparkles className="size-7 text-gold" /> Tarot dos Arcanos
+          <SectionLamp
+            title="Tarot dos Arcanos"
+            why="Cada arcano é um arquétipo — uma chave simbólica que ilumina onde sua atenção é mais necessária agora."
+            how="Escolha o tipo de tiragem, formule uma intenção clara e sorteie. A IA interpreta as cartas conectando ao seu mapa e numerologia."
+            purpose="Receber orientação simbólica para destravar decisões, entender ciclos e integrar arquétipos da sua jornada."
+          />
         </h1>
         <p className="text-muted-foreground max-w-2xl">
           Sorteio dos 22 Arcanos Maiores com interpretação personalizada por IA.

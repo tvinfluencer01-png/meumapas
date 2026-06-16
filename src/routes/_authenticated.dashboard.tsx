@@ -15,6 +15,7 @@ import { WeeklyReading } from "@/components/WeeklyReading";
 import { FavoritesSummary } from "@/components/FavoritesSummary";
 import { FavoritesImpact } from "@/components/FavoritesImpact";
 import { AIInsights } from "@/components/AIInsights";
+import { SectionLamp } from "@/components/SectionLamp";
 import { generateReport } from "@/lib/reports.functions";
 import { emitCreditsChanged } from "@/lib/credits-events";
 import { toast } from "sonner";
@@ -62,8 +63,14 @@ function Dashboard() {
         <p className="text-xs uppercase tracking-[0.3em] text-gold">
           {day.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" })}
         </p>
-        <h1 className="font-serif text-3xl lg:text-5xl mt-2 shimmer-text">
+        <h1 className="font-serif text-3xl lg:text-5xl mt-2 shimmer-text inline-flex items-center gap-3 flex-wrap">
           Bem-vindo, {birth?.full_name?.split(" ")[0] ?? "viajante"}
+          <SectionLamp
+            title="Dashboard"
+            why="O painel reúne em um só lugar a energia do dia, sua vibração numérica, leituras rápidas e atalhos para as principais áreas do sistema."
+            how="Leia a vibração do dia, confira insights da IA e a leitura da semana, e use os atalhos para gerar relatórios ou abrir cada módulo."
+            purpose="Dar o ponto de partida diário consciente — em 30 segundos você sabe o tom da sua jornada e por onde começar."
+          />
         </h1>
         <p className="mt-2 text-muted-foreground">A energia do dia te observa. Veja o que ela revela.</p>
       </header>

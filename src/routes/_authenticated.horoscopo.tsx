@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Sun, Lock, Send, User, AlertTriangle } from "lucide-react";
+import { SectionLamp } from "@/components/SectionLamp";
 import {
   getMyHoroscopeSubscription,
   updateMyHoroscopeSubscription,
@@ -96,7 +97,15 @@ function HoroscopoPage() {
       <header className="space-y-2">
         <div className="flex items-center gap-3">
           <Sun className="size-7 text-gold" />
-          <h1 className="text-2xl font-serif text-gold">Horóscopo Diário</h1>
+          <h1 className="text-2xl font-serif text-gold inline-flex items-center gap-3 flex-wrap">
+            Horóscopo Diário
+            <SectionLamp
+              title="Horóscopo Diário"
+              why="Pequenas leituras diárias mantêm você sintonizado com a energia do dia sem precisar abrir o sistema."
+              how="Ative o add-on, defina seu WhatsApp/e-mail e signo. Toda manhã às 7h (BRT) chega sua previsão personalizada."
+              purpose="Começar o dia consciente dos trânsitos que influenciam você e agir alinhado a eles."
+            />
+          </h1>
         </div>
         <p className="text-sm text-muted-foreground">
           Cada contexto ativo tem suas próprias preferências. As mensagens saem todo dia às 7h (BRT).

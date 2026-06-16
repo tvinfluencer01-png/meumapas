@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { TreePine, Loader2, FileDown, Trash2, History, Sparkles } from "lucide-react";
+import { SectionLamp } from "@/components/SectionLamp";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -111,8 +112,14 @@ function MeditacaoPage() {
     <div className="space-y-8">
       <header className="space-y-2">
         <p className="text-xs uppercase tracking-[0.3em] text-gold">Cabala</p>
-        <h1 className="font-serif text-3xl lg:text-5xl shimmer-text flex items-center gap-3">
+        <h1 className="font-serif text-3xl lg:text-5xl shimmer-text flex items-center gap-3 flex-wrap">
           <TreePine className="size-7 text-gold" /> Meditação Cabalística
+          <SectionLamp
+            title="Meditação Cabalística"
+            why="As 10 Sefirot da Árvore da Vida funcionam como portais energéticos. Meditar em cada uma reorganiza áreas específicas da vida."
+            how="Escolha a sefirá, descreva sua intenção e gere um roteiro guiado por IA com abertura, mantra, prática e integração."
+            purpose="Aprofundar autoconhecimento espiritual e trabalhar conscientemente qualidades como sabedoria, força, beleza, vitória, etc."
+          />
         </h1>
         <p className="text-muted-foreground max-w-2xl">
           Sessões guiadas baseadas nas 10 Sefirot da Árvore da Vida. Escolha a

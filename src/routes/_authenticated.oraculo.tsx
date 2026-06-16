@@ -8,6 +8,7 @@ import ReactMarkdown from "react-markdown";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Sparkles, Send, MessageCircle, Loader2, Stars, Square } from "lucide-react";
+import { SectionLamp } from "@/components/SectionLamp";
 import { CreditCostBadge } from "@/components/CreditCostBadge";
 import { emitCreditsChanged } from "@/lib/credits-events";
 import { showFeedback } from "@/components/system-feedback";
@@ -119,8 +120,14 @@ function OraculoPage() {
       <header className="flex items-end justify-between flex-wrap gap-3">
         <div>
           <p className="text-xs uppercase tracking-[0.3em] text-gold">IA Espiritual</p>
-          <h1 className="font-serif text-3xl lg:text-5xl mt-2 shimmer-text flex items-center gap-3">
+          <h1 className="font-serif text-3xl lg:text-5xl mt-2 shimmer-text flex items-center gap-3 flex-wrap">
             <Stars className="size-8 text-gold" /> Oráculo
+            <SectionLamp
+              title="Oráculo IA"
+              why="Uma voz arquetípica que conecta sua pergunta ao seu mapa astral e numerológico — não dá respostas prontas, abre reflexões."
+              how="Pergunte com clareza, leia com calma, retorne com novas perguntas. Use as sugestões quando não souber por onde começar."
+              purpose="Ampliar autoconhecimento e descobrir caminhos diante de dúvidas existenciais, decisões e ciclos de vida."
+            />
           </h1>
           <p className="mt-2 text-muted-foreground max-w-2xl">
             Uma inteligência ancestral conectada ao seu mapa astral e à sua numerologia.

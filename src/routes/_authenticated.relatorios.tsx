@@ -15,6 +15,7 @@ import {
   FileText, Download, Sparkles, Heart, Briefcase, Flame, Loader2, Trash2, ScrollText,
   Coins, Home, HeartPulse, Users, Search, CalendarDays, X,
 } from "lucide-react";
+import { SectionLamp } from "@/components/SectionLamp";
 import { CreditCostBadge } from "@/components/CreditCostBadge";
 
 export const Route = createFileRoute("/_authenticated/relatorios")({
@@ -321,8 +322,14 @@ function RelatoriosPage() {
     <div className="space-y-10">
       <header>
         <p className="text-xs uppercase tracking-[0.3em] text-gold">Relatorios Premium</p>
-        <h1 className="font-serif text-3xl lg:text-5xl mt-2 shimmer-text flex items-center gap-3">
+        <h1 className="font-serif text-3xl lg:text-5xl mt-2 shimmer-text flex items-center gap-3 flex-wrap">
           <ScrollText className="size-8 text-gold" /> Sua Biblioteca Cosmica
+          <SectionLamp
+            title="Relatórios Premium"
+            why="Relatórios reúnem em PDF o que sua leitura tem de mais importante — pensado para guardar, imprimir e reler com calma."
+            how="Escolha o tipo de relatório (amor, carreira, ciclo, etc.), gere com IA, baixe e arquive. Cada relatório fica salvo na sua biblioteca."
+            purpose="Transformar leituras profundas em material concreto, em linguagem humanizada e formato cinematográfico."
+          />
         </h1>
         <p className="mt-2 text-muted-foreground max-w-2xl">
           Relatorios PDF gerados sob medida com IA, a partir do seu mapa astral e numerologia.

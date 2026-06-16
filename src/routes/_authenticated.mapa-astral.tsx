@@ -14,6 +14,7 @@ import { PLANET_MEANING, SIGN_MEANING, ASPECT_MEANING, SIGN_GUIDANCE } from "@/l
 import { CreditCostBadge } from "@/components/CreditCostBadge";
 import { emitCreditsChanged } from "@/lib/credits-events";
 import { useActiveSubject } from "@/hooks/use-active-subject";
+import { SectionLamp } from "@/components/SectionLamp";
 
 export const Route = createFileRoute("/_authenticated/mapa-astral")({
   component: MapaAstral,
@@ -338,7 +339,15 @@ function MapaAstral() {
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-xs uppercase tracking-[0.3em] text-gold">Astrologia</p>
-          <h1 className="font-serif text-3xl lg:text-5xl mt-2 shimmer-text">Seu Mapa Astral</h1>
+          <h1 className="font-serif text-3xl lg:text-5xl mt-2 shimmer-text inline-flex items-center gap-3 flex-wrap">
+            Seu Mapa Astral
+            <SectionLamp
+              title="Mapa Astral"
+              why="O mapa é a fotografia do céu no seu nascimento. Cada planeta, signo e casa descreve uma área da sua vida e do seu temperamento."
+              how="Confira sua síntese (Sol, Lua, Ascendente, Meio do Céu), explore os planetas e os aspectos. Use as previsões para ver os próximos dias."
+              purpose="Conhecer profundamente a si mesmo e antecipar movimentos energéticos para tomar decisões mais conscientes."
+            />
+          </h1>
           <p className="text-muted-foreground mt-2">
             Cálculo via Swiss Ephemeris (pure-JS) — preciso e gratuito.
           </p>
