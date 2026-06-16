@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Settings as SettingsIcon } from "lucide-react";
 import { PdfBrandingForm } from "@/components/PdfBrandingForm";
+import { SectionLamp } from "@/components/SectionLamp";
 
 export const Route = createFileRoute("/_authenticated/configuracoes")({
   component: ConfiguracoesPage,
