@@ -7,6 +7,7 @@ import {
   Users, Plus, Pencil, Trash2, Star, StarOff, Phone, Mail, Tag,
   Sparkles, ShoppingCart, Search, Check, ChevronsUpDown,
 } from "lucide-react";
+import { SectionLamp } from "@/components/SectionLamp";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
