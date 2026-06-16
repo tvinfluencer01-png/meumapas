@@ -26,37 +26,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const qc = useQueryClient();
   const bootstrappedRef = useRef(false);
 
+  const routerRef = useRef(router);
+  const qcRef = useRef(qc);
+  routerRef.current = router;
+  qcRef.current = qc;
+
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, s) => {
-      // Ignore noisy events that fire on every tab focus / hourly refresh.
-      // Only act on real identity transitions to avoid thrashing the router
-      // and the query cache (which can cause the app to appear to "restart").
-      if (
-        event !== "SIGNED_IN" &&
-        event !== "SIGNED_OUT" &&
-        event !== "USER_UPDATED" &&
-        event !== "INITIAL_SESSION"
-      ) {
-        // TOKEN_REFRESHED / PASSWORD_RECOVERY / etc.: just update the session.
-        setSession(s);
-        return;
-      }
-
+      // Always keep local session in sync, but only act on real identity
+      // transitions. INITIAL_SESSION / TOKEN_REFRESHED must NOT invalidate
+      // the router or query cache — that would re-render the current page
+      // (e.g. the /auth form) and wipe what the user is typing.
       setSession(s);
-      const shouldReleaseLoading = bootstrappedRef.current || event !== "INITIAL_SESSION";
 
-      if (shouldReleaseLoading) {
-        setLoading(false);
-        router.invalidate();
-        // Never invalidate queries on SIGNED_OUT — they would refetch against
-        // a cleared session and produce a 401 storm.
-        if (event !== "SIGNED_OUT") {
-          qc.invalidateQueries();
+      if (event === "SIGNED_IN" || event === "USER_UPDATED") {
+        if (bootstrappedRef.current) {
+          routerRef.current.invalidate();
+          qcRef.current.invalidateQueries();
         }
-      }
-
-      if (bootstrappedRef.current && event === "SIGNED_OUT") {
-        router.navigate({ to: "/auth", replace: true });
+      } else if (event === "SIGNED_OUT") {
+        if (bootstrappedRef.current) {
+          routerRef.current.invalidate();
+          routerRef.current.navigate({ to: "/auth", replace: true });
+        }
       }
     });
 
@@ -73,7 +65,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       subscription.unsubscribe();
     };
-  }, [router, qc]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
 
   return (
