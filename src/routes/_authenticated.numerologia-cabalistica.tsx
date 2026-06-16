@@ -547,7 +547,15 @@ function NumerologiaCabalisticaPage() {
         <p className="text-xs uppercase tracking-[0.3em] text-gold flex items-center gap-2">
           <TreePine className="size-3.5" /> Numerologia Cabalística
         </p>
-        <h1 className="font-serif text-3xl lg:text-5xl mt-2 shimmer-text">A vibração hebraica do seu nome</h1>
+        <h1 className="font-serif text-3xl lg:text-5xl mt-2 shimmer-text inline-flex items-center gap-3 flex-wrap">
+          A vibração hebraica do seu nome
+          <SectionLamp
+            title="Numerologia Cabalística"
+            why="O alfabeto hebraico atribui valores específicos a cada letra. Essa numerologia revela camadas espirituais que a pitagórica não alcança."
+            how="Veja a tradução do seu nome para letras hebraicas, observe os números de 1 a 8 (o 9 é sagrado) e leia o significado completo no PDF."
+            purpose="Acessar uma leitura mais mística e ancestral do seu nome, complementar à pitagórica e ao mapa astral."
+          />
+        </h1>
         <p className="mt-3 text-muted-foreground max-w-3xl">
           Diferente da pitagórica, a numerologia cabalística trabalha apenas com o nome (não com a data de nascimento)
           e utiliza uma tabela inspirada no alfabeto hebraico, reduzindo os valores entre 1 e 8 — o número 9 é
