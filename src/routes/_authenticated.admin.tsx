@@ -679,20 +679,9 @@ function PasswordDialog({ user, onDone }: { user: AdminUserRow; onDone: () => vo
 }
 
 function PlansDialog({ user, onDone }: { user: AdminUserRow; onDone: () => void }) {
-  const qc = useQueryClient();
-  const listFn = useServerFn(adminListUserSubscriptions);
-  const setFn = useServerFn(adminSetUserSubscription);
-  const applyPackageFn = useServerFn(adminApplyLandingPackage);
-  const listPackagesFn = useServerFn(
-    // dynamic import keeps bundle simple; lazy require via inline
-    (async () => {
-      const m = await import("@/lib/landing-packages.functions");
-      return m.listAdminLandingPackages;
-    }) as never,
-  );
-  // Simpler: import directly
   return <PlansDialogInner user={user} onDone={onDone} />;
 }
+
 
 function PlansDialogInner({ user, onDone }: { user: AdminUserRow; onDone: () => void }) {
   const qc = useQueryClient();
