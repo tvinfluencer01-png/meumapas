@@ -149,7 +149,7 @@ function OnboardingPage() {
           description: "Escolha um pacote para liberar o acesso ao sistema.",
           type: "info",
         });
-        window.location.replace("/#planos");
+        window.location.replace("/ativacao");
       }
     } catch (err) {
       showFeedback({ title: "Erro ao salvar", description: err instanceof Error ? err.message : "Erro ao concluir onboarding", type: "error" });
