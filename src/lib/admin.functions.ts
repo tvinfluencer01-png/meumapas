@@ -886,6 +886,39 @@ export const adminApplyLandingPackage = createServerFn({ method: "POST" })
         .eq("status", "active");
     }
 
+    // Record the package itself as a subscription row so it appears in the "Plano" column
+    {
+      const { data: existing } = await supabaseAdmin
+        .from("user_subscriptions")
+        .select("id")
+        .eq("user_id", data.user_id)
+        .eq("addon_id", pkg.slug)
+        .maybeSingle();
+      if (existing) {
+        const { error } = await supabaseAdmin
+          .from("user_subscriptions")
+          .update({
+            status: "active",
+            current_period_end: periodEnd,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", existing.id);
+        if (error) throw new Error(error.message);
+      } else {
+        const { error } = await supabaseAdmin
+          .from("user_subscriptions")
+          .insert({
+            user_id: data.user_id,
+            addon_id: pkg.slug,
+            status: "active",
+            current_period_end: periodEnd,
+          });
+        if (error) throw new Error(error.message);
+      }
+    }
+
+
+
     // Activate each addon from the package
     for (const addonId of addons) {
       const { data: existing } = await supabaseAdmin
