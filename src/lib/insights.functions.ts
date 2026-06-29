@@ -67,7 +67,9 @@ export type AIInsightResult = {
   };
   hasData: boolean;
   generatedAt: string;
+  notice?: string | null;
 };
+
 
 export const getAIInsights = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
