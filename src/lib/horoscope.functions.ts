@@ -69,10 +69,64 @@ export function computeLuckyForDay(
   return { number, color };
 }
 
+// Ângulos/temas para garantir variedade diária — cada dia o astrologo
+// escolhe um foco distinto que não repete em ~30 dias.
+const DAILY_THEMES = [
+  "trânsito da Lua sobre uma casa específica do nativo",
+  "aspecto exato da Lua com um planeta natal",
+  "ingresso/posição do Sol em relação ao Ascendente",
+  "Mercúrio e a comunicação prática do dia",
+  "Vênus e gestos de afeto/estética",
+  "Marte e onde investir energia hoje",
+  "Júpiter e oportunidades de expansão",
+  "Saturno e responsabilidades a honrar",
+  "Urano e quebras de rotina inesperadas",
+  "Netuno e intuição/sonhos",
+  "Plutão e transformações profundas",
+  "regente do dia da semana e seu recado",
+  "fase da Lua atual e como surfá-la",
+  "nodo lunar e missão kármica do dia",
+  "Quíron e cura emocional",
+  "elemento dominante do dia (fogo/terra/ar/água)",
+  "casa astrológica em destaque para hoje",
+  "aspecto desafiador a ressignificar",
+  "trígono harmônico a aproveitar",
+  "energia da estação astrológica corrente",
+];
+
+function pickThemesForDay(seedKey: string, count = 2): string[] {
+  const h = hashStr(seedKey);
+  const out: string[] = [];
+  const used = new Set<number>();
+  let i = 0;
+  while (out.length < count && i < 32) {
+    const idx = (h + i * 2654435761) % DAILY_THEMES.length;
+    if (!used.has(idx)) {
+      used.add(idx);
+      out.push(DAILY_THEMES[idx]);
+    }
+    i++;
+  }
+  return out;
+}
+
+type ChartSummary = {
+  fullName?: string | null;
+  birthDate?: string | null;
+  birthTime?: string | null;
+  birthCity?: string | null;
+  sunSign?: string | null;
+  ascendant?: string | null;
+  moonSign?: string | null;
+  topPlanets?: string | null; // ex: "Sol em Leão (casa 5), Lua em Peixes (casa 12)"
+  recentThemes?: string[]; // temas já usados nos últimos dias, a EVITAR
+};
+
 export function buildHoroscopePrompt(
   sunSign: string,
   today: string,
   lucky?: { number: number; color: string },
+  chart?: ChartSummary,
 ) {
   const luckyLine = lucky
     ? `Número: ${lucky.number} | Cor: ${lucky.color}`
@@ -80,36 +134,157 @@ export function buildHoroscopePrompt(
   const luckyRule = lucky
     ? `\n\nIMPORTANTE: na seção "🎯 Número e cor da sorte", use EXATAMENTE: "${luckyLine}". Não invente outros valores.`
     : "";
-  return `Escreva um horóscopo PERSONALIZADO, rico e inspirador em pt-BR para hoje (${today}) para o signo ${sunSign}.
+
+  const seedKey = `${chart?.birthDate ?? "anon"}|${sunSign}|${today}`;
+  const themes = pickThemesForDay(seedKey, 2);
+  const avoid = (chart?.recentThemes ?? []).slice(0, 10);
+
+  const personLine = chart?.fullName ? `Nativo: ${chart.fullName}.` : "";
+  const birthLine = chart?.birthDate
+    ? `Nascimento: ${chart.birthDate}${chart.birthTime ? " às " + chart.birthTime : ""}${chart.birthCity ? " em " + chart.birthCity : ""}.`
+    : "";
+  const chartLine = [
+    chart?.sunSign ? `Sol em ${chart.sunSign}` : null,
+    chart?.moonSign ? `Lua em ${chart.moonSign}` : null,
+    chart?.ascendant ? `Ascendente ${chart.ascendant}` : null,
+  ].filter(Boolean).join(" · ");
+  const planetsLine = chart?.topPlanets ? `Posições natais relevantes: ${chart.topPlanets}.` : "";
+  const avoidLine = avoid.length
+    ? `\n\nEVITE repetir os ângulos já usados recentemente: ${avoid.join("; ")}. Traga uma leitura COMPLETAMENTE diferente.`
+    : "";
+
+  return `Você é um(a) astrólogo(a) sênior. Escreva o horóscopo de HOJE (${today}) ÚNICO, específico e não-genérico para ${sunSign}.
+
+Contexto do nativo:
+${personLine}
+${birthLine}
+${chartLine ? "Mapa: " + chartLine + "." : ""}
+${planetsLine}
+
+Ancore a leitura de hoje em DOIS ângulos astrológicos OBRIGATÓRIOS e distintos:
+1) ${themes[0]}
+2) ${themes[1]}
+Use linguagem astrológica real (planeta, signo, casa, aspecto, fase lunar) — não vagueza motivacional.
 
 Formato obrigatório (use exatamente estes títulos com emojis, sem markdown, apenas texto puro com quebras de linha):
 
 🌅 Visão geral do dia
-(2 linhas curtas descrevendo a energia astrológica do dia para ${sunSign})
+(2 linhas conectando os 2 ângulos acima à vida prática do nativo)
 
 💛 Amor & Relacionamentos
-✨ Faça: (1 linha — ação concreta recomendada)
-⚠️ Evite: (1 linha — atitude a não tomar)
+✨ Faça: (1 linha — ação concreta hoje, ligada ao ângulo astrológico)
+⚠️ Evite: (1 linha — atitude específica a não tomar)
 
 💰 Dinheiro & Carreira
-✨ Faça: (1 linha — ação concreta recomendada)
-⚠️ Evite: (1 linha — atitude a não tomar)
+✨ Faça: (1 linha — ação concreta hoje)
+⚠️ Evite: (1 linha — atitude específica a não tomar)
 
 🌿 Saúde & Bem-estar
-✨ Faça: (1 linha — prática recomendada hoje)
+✨ Faça: (1 linha — prática específica hoje)
 ⚠️ Evite: (1 linha — hábito a evitar)
 
 ⚡ Energia do dia
-(1 linha — nível de energia e como canalizá-la)
+(1 linha — nível de energia e onde canalizá-la, citando planeta/casa)
 
 🌟 Conselho cósmico
-(1 frase poderosa e prática para guiar o dia)
+(1 frase original, sem clichês como "confie no universo" ou "abrace as mudanças")
 
 🎯 Número e cor da sorte
 ${luckyLine}
 
-Regras: tom inspirador, simbólico mas prático e acionável. Nada de markdown (sem **, ##, -). Use apenas emojis e quebras de linha. Seja específico — evite frases genéricas.${luckyRule}`;
+Regras rígidas:
+- NUNCA use frases genéricas reutilizáveis para qualquer signo. Cada linha deve fazer sentido apenas para ${sunSign} hoje.
+- PROIBIDO: "confie no universo", "abrace as mudanças", "energia positiva", "siga seu coração", "tudo flui", "respire fundo e siga", "o universo conspira".
+- Sem markdown (sem **, ##, -). Apenas emojis e quebras de linha.
+- Tom inspirador, simbólico, mas concreto e acionável.${avoidLine}${luckyRule}`;
 }
+
+/** Coleta um resumo do mapa natal do nativo (quando existir) para enriquecer o prompt. */
+export async function loadChartSummaryForHoroscope(
+  userId: string,
+  clientProfileId: string | null,
+  birthDate: string | null,
+  fullName: string | null,
+  sunSign: string,
+): Promise<ChartSummary> {
+  // Carrega birth_data completo (hora/cidade) para contexto
+  let birthTime: string | null = null;
+  let birthCity: string | null = null;
+  if (clientProfileId) {
+    const { data } = await supabaseAdmin
+      .from("client_profiles")
+      .select("birth_time, city")
+      .eq("id", clientProfileId)
+      .maybeSingle();
+    birthTime = (data?.birth_time as string | null) ?? null;
+    birthCity = (data?.city as string | null) ?? null;
+  } else {
+    const { data } = await supabaseAdmin
+      .from("birth_data")
+      .select("birth_time, city")
+      .eq("user_id", userId)
+      .eq("is_primary", true)
+      .maybeSingle();
+    birthTime = (data?.birth_time as string | null) ?? null;
+    birthCity = (data?.city as string | null) ?? null;
+  }
+
+  // Carrega o mapa astral, se houver
+  let chartQ = supabaseAdmin
+    .from("astro_charts")
+    .select("planets, ascendant")
+    .eq("user_id", userId);
+  chartQ = clientProfileId
+    ? chartQ.eq("client_profile_id", clientProfileId)
+    : chartQ.is("client_profile_id", null);
+  const { data: chart } = await chartQ.order("created_at", { ascending: false }).limit(1).maybeSingle();
+
+  let moonSign: string | null = null;
+  let ascendant: string | null = null;
+  let topPlanets: string | null = null;
+  if (chart) {
+    const planets = Array.isArray(chart.planets) ? (chart.planets as any[]) : [];
+    const moon = planets.find((p) => /lua|moon/i.test(p?.name ?? ""));
+    if (moon?.sign) moonSign = String(moon.sign);
+    if (chart.ascendant != null) ascendant = String(chart.ascendant);
+    const main = ["Sol","Lua","Mercúrio","Vênus","Marte","Júpiter","Saturno"];
+    topPlanets = planets
+      .filter((p) => main.includes(String(p?.name)))
+      .slice(0, 7)
+      .map((p) => `${p.name} em ${p.sign ?? "?"}${p.house ? ` (casa ${p.house})` : ""}`)
+      .join(", ") || null;
+  }
+
+  // Coleta temas já usados nos últimos 14 dias para evitar repetição
+  const since = new Date(Date.now() - 14 * 86400000).toISOString().slice(0, 10);
+  const { data: recent } = await supabaseAdmin
+    .from("horoscope_log")
+    .select("date, detail")
+    .eq("user_id", userId)
+    .gte("date", since)
+    .eq("channel", "ai_theme");
+  const recentThemes = (recent ?? [])
+    .map((r) => r.detail)
+    .filter(Boolean) as string[];
+
+  return {
+    fullName,
+    birthDate,
+    birthTime,
+    birthCity,
+    sunSign,
+    ascendant,
+    moonSign,
+    topPlanets,
+    recentThemes,
+  };
+}
+
+/** Retorna os temas escolhidos para o dia (para registrar e evitar repetição futura). */
+export function themesForDay(birthDate: string | null, sunSign: string, today: string): string[] {
+  return pickThemesForDay(`${birthDate ?? "anon"}|${sunSign}|${today}`, 2);
+}
+
 
 /**
  * Resolve o "contexto ativo" do usuário: usa o client_profile ativo, se houver;
@@ -339,22 +514,45 @@ export const sendTestHoroscopeWhatsapp = createServerFn({ method: "POST" })
     const override = await getAddonPromptOverride("sub_daily_horoscope");
     const today = new Date().toISOString().slice(0, 10);
     const lucky = computeLuckyForDay(ctx.birthDate, sign, today);
+    const chartSummary = await loadChartSummaryForHoroscope(
+      userId,
+      ctx.clientProfileId,
+      ctx.birthDate,
+      ctx.fullName,
+      sign,
+    );
+    const themes = themesForDay(ctx.birthDate, sign, today);
     const prompt = override
       ? override
           .replace(/\{\{sign\}\}/gi, sign)
           .replace(/\{\{date\}\}/gi, today)
           .replace(/\{\{lucky_number\}\}/gi, String(lucky.number))
           .replace(/\{\{lucky_color\}\}/gi, lucky.color) +
-        `\n\nIMPORTANTE: na seção "🎯 Número e cor da sorte", use EXATAMENTE: "Número: ${lucky.number} | Cor: ${lucky.color}". Não invente outros valores.`
-      : buildHoroscopePrompt(sign, today, lucky);
+        `\n\nÂngulos astrológicos obrigatórios de hoje: 1) ${themes[0]}; 2) ${themes[1]}. EVITE temas usados recentemente: ${(chartSummary.recentThemes ?? []).join("; ") || "—"}.\n\nIMPORTANTE: na seção "🎯 Número e cor da sorte", use EXATAMENTE: "Número: ${lucky.number} | Cor: ${lucky.color}". Não invente outros valores.`
+      : buildHoroscopePrompt(sign, today, lucky, chartSummary);
 
     let body = "";
     try {
-      const { text } = await generateText({ model, prompt, temperature: 0.85 });
+      const { text } = await generateText({
+        model,
+        prompt,
+        temperature: 1.0,
+        topP: 0.95,
+        seed: hashStr(`${userId}|${today}`),
+      });
       body = text.trim();
     } catch (e: any) {
       throw new Error("Falha ao gerar horóscopo: " + (e?.message ?? String(e)));
     }
+
+    // Registra os temas do dia para evitar repetição em execuções futuras
+    for (const t of themes) {
+      await supabaseAdmin.from("horoscope_log").insert({
+        user_id: userId, date: today, channel: "ai_theme", status: "ok",
+        detail: t, sign,
+      });
+    }
+
 
     const who = ctx.fullName ? ` (${ctx.fullName})` : "";
     const { pickMarketingFooter } = await import("./marketing.functions");

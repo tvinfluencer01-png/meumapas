@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { generateText } from "ai";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway";
-import { buildHoroscopePrompt, computeLuckyForDay } from "@/lib/horoscope.functions";
+import { buildHoroscopePrompt, computeLuckyForDay, loadChartSummaryForHoroscope, themesForDay } from "@/lib/horoscope.functions";
 
 /**
  * Daily horoscope cron handler.
@@ -93,6 +93,22 @@ async function handler({ request }: { request: Request }) {
     }
     const lucky = computeLuckyForDay(birthDate, s.sun_sign, today);
 
+    // Resolve nome do nativo para enriquecer o prompt
+    let fullName: string | null = null;
+    if (s.client_profile_id) {
+      const { data: cp2 } = await supabaseAdmin
+        .from("client_profiles").select("full_name").eq("id", s.client_profile_id).maybeSingle();
+      fullName = (cp2?.full_name as string | null) ?? null;
+    } else {
+      const { data: bd2 } = await supabaseAdmin
+        .from("birth_data").select("full_name").eq("user_id", s.user_id).eq("is_primary", true).maybeSingle();
+      fullName = (bd2?.full_name as string | null) ?? null;
+    }
+    const chartSummary = await loadChartSummaryForHoroscope(
+      s.user_id, s.client_profile_id, birthDate, fullName, s.sun_sign,
+    );
+    const themes = themesForDay(birthDate, s.sun_sign, today);
+
     let body = "";
     try {
       const prompt = promptOverride
@@ -101,9 +117,13 @@ async function handler({ request }: { request: Request }) {
             .replace(/\{\{date\}\}/gi, today)
             .replace(/\{\{lucky_number\}\}/gi, String(lucky.number))
             .replace(/\{\{lucky_color\}\}/gi, lucky.color) +
-          `\n\nIMPORTANTE: na seção "🎯 Número e cor da sorte", use EXATAMENTE: "Número: ${lucky.number} | Cor: ${lucky.color}". Não invente outros valores.`
-        : buildHoroscopePrompt(s.sun_sign, today, lucky);
-      const { text } = await generateText({ model, prompt, temperature: 0.85 });
+          `\n\nÂngulos astrológicos obrigatórios de hoje: 1) ${themes[0]}; 2) ${themes[1]}. EVITE temas usados recentemente: ${(chartSummary.recentThemes ?? []).join("; ") || "—"}.\n\nIMPORTANTE: na seção "🎯 Número e cor da sorte", use EXATAMENTE: "Número: ${lucky.number} | Cor: ${lucky.color}". Não invente outros valores.`
+        : buildHoroscopePrompt(s.sun_sign, today, lucky, chartSummary);
+      // seed determinístico por (usuário, dia) garante unicidade sem perder reprodutibilidade
+      const seedNum = Array.from(`${s.user_id}|${today}`).reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 2166136261) >>> 0;
+      const { text } = await generateText({
+        model, prompt, temperature: 1.0, topP: 0.95, seed: seedNum,
+      });
       body = text.trim();
     } catch (e: any) {
       await supabaseAdmin.from("horoscope_log").insert({
@@ -112,6 +132,15 @@ async function handler({ request }: { request: Request }) {
       });
       continue;
     }
+
+    // Registra os ângulos do dia para evitar repetição nos próximos
+    for (const t of themes) {
+      await supabaseAdmin.from("horoscope_log").insert({
+        user_id: s.user_id, date: today, channel: "ai_theme", status: "ok",
+        detail: t, sign: s.sun_sign,
+      });
+    }
+
 
     const { pickMarketingFooter } = await import("@/lib/marketing.functions");
     const footer = await pickMarketingFooter("horoscope_daily");
