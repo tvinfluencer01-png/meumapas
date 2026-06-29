@@ -843,6 +843,105 @@ export const adminSetUserSubscription = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const adminApplyLandingPackage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({
+      user_id: z.string().uuid(),
+      package_slug: z.string().trim().min(1).max(120),
+      mode: z.enum(["add", "replace"]).default("add"),
+      days: z.number().int().min(1).max(3650).optional().default(30),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+
+    const { data: pkg, error: pkgErr } = await supabaseAdmin
+      .from("landing_packages")
+      .select("*")
+      .eq("slug", data.package_slug)
+      .maybeSingle();
+    if (pkgErr) throw new Error(pkgErr.message);
+    if (!pkg) throw new Error("Pacote não encontrado.");
+
+    const periodEnd = new Date(Date.now() + (data.days ?? 30) * 86_400_000).toISOString();
+    const addons = Array.isArray((pkg as any).included_addons)
+      ? ((pkg as any).included_addons as string[])
+      : [];
+
+    if (data.mode === "replace") {
+      // Cancel all current active subscriptions for this user
+      await supabaseAdmin
+        .from("user_subscriptions")
+        .update({ status: "canceled", updated_at: new Date().toISOString() })
+        .eq("user_id", data.user_id)
+        .eq("status", "active");
+    }
+
+    // Activate each addon from the package
+    for (const addonId of addons) {
+      const { data: existing } = await supabaseAdmin
+        .from("user_subscriptions")
+        .select("id")
+        .eq("user_id", data.user_id)
+        .eq("addon_id", addonId)
+        .maybeSingle();
+      if (existing) {
+        const { error } = await supabaseAdmin
+          .from("user_subscriptions")
+          .update({
+            status: "active",
+            current_period_end: periodEnd,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", existing.id);
+        if (error) throw new Error(error.message);
+      } else {
+        const { error } = await supabaseAdmin
+          .from("user_subscriptions")
+          .insert({
+            user_id: data.user_id,
+            addon_id: addonId,
+            status: "active",
+            current_period_end: periodEnd,
+          });
+        if (error) throw new Error(error.message);
+      }
+    }
+
+    // Credit monthly credits if any
+    const creditsPerMonth = (pkg as any).credits_per_month ?? 0;
+    if (creditsPerMonth > 0) {
+      await supabaseAdmin.rpc("adjust_credits", {
+        _user_id: data.user_id,
+        _amount: creditsPerMonth,
+        _kind: "admin_grant",
+        _reference: `Admin · ${data.mode === "replace" ? "mudou para" : "adicionou"} pacote ${pkg.name}`,
+      });
+    }
+
+    await supabaseAdmin.from("app_logs").insert({
+      event: "admin_apply_landing_package",
+      user_id: context.userId,
+      payload: {
+        target_user_id: data.user_id,
+        package_slug: data.package_slug,
+        package_name: pkg.name,
+        mode: data.mode,
+        days: data.days,
+        addons,
+        credits_granted: creditsPerMonth,
+      },
+    });
+
+    return {
+      ok: true,
+      package_name: pkg.name,
+      addons,
+      credits_granted: creditsPerMonth,
+    };
+  });
+
 // --- Evolution API (WhatsApp) ---------------------------------------------
 
 function normalizeBaseUrl(url: string): string {
