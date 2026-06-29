@@ -514,22 +514,45 @@ export const sendTestHoroscopeWhatsapp = createServerFn({ method: "POST" })
     const override = await getAddonPromptOverride("sub_daily_horoscope");
     const today = new Date().toISOString().slice(0, 10);
     const lucky = computeLuckyForDay(ctx.birthDate, sign, today);
+    const chartSummary = await loadChartSummaryForHoroscope(
+      userId,
+      ctx.clientProfileId,
+      ctx.birthDate,
+      ctx.fullName,
+      sign,
+    );
+    const themes = themesForDay(ctx.birthDate, sign, today);
     const prompt = override
       ? override
           .replace(/\{\{sign\}\}/gi, sign)
           .replace(/\{\{date\}\}/gi, today)
           .replace(/\{\{lucky_number\}\}/gi, String(lucky.number))
           .replace(/\{\{lucky_color\}\}/gi, lucky.color) +
-        `\n\nIMPORTANTE: na seção "🎯 Número e cor da sorte", use EXATAMENTE: "Número: ${lucky.number} | Cor: ${lucky.color}". Não invente outros valores.`
-      : buildHoroscopePrompt(sign, today, lucky);
+        `\n\nÂngulos astrológicos obrigatórios de hoje: 1) ${themes[0]}; 2) ${themes[1]}. EVITE temas usados recentemente: ${(chartSummary.recentThemes ?? []).join("; ") || "—"}.\n\nIMPORTANTE: na seção "🎯 Número e cor da sorte", use EXATAMENTE: "Número: ${lucky.number} | Cor: ${lucky.color}". Não invente outros valores.`
+      : buildHoroscopePrompt(sign, today, lucky, chartSummary);
 
     let body = "";
     try {
-      const { text } = await generateText({ model, prompt, temperature: 0.85 });
+      const { text } = await generateText({
+        model,
+        prompt,
+        temperature: 1.0,
+        topP: 0.95,
+        seed: hashStr(`${userId}|${today}`),
+      });
       body = text.trim();
     } catch (e: any) {
       throw new Error("Falha ao gerar horóscopo: " + (e?.message ?? String(e)));
     }
+
+    // Registra os temas do dia para evitar repetição em execuções futuras
+    for (const t of themes) {
+      await supabaseAdmin.from("horoscope_log").insert({
+        user_id: userId, date: today, channel: "ai_theme", status: "ok",
+        detail: t, sign,
+      });
+    }
+
 
     const who = ctx.fullName ? ` (${ctx.fullName})` : "";
     const { pickMarketingFooter } = await import("./marketing.functions");
