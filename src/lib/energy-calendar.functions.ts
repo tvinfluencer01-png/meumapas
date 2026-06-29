@@ -139,5 +139,5 @@ ${upcoming.map((u) => `- ${u.date}: número pessoal ${u.personal_day ?? "?"}, ${
       }
     }
 
-    return { days, insights, hasBirth: !!birth };
+    return { days, insights, hasBirth: !!birth, notice };
   });
