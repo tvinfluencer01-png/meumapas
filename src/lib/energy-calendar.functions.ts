@@ -66,11 +66,12 @@ export const getEnergyCalendar = createServerFn({ method: "POST" })
       const ok = await consumeCredits(userId, action, `Calendário ${data.month}/${data.year}`);
       if (!ok) {
         return {
-          days: [],
-          insights: {},
+          days: [] as Array<{ date: string; day: number; weekday: number; personal_day: number | null; intensity: "calm" | "balanced" | "intense" | "peak"; moon: { label: string; icon: string; angle: number } }>,
+          insights: {} as Record<string, { emotions: string; actions: string; alert: string }>,
           hasBirth: false,
           notice: `Saldo insuficiente. Consultar o calendário custa ${cost} créditos.`,
         };
+
       }
     }
 
