@@ -389,7 +389,10 @@ function UsersAdmin() {
                             <CoinsIcon className="size-4 mr-2" /> Adicionar / remover créditos
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => open("plans", u)}>
-                            <Package className="size-4 mr-2" /> Mudar plano / Add-ons
+                            <Package className="size-4 mr-2" /> Adicionar plano
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => open("addons", u)}>
+                            <Layers className="size-4 mr-2" /> Adicionar add-ons
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           {u.is_admin ? (
