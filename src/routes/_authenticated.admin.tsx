@@ -49,6 +49,7 @@ import {
   adminDeleteUser,
   adminListUserSubscriptions,
   adminSetUserSubscription,
+  adminApplyLandingPackage,
   getEvolutionSettings,
   saveEvolutionSettings,
   testEvolutionConnection,
