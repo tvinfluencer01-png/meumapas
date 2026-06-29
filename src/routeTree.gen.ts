@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ProfissionaisRouteImport } from './routes/profissionais'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AtivacaoRouteImport } from './routes/ativacao'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiChatRouteImport } from './routes/api.chat'
@@ -44,6 +45,11 @@ const ProfissionaisRoute = ProfissionaisRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AtivacaoRoute = AtivacaoRouteImport.update({
+  id: '/ativacao',
+  path: '/ativacao',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
@@ -175,6 +181,7 @@ const ApiPublicHooksDailyHoroscopeRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/ativacao': typeof AtivacaoRoute
   '/auth': typeof AuthRoute
   '/profissionais': typeof ProfissionaisRoute
   '/addons': typeof AuthenticatedAddonsRoute
@@ -202,6 +209,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/ativacao': typeof AtivacaoRoute
   '/auth': typeof AuthRoute
   '/profissionais': typeof ProfissionaisRoute
   '/addons': typeof AuthenticatedAddonsRoute
@@ -231,6 +239,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/ativacao': typeof AtivacaoRoute
   '/auth': typeof AuthRoute
   '/profissionais': typeof ProfissionaisRoute
   '/_authenticated/addons': typeof AuthenticatedAddonsRoute
@@ -260,6 +269,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/ativacao'
     | '/auth'
     | '/profissionais'
     | '/addons'
@@ -287,6 +297,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/ativacao'
     | '/auth'
     | '/profissionais'
     | '/addons'
@@ -315,6 +326,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/ativacao'
     | '/auth'
     | '/profissionais'
     | '/_authenticated/addons'
@@ -344,6 +356,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  AtivacaoRoute: typeof AtivacaoRoute
   AuthRoute: typeof AuthRoute
   ProfissionaisRoute: typeof ProfissionaisRoute
   ApiChatRoute: typeof ApiChatRoute
@@ -367,6 +380,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ativacao': {
+      id: '/ativacao'
+      path: '/ativacao'
+      fullPath: '/ativacao'
+      preLoaderRoute: typeof AtivacaoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -597,6 +617,7 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  AtivacaoRoute: AtivacaoRoute,
   AuthRoute: AuthRoute,
   ProfissionaisRoute: ProfissionaisRoute,
   ApiChatRoute: ApiChatRoute,

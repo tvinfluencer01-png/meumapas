@@ -138,10 +138,10 @@ function AuthedLayout() {
         router.navigate({ to: "/onboarding" });
         return;
       }
-      // Gate de pacote: sem pacote ativo, envia para a landing (#planos).
+      // Gate de pacote: sem pacote ativo, envia para a página de ativação.
       // Admins têm acesso liberado; onboarding é permitido para coletar dados.
       if (activeSubs.length === 0 && !userIsAdmin && path !== "/onboarding") {
-        window.location.replace("/#planos");
+        router.navigate({ to: "/ativacao", replace: true });
         return;
       }
       setProfileChecked(true);
