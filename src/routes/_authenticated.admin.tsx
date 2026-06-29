@@ -357,6 +357,8 @@ function UsersAdmin() {
                       ) : (
                         <span className="text-xs text-muted-foreground">Sem plano</span>
                       )}
+                    </td>
+
 
                     <td className="px-3 py-2">
                       {u.is_admin ? (
