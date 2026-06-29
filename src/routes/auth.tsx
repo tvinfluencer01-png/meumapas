@@ -105,10 +105,10 @@ function AuthPage() {
 
         // Se houver um plano selecionado, salva a intenção ANTES de criar a conta
         if (search.plan) {
-          await supabase.from("pending_plan_selections").insert({
+          await supabase.from("pending_plan_selections").upsert({
             email: parsed.data.email.toLowerCase(),
             plan_slug: search.plan,
-          });
+          }, { onConflict: "email" });
         }
 
         const { error } = await supabase.auth.signUp({
