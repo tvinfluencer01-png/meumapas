@@ -143,12 +143,11 @@ function AuthedLayout() {
         path.startsWith("/addons") ||
         (userIsAdmin && path.startsWith("/admin"));
       if (
-        profile?.onboarding_completed &&
         activeSubs.length === 0 &&
         !userIsAdmin &&
         !allowedWithoutPackage
       ) {
-        window.location.href = "/#planos";
+        router.navigate({ to: "/ativacao", replace: true });
         return;
       }
       setProfileChecked(true);
