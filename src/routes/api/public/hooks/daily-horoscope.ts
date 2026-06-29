@@ -30,14 +30,33 @@ async function handler({ request }: { request: Request }) {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  const today = new Date().toISOString().slice(0, 10);
-  const { data: subs, error } = await supabaseAdmin
+  const now = new Date();
+  const today = now.toISOString().slice(0, 10);
+  const currentUtcHour = now.getUTCHours();
+  const { data: allSubs, error } = await supabaseAdmin
     .from("horoscope_subscriptions")
     .select("*")
     .eq("enabled", true)
     .or(`last_sent_on.is.null,last_sent_on.lt.${today}`)
-    .limit(500);
+    .limit(2000);
   if (error) return new Response(error.message, { status: 500 });
+
+  // BRT (-3). dia da semana local: 0=domingo..6=sábado
+  const localDow = (new Date(now.getTime() - 3 * 3600 * 1000)).getUTCDay();
+  const subs = (allSubs ?? []).filter((s: any) => {
+    if ((s.send_hour_utc ?? 10) !== currentUtcHour) return false;
+    const freq = s.frequency ?? "daily";
+    if (freq === "weekly") {
+      return s.send_weekday != null && s.send_weekday === localDow;
+    }
+    if (freq === "alternate") {
+      if (!s.last_sent_on) return true;
+      const last = new Date(s.last_sent_on + "T00:00:00Z").getTime();
+      const diffDays = Math.floor((Date.parse(today + "T00:00:00Z") - last) / 86400000);
+      return diffDays >= 2;
+    }
+    return true;
+  });
 
   const { data: twilio } = await supabaseAdmin
     .from("twilio_settings")
