@@ -233,7 +233,7 @@ type AdminUserRow = {
 };
 
 
-type DialogKind = "create" | "edit" | "password" | "credits" | "plans" | null;
+type DialogKind = "create" | "edit" | "password" | "credits" | "plans" | "addons" | null;
 
 function UsersAdmin() {
   const qc = useQueryClient();
@@ -389,7 +389,10 @@ function UsersAdmin() {
                             <CoinsIcon className="size-4 mr-2" /> Adicionar / remover créditos
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => open("plans", u)}>
-                            <Package className="size-4 mr-2" /> Mudar plano / Add-ons
+                            <Package className="size-4 mr-2" /> Adicionar plano
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => open("addons", u)}>
+                            <Layers className="size-4 mr-2" /> Adicionar add-ons
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           {u.is_admin ? (
@@ -467,7 +470,12 @@ function UsersAdmin() {
       </Dialog>
       <Dialog open={dialog === "plans"} onOpenChange={(o) => !o && close()}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          {active && <PlansDialog user={active} onDone={close} />}
+          {active && <PlanPackagesDialog user={active} onDone={close} />}
+        </DialogContent>
+      </Dialog>
+      <Dialog open={dialog === "addons"} onOpenChange={(o) => !o && close()}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          {active && <AddonsDialog user={active} onDone={close} />}
         </DialogContent>
       </Dialog>
     </Card>
@@ -678,20 +686,14 @@ function PasswordDialog({ user, onDone }: { user: AdminUserRow; onDone: () => vo
   );
 }
 
-function PlansDialog({ user, onDone }: { user: AdminUserRow; onDone: () => void }) {
-  return <PlansDialogInner user={user} onDone={onDone} />;
-}
-
-
-function PlansDialogInner({ user, onDone }: { user: AdminUserRow; onDone: () => void }) {
+function PlanPackagesDialog({ user, onDone }: { user: AdminUserRow; onDone: () => void }) {
   const qc = useQueryClient();
   const listFn = useServerFn(adminListUserSubscriptions);
-  const setFn = useServerFn(adminSetUserSubscription);
   const applyPackageFn = useServerFn(adminApplyLandingPackage);
-  const [pkgMode, setPkgMode] = useState<null | "add" | "replace">(null);
-  const [pkgSlug, setPkgSlug] = useState<string>("");
+  const [selectedSlug, setSelectedSlug] = useState<string>("");
+  const [mode, setMode] = useState<"add" | "replace">("add");
 
-  const { data, isLoading, refetch } = useQuery({
+  const { data: subsData, refetch } = useQuery({
     queryKey: ["admin-user-subs", user.id],
     queryFn: () => listFn({ data: { user_id: user.id } }),
   });
@@ -705,16 +707,16 @@ function PlansDialogInner({ user, onDone }: { user: AdminUserRow; onDone: () => 
   });
   const availablePackages = (packagesData ?? []).filter((p: any) => p.enabled);
 
-  const mut = useMutation({
-    mutationFn: (vars: { addon_id: string; active: boolean; days?: number }) =>
-      setFn({ data: { user_id: user.id, ...vars } }),
-    onSuccess: () => {
-      toast.success("Plano atualizado.");
-      refetch();
-      qc.invalidateQueries({ queryKey: ["addons-overview"] });
-      qc.invalidateQueries({ queryKey: ["admin-users"] });
-    },
-    onError: (e: Error) => toast.error(e.message),
+  const activeAddonIds = new Set(
+    (subsData?.subscriptions ?? [])
+      .filter((s) => s.status === "active")
+      .map((s) => s.addon_id),
+  );
+
+  // Determine which package the user "has": one whose included_addons are all active
+  const currentPackage = availablePackages.find((p: any) => {
+    const addons: string[] = Array.isArray(p.included_addons) ? p.included_addons : [];
+    return addons.length > 0 && addons.every((a) => activeAddonIds.has(a));
   });
 
   const applyMut = useMutation({
@@ -723,8 +725,142 @@ function PlansDialogInner({ user, onDone }: { user: AdminUserRow; onDone: () => 
     onSuccess: (res: any) => {
       const creditsMsg = res?.credits_granted ? ` (+${res.credits_granted} créditos)` : "";
       toast.success(`Pacote "${res?.package_name}" aplicado${creditsMsg}.`);
-      setPkgMode(null);
-      setPkgSlug("");
+      setSelectedSlug("");
+      refetch();
+      qc.invalidateQueries({ queryKey: ["addons-overview"] });
+      qc.invalidateQueries({ queryKey: ["admin-users"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle className="flex items-center gap-2">
+          <Package className="size-5 text-gold" /> Adicionar plano
+        </DialogTitle>
+        <DialogDescription>
+          Aplique um pacote completo para {user.email}. Os módulos e créditos são ativados por 30 dias.
+        </DialogDescription>
+      </DialogHeader>
+
+      <div className="rounded-md border border-border p-3 bg-card/40 text-sm">
+        <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Plano atual</div>
+        {currentPackage ? (
+          <div className="font-medium">{currentPackage.name}</div>
+        ) : (
+          <div className="text-muted-foreground">Nenhum plano completo ativo.</div>
+        )}
+      </div>
+
+      <div className="flex items-center gap-2 text-xs">
+        <span className="text-muted-foreground">Modo:</span>
+        <Button
+          size="sm"
+          variant={mode === "add" ? "default" : "outline"}
+          onClick={() => setMode("add")}
+        >
+          <UserPlus className="size-3 mr-1" /> Adicionar
+        </Button>
+        <Button
+          size="sm"
+          variant={mode === "replace" ? "default" : "outline"}
+          onClick={() => setMode("replace")}
+        >
+          <ArrowRightLeft className="size-3 mr-1" /> Substituir
+        </Button>
+        <span className="text-muted-foreground ml-1">
+          {mode === "add"
+            ? "Soma módulos e créditos sem remover assinaturas atuais."
+            : "Cancela assinaturas atuais antes de aplicar o novo pacote."}
+        </span>
+      </div>
+
+      {packagesLoading ? (
+        <div className="text-sm text-muted-foreground">Carregando pacotes…</div>
+      ) : availablePackages.length === 0 ? (
+        <div className="text-sm text-muted-foreground">Nenhum pacote habilitado.</div>
+      ) : (
+        <div className="space-y-2 max-h-[45vh] overflow-y-auto pr-1">
+          {availablePackages.map((p: any) => {
+            const isCurrent = currentPackage?.id === p.id;
+            const isSelected = selectedSlug === p.slug;
+            const addons: string[] = Array.isArray(p.included_addons) ? p.included_addons : [];
+            return (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => setSelectedSlug(p.slug)}
+                className={`w-full text-left rounded-md border p-3 transition ${
+                  isSelected
+                    ? "border-gold bg-gold/5"
+                    : "border-border hover:border-muted-foreground/40"
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="font-medium text-sm flex items-center gap-2">
+                      {p.name}
+                      {isCurrent && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-500 border border-emerald-500/30">
+                          PLANO ATUAL
+                        </span>
+                      )}
+                    </div>
+                    {p.description && (
+                      <div className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
+                        {p.description}
+                      </div>
+                    )}
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {p.credits_per_month ? `+${p.credits_per_month} créditos/mês` : "Sem créditos"}
+                      {addons.length > 0 ? ` · ${addons.length} módulo(s)` : ""}
+                    </div>
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      <DialogFooter>
+        <Button variant="ghost" onClick={onDone} disabled={applyMut.isPending}>
+          Fechar
+        </Button>
+        <Button
+          onClick={() =>
+            selectedSlug &&
+            applyMut.mutate({ package_slug: selectedSlug, mode, days: 30 })
+          }
+          disabled={!selectedSlug || applyMut.isPending}
+        >
+          {applyMut.isPending
+            ? "Aplicando…"
+            : mode === "add"
+              ? "Adicionar pacote"
+              : "Substituir plano"}
+        </Button>
+      </DialogFooter>
+    </>
+  );
+}
+
+function AddonsDialog({ user, onDone }: { user: AdminUserRow; onDone: () => void }) {
+  const qc = useQueryClient();
+  const listFn = useServerFn(adminListUserSubscriptions);
+  const setFn = useServerFn(adminSetUserSubscription);
+
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ["admin-user-subs", user.id],
+    queryFn: () => listFn({ data: { user_id: user.id } }),
+  });
+
+  const mut = useMutation({
+    mutationFn: (vars: { addon_id: string; active: boolean; days?: number }) =>
+      setFn({ data: { user_id: user.id, ...vars } }),
+    onSuccess: () => {
+      toast.success("Módulo atualizado.");
       refetch();
       qc.invalidateQueries({ queryKey: ["addons-overview"] });
       qc.invalidateQueries({ queryKey: ["admin-users"] });
@@ -738,112 +874,21 @@ function PlansDialogInner({ user, onDone }: { user: AdminUserRow; onDone: () => 
       .map((s) => [s.addon_id, s] as const),
   );
 
-  const handleConfirmPackage = () => {
-    if (!pkgSlug || !pkgMode) return;
-    applyMut.mutate({ package_slug: pkgSlug, mode: pkgMode, days: 30 });
-  };
-
   return (
     <>
       <DialogHeader>
         <DialogTitle className="flex items-center gap-2">
-          <Package className="size-5 text-gold" /> Planos & Add-ons
+          <Layers className="size-5 text-gold" /> Adicionar add-ons
         </DialogTitle>
         <DialogDescription>
-          Aplique um plano completo ou habilite módulos individuais para {user.email}. Padrão: 30 dias.
+          Ative ou desative módulos individuais para {user.email}. Padrão: 30 dias.
         </DialogDescription>
       </DialogHeader>
-
-      {/* Plan actions */}
-      <div className="rounded-md border border-border p-3 space-y-3 bg-card/40">
-        <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          Aplicar pacote completo
-        </div>
-        {pkgMode === null ? (
-          <div className="flex flex-wrap gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setPkgMode("add")}
-              disabled={packagesLoading || availablePackages.length === 0}
-            >
-              <UserPlus className="size-4 mr-1" /> Adicionar plano
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => setPkgMode("replace")}
-              disabled={packagesLoading || availablePackages.length === 0}
-            >
-              <ArrowRightLeft className="size-4 mr-1" /> Mudar plano
-            </Button>
-            {packagesLoading && (
-              <span className="text-xs text-muted-foreground self-center">Carregando pacotes…</span>
-            )}
-            {!packagesLoading && availablePackages.length === 0 && (
-              <span className="text-xs text-muted-foreground self-center">
-                Nenhum pacote habilitado.
-              </span>
-            )}
-          </div>
-        ) : (
-          <div className="space-y-2">
-            <div className="text-xs text-muted-foreground">
-              {pkgMode === "add"
-                ? "Adiciona os módulos e créditos do pacote sem remover as assinaturas atuais."
-                : "Cancela todas as assinaturas atuais e aplica os módulos e créditos do novo pacote."}
-            </div>
-            <select
-              value={pkgSlug}
-              onChange={(e) => setPkgSlug(e.target.value)}
-              className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
-            >
-              <option value="">Selecione um pacote…</option>
-              {availablePackages.map((p: any) => (
-                <option key={p.id} value={p.slug}>
-                  {p.name}
-                  {p.credits_per_month ? ` · +${p.credits_per_month} créditos/mês` : ""}
-                  {Array.isArray(p.included_addons) && p.included_addons.length > 0
-                    ? ` · ${p.included_addons.length} módulo(s)`
-                    : ""}
-                </option>
-              ))}
-            </select>
-            <div className="flex gap-2 justify-end">
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => {
-                  setPkgMode(null);
-                  setPkgSlug("");
-                }}
-                disabled={applyMut.isPending}
-              >
-                Cancelar
-              </Button>
-              <Button
-                size="sm"
-                onClick={handleConfirmPackage}
-                disabled={!pkgSlug || applyMut.isPending}
-              >
-                {applyMut.isPending
-                  ? "Aplicando…"
-                  : pkgMode === "add"
-                    ? "Adicionar pacote"
-                    : "Aplicar novo pacote"}
-              </Button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground mt-2">
-        Módulos individuais
-      </div>
 
       {isLoading ? (
         <div className="text-sm text-muted-foreground">Carregando…</div>
       ) : (
-        <div className="space-y-2 max-h-[40vh] overflow-y-auto pr-1">
+        <div className="space-y-2 max-h-[55vh] overflow-y-auto pr-1">
           {SUBSCRIPTION_ADDONS.map((addon) => {
             const sub = activeByAddon.get(addon.id);
             const isActive = !!sub;
