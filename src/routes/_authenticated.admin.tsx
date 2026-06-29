@@ -233,7 +233,7 @@ type AdminUserRow = {
 };
 
 
-type DialogKind = "create" | "edit" | "password" | "credits" | "plans" | null;
+type DialogKind = "create" | "edit" | "password" | "credits" | "plans" | "addons" | null;
 
 function UsersAdmin() {
   const qc = useQueryClient();
