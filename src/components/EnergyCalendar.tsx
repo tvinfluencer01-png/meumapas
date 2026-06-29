@@ -5,6 +5,8 @@ import { getEnergyCalendar } from "@/lib/energy-calendar.functions";
 import { listFavorites, toggleFavorite } from "@/lib/favorites.functions";
 import { ChevronLeft, ChevronRight, Sparkles, Moon, Heart, Compass, AlertTriangle, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { InsufficientCreditsNotice } from "@/components/InsufficientCreditsNotice";
+
 
 const WEEKDAYS = ["D", "S", "T", "Q", "Q", "S", "S"];
 const MONTHS = [
