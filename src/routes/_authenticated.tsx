@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { showFeedback } from "@/components/system-feedback";
+import { checkIsAdmin } from "@/lib/admin.functions";
 
 import { listClientProfiles, setActiveClientProfile } from "@/lib/client-profiles.functions";
 
@@ -69,6 +70,7 @@ const MAIN_MENU_BADGES: Record<string, { label: string; addonId: string }> = {
 function AuthedLayout() {
   const { signOut, user, loading } = useAuth();
   const router = useRouter();
+  const checkAdminFn = useServerFn(checkIsAdmin);
   const [open, setOpen] = useState(false);
   const [profileChecked, setProfileChecked] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -119,12 +121,12 @@ function AuthedLayout() {
   useEffect(() => {
     if (loading || !user) return;
     (async () => {
-      const [{ data: profile }, { data: role }, { data: subs }] = await Promise.all([
+      const [{ data: profile }, adminCheck, { data: subs }] = await Promise.all([
         supabase.from("profiles").select("onboarding_completed").eq("id", user.id).maybeSingle(),
-        supabase.from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle(),
+        checkAdminFn().catch(() => ({ isAdmin: false })),
         supabase.from("user_subscriptions").select("addon_id, status, current_period_end").eq("user_id", user.id).eq("status", "active"),
       ]);
-      const userIsAdmin = !!role;
+      const userIsAdmin = !!adminCheck?.isAdmin;
       setIsAdmin(userIsAdmin);
       const now = Date.now();
       const activeSubs = (subs ?? []).filter(
@@ -152,7 +154,7 @@ function AuthedLayout() {
       }
       setProfileChecked(true);
     })();
-  }, [loading, user, router]);
+  }, [loading, user, router, checkAdminFn]);
 
   async function handleSignOut() {
     await signOut();
