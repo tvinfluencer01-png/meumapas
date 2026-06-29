@@ -650,7 +650,7 @@ function Pricing() {
     },
   });
 
-  const displayPlans = packages ?? [];
+  const displayPlans = [...(packages ?? [])].sort((a, b) => (a.price_cents ?? 0) - (b.price_cents ?? 0));
 
   return (
     <section id="planos" className="py-32">
