@@ -268,6 +268,11 @@ function AuthedLayout() {
               </span>
               <div className="flex-1 min-w-0">
                 <div className="text-xs text-stardust truncate">{user?.email}</div>
+                {activePlanName && (
+                  <div className="text-[10px] uppercase tracking-wider text-gold/80 truncate mt-0.5">
+                    {activePlanName}
+                  </div>
+                )}
                 <div className="mt-1 flex items-center gap-2">
                   <div className="flex-1 h-1.5 rounded-full bg-secondary overflow-hidden">
                     <div
