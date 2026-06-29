@@ -71,7 +71,7 @@ export function AIInsights() {
         )}
 
         {data?.notice && (
-          <NoticeBanner message={data.notice} />
+          <InsufficientCreditsNotice message={data.notice} />
         )}
 
         {isError && !data?.notice && (
