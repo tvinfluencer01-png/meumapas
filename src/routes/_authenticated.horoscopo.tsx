@@ -42,15 +42,21 @@ function HoroscopoPage() {
   const [chWA, setChWA] = useState(true);
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [frequency, setFrequency] = useState<"daily" | "weekly" | "alternate">("daily");
+  const [sendHour, setSendHour] = useState<number>(7);
+  const [sendWeekday, setSendWeekday] = useState<number>(1);
 
   useEffect(() => {
     if (!data) return;
-    const s = data.sub;
+    const s: any = data.sub;
     setEnabled(s?.enabled ?? true);
     setChEmail(s?.channel_email ?? true);
     setChWA(s?.channel_whatsapp ?? true);
     setEmail(s?.email ?? data.defaults.email ?? "");
     setPhone(s?.phone_e164 ?? data.defaults.phone_e164 ?? "");
+    setFrequency((s?.frequency as any) ?? "daily");
+    setSendHour(s?.send_local_hour ?? 7);
+    setSendWeekday(s?.send_weekday ?? 1);
   }, [data]);
 
   const mutation = useMutation({
@@ -62,6 +68,9 @@ function HoroscopoPage() {
           channel_whatsapp: chWA,
           email: email || null,
           phone_e164: phone || null,
+          frequency,
+          send_local_hour: sendHour,
+          send_weekday: frequency === "weekly" ? sendWeekday : null,
         },
       }),
     onSuccess: () => {
