@@ -129,9 +129,9 @@ export const createMercadoPagoCheckout = createServerFn({ method: "POST" })
       },
       back_urls: data.kind === "landing_package"
         ? {
-            success: `${origin}/#planos`,
-            pending: `${origin}/#planos`,
-            failure: `${origin}/#planos`,
+            success: `${origin}/ativacao?status=success`,
+            pending: `${origin}/ativacao?status=pending`,
+            failure: `${origin}/ativacao?status=failure`,
           }
         : {
             success: `${origin}/addons?status=success`,
