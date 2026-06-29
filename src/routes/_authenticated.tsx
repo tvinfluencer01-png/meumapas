@@ -75,6 +75,7 @@ function AuthedLayout() {
   const [profileChecked, setProfileChecked] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [activeAddons, setActiveAddons] = useState<Set<string>>(new Set());
+  const [activePlanName, setActivePlanName] = useState<string | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
   
 
