@@ -68,11 +68,16 @@ export function AIInsights() {
           </div>
         )}
 
-        {isError && (
+        {data?.notice && (
+          <NoticeBanner message={data.notice} />
+        )}
+
+        {isError && !data?.notice && (
           <p className="mt-6 text-sm text-destructive">
             Não foi possível gerar os insights agora. Tente novamente em instantes.
           </p>
         )}
+
 
         {data && (
           <div className="mt-6 space-y-5">
