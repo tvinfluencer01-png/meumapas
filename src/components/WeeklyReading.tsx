@@ -4,6 +4,8 @@ import { getWeeklyReading } from "@/lib/weekly-reading.functions";
 import { Sparkles, TrendingUp, Moon, ArrowUpRight, Wind, Anchor, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SectionLamp } from "@/components/SectionLamp";
+import { InsufficientCreditsNotice } from "@/components/InsufficientCreditsNotice";
+
 
 const TONE_STYLES = {
   rise: { bg: "from-gold/30 to-gold/5", icon: ArrowUpRight, ring: "ring-gold/40" },
