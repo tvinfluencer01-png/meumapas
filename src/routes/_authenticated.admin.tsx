@@ -228,7 +228,9 @@ type AdminUserRow = {
   full_name: string;
   created_at: string | null | undefined;
   is_admin: boolean;
+  plans: string[];
 };
+
 
 type DialogKind = "create" | "edit" | "password" | "credits" | "plans" | null;
 
