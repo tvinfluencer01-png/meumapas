@@ -139,8 +139,8 @@ function AuthedLayout() {
         return;
       }
       // Gate de pacote: sem pacote ativo, força a tela de ativação (sem menu).
-      // Admins têm acesso liberado para administrar o sistema.
-      if (activeSubs.length === 0 && !userIsAdmin) {
+      // Admins têm acesso liberado; onboarding é permitido para coletar dados.
+      if (activeSubs.length === 0 && !userIsAdmin && path !== "/onboarding") {
         router.navigate({ to: "/ativacao", replace: true });
         return;
       }
