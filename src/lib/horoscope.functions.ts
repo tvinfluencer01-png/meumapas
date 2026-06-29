@@ -213,11 +213,11 @@ export async function loadChartSummaryForHoroscope(
   if (clientProfileId) {
     const { data } = await supabaseAdmin
       .from("client_profiles")
-      .select("birth_time, birth_city")
+      .select("birth_time, city")
       .eq("id", clientProfileId)
       .maybeSingle();
     birthTime = (data?.birth_time as string | null) ?? null;
-    birthCity = (data?.birth_city as string | null) ?? null;
+    birthCity = (data?.city as string | null) ?? null;
   } else {
     const { data } = await supabaseAdmin
       .from("birth_data")
