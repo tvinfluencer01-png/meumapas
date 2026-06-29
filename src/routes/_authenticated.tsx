@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { showFeedback } from "@/components/system-feedback";
-import { checkIsAdmin } from "@/lib/admin.functions";
+import { getMyAdminStatus } from "@/lib/roles.functions";
 
 import { listClientProfiles, setActiveClientProfile } from "@/lib/client-profiles.functions";
 
@@ -70,7 +70,7 @@ const MAIN_MENU_BADGES: Record<string, { label: string; addonId: string }> = {
 function AuthedLayout() {
   const { signOut, user, loading } = useAuth();
   const router = useRouter();
-  const checkAdminFn = useServerFn(checkIsAdmin);
+  const checkAdminFn = useServerFn(getMyAdminStatus);
   const [open, setOpen] = useState(false);
   const [profileChecked, setProfileChecked] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
