@@ -138,18 +138,10 @@ function AuthedLayout() {
         router.navigate({ to: "/onboarding" });
         return;
       }
-      // Gate de pacote: só libera o sistema se houver pacote ativo.
-      // Permitido sem pacote: onboarding, addons, admin (apenas admins).
-      const allowedWithoutPackage =
-        path === "/onboarding" ||
-        path.startsWith("/addons") ||
-        (userIsAdmin && path.startsWith("/admin"));
-      if (
-        activeSubs.length === 0 &&
-        !userIsAdmin &&
-        !allowedWithoutPackage
-      ) {
-        router.navigate({ to: "/addons", replace: true });
+      // Gate de pacote: sem pacote ativo, força a tela de ativação (sem menu).
+      // Admins têm acesso liberado; onboarding é permitido para coletar dados.
+      if (activeSubs.length === 0 && !userIsAdmin && path !== "/onboarding") {
+        router.navigate({ to: "/ativacao", replace: true });
         return;
       }
       setProfileChecked(true);
