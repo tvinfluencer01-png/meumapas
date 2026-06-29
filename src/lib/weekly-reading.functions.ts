@@ -99,5 +99,5 @@ ${days.map((d) => `- ${d.date} (${d.weekday}): dia pessoal ${d.personal_day ?? "
       }
     }
 
-    return { days, summary, hasBirth: !!birth };
+    return { days, summary, hasBirth: !!birth, notice };
   });
