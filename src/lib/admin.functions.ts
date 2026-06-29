@@ -97,10 +97,11 @@ export const listAdminUsers = createServerFn({ method: "POST" })
     ]);
     const adminSet = new Set((roles ?? []).map((r) => r.user_id));
 
-    const { ADDONS_CATALOG } = await import("@/lib/addons.catalog");
+    const { CREDIT_PACKAGES, SUBSCRIPTION_ADDONS } = await import("@/lib/addons.catalog");
     const nameById = new Map<string, string>();
     for (const p of pkgs ?? []) nameById.set(p.slug, p.name);
-    for (const a of ADDONS_CATALOG) if (!nameById.has(a.id)) nameById.set(a.id, a.name);
+    for (const a of [...CREDIT_PACKAGES, ...SUBSCRIPTION_ADDONS]) if (!nameById.has(a.id)) nameById.set(a.id, a.name);
+
 
     const plansByUser = new Map<string, string[]>();
     const now = Date.now();
