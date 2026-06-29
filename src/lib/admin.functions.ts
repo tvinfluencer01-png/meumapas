@@ -79,12 +79,39 @@ export const listAdminUsers = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
 
     const ids = list.users.map((u) => u.id);
-    const { data: roles } = await supabaseAdmin
-      .from("user_roles")
-      .select("user_id, role")
-      .in("user_id", ids.length ? ids : ["00000000-0000-0000-0000-000000000000"])
-      .eq("role", "admin");
+    const safeIds = ids.length ? ids : ["00000000-0000-0000-0000-000000000000"];
+    const [{ data: roles }, { data: subs }, { data: pkgs }] = await Promise.all([
+      supabaseAdmin
+        .from("user_roles")
+        .select("user_id, role")
+        .in("user_id", safeIds)
+        .eq("role", "admin"),
+      supabaseAdmin
+        .from("user_subscriptions")
+        .select("user_id, addon_id, status, current_period_end")
+        .in("user_id", safeIds)
+        .eq("status", "active"),
+      supabaseAdmin
+        .from("landing_packages")
+        .select("slug, name"),
+    ]);
     const adminSet = new Set((roles ?? []).map((r) => r.user_id));
+
+    const { CREDIT_PACKAGES, SUBSCRIPTION_ADDONS } = await import("@/lib/addons.catalog");
+    const nameById = new Map<string, string>();
+    for (const p of pkgs ?? []) nameById.set(p.slug, p.name);
+    for (const a of [...CREDIT_PACKAGES, ...SUBSCRIPTION_ADDONS]) if (!nameById.has(a.id)) nameById.set(a.id, a.name);
+
+
+    const plansByUser = new Map<string, string[]>();
+    const now = Date.now();
+    for (const s of subs ?? []) {
+      if (s.current_period_end && new Date(s.current_period_end).getTime() < now) continue;
+      const label = nameById.get(s.addon_id) ?? s.addon_id;
+      const arr = plansByUser.get(s.user_id) ?? [];
+      if (!arr.includes(label)) arr.push(label);
+      plansByUser.set(s.user_id, arr);
+    }
 
     const q = data.search.toLowerCase();
     const users = list.users
@@ -97,6 +124,7 @@ export const listAdminUsers = createServerFn({ method: "POST" })
           "",
         created_at: u.created_at,
         is_admin: adminSet.has(u.id),
+        plans: plansByUser.get(u.id) ?? [],
       }))
       .filter((u) =>
         q
@@ -104,6 +132,7 @@ export const listAdminUsers = createServerFn({ method: "POST" })
             u.full_name.toLowerCase().includes(q)
           : true,
       );
+
 
     return { users, page: data.page, perPage, hasMore: list.users.length === perPage };
   });
