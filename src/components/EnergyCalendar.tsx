@@ -5,6 +5,8 @@ import { getEnergyCalendar } from "@/lib/energy-calendar.functions";
 import { listFavorites, toggleFavorite } from "@/lib/favorites.functions";
 import { ChevronLeft, ChevronRight, Sparkles, Moon, Heart, Compass, AlertTriangle, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { InsufficientCreditsNotice } from "@/components/InsufficientCreditsNotice";
+
 
 const WEEKDAYS = ["D", "S", "T", "Q", "Q", "S", "S"];
 const MONTHS = [
@@ -124,6 +126,9 @@ export function EnergyCalendar() {
           </button>
         </div>
       </header>
+
+      {data?.notice && <InsufficientCreditsNotice message={data.notice} />}
+
 
       <div className="grid grid-cols-7 gap-1 mb-2 text-[10px] uppercase tracking-widest text-muted-foreground text-center">
         {WEEKDAYS.map((w, i) => <div key={i}>{w}</div>)}

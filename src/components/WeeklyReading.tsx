@@ -4,6 +4,8 @@ import { getWeeklyReading } from "@/lib/weekly-reading.functions";
 import { Sparkles, TrendingUp, Moon, ArrowUpRight, Wind, Anchor, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SectionLamp } from "@/components/SectionLamp";
+import { InsufficientCreditsNotice } from "@/components/InsufficientCreditsNotice";
+
 
 const TONE_STYLES = {
   rise: { bg: "from-gold/30 to-gold/5", icon: ArrowUpRight, ring: "ring-gold/40" },
@@ -39,7 +41,10 @@ export function WeeklyReading() {
         <Sparkles className="size-5 text-gold animate-pulse" />
       </header>
 
+      {data?.notice && <InsufficientCreditsNotice message={data.notice} />}
+
       {/* AI summary */}
+
       <div className="rounded-xl border border-gold/20 bg-gradient-to-br from-gold/5 to-transparent p-5 mb-6 min-h-[120px]">
         {isLoading ? (
           <div className="space-y-2 animate-pulse">

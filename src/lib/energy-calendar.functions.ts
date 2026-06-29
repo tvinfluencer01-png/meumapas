@@ -61,12 +61,20 @@ export const getEnergyCalendar = createServerFn({ method: "POST" })
     const action = "energy_calendar";
     const unlimited = await hasUnlimitedAccess(userId, action);
     const cost = unlimited ? 0 : await getCreditCost(action);
+    let notice: string | null = null;
     if (!unlimited && cost > 0) {
       const ok = await consumeCredits(userId, action, `Calendário ${data.month}/${data.year}`);
       if (!ok) {
-        throw new Error(`Saldo insuficiente. Consultar o calendário custa ${cost} créditos.`);
+        return {
+          days: [] as Array<{ date: string; day: number; weekday: number; personal_day: number | null; intensity: "calm" | "balanced" | "intense" | "peak"; moon: { label: string; icon: string; angle: number } }>,
+          insights: {} as Record<string, { emotions: string; actions: string; alert: string }>,
+          hasBirth: false,
+          notice: `Saldo insuficiente. Consultar o calendário custa ${cost} créditos.`,
+        };
+
       }
     }
+
 
 
     // Active context: selected client or user's own profile
@@ -132,5 +140,5 @@ ${upcoming.map((u) => `- ${u.date}: número pessoal ${u.personal_day ?? "?"}, ${
       }
     }
 
-    return { days, insights, hasBirth: !!birth };
+    return { days, insights, hasBirth: !!birth, notice };
   });

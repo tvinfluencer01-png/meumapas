@@ -5,6 +5,8 @@ import { getAIInsights } from "@/lib/insights.functions";
 import { Sparkles, Loader2, RefreshCw, Briefcase, Heart, Flame, Compass } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SectionLamp } from "@/components/SectionLamp";
+import { InsufficientCreditsNotice } from "@/components/InsufficientCreditsNotice";
+
 
 const AREA_ICON: Record<string, React.ComponentType<{ className?: string }>> = {
   "Trabalho & Propósito": Briefcase,
@@ -68,11 +70,16 @@ export function AIInsights() {
           </div>
         )}
 
-        {isError && (
+        {data?.notice && (
+          <InsufficientCreditsNotice message={data.notice} />
+        )}
+
+        {isError && !data?.notice && (
           <p className="mt-6 text-sm text-destructive">
             Não foi possível gerar os insights agora. Tente novamente em instantes.
           </p>
         )}
+
 
         {data && (
           <div className="mt-6 space-y-5">
