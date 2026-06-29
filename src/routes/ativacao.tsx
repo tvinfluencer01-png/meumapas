@@ -168,7 +168,7 @@ function ActivationPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {(packages ?? []).map((pkg) => {
+            {[...(packages ?? [])].sort((a, b) => a.price_cents - b.price_cents).map((pkg) => {
               const isLoading = checkingPlan === pkg.slug;
               return (
                 <div
