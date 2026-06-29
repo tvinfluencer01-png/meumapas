@@ -41,7 +41,10 @@ export function WeeklyReading() {
         <Sparkles className="size-5 text-gold animate-pulse" />
       </header>
 
+      {data?.notice && <InsufficientCreditsNotice message={data.notice} />}
+
       {/* AI summary */}
+
       <div className="rounded-xl border border-gold/20 bg-gradient-to-br from-gold/5 to-transparent p-5 mb-6 min-h-[120px]">
         {isLoading ? (
           <div className="space-y-2 animate-pulse">
