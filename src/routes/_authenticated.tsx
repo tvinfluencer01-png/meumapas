@@ -75,6 +75,7 @@ function AuthedLayout() {
   const [profileChecked, setProfileChecked] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [activeAddons, setActiveAddons] = useState<Set<string>>(new Set());
+  const [activePlanName, setActivePlanName] = useState<string | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
   
 
@@ -133,6 +134,17 @@ function AuthedLayout() {
         (s) => !s.current_period_end || new Date(s.current_period_end).getTime() > now,
       );
       setActiveAddons(new Set(activeSubs.map((s) => s.addon_id)));
+      const slugs = activeSubs.map((s) => s.addon_id);
+      if (slugs.length > 0) {
+        const { data: pkgs } = await supabase
+          .from("landing_packages")
+          .select("slug, name")
+          .in("slug", slugs);
+        const plan = (pkgs ?? []).find((p) => slugs.includes(p.slug));
+        setActivePlanName(plan?.name ?? null);
+      } else {
+        setActivePlanName(null);
+      }
       const path = router.state.location.pathname;
       if (profile && !profile.onboarding_completed && path !== "/onboarding") {
         router.navigate({ to: "/onboarding" });
@@ -256,6 +268,11 @@ function AuthedLayout() {
               </span>
               <div className="flex-1 min-w-0">
                 <div className="text-xs text-stardust truncate">{user?.email}</div>
+                {activePlanName && (
+                  <div className="text-[10px] uppercase tracking-wider text-gold/80 truncate mt-0.5">
+                    {activePlanName}
+                  </div>
+                )}
                 <div className="mt-1 flex items-center gap-2">
                   <div className="flex-1 h-1.5 rounded-full bg-secondary overflow-hidden">
                     <div
