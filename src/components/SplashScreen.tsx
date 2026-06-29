@@ -13,8 +13,13 @@ export function SplashScreen({ onComplete, minimumDuration = 4500 }: SplashScree
   const [phase, setPhase] = useState<"enter" | "exit">("enter");
   const [visible, setVisible] = useState(() => {
     if (typeof window === "undefined") return false;
+    // Não exibe a splash em rotas onde o usuário precisa interagir imediatamente
+    // (ex.: /auth — a splash sobreposta bloqueia os campos de e-mail/senha).
+    const path = window.location.pathname;
+    if (path.startsWith("/auth")) return false;
     return sessionStorage.getItem(SPLASH_SHOWN_KEY) !== "1";
   });
+
 
   useEffect(() => {
     if (!visible) return;
