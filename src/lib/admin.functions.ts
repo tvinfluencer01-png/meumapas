@@ -99,18 +99,24 @@ export const listAdminUsers = createServerFn({ method: "POST" })
 
     const { CREDIT_PACKAGES, SUBSCRIPTION_ADDONS } = await import("@/lib/addons.catalog");
     const nameById = new Map<string, string>();
-    for (const p of pkgs ?? []) nameById.set(p.slug, p.name);
+    const planSlugs = new Set<string>();
+    for (const p of pkgs ?? []) {
+      nameById.set(p.slug, p.name);
+      planSlugs.add(p.slug);
+    }
     for (const a of [...CREDIT_PACKAGES, ...SUBSCRIPTION_ADDONS]) if (!nameById.has(a.id)) nameById.set(a.id, a.name);
 
 
     const plansByUser = new Map<string, string[]>();
+    const addonsByUser = new Map<string, string[]>();
     const now = Date.now();
     for (const s of subs ?? []) {
       if (s.current_period_end && new Date(s.current_period_end).getTime() < now) continue;
       const label = nameById.get(s.addon_id) ?? s.addon_id;
-      const arr = plansByUser.get(s.user_id) ?? [];
+      const target = planSlugs.has(s.addon_id) ? plansByUser : addonsByUser;
+      const arr = target.get(s.user_id) ?? [];
       if (!arr.includes(label)) arr.push(label);
-      plansByUser.set(s.user_id, arr);
+      target.set(s.user_id, arr);
     }
 
     const q = data.search.toLowerCase();
@@ -125,6 +131,7 @@ export const listAdminUsers = createServerFn({ method: "POST" })
         created_at: u.created_at,
         is_admin: adminSet.has(u.id),
         plans: plansByUser.get(u.id) ?? [],
+        addons: addonsByUser.get(u.id) ?? [],
       }))
       .filter((u) =>
         q
@@ -136,6 +143,7 @@ export const listAdminUsers = createServerFn({ method: "POST" })
 
     return { users, page: data.page, perPage, hasMore: list.users.length === perPage };
   });
+
 
 export const adminCreateUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

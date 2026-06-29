@@ -22,6 +22,7 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -230,7 +231,9 @@ type AdminUserRow = {
   created_at: string | null | undefined;
   is_admin: boolean;
   plans: string[];
+  addons: string[];
 };
+
 
 
 type DialogKind = "create" | "edit" | "password" | "credits" | "plans" | "addons" | null;
@@ -331,8 +334,10 @@ function UsersAdmin() {
                   <th className="px-3 py-2 font-medium">Usuário</th>
                   <th className="px-3 py-2 font-medium">Criado em</th>
                   <th className="px-3 py-2 font-medium">Plano</th>
+                  <th className="px-3 py-2 font-medium">Add-ons</th>
                   <th className="px-3 py-2 font-medium">Papel</th>
                   <th className="px-3 py-2 font-medium text-right">Ações</th>
+
                 </tr>
 
               </thead>
@@ -359,6 +364,37 @@ function UsersAdmin() {
                         <span className="text-xs text-muted-foreground">Sem plano</span>
                       )}
                     </td>
+                    <td className="px-3 py-2">
+                      {u.addons.length ? (
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <button
+                              type="button"
+                              className="inline-flex items-center rounded bg-green-600 px-2 py-0.5 text-xs font-medium text-white hover:bg-green-700"
+                            >
+                              Add-Ons Ativos ({u.addons.length})
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent align="start" className="w-64">
+                            <div className="text-xs font-semibold mb-2 text-muted-foreground uppercase tracking-wide">
+                              Add-ons ativos
+                            </div>
+                            <ul className="space-y-1">
+                              {u.addons.map((a) => (
+                                <li key={a} className="text-sm flex items-center gap-2">
+                                  <span className="size-1.5 rounded-full bg-green-500" />
+                                  {a}
+                                </li>
+                              ))}
+                            </ul>
+                          </PopoverContent>
+                        </Popover>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
+                    </td>
+
+
 
 
                     <td className="px-3 py-2">
