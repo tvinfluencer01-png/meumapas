@@ -84,9 +84,18 @@ export const getAIInsights = createServerFn({ method: "POST" })
     if (!unlimited && cost > 0) {
       const ok = await consumeCredits(userId, action, "Insights da IA");
       if (!ok) {
-        throw new Error(`Saldo insuficiente. Gerar insights custa ${cost} créditos.`);
+        return {
+          intro: "",
+          cards: [],
+          closing: "",
+          context: { sunSign: null, moonSign: null, ascSign: null, personalDay: null, moon: "", lifePath: null, weekdayPt: "" },
+          hasData: false,
+          generatedAt: new Date().toISOString(),
+          notice: `Saldo insuficiente. Gerar insights custa ${cost} créditos.`,
+        };
       }
     }
+
 
 
     const birth = await resolveActiveSubject(supabase, userId);
