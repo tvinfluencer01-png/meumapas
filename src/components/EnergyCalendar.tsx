@@ -127,6 +127,9 @@ export function EnergyCalendar() {
         </div>
       </header>
 
+      {data?.notice && <InsufficientCreditsNotice message={data.notice} />}
+
+
       <div className="grid grid-cols-7 gap-1 mb-2 text-[10px] uppercase tracking-widest text-muted-foreground text-center">
         {WEEKDAYS.map((w, i) => <div key={i}>{w}</div>)}
       </div>
