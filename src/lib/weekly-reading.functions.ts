@@ -46,12 +46,19 @@ export const getWeeklyReading = createServerFn({ method: "POST" })
     const action = "weekly_reading";
     const unlimited = await hasUnlimitedAccess(userId, action);
     const cost = unlimited ? 0 : await getCreditCost(action);
+    let notice: string | null = null;
     if (!unlimited && cost > 0) {
       const ok = await consumeCredits(userId, action, "Leitura Semanal");
       if (!ok) {
-        throw new Error(`Saldo insuficiente. A leitura semanal custa ${cost} créditos.`);
+        return {
+          days: [] as Array<{ date: string; weekday: string; day: number; personal_day: number | null; moon: { angle: number; label: string }; trend: { label: string; tone: "rise" | "flow" | "release" | "peak" } }>,
+          summary: "",
+          hasBirth: false,
+          notice: `Saldo insuficiente. A leitura semanal custa ${cost} créditos.`,
+        };
       }
     }
+
 
 
     const birth = await resolveActiveSubject(supabase, userId);
