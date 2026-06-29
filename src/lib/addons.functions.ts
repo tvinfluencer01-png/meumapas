@@ -127,11 +127,17 @@ export const createMercadoPagoCheckout = createServerFn({ method: "POST" })
         kind: data.kind,
         product_id: data.product_id,
       },
-      back_urls: {
-        success: `${origin}/addons?status=success`,
-        pending: `${origin}/addons?status=pending`,
-        failure: `${origin}/addons?status=failure`,
-      },
+      back_urls: data.kind === "landing_package"
+        ? {
+            success: `${origin}/ativacao?status=success`,
+            pending: `${origin}/ativacao?status=pending`,
+            failure: `${origin}/ativacao?status=failure`,
+          }
+        : {
+            success: `${origin}/addons?status=success`,
+            pending: `${origin}/addons?status=pending`,
+            failure: `${origin}/addons?status=failure`,
+          },
       auto_return: "approved",
       // Webhook notification URL for Mercado Pago
       notification_url: `${origin}/api/public/hooks/mercadopago`,
