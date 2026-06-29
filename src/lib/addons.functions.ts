@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
@@ -109,7 +110,18 @@ export const createMercadoPagoCheckout = createServerFn({ method: "POST" })
     if (orderErr) throw new Error(orderErr.message);
 
     // Build Mercado Pago preference
-    const origin = process.env.PUBLIC_APP_URL || "https://cosmic-whispers-ai-94.lovable.app";
+    let origin = process.env.PUBLIC_APP_URL;
+    if (!origin) {
+      try {
+        const req = getRequest();
+        const url = new URL(req.url);
+        const forwardedHost = req.headers.get("x-forwarded-host") ?? req.headers.get("host");
+        const forwardedProto = req.headers.get("x-forwarded-proto") ?? url.protocol.replace(":", "");
+        origin = `${forwardedProto}://${forwardedHost ?? url.host}`;
+      } catch {
+        origin = "https://meumapas.lovable.app";
+      }
+    }
     const prefBody = {
       items: [
         {
