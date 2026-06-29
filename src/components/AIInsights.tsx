@@ -5,6 +5,8 @@ import { getAIInsights } from "@/lib/insights.functions";
 import { Sparkles, Loader2, RefreshCw, Briefcase, Heart, Flame, Compass } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SectionLamp } from "@/components/SectionLamp";
+import { InsufficientCreditsNotice } from "@/components/InsufficientCreditsNotice";
+
 
 const AREA_ICON: Record<string, React.ComponentType<{ className?: string }>> = {
   "Trabalho & Propósito": Briefcase,
