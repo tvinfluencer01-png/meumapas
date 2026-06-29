@@ -196,6 +196,16 @@ async function handler({ request }: { request: Request }) {
           });
         }
       }
+      // Credita os créditos mensais do pacote, se houver
+      const creditsPerMonth = (pkg as any).credits_per_month ?? 0;
+      if (creditsPerMonth > 0) {
+        await supabaseAdmin.rpc("adjust_credits", {
+          _user_id: order.user_id,
+          _amount: creditsPerMonth,
+          _kind: "purchase",
+          _reference: `MP payment ${paymentId} · ${pkg.name}`,
+        });
+      }
     }
   }
 
