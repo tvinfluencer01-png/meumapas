@@ -346,6 +346,19 @@ function UsersAdmin() {
                       {u.created_at ? new Date(u.created_at).toLocaleDateString("pt-BR") : "—"}
                     </td>
                     <td className="px-3 py-2">
+                      {u.plans.length ? (
+                        <div className="flex flex-wrap gap-1">
+                          {u.plans.map((p) => (
+                            <span key={p} className="inline-flex items-center rounded bg-secondary/60 px-2 py-0.5 text-xs text-foreground">
+                              {p}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">Sem plano</span>
+                      )}
+
+                    <td className="px-3 py-2">
                       {u.is_admin ? (
                         <span className="inline-flex items-center gap-1 text-gold text-xs">
                           <ShieldCheck className="size-3" /> Admin
