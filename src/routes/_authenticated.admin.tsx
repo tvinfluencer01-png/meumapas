@@ -470,7 +470,12 @@ function UsersAdmin() {
       </Dialog>
       <Dialog open={dialog === "plans"} onOpenChange={(o) => !o && close()}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          {active && <PlansDialog user={active} onDone={close} />}
+          {active && <PlanPackagesDialog user={active} onDone={close} />}
+        </DialogContent>
+      </Dialog>
+      <Dialog open={dialog === "addons"} onOpenChange={(o) => !o && close()}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          {active && <AddonsDialog user={active} onDone={close} />}
         </DialogContent>
       </Dialog>
     </Card>
