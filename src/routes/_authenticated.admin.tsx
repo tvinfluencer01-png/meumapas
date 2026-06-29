@@ -231,7 +231,9 @@ type AdminUserRow = {
   created_at: string | null | undefined;
   is_admin: boolean;
   plans: string[];
+  addons: string[];
 };
+
 
 
 type DialogKind = "create" | "edit" | "password" | "credits" | "plans" | "addons" | null;
