@@ -682,11 +682,39 @@ function PlansDialog({ user, onDone }: { user: AdminUserRow; onDone: () => void 
   const qc = useQueryClient();
   const listFn = useServerFn(adminListUserSubscriptions);
   const setFn = useServerFn(adminSetUserSubscription);
+  const applyPackageFn = useServerFn(adminApplyLandingPackage);
+  const listPackagesFn = useServerFn(
+    // dynamic import keeps bundle simple; lazy require via inline
+    (async () => {
+      const m = await import("@/lib/landing-packages.functions");
+      return m.listAdminLandingPackages;
+    }) as never,
+  );
+  // Simpler: import directly
+  return <PlansDialogInner user={user} onDone={onDone} />;
+}
+
+function PlansDialogInner({ user, onDone }: { user: AdminUserRow; onDone: () => void }) {
+  const qc = useQueryClient();
+  const listFn = useServerFn(adminListUserSubscriptions);
+  const setFn = useServerFn(adminSetUserSubscription);
+  const applyPackageFn = useServerFn(adminApplyLandingPackage);
+  const [pkgMode, setPkgMode] = useState<null | "add" | "replace">(null);
+  const [pkgSlug, setPkgSlug] = useState<string>("");
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["admin-user-subs", user.id],
     queryFn: () => listFn({ data: { user_id: user.id } }),
   });
+
+  const { data: packagesData, isLoading: packagesLoading } = useQuery({
+    queryKey: ["admin-landing-packages"],
+    queryFn: async () => {
+      const { listAdminLandingPackages } = await import("@/lib/landing-packages.functions");
+      return listAdminLandingPackages();
+    },
+  });
+  const availablePackages = (packagesData ?? []).filter((p: any) => p.enabled);
 
   const mut = useMutation({
     mutationFn: (vars: { addon_id: string; active: boolean; days?: number }) =>
@@ -695,6 +723,22 @@ function PlansDialog({ user, onDone }: { user: AdminUserRow; onDone: () => void 
       toast.success("Plano atualizado.");
       refetch();
       qc.invalidateQueries({ queryKey: ["addons-overview"] });
+      qc.invalidateQueries({ queryKey: ["admin-users"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const applyMut = useMutation({
+    mutationFn: (vars: { package_slug: string; mode: "add" | "replace"; days?: number }) =>
+      applyPackageFn({ data: { user_id: user.id, ...vars } }),
+    onSuccess: (res: any) => {
+      const creditsMsg = res?.credits_granted ? ` (+${res.credits_granted} créditos)` : "";
+      toast.success(`Pacote "${res?.package_name}" aplicado${creditsMsg}.`);
+      setPkgMode(null);
+      setPkgSlug("");
+      refetch();
+      qc.invalidateQueries({ queryKey: ["addons-overview"] });
+      qc.invalidateQueries({ queryKey: ["admin-users"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -705,6 +749,11 @@ function PlansDialog({ user, onDone }: { user: AdminUserRow; onDone: () => void 
       .map((s) => [s.addon_id, s] as const),
   );
 
+  const handleConfirmPackage = () => {
+    if (!pkgSlug || !pkgMode) return;
+    applyMut.mutate({ package_slug: pkgSlug, mode: pkgMode, days: 30 });
+  };
+
   return (
     <>
       <DialogHeader>
@@ -712,14 +761,100 @@ function PlansDialog({ user, onDone }: { user: AdminUserRow; onDone: () => void 
           <Package className="size-5 text-gold" /> Planos & Add-ons
         </DialogTitle>
         <DialogDescription>
-          Habilite manualmente assinaturas para {user.email}. Padrão: 30 dias.
+          Aplique um plano completo ou habilite módulos individuais para {user.email}. Padrão: 30 dias.
         </DialogDescription>
       </DialogHeader>
+
+      {/* Plan actions */}
+      <div className="rounded-md border border-border p-3 space-y-3 bg-card/40">
+        <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          Aplicar pacote completo
+        </div>
+        {pkgMode === null ? (
+          <div className="flex flex-wrap gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setPkgMode("add")}
+              disabled={packagesLoading || availablePackages.length === 0}
+            >
+              <UserPlus className="size-4 mr-1" /> Adicionar plano
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => setPkgMode("replace")}
+              disabled={packagesLoading || availablePackages.length === 0}
+            >
+              <ArrowRightLeft className="size-4 mr-1" /> Mudar plano
+            </Button>
+            {packagesLoading && (
+              <span className="text-xs text-muted-foreground self-center">Carregando pacotes…</span>
+            )}
+            {!packagesLoading && availablePackages.length === 0 && (
+              <span className="text-xs text-muted-foreground self-center">
+                Nenhum pacote habilitado.
+              </span>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <div className="text-xs text-muted-foreground">
+              {pkgMode === "add"
+                ? "Adiciona os módulos e créditos do pacote sem remover as assinaturas atuais."
+                : "Cancela todas as assinaturas atuais e aplica os módulos e créditos do novo pacote."}
+            </div>
+            <select
+              value={pkgSlug}
+              onChange={(e) => setPkgSlug(e.target.value)}
+              className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
+            >
+              <option value="">Selecione um pacote…</option>
+              {availablePackages.map((p: any) => (
+                <option key={p.id} value={p.slug}>
+                  {p.name}
+                  {p.credits_per_month ? ` · +${p.credits_per_month} créditos/mês` : ""}
+                  {Array.isArray(p.included_addons) && p.included_addons.length > 0
+                    ? ` · ${p.included_addons.length} módulo(s)`
+                    : ""}
+                </option>
+              ))}
+            </select>
+            <div className="flex gap-2 justify-end">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  setPkgMode(null);
+                  setPkgSlug("");
+                }}
+                disabled={applyMut.isPending}
+              >
+                Cancelar
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleConfirmPackage}
+                disabled={!pkgSlug || applyMut.isPending}
+              >
+                {applyMut.isPending
+                  ? "Aplicando…"
+                  : pkgMode === "add"
+                    ? "Adicionar pacote"
+                    : "Aplicar novo pacote"}
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground mt-2">
+        Módulos individuais
+      </div>
 
       {isLoading ? (
         <div className="text-sm text-muted-foreground">Carregando…</div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-2 max-h-[40vh] overflow-y-auto pr-1">
           {SUBSCRIPTION_ADDONS.map((addon) => {
             const sub = activeByAddon.get(addon.id);
             const isActive = !!sub;
