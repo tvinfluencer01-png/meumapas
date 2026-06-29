@@ -286,7 +286,7 @@ function AuthedLayout() {
                 </div>
               </div>
             </button>
-            <Button onClick={handleSignOut} variant="ghost" size="sm" className="w-full justify-start text-muted-foreground hover:text-destructive">
+            <Button onClick={handleSignOut} variant="ghost" size="sm" className="w-full justify-start text-muted-foreground hover:bg-gold hover:text-white">
               <LogOut className="size-4 mr-2" /> Sair
             </Button>
           </div>
