@@ -149,7 +149,7 @@ function AuthedLayout() {
         !userIsAdmin &&
         !allowedWithoutPackage
       ) {
-        router.navigate({ to: "/ativacao", replace: true });
+        router.navigate({ to: "/addons", replace: true });
         return;
       }
       setProfileChecked(true);
