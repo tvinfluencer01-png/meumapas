@@ -134,6 +134,17 @@ function AuthedLayout() {
         (s) => !s.current_period_end || new Date(s.current_period_end).getTime() > now,
       );
       setActiveAddons(new Set(activeSubs.map((s) => s.addon_id)));
+      const slugs = activeSubs.map((s) => s.addon_id);
+      if (slugs.length > 0) {
+        const { data: pkgs } = await supabase
+          .from("landing_packages")
+          .select("slug, name")
+          .in("slug", slugs);
+        const plan = (pkgs ?? []).find((p) => slugs.includes(p.slug));
+        setActivePlanName(plan?.name ?? null);
+      } else {
+        setActivePlanName(null);
+      }
       const path = router.state.location.pathname;
       if (profile && !profile.onboarding_completed && path !== "/onboarding") {
         router.navigate({ to: "/onboarding" });
