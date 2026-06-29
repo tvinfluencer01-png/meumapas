@@ -516,10 +516,13 @@ export type Database = {
           created_at: string
           email: string | null
           enabled: boolean
+          frequency: string
           id: string
           last_sent_on: string | null
           phone_e164: string | null
           send_hour_utc: number
+          send_local_hour: number
+          send_weekday: number | null
           sun_sign: string | null
           updated_at: string
           user_id: string
@@ -531,10 +534,13 @@ export type Database = {
           created_at?: string
           email?: string | null
           enabled?: boolean
+          frequency?: string
           id?: string
           last_sent_on?: string | null
           phone_e164?: string | null
           send_hour_utc?: number
+          send_local_hour?: number
+          send_weekday?: number | null
           sun_sign?: string | null
           updated_at?: string
           user_id: string
@@ -546,10 +552,13 @@ export type Database = {
           created_at?: string
           email?: string | null
           enabled?: boolean
+          frequency?: string
           id?: string
           last_sent_on?: string | null
           phone_e164?: string | null
           send_hour_utc?: number
+          send_local_hour?: number
+          send_weekday?: number | null
           sun_sign?: string | null
           updated_at?: string
           user_id?: string

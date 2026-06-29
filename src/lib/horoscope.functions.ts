@@ -392,6 +392,9 @@ const UpdateSchema = z.object({
     .regex(/^\+?[1-9]\d{7,14}$/, "Telefone em formato internacional (ex: +5511999998888)")
     .nullable()
     .optional(),
+  frequency: z.enum(["daily", "weekly", "alternate"]).default("daily"),
+  send_local_hour: z.number().int().min(0).max(23).default(7),
+  send_weekday: z.number().int().min(0).max(6).nullable().optional(),
 });
 
 export const updateMyHoroscopeSubscription = createServerFn({ method: "POST" })
@@ -419,6 +422,9 @@ export const updateMyHoroscopeSubscription = createServerFn({ method: "POST" })
       );
     }
 
+    // BRT = UTC-3 (sem horário de verão no Brasil atualmente)
+    const sendHourUtc = (data.send_local_hour + 3) % 24;
+
     const payload = {
       user_id: userId,
       client_profile_id: ctx.clientProfileId,
@@ -428,7 +434,10 @@ export const updateMyHoroscopeSubscription = createServerFn({ method: "POST" })
       sun_sign: sign,
       email: data.email ?? null,
       phone_e164: data.phone_e164 ?? null,
-      send_hour_utc: 10,
+      send_hour_utc: sendHourUtc,
+      frequency: data.frequency,
+      send_local_hour: data.send_local_hour,
+      send_weekday: data.frequency === "weekly" ? (data.send_weekday ?? 1) : null,
     };
 
     // Upsert manual: índice único usa COALESCE, então ON CONFLICT não funciona aqui.

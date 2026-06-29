@@ -6,6 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { Sun, Lock, Send, User, AlertTriangle } from "lucide-react";
 import { SectionLamp } from "@/components/SectionLamp";
@@ -35,15 +42,21 @@ function HoroscopoPage() {
   const [chWA, setChWA] = useState(true);
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [frequency, setFrequency] = useState<"daily" | "weekly" | "alternate">("daily");
+  const [sendHour, setSendHour] = useState<number>(7);
+  const [sendWeekday, setSendWeekday] = useState<number>(1);
 
   useEffect(() => {
     if (!data) return;
-    const s = data.sub;
+    const s: any = data.sub;
     setEnabled(s?.enabled ?? true);
     setChEmail(s?.channel_email ?? true);
     setChWA(s?.channel_whatsapp ?? true);
     setEmail(s?.email ?? data.defaults.email ?? "");
     setPhone(s?.phone_e164 ?? data.defaults.phone_e164 ?? "");
+    setFrequency((s?.frequency as any) ?? "daily");
+    setSendHour(s?.send_local_hour ?? 7);
+    setSendWeekday(s?.send_weekday ?? 1);
   }, [data]);
 
   const mutation = useMutation({
@@ -55,6 +68,9 @@ function HoroscopoPage() {
           channel_whatsapp: chWA,
           email: email || null,
           phone_e164: phone || null,
+          frequency,
+          send_local_hour: sendHour,
+          send_weekday: frequency === "weekly" ? sendWeekday : null,
         },
       }),
     onSuccess: () => {
@@ -146,6 +162,53 @@ function HoroscopoPage() {
           </div>
           <Switch checked={enabled} onCheckedChange={setEnabled} />
         </div>
+
+        <div className={`grid gap-3 ${frequency === "weekly" ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Periodicidade</Label>
+            <Select value={frequency} onValueChange={(v) => setFrequency(v as any)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="daily">Diariamente</SelectItem>
+                <SelectItem value="weekly">Semanalmente</SelectItem>
+                <SelectItem value="alternate">Dia sim, dia não</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Horário (BRT)</Label>
+            <Select value={String(sendHour)} onValueChange={(v) => setSendHour(Number(v))}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent className="max-h-72">
+                {Array.from({ length: 24 }, (_, h) => (
+                  <SelectItem key={h} value={String(h)}>
+                    {String(h).padStart(2, "0")}:00
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {frequency === "weekly" && (
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Dia da semana</Label>
+              <Select value={String(sendWeekday)} onValueChange={(v) => setSendWeekday(Number(v))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">Domingo</SelectItem>
+                  <SelectItem value="1">Segunda-feira</SelectItem>
+                  <SelectItem value="2">Terça-feira</SelectItem>
+                  <SelectItem value="3">Quarta-feira</SelectItem>
+                  <SelectItem value="4">Quinta-feira</SelectItem>
+                  <SelectItem value="5">Sexta-feira</SelectItem>
+                  <SelectItem value="6">Sábado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        </div>
+
 
         <div className="space-y-3 border-t border-border/60 pt-4">
           <div className="flex items-center justify-between">
