@@ -163,6 +163,53 @@ function HoroscopoPage() {
           <Switch checked={enabled} onCheckedChange={setEnabled} />
         </div>
 
+        <div className={`grid gap-3 ${frequency === "weekly" ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Periodicidade</Label>
+            <Select value={frequency} onValueChange={(v) => setFrequency(v as any)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="daily">Diariamente</SelectItem>
+                <SelectItem value="weekly">Semanalmente</SelectItem>
+                <SelectItem value="alternate">Dia sim, dia não</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Horário (BRT)</Label>
+            <Select value={String(sendHour)} onValueChange={(v) => setSendHour(Number(v))}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent className="max-h-72">
+                {Array.from({ length: 24 }, (_, h) => (
+                  <SelectItem key={h} value={String(h)}>
+                    {String(h).padStart(2, "0")}:00
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {frequency === "weekly" && (
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Dia da semana</Label>
+              <Select value={String(sendWeekday)} onValueChange={(v) => setSendWeekday(Number(v))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">Domingo</SelectItem>
+                  <SelectItem value="1">Segunda-feira</SelectItem>
+                  <SelectItem value="2">Terça-feira</SelectItem>
+                  <SelectItem value="3">Quarta-feira</SelectItem>
+                  <SelectItem value="4">Quinta-feira</SelectItem>
+                  <SelectItem value="5">Sexta-feira</SelectItem>
+                  <SelectItem value="6">Sábado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        </div>
+
+
         <div className="space-y-3 border-t border-border/60 pt-4">
           <div className="flex items-center justify-between">
             <Label>WhatsApp</Label>
