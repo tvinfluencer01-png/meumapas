@@ -334,8 +334,10 @@ function UsersAdmin() {
                   <th className="px-3 py-2 font-medium">Usuário</th>
                   <th className="px-3 py-2 font-medium">Criado em</th>
                   <th className="px-3 py-2 font-medium">Plano</th>
+                  <th className="px-3 py-2 font-medium">Add-ons</th>
                   <th className="px-3 py-2 font-medium">Papel</th>
                   <th className="px-3 py-2 font-medium text-right">Ações</th>
+
                 </tr>
 
               </thead>
