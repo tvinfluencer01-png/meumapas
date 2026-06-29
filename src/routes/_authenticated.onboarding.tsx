@@ -149,7 +149,7 @@ function OnboardingPage() {
           description: "Escolha um pacote para liberar o acesso ao sistema.",
           type: "info",
         });
-        nav({ to: "/ativacao", replace: true });
+        nav({ to: "/addons", replace: true });
       }
     } catch (err) {
       showFeedback({ title: "Erro ao salvar", description: err instanceof Error ? err.message : "Erro ao concluir onboarding", type: "error" });
