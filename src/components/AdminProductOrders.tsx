@@ -96,6 +96,9 @@ export function AdminProductOrders() {
     onError: (e: Error) => showFeedback({ title: "Erro", description: e.message, type: "error" }),
   });
 
+  const [resendState, setResendState] = useState<Record<string, { status: "pending" | "success" | "error"; message?: string; at?: number }>>({});
+  const resendKey = (id: string, action: "email" | "whatsapp") => `${id}:${action}`;
+
   const dispatchMutation = useMutation({
     mutationFn: (vars: { id: string; action: "pdf" | "email" | "both" | "password_setup" | "whatsapp" }) =>
       dispatchFn({ data: vars }),
@@ -114,6 +117,28 @@ export function AdminProductOrders() {
     },
     onError: (e: Error) => showFeedback({ title: "Erro ao despachar", description: e.message, type: "error" }),
   });
+
+  const resendMutation = useMutation({
+    mutationFn: (vars: { id: string; action: "email" | "whatsapp" }) =>
+      dispatchFn({ data: vars }),
+    onMutate: (vars) => {
+      setResendState((s) => ({ ...s, [resendKey(vars.id, vars.action)]: { status: "pending" } }));
+    },
+    onSuccess: (_, vars) => {
+      setResendState((s) => ({ ...s, [resendKey(vars.id, vars.action)]: { status: "success", at: Date.now() } }));
+      showFeedback({
+        title: vars.action === "email" ? "E-mail reenviado" : "WhatsApp reenviado",
+        description: "Usando a URL curta do PDF já registrada.",
+        type: "success",
+      });
+      qc.invalidateQueries({ queryKey: ["admin-product-orders"] });
+    },
+    onError: (e: Error, vars) => {
+      setResendState((s) => ({ ...s, [resendKey(vars.id, vars.action)]: { status: "error", message: e.message, at: Date.now() } }));
+      showFeedback({ title: "Falha ao reenviar", description: e.message, type: "error" });
+    },
+  });
+
 
   const filtered = (orders ?? []).filter((o: any) => {
     if (filterStatus !== "all" && o.status !== filterStatus) return false;
