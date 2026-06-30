@@ -445,6 +445,63 @@ export type Database = {
         }
         Relationships: []
       }
+      crm_leads: {
+        Row: {
+          converted_order_id: string | null
+          converted_user_id: string | null
+          created_at: string
+          customer_data: Json
+          email: string
+          followup_count: number
+          full_name: string | null
+          id: string
+          landing_id: string | null
+          landing_slug: string | null
+          last_contact_at: string | null
+          notes: string | null
+          phone: string | null
+          source: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          converted_order_id?: string | null
+          converted_user_id?: string | null
+          created_at?: string
+          customer_data?: Json
+          email: string
+          followup_count?: number
+          full_name?: string | null
+          id?: string
+          landing_id?: string | null
+          landing_slug?: string | null
+          last_contact_at?: string | null
+          notes?: string | null
+          phone?: string | null
+          source?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          converted_order_id?: string | null
+          converted_user_id?: string | null
+          created_at?: string
+          customer_data?: Json
+          email?: string
+          followup_count?: number
+          full_name?: string | null
+          id?: string
+          landing_id?: string | null
+          landing_slug?: string | null
+          last_contact_at?: string | null
+          notes?: string | null
+          phone?: string | null
+          source?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       evolution_settings: {
         Row: {
           base_url: string | null
@@ -1169,8 +1226,10 @@ export type Database = {
           dispatch_attempts: number
           email_sent_at: string | null
           error_message: string | null
+          guest_email: string | null
           id: string
           landing_id: string
+          lead_id: string | null
           mp_payment_id: string | null
           mp_preference_id: string | null
           pdf_generated_at: string | null
@@ -1178,7 +1237,7 @@ export type Database = {
           report_id: string | null
           status: string
           updated_at: string
-          user_id: string
+          user_id: string | null
           viewed_by_admin: boolean
         }
         Insert: {
@@ -1190,8 +1249,10 @@ export type Database = {
           dispatch_attempts?: number
           email_sent_at?: string | null
           error_message?: string | null
+          guest_email?: string | null
           id?: string
           landing_id: string
+          lead_id?: string | null
           mp_payment_id?: string | null
           mp_preference_id?: string | null
           pdf_generated_at?: string | null
@@ -1199,7 +1260,7 @@ export type Database = {
           report_id?: string | null
           status?: string
           updated_at?: string
-          user_id: string
+          user_id?: string | null
           viewed_by_admin?: boolean
         }
         Update: {
@@ -1211,8 +1272,10 @@ export type Database = {
           dispatch_attempts?: number
           email_sent_at?: string | null
           error_message?: string | null
+          guest_email?: string | null
           id?: string
           landing_id?: string
+          lead_id?: string | null
           mp_payment_id?: string | null
           mp_preference_id?: string | null
           pdf_generated_at?: string | null
@@ -1220,7 +1283,7 @@ export type Database = {
           report_id?: string | null
           status?: string
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
           viewed_by_admin?: boolean
         }
         Relationships: [

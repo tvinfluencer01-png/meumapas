@@ -17,6 +17,8 @@ import { AdminSmtp } from "@/components/AdminSmtp";
 import { AdminPwa } from "@/components/AdminPwa";
 import { AdminProductLandings } from "@/components/AdminProductLandings";
 import { AdminProductOrders } from "@/components/AdminProductOrders";
+import { AdminCrm } from "@/components/AdminCrm";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -183,7 +185,11 @@ function AdminTabs() {
           <TabsTrigger value="pedidos" className="gap-2">
             <ShoppingCart className="size-4" /> Pedidos
           </TabsTrigger>
+          <TabsTrigger value="crm" className="gap-2">
+            <Mail className="size-4" /> CRM Leads
+          </TabsTrigger>
         </TabsList>
+
 
 
         <TabsContent value="settings" className="mt-0">
@@ -244,7 +250,11 @@ function AdminTabs() {
         <TabsContent value="pedidos" className="mt-0">
           <AdminProductOrders />
         </TabsContent>
+        <TabsContent value="crm" className="mt-0">
+          <AdminCrm />
+        </TabsContent>
       </Tabs>
+
   );
 }
 
