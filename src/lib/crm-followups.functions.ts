@@ -61,6 +61,7 @@ const SaveSchema = z.object({
   max_followups: z.number().int().min(1).max(20),
   subject_template: z.string().trim().min(1).max(200),
   body_template: z.string().trim().min(1).max(5000),
+  version_note: z.string().trim().max(200).optional(),
 });
 
 export const saveCrmFollowupSettings = createServerFn({ method: "POST" })
@@ -79,17 +80,33 @@ export const saveCrmFollowupSettings = createServerFn({ method: "POST" })
     };
     const { data: existing } = await supabaseAdmin
       .from("crm_followup_settings" as any)
-      .select("id")
+      .select("id,subject_template,body_template")
       .limit(1)
       .maybeSingle();
-    if (existing && (existing as any).id) {
-      const id = (existing as any).id as string;
+
+    const prev = existing as any;
+    const templatesChanged =
+      !prev ||
+      prev.subject_template !== data.subject_template ||
+      prev.body_template !== data.body_template;
+
+    if (templatesChanged) {
+      await supabaseAdmin.from("crm_followup_template_versions" as any).insert({
+        subject_template: data.subject_template,
+        body_template: data.body_template,
+        note: data.version_note ?? null,
+        created_by: context.userId,
+      } as any);
+    }
+
+    if (prev && prev.id) {
+      const id = prev.id as string;
       const { error } = await supabaseAdmin
         .from("crm_followup_settings" as any)
         .update(payload)
         .eq("id", id);
       if (error) throw new Error(error.message);
-      return { ok: true, id };
+      return { ok: true, id, versioned: templatesChanged };
     }
     const { data: row, error } = await supabaseAdmin
       .from("crm_followup_settings" as any)
@@ -97,8 +114,44 @@ export const saveCrmFollowupSettings = createServerFn({ method: "POST" })
       .select("id")
       .single();
     if (error) throw new Error(error.message);
-    return { ok: true, id: (row as any).id };
+    return { ok: true, id: (row as any).id, versioned: templatesChanged };
   });
+
+export const listCrmTemplateVersions = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
+      .from("crm_followup_template_versions" as any)
+      .select("id,subject_template,body_template,note,created_by,created_at")
+      .order("created_at", { ascending: false })
+      .limit(100);
+    if (error) throw new Error(error.message);
+    return (data ?? []) as unknown as Array<{
+      id: string;
+      subject_template: string;
+      body_template: string;
+      note: string | null;
+      created_by: string | null;
+      created_at: string;
+    }>;
+  });
+
+export const deleteCrmTemplateVersion = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("crm_followup_template_versions" as any)
+      .delete()
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 
 // Core dispatch logic — shared by cron route and manual trigger
 export async function dispatchPendingFollowups() {
