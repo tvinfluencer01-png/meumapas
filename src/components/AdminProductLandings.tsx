@@ -53,6 +53,8 @@ const EMPTY: Landing = {
   subtitle: "",
   description: "",
   hero_image_url: "",
+  hero_image_width: 480,
+  hero_image_height: 600,
   price_cents: 4990,
   report_type: "mapa_astral",
   required_fields: ["full_name", "email", "birth_date"],
