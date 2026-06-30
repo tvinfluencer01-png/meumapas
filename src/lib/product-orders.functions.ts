@@ -1001,6 +1001,60 @@ export const listCrmLeads = createServerFn({ method: "GET" })
     return data ?? [];
   });
 
+export const createCrmLead = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({
+    email: z.string().trim().email().max(255),
+    full_name: z.string().trim().min(1).max(120),
+    phone: z.string().trim().max(40).optional().nullable(),
+    landing_slug: z.string().trim().max(120).optional().nullable(),
+    notes: z.string().max(2000).optional().nullable(),
+    status: z.enum(["new", "contacted", "negotiating", "converted", "lost"]).default("new"),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: isAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId, _role: "admin",
+    });
+    if (!isAdmin) throw new Error("Forbidden");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const payload = {
+      email: data.email.toLowerCase(),
+      full_name: data.full_name,
+      phone: data.phone || null,
+      landing_slug: data.landing_slug || null,
+      notes: data.notes || null,
+      status: data.status,
+      source: "manual",
+      customer_data: {},
+    };
+    const { data: row, error } = await supabaseAdmin
+      .from("crm_leads")
+      .insert(payload as any)
+      .select("id,status")
+      .single();
+    if (error) throw new Error(error.message);
+
+    await supabaseAdmin.from("crm_lead_status_history").insert({
+      lead_id: (row as any).id,
+      from_status: null,
+      to_status: data.status,
+      changed_by: context.userId,
+      changed_by_email: (context.claims as any)?.email ?? null,
+      source: "manual",
+      note: "Lead criado manualmente",
+    } as any);
+
+    if (data.status !== "new" && data.status !== "lost") {
+      try {
+        const { runStatusAutomation } = await import("./crm-status-automations.functions");
+        await runStatusAutomation((row as any).id, data.status);
+      } catch (e) {
+        console.error("[createCrmLead] status automation failed", e);
+      }
+    }
+    return { ok: true, id: (row as any).id };
+  });
+
 export const updateCrmLead = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, Mail, MessageCircle, Pause, Play, Send, Settings as SettingsIcon, History, GitBranch, RotateCcw, Trash2, ClipboardList, ArrowRight } from "lucide-react";
+import { Loader2, Mail, MessageCircle, Pause, Play, Send, Settings as SettingsIcon, History, GitBranch, RotateCcw, Trash2, ClipboardList, ArrowRight, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { showFeedback } from "@/components/system-feedback";
-import { listCrmLeads, updateCrmLead, listCrmLeadStatusHistory } from "@/lib/product-orders.functions";
+import { listCrmLeads, updateCrmLead, listCrmLeadStatusHistory, createCrmLead } from "@/lib/product-orders.functions";
 import {
   getCrmFollowupSettings,
   saveCrmFollowupSettings,
@@ -122,6 +122,50 @@ export function AdminCrm() {
     },
     onError: (e: Error) => showFeedback({ title: "Erro", description: e.message, type: "error" }),
   });
+
+  const createFn = useServerFn(createCrmLead);
+  const emptyQuick = { full_name: "", email: "", phone: "", landing_slug: "", notes: "", status: "new" as string };
+  const [quickOpen, setQuickOpen] = useState(false);
+  const [quick, setQuick] = useState(emptyQuick);
+  const [quickErrors, setQuickErrors] = useState<Record<string, string>>({});
+
+  const createMut = useMutation({
+    mutationFn: (vars: any) => createFn({ data: vars }),
+    onSuccess: () => {
+      showFeedback({ title: "Lead criado", type: "success" });
+      qc.invalidateQueries({ queryKey: ["admin-crm-leads"] });
+      setQuickOpen(false);
+      setQuick(emptyQuick);
+      setQuickErrors({});
+    },
+    onError: (e: Error) => showFeedback({ title: "Erro ao criar lead", description: e.message, type: "error" }),
+  });
+
+  function openQuickCreate(statusKey: string) {
+    setQuick({ ...emptyQuick, status: statusKey });
+    setQuickErrors({});
+    setQuickOpen(true);
+  }
+
+  function submitQuickCreate() {
+    const errs: Record<string, string> = {};
+    if (!quick.full_name.trim()) errs.full_name = "Informe o nome";
+    else if (quick.full_name.trim().length > 120) errs.full_name = "Máximo 120 caracteres";
+    const email = quick.email.trim();
+    if (!email) errs.email = "Informe o e-mail";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errs.email = "E-mail inválido";
+    if (quick.phone && quick.phone.length > 40) errs.phone = "Máximo 40 caracteres";
+    setQuickErrors(errs);
+    if (Object.keys(errs).length) return;
+    createMut.mutate({
+      full_name: quick.full_name.trim(),
+      email: email.toLowerCase(),
+      phone: quick.phone.trim() || null,
+      landing_slug: quick.landing_slug.trim() || null,
+      notes: quick.notes.trim() || null,
+      status: quick.status,
+    });
+  }
 
   const saveSettingsMut = useMutation({
     mutationFn: (vars: any) => saveSettingsFn({ data: vars }),
@@ -244,6 +288,9 @@ export function AdminCrm() {
             <Button size="sm" variant="outline" onClick={() => setAutomationsOpen(true)}>
               <SettingsIcon className="size-4 mr-1" />Automações por status
             </Button>
+            <Button size="sm" onClick={() => openQuickCreate("new")}>
+              <Plus className="size-4 mr-1" />Novo lead
+            </Button>
           </div>
         </div>
         <div className="flex flex-wrap gap-2 pt-2 text-xs">
@@ -296,9 +343,19 @@ export function AdminCrm() {
                   }}
                   className="rounded-lg border border-border/40 bg-secondary/20 p-2 min-h-[400px] flex flex-col"
                 >
-                  <div className={`px-2 py-1 mb-2 rounded text-xs border flex items-center justify-between ${meta.color}`}>
+                  <div className={`px-2 py-1 mb-2 rounded text-xs border flex items-center justify-between gap-2 ${meta.color}`}>
                     <span className="font-semibold">{meta.label}</span>
-                    <span className="opacity-80">{columnLeads.length}</span>
+                    <div className="flex items-center gap-1">
+                      <span className="opacity-80">{columnLeads.length}</span>
+                      <button
+                        type="button"
+                        title="Adicionar lead nesta coluna"
+                        onClick={() => openQuickCreate(statusKey)}
+                        className="rounded p-0.5 hover:bg-background/30"
+                      >
+                        <Plus className="size-3.5" />
+                      </button>
+                    </div>
                   </div>
                   <div className="space-y-2 flex-1">
                     {columnLeads.map((l: any) => {
@@ -781,6 +838,84 @@ export function AdminCrm() {
         </DialogContent>
       </Dialog>
       <CrmStatusAutomationsDialog open={automationsOpen} onOpenChange={setAutomationsOpen} />
+
+      <Dialog open={quickOpen} onOpenChange={(o) => { if (!o) { setQuickOpen(false); setQuickErrors({}); } }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-serif shimmer-text">Novo lead</DialogTitle>
+          </DialogHeader>
+          <form
+            className="space-y-3"
+            onSubmit={(e) => { e.preventDefault(); submitQuickCreate(); }}
+          >
+            <div>
+              <Label>Nome completo *</Label>
+              <Input
+                value={quick.full_name}
+                maxLength={120}
+                onChange={(e) => setQuick({ ...quick, full_name: e.target.value })}
+                autoFocus
+              />
+              {quickErrors.full_name && <p className="text-xs text-red-400 mt-1">{quickErrors.full_name}</p>}
+            </div>
+            <div>
+              <Label>E-mail *</Label>
+              <Input
+                type="email"
+                value={quick.email}
+                maxLength={255}
+                onChange={(e) => setQuick({ ...quick, email: e.target.value })}
+              />
+              {quickErrors.email && <p className="text-xs text-red-400 mt-1">{quickErrors.email}</p>}
+            </div>
+            <div>
+              <Label>Telefone (WhatsApp)</Label>
+              <Input
+                value={quick.phone}
+                maxLength={40}
+                placeholder="55 11 99999-9999"
+                onChange={(e) => setQuick({ ...quick, phone: e.target.value })}
+              />
+              {quickErrors.phone && <p className="text-xs text-red-400 mt-1">{quickErrors.phone}</p>}
+            </div>
+            <div>
+              <Label>Produto / Landing</Label>
+              <Input
+                value={quick.landing_slug}
+                maxLength={120}
+                placeholder="ex.: mapa-astral"
+                onChange={(e) => setQuick({ ...quick, landing_slug: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>Status</Label>
+              <Select value={quick.status} onValueChange={(v) => setQuick({ ...quick, status: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {Object.entries(STATUS_LABEL).map(([k, v]) => (
+                    <SelectItem key={k} value={k}>{v.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Anotações</Label>
+              <Textarea
+                value={quick.notes}
+                maxLength={2000}
+                rows={3}
+                onChange={(e) => setQuick({ ...quick, notes: e.target.value })}
+              />
+            </div>
+            <DialogFooter className="gap-2">
+              <Button type="button" variant="outline" onClick={() => setQuickOpen(false)}>Cancelar</Button>
+              <Button type="submit" disabled={createMut.isPending}>
+                {createMut.isPending ? <Loader2 className="size-4 animate-spin" /> : "Criar lead"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
