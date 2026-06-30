@@ -243,6 +243,15 @@ export function AdminProductOrders() {
                           <Button
                             size="icon"
                             variant="ghost"
+                            title="Enviar PDF por WhatsApp"
+                            disabled={busy}
+                            onClick={() => dispatchMutation.mutate({ id: o.id, action: "whatsapp" })}
+                          >
+                            {busy ? <Loader2 className="size-4 animate-spin" /> : <MessageCircle className="size-4 text-emerald-400" />}
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
                             title="Enviar e-mail de definição de senha"
                             disabled={busy}
                             onClick={() => dispatchMutation.mutate({ id: o.id, action: "password_setup" })}
