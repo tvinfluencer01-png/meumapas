@@ -445,6 +445,42 @@ export type Database = {
         }
         Relationships: []
       }
+      crm_followup_settings: {
+        Row: {
+          body_template: string
+          created_at: string
+          days_after_last_email: number
+          days_after_lead: number
+          enabled: boolean
+          id: string
+          max_followups: number
+          subject_template: string
+          updated_at: string
+        }
+        Insert: {
+          body_template?: string
+          created_at?: string
+          days_after_last_email?: number
+          days_after_lead?: number
+          enabled?: boolean
+          id?: string
+          max_followups?: number
+          subject_template?: string
+          updated_at?: string
+        }
+        Update: {
+          body_template?: string
+          created_at?: string
+          days_after_last_email?: number
+          days_after_lead?: number
+          enabled?: boolean
+          id?: string
+          max_followups?: number
+          subject_template?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       crm_leads: {
         Row: {
           converted_order_id: string | null
@@ -453,11 +489,14 @@ export type Database = {
           customer_data: Json
           email: string
           followup_count: number
+          followup_paused: boolean
           full_name: string | null
           id: string
           landing_id: string | null
           landing_slug: string | null
           last_contact_at: string | null
+          last_followup_at: string | null
+          next_followup_at: string | null
           notes: string | null
           phone: string | null
           source: string | null
@@ -471,11 +510,14 @@ export type Database = {
           customer_data?: Json
           email: string
           followup_count?: number
+          followup_paused?: boolean
           full_name?: string | null
           id?: string
           landing_id?: string | null
           landing_slug?: string | null
           last_contact_at?: string | null
+          last_followup_at?: string | null
+          next_followup_at?: string | null
           notes?: string | null
           phone?: string | null
           source?: string | null
@@ -489,11 +531,14 @@ export type Database = {
           customer_data?: Json
           email?: string
           followup_count?: number
+          followup_paused?: boolean
           full_name?: string | null
           id?: string
           landing_id?: string | null
           landing_slug?: string | null
           last_contact_at?: string | null
+          last_followup_at?: string | null
+          next_followup_at?: string | null
           notes?: string | null
           phone?: string | null
           source?: string | null
