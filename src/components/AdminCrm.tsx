@@ -16,6 +16,7 @@ import {
   getCrmFollowupSettings,
   saveCrmFollowupSettings,
   runCrmFollowupsNow,
+  listCrmFollowupHistory,
 } from "@/lib/crm-followups.functions";
 
 const STATUS_LABEL: Record<string, { label: string; color: string }> = {
