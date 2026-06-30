@@ -223,7 +223,7 @@ export const updateOrderStatus = createServerFn({ method: "POST" })
     if (data.pdf_url !== undefined) patch.pdf_url = data.pdf_url;
     if (data.error_message !== undefined) patch.error_message = data.error_message;
     if (data.status === "delivered") patch.delivered_at = new Date().toISOString();
-    const { error } = await supabaseAdmin.from("product_orders").update(patch).eq("id", data.id);
+    const { error } = await supabaseAdmin.from("product_orders").update(patch as any).eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });

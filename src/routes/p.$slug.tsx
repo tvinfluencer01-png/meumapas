@@ -61,7 +61,7 @@ function ProductLandingPage() {
     if (!user) {
       navigate({ to: "/auth", search: { redirect: `/p/${landing.slug}/checkout` } as any });
     } else {
-      navigate({ to: "/p/$slug/checkout" as any, params: { slug: landing.slug } });
+      navigate({ to: "/p/$slug/checkout", params: { slug: landing.slug } } as any);
     }
   }
 
