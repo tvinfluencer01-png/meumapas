@@ -140,18 +140,28 @@ export function AdminProductOrders() {
             <Label htmlFor="auto-dispatch">Envio automático ativado</Label>
           </div>
           <div className="flex flex-col gap-1">
-            <Label htmlFor="delay-min">Delay (minutos)</Label>
-            <Input
-              id="delay-min"
-              type="number"
-              min={0}
-              max={1440}
-              value={delayMin}
-              onChange={(e) => setDelayMin(Number(e.target.value) || 0)}
-              disabled={!autoEnabled}
-              className="w-32"
-            />
+            <Label htmlFor="delay-val">Delay</Label>
+            <div className="flex gap-2">
+              <Input
+                id="delay-val"
+                type="number"
+                min={0}
+                value={delayValue}
+                onChange={(e) => setDelayValue(Number(e.target.value) || 0)}
+                disabled={!autoEnabled}
+                className="w-28"
+              />
+              <Select value={delayUnit} onValueChange={(v) => setDelayUnit(v as any)} disabled={!autoEnabled}>
+                <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="minutes">Minutos</SelectItem>
+                  <SelectItem value="hours">Horas</SelectItem>
+                  <SelectItem value="days">Dias</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
+
           <Button onClick={() => settingsMutation.mutate()} disabled={settingsMutation.isPending}>
             {settingsMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : "Salvar"}
           </Button>
