@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { Shield, MessageSquare, Save, Send, CheckCircle2, AlertTriangle, Users, Search, ShieldOff, ShieldCheck, History, RefreshCw, Settings as SettingsIcon, Wallet, Coins, MoreHorizontal, UserCog, KeyRound, Package, Trash2, Coins as CoinsIcon, Zap, Plug, Clock, UserPlus, Eye, EyeOff, Database, Download, Loader2, Phone, ArrowRightLeft, Layers, Megaphone, Mail, Smartphone } from "lucide-react";
+import { Shield, MessageSquare, Save, Send, CheckCircle2, AlertTriangle, Users, Search, ShieldOff, ShieldCheck, History, RefreshCw, Settings as SettingsIcon, Wallet, Coins, MoreHorizontal, UserCog, KeyRound, Package, Trash2, Coins as CoinsIcon, Zap, Plug, Clock, UserPlus, Eye, EyeOff, Database, Download, Loader2, Phone, ArrowRightLeft, Layers, Megaphone, Mail, Smartphone, ShoppingCart, FileText } from "lucide-react";
 import { MercadoPagoForm } from "@/components/MercadoPagoForm";
 import { AdminCreditsManager, CreditsDialog } from "@/components/AdminCreditsManager";
 import { AdminCreditCosts } from "@/components/AdminCreditCosts";
@@ -15,6 +15,8 @@ import { AdminPlanMigration } from "@/components/AdminPlanMigration";
 import { AdminMarketing } from "@/components/AdminMarketing";
 import { AdminSmtp } from "@/components/AdminSmtp";
 import { AdminPwa } from "@/components/AdminPwa";
+import { AdminProductLandings } from "@/components/AdminProductLandings";
+import { AdminProductOrders } from "@/components/AdminProductOrders";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -110,7 +112,19 @@ function AdminPage() {
         </div>
       </header>
 
-      <Tabs defaultValue="settings" className="space-y-6">
+      <AdminTabs />
+    </div>
+  );
+}
+
+function AdminTabs() {
+  const initialTab =
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("tab") ?? "settings"
+      : "settings";
+  const [tab, setTab] = useState(initialTab);
+  return (
+      <Tabs value={tab} onValueChange={setTab} className="space-y-6">
         <TabsList className="flex flex-wrap h-auto">
           <TabsTrigger value="settings" className="gap-2">
             <SettingsIcon className="size-4" /> Configurações
@@ -162,6 +176,12 @@ function AdminPage() {
           </TabsTrigger>
           <TabsTrigger value="pwa" className="gap-2">
             <Smartphone className="size-4" /> PWA
+          </TabsTrigger>
+          <TabsTrigger value="product-landings" className="gap-2">
+            <FileText className="size-4" /> Landings Produtos
+          </TabsTrigger>
+          <TabsTrigger value="pedidos" className="gap-2">
+            <ShoppingCart className="size-4" /> Pedidos
           </TabsTrigger>
         </TabsList>
 
@@ -218,11 +238,16 @@ function AdminPage() {
         <TabsContent value="pwa" className="mt-0">
           <AdminPwa />
         </TabsContent>
+        <TabsContent value="product-landings" className="mt-0">
+          <AdminProductLandings />
+        </TabsContent>
+        <TabsContent value="pedidos" className="mt-0">
+          <AdminProductOrders />
+        </TabsContent>
       </Tabs>
-
-    </div>
   );
 }
+
 
 type AdminUserRow = {
   id: string;

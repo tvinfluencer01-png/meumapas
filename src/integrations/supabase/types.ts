@@ -1066,6 +1066,147 @@ export type Database = {
         }
         Relationships: []
       }
+      product_landings: {
+        Row: {
+          active: boolean
+          benefits: Json
+          created_at: string
+          created_by: string | null
+          cta_text: string
+          delivery_email_subject: string | null
+          delivery_email_template: string | null
+          delivery_whatsapp_template: string | null
+          description: string | null
+          hero_image_url: string | null
+          id: string
+          price_cents: number
+          report_type: string
+          required_fields: Json
+          seo_description: string | null
+          seo_title: string | null
+          slug: string
+          subtitle: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          benefits?: Json
+          created_at?: string
+          created_by?: string | null
+          cta_text?: string
+          delivery_email_subject?: string | null
+          delivery_email_template?: string | null
+          delivery_whatsapp_template?: string | null
+          description?: string | null
+          hero_image_url?: string | null
+          id?: string
+          price_cents: number
+          report_type: string
+          required_fields?: Json
+          seo_description?: string | null
+          seo_title?: string | null
+          slug: string
+          subtitle?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          benefits?: Json
+          created_at?: string
+          created_by?: string | null
+          cta_text?: string
+          delivery_email_subject?: string | null
+          delivery_email_template?: string | null
+          delivery_whatsapp_template?: string | null
+          description?: string | null
+          hero_image_url?: string | null
+          id?: string
+          price_cents?: number
+          report_type?: string
+          required_fields?: Json
+          seo_description?: string | null
+          seo_title?: string | null
+          slug?: string
+          subtitle?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      product_orders: {
+        Row: {
+          access_token: string
+          amount_cents: number
+          created_at: string
+          customer_data: Json
+          delivered_at: string | null
+          error_message: string | null
+          id: string
+          landing_id: string
+          mp_payment_id: string | null
+          mp_preference_id: string | null
+          pdf_url: string | null
+          report_id: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          viewed_by_admin: boolean
+        }
+        Insert: {
+          access_token?: string
+          amount_cents: number
+          created_at?: string
+          customer_data?: Json
+          delivered_at?: string | null
+          error_message?: string | null
+          id?: string
+          landing_id: string
+          mp_payment_id?: string | null
+          mp_preference_id?: string | null
+          pdf_url?: string | null
+          report_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          viewed_by_admin?: boolean
+        }
+        Update: {
+          access_token?: string
+          amount_cents?: number
+          created_at?: string
+          customer_data?: Json
+          delivered_at?: string | null
+          error_message?: string | null
+          id?: string
+          landing_id?: string
+          mp_payment_id?: string | null
+          mp_preference_id?: string | null
+          pdf_url?: string | null
+          report_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          viewed_by_admin?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_orders_landing_id_fkey"
+            columns: ["landing_id"]
+            isOneToOne: false
+            referencedRelation: "product_landings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_orders_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           active_client_profile_id: string | null
@@ -1580,6 +1721,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      count_unviewed_orders: { Args: never; Returns: number }
       get_public_enums: {
         Args: never
         Returns: {

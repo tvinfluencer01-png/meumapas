@@ -8,7 +8,7 @@ import { Starfield } from "@/components/Starfield";
 import { UserProfileDialog } from "@/components/UserProfileDialog";
 import { Logo } from "@/components/Logo";
 import {
-  LayoutDashboard, CircleDot, Hash, MessageCircle, LogOut, Menu, X, ScrollText, Shield, Settings, Coins, Wand2, TreePine, Crown, Infinity as InfinityIcon, FileBadge, User as UserIcon, Palette, Users, UserCircle2, Loader2, Sun, Building2,
+  LayoutDashboard, CircleDot, Hash, MessageCircle, LogOut, Menu, X, ScrollText, Shield, Settings, Coins, Wand2, TreePine, Crown, Infinity as InfinityIcon, FileBadge, User as UserIcon, Palette, Users, UserCircle2, Loader2, Sun, Building2, ShoppingCart,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,6 +22,7 @@ import { showFeedback } from "@/components/system-feedback";
 import { getMyAdminStatus } from "@/lib/roles.functions";
 
 import { listClientProfiles, setActiveClientProfile } from "@/lib/client-profiles.functions";
+import { countUnviewedOrders } from "@/lib/product-orders.functions";
 
 const SELF_VALUE = "__self__";
 
@@ -107,6 +108,16 @@ function AuthedLayout() {
   const peak = credits?.peak ?? 5;
   const pct = Math.max(0, Math.min(100, (balance / peak) * 100));
 
+  // Badge de pedidos não vistos (apenas admin)
+  const unviewedFn = useServerFn(countUnviewedOrders);
+  const { data: unviewed } = useQuery({
+    queryKey: ["admin-unviewed-orders"],
+    queryFn: () => unviewedFn(),
+    enabled: isAdmin,
+    refetchInterval: 30_000,
+  });
+  const unviewedCount = unviewed?.count ?? 0;
+
   useEffect(() => {
     if (!loading || !user) {
       setProfileChecked(false);
@@ -151,8 +162,9 @@ function AuthedLayout() {
         return;
       }
       // Gate de pacote: sem pacote ativo, envia para a página de ativação.
-      // Admins têm acesso liberado; onboarding é permitido para coletar dados.
-      if (activeSubs.length === 0 && !userIsAdmin && path !== "/onboarding") {
+      // Admins têm acesso liberado; onboarding e checkout de produto avulso (/p/.../checkout) também passam.
+      const isProductCheckout = path.startsWith("/p/") && path.endsWith("/checkout");
+      if (activeSubs.length === 0 && !userIsAdmin && path !== "/onboarding" && !isProductCheckout) {
         router.navigate({ to: "/ativacao", replace: true });
         return;
       }
@@ -199,6 +211,23 @@ function AuthedLayout() {
             <ActiveClientSwitcher />
           </div>
           <nav className="flex-1 overflow-y-auto p-4 space-y-1 scrollbar-gold">
+            {isAdmin && (
+              <Link
+                to="/admin"
+                search={{ tab: "pedidos" } as any}
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-gold hover:bg-secondary/40 transition-colors"
+              >
+                <ShoppingCart className="size-4 shrink-0" />
+                <span className="flex-1">Pedidos</span>
+                {unviewedCount > 0 && (
+                  <span className="text-[10px] font-bold leading-none px-1.5 py-0.5 rounded-full bg-gold text-background shadow-[0_0_10px_rgba(212,175,55,0.5)] animate-pulse">
+                    {unviewedCount}
+                  </span>
+                )}
+              </Link>
+            )}
+
 
             {NAV.filter((item) => !item.addonId || activeAddons.has(item.addonId)).map((item) => {
               const badge = MAIN_MENU_BADGES[item.to];

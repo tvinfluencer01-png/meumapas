@@ -14,6 +14,8 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AtivacaoRouteImport } from './routes/ativacao'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as RTokenRouteImport } from './routes/r.$token'
+import { Route as PSlugRouteImport } from './routes/p.$slug'
 import { Route as ApiChatRouteImport } from './routes/api.chat'
 import { Route as AuthenticatedTarotRouteImport } from './routes/_authenticated.tarot'
 import { Route as AuthenticatedRelatoriosRouteImport } from './routes/_authenticated.relatorios'
@@ -36,6 +38,7 @@ import { Route as ApiPublicManifestWebmanifestRouteImport } from './routes/api/p
 import { Route as ApiPublicManifestIconRouteImport } from './routes/api/public/manifest.icon'
 import { Route as ApiPublicHooksMercadopagoRouteImport } from './routes/api/public/hooks/mercadopago'
 import { Route as ApiPublicHooksDailyHoroscopeRouteImport } from './routes/api/public/hooks/daily-horoscope'
+import { Route as AuthenticatedPSlugCheckoutRouteImport } from './routes/_authenticated.p.$slug.checkout'
 
 const ProfissionaisRoute = ProfissionaisRouteImport.update({
   id: '/profissionais',
@@ -59,6 +62,16 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RTokenRoute = RTokenRouteImport.update({
+  id: '/r/$token',
+  path: '/r/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PSlugRoute = PSlugRouteImport.update({
+  id: '/p/$slug',
+  path: '/p/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiChatRoute = ApiChatRouteImport.update({
@@ -178,6 +191,12 @@ const ApiPublicHooksDailyHoroscopeRoute =
     path: '/api/public/hooks/daily-horoscope',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AuthenticatedPSlugCheckoutRoute =
+  AuthenticatedPSlugCheckoutRouteImport.update({
+    id: '/p/$slug/checkout',
+    path: '/p/$slug/checkout',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -201,7 +220,10 @@ export interface FileRoutesByFullPath {
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/tarot': typeof AuthenticatedTarotRoute
   '/api/chat': typeof ApiChatRoute
+  '/p/$slug': typeof PSlugRoute
+  '/r/$token': typeof RTokenRoute
   '/admin/logs': typeof AuthenticatedAdminLogsRoute
+  '/p/$slug/checkout': typeof AuthenticatedPSlugCheckoutRoute
   '/api/public/hooks/daily-horoscope': typeof ApiPublicHooksDailyHoroscopeRoute
   '/api/public/hooks/mercadopago': typeof ApiPublicHooksMercadopagoRoute
   '/api/public/manifest/icon': typeof ApiPublicManifestIconRoute
@@ -229,7 +251,10 @@ export interface FileRoutesByTo {
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/tarot': typeof AuthenticatedTarotRoute
   '/api/chat': typeof ApiChatRoute
+  '/p/$slug': typeof PSlugRoute
+  '/r/$token': typeof RTokenRoute
   '/admin/logs': typeof AuthenticatedAdminLogsRoute
+  '/p/$slug/checkout': typeof AuthenticatedPSlugCheckoutRoute
   '/api/public/hooks/daily-horoscope': typeof ApiPublicHooksDailyHoroscopeRoute
   '/api/public/hooks/mercadopago': typeof ApiPublicHooksMercadopagoRoute
   '/api/public/manifest/icon': typeof ApiPublicManifestIconRoute
@@ -259,7 +284,10 @@ export interface FileRoutesById {
   '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
   '/_authenticated/tarot': typeof AuthenticatedTarotRoute
   '/api/chat': typeof ApiChatRoute
+  '/p/$slug': typeof PSlugRoute
+  '/r/$token': typeof RTokenRoute
   '/_authenticated/admin/logs': typeof AuthenticatedAdminLogsRoute
+  '/_authenticated/p/$slug/checkout': typeof AuthenticatedPSlugCheckoutRoute
   '/api/public/hooks/daily-horoscope': typeof ApiPublicHooksDailyHoroscopeRoute
   '/api/public/hooks/mercadopago': typeof ApiPublicHooksMercadopagoRoute
   '/api/public/manifest/icon': typeof ApiPublicManifestIconRoute
@@ -289,7 +317,10 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/tarot'
     | '/api/chat'
+    | '/p/$slug'
+    | '/r/$token'
     | '/admin/logs'
+    | '/p/$slug/checkout'
     | '/api/public/hooks/daily-horoscope'
     | '/api/public/hooks/mercadopago'
     | '/api/public/manifest/icon'
@@ -317,7 +348,10 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/tarot'
     | '/api/chat'
+    | '/p/$slug'
+    | '/r/$token'
     | '/admin/logs'
+    | '/p/$slug/checkout'
     | '/api/public/hooks/daily-horoscope'
     | '/api/public/hooks/mercadopago'
     | '/api/public/manifest/icon'
@@ -346,7 +380,10 @@ export interface FileRouteTypes {
     | '/_authenticated/relatorios'
     | '/_authenticated/tarot'
     | '/api/chat'
+    | '/p/$slug'
+    | '/r/$token'
     | '/_authenticated/admin/logs'
+    | '/_authenticated/p/$slug/checkout'
     | '/api/public/hooks/daily-horoscope'
     | '/api/public/hooks/mercadopago'
     | '/api/public/manifest/icon'
@@ -360,6 +397,8 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ProfissionaisRoute: typeof ProfissionaisRoute
   ApiChatRoute: typeof ApiChatRoute
+  PSlugRoute: typeof PSlugRoute
+  RTokenRoute: typeof RTokenRoute
   ApiPublicHooksDailyHoroscopeRoute: typeof ApiPublicHooksDailyHoroscopeRoute
   ApiPublicHooksMercadopagoRoute: typeof ApiPublicHooksMercadopagoRoute
   ApiPublicManifestIconRoute: typeof ApiPublicManifestIconRoute
@@ -401,6 +440,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/r/$token': {
+      id: '/r/$token'
+      path: '/r/$token'
+      fullPath: '/r/$token'
+      preLoaderRoute: typeof RTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/p/$slug': {
+      id: '/p/$slug'
+      path: '/p/$slug'
+      fullPath: '/p/$slug'
+      preLoaderRoute: typeof PSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/chat': {
@@ -557,6 +610,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksDailyHoroscopeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/p/$slug/checkout': {
+      id: '/_authenticated/p/$slug/checkout'
+      path: '/p/$slug/checkout'
+      fullPath: '/p/$slug/checkout'
+      preLoaderRoute: typeof AuthenticatedPSlugCheckoutRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
   }
 }
 
@@ -588,6 +648,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedPdfCssRoute: typeof AuthenticatedPdfCssRoute
   AuthenticatedRelatoriosRoute: typeof AuthenticatedRelatoriosRoute
   AuthenticatedTarotRoute: typeof AuthenticatedTarotRoute
+  AuthenticatedPSlugCheckoutRoute: typeof AuthenticatedPSlugCheckoutRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -608,6 +669,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedPdfCssRoute: AuthenticatedPdfCssRoute,
   AuthenticatedRelatoriosRoute: AuthenticatedRelatoriosRoute,
   AuthenticatedTarotRoute: AuthenticatedTarotRoute,
+  AuthenticatedPSlugCheckoutRoute: AuthenticatedPSlugCheckoutRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
@@ -621,6 +683,8 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ProfissionaisRoute: ProfissionaisRoute,
   ApiChatRoute: ApiChatRoute,
+  PSlugRoute: PSlugRoute,
+  RTokenRoute: RTokenRoute,
   ApiPublicHooksDailyHoroscopeRoute: ApiPublicHooksDailyHoroscopeRoute,
   ApiPublicHooksMercadopagoRoute: ApiPublicHooksMercadopagoRoute,
   ApiPublicManifestIconRoute: ApiPublicManifestIconRoute,
@@ -629,13 +693,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
