@@ -780,6 +780,7 @@ export function AdminCrm() {
           )}
         </DialogContent>
       </Dialog>
+      <CrmStatusAutomationsDialog open={automationsOpen} onOpenChange={setAutomationsOpen} />
     </Card>
   );
 }
