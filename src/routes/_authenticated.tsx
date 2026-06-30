@@ -211,6 +211,23 @@ function AuthedLayout() {
             <ActiveClientSwitcher />
           </div>
           <nav className="flex-1 overflow-y-auto p-4 space-y-1 scrollbar-gold">
+            {isAdmin && (
+              <Link
+                to="/admin"
+                search={{ tab: "pedidos" } as any}
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-gold hover:bg-secondary/40 transition-colors"
+              >
+                <ShoppingCart className="size-4 shrink-0" />
+                <span className="flex-1">Pedidos</span>
+                {unviewedCount > 0 && (
+                  <span className="text-[10px] font-bold leading-none px-1.5 py-0.5 rounded-full bg-gold text-background shadow-[0_0_10px_rgba(212,175,55,0.5)] animate-pulse">
+                    {unviewedCount}
+                  </span>
+                )}
+              </Link>
+            )}
+
 
             {NAV.filter((item) => !item.addonId || activeAddons.has(item.addonId)).map((item) => {
               const badge = MAIN_MENU_BADGES[item.to];
