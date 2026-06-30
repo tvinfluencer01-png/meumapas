@@ -71,6 +71,8 @@ const MAIN_MENU_BADGES: Record<string, { label: string; addonId: string }> = {
 function AuthedLayout() {
   const { signOut, user, loading } = useAuth();
   const router = useRouter();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isAdminRoute = pathname.startsWith("/admin");
   const checkAdminFn = useServerFn(getMyAdminStatus);
   const [open, setOpen] = useState(false);
   const [profileChecked, setProfileChecked] = useState(false);
