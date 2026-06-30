@@ -123,6 +123,50 @@ export function AdminCrm() {
     onError: (e: Error) => showFeedback({ title: "Erro", description: e.message, type: "error" }),
   });
 
+  const createFn = useServerFn(createCrmLead);
+  const emptyQuick = { full_name: "", email: "", phone: "", landing_slug: "", notes: "", status: "new" as string };
+  const [quickOpen, setQuickOpen] = useState(false);
+  const [quick, setQuick] = useState(emptyQuick);
+  const [quickErrors, setQuickErrors] = useState<Record<string, string>>({});
+
+  const createMut = useMutation({
+    mutationFn: (vars: any) => createFn({ data: vars }),
+    onSuccess: () => {
+      showFeedback({ title: "Lead criado", type: "success" });
+      qc.invalidateQueries({ queryKey: ["admin-crm-leads"] });
+      setQuickOpen(false);
+      setQuick(emptyQuick);
+      setQuickErrors({});
+    },
+    onError: (e: Error) => showFeedback({ title: "Erro ao criar lead", description: e.message, type: "error" }),
+  });
+
+  function openQuickCreate(statusKey: string) {
+    setQuick({ ...emptyQuick, status: statusKey });
+    setQuickErrors({});
+    setQuickOpen(true);
+  }
+
+  function submitQuickCreate() {
+    const errs: Record<string, string> = {};
+    if (!quick.full_name.trim()) errs.full_name = "Informe o nome";
+    else if (quick.full_name.trim().length > 120) errs.full_name = "Máximo 120 caracteres";
+    const email = quick.email.trim();
+    if (!email) errs.email = "Informe o e-mail";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errs.email = "E-mail inválido";
+    if (quick.phone && quick.phone.length > 40) errs.phone = "Máximo 40 caracteres";
+    setQuickErrors(errs);
+    if (Object.keys(errs).length) return;
+    createMut.mutate({
+      full_name: quick.full_name.trim(),
+      email: email.toLowerCase(),
+      phone: quick.phone.trim() || null,
+      landing_slug: quick.landing_slug.trim() || null,
+      notes: quick.notes.trim() || null,
+      status: quick.status,
+    });
+  }
+
   const saveSettingsMut = useMutation({
     mutationFn: (vars: any) => saveSettingsFn({ data: vars }),
     onSuccess: (r: any) => {
