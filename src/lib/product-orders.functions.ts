@@ -426,10 +426,10 @@ async function runDispatchForOrder(
   } catch (e: any) {
     patch.status = "failed";
     patch.error_message = e?.message ?? String(e);
-    await supabaseAdmin.from("product_orders").update(patch).eq("id", order.id);
+    await supabaseAdmin.from("product_orders").update(patch as any).eq("id", order.id);
     throw e;
   }
-  await supabaseAdmin.from("product_orders").update(patch).eq("id", order.id);
+  await supabaseAdmin.from("product_orders").update(patch as any).eq("id", order.id);
   return { ok: true, pdf_url: pdfUrl };
 }
 
