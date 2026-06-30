@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, Mail, MessageCircle, Pause, Play, Send, Settings as SettingsIcon, History } from "lucide-react";
+import { Loader2, Mail, MessageCircle, Pause, Play, Send, Settings as SettingsIcon, History, GitBranch, RotateCcw, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,6 +17,8 @@ import {
   saveCrmFollowupSettings,
   runCrmFollowupsNow,
   listCrmFollowupHistory,
+  listCrmTemplateVersions,
+  deleteCrmTemplateVersion,
 } from "@/lib/crm-followups.functions";
 
 const STATUS_LABEL: Record<string, { label: string; color: string }> = {
@@ -51,7 +53,11 @@ export function AdminCrm() {
   const saveSettingsFn = useServerFn(saveCrmFollowupSettings);
   const runNowFn = useServerFn(runCrmFollowupsNow);
   const historyFn = useServerFn(listCrmFollowupHistory);
+  const listVersionsFn = useServerFn(listCrmTemplateVersions);
+  const deleteVersionFn = useServerFn(deleteCrmTemplateVersion);
   const [historyLead, setHistoryLead] = useState<any | null>(null);
+  const [versionsOpen, setVersionsOpen] = useState(false);
+  const [compareVersion, setCompareVersion] = useState<any | null>(null);
 
   const { data: history, isLoading: historyLoading } = useQuery({
     queryKey: ["admin-crm-followup-history", historyLead?.id],
@@ -78,6 +84,7 @@ export function AdminCrm() {
   const [form, setForm] = useState<any | null>(null);
   const [previewLeadId, setPreviewLeadId] = useState<string>("");
   const [showPreview, setShowPreview] = useState(false);
+  const [versionNote, setVersionNote] = useState("");
 
   useEffect(() => {
     if (settings && !form) setForm(settings);
@@ -109,13 +116,66 @@ export function AdminCrm() {
 
   const saveSettingsMut = useMutation({
     mutationFn: (vars: any) => saveSettingsFn({ data: vars }),
-    onSuccess: () => {
-      showFeedback({ title: "Configurações salvas", type: "success" });
+    onSuccess: (r: any) => {
+      showFeedback({
+        title: "Configurações salvas",
+        description: r?.versioned ? "Nova versão dos templates registrada." : undefined,
+        type: "success",
+      });
+      setVersionNote("");
       qc.invalidateQueries({ queryKey: ["admin-crm-followup-settings"] });
+      qc.invalidateQueries({ queryKey: ["admin-crm-template-versions"] });
       setSettingsOpen(false);
     },
     onError: (e: Error) => showFeedback({ title: "Erro", description: e.message, type: "error" }),
   });
+
+  const { data: versions } = useQuery({
+    queryKey: ["admin-crm-template-versions"],
+    queryFn: () => listVersionsFn(),
+    enabled: settingsOpen || versionsOpen,
+  });
+
+  const deleteVersionMut = useMutation({
+    mutationFn: (id: string) => deleteVersionFn({ data: { id } }),
+    onSuccess: () => {
+      showFeedback({ title: "Versão removida", type: "success" });
+      qc.invalidateQueries({ queryKey: ["admin-crm-template-versions"] });
+    },
+    onError: (e: Error) => showFeedback({ title: "Erro", description: e.message, type: "error" }),
+  });
+
+  function restoreVersion(v: any) {
+    if (!form) return;
+    setForm({ ...form, subject_template: v.subject_template, body_template: v.body_template });
+    setVersionNote(`Restaurado de ${new Date(v.created_at).toLocaleString("pt-BR")}`);
+    setCompareVersion(null);
+    setVersionsOpen(false);
+    showFeedback({
+      title: "Versão restaurada no formulário",
+      description: "Clique em Salvar para aplicar.",
+      type: "info",
+    });
+  }
+
+  function diffLines(a: string, b: string) {
+    const al = (a ?? "").split("\n");
+    const bl = (b ?? "").split("\n");
+    const max = Math.max(al.length, bl.length);
+    const out: Array<{ kind: "same" | "old" | "new"; text: string }> = [];
+    for (let i = 0; i < max; i++) {
+      const x = al[i];
+      const y = bl[i];
+      if (x === y) {
+        if (x !== undefined) out.push({ kind: "same", text: x });
+      } else {
+        if (x !== undefined) out.push({ kind: "old", text: x });
+        if (y !== undefined) out.push({ kind: "new", text: y });
+      }
+    }
+    return out;
+  }
+
 
   const runNowMut = useMutation({
     mutationFn: () => runNowFn(),
@@ -407,10 +467,34 @@ export function AdminCrm() {
                 )}
               </div>
 
+              <div className="rounded border border-border/40 p-3 space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <div>
+                    <Label className="text-sm">Versionamento dos templates</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Cada alteração de assunto/corpo cria uma versão. {versions?.length ?? 0} versão(ões) registradas.
+                    </p>
+                  </div>
+                  <Button type="button" size="sm" variant="outline" onClick={() => setVersionsOpen(true)}>
+                    <GitBranch className="size-4 mr-1" />Histórico
+                  </Button>
+                </div>
+                <div>
+                  <Label className="text-xs">Nota da nova versão (opcional)</Label>
+                  <Input
+                    placeholder="Ex.: ajustei o tom para soar mais próximo"
+                    value={versionNote}
+                    onChange={(e) => setVersionNote(e.target.value)}
+                  />
+                </div>
+              </div>
 
               <DialogFooter>
                 <Button variant="outline" onClick={() => setSettingsOpen(false)}>Cancelar</Button>
-                <Button onClick={() => saveSettingsMut.mutate(form)} disabled={saveSettingsMut.isPending}>
+                <Button
+                  onClick={() => saveSettingsMut.mutate({ ...form, version_note: versionNote || undefined })}
+                  disabled={saveSettingsMut.isPending}
+                >
                   {saveSettingsMut.isPending ? <Loader2 className="size-4 animate-spin" /> : "Salvar"}
                 </Button>
               </DialogFooter>
@@ -475,6 +559,144 @@ export function AdminCrm() {
                   })}
                 </tbody>
               </table>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={versionsOpen} onOpenChange={setVersionsOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="font-serif shimmer-text">Versões dos templates</DialogTitle>
+          </DialogHeader>
+          {!versions || versions.length === 0 ? (
+            <p className="py-8 text-center text-sm text-muted-foreground">
+              Nenhuma versão registrada ainda. A próxima alteração de assunto/corpo será salva como versão.
+            </p>
+          ) : (
+            <div className="overflow-x-auto max-h-[60vh]">
+              <table className="w-full text-sm">
+                <thead className="text-xs uppercase text-muted-foreground border-b border-border/40">
+                  <tr>
+                    <th className="text-left p-2">Data</th>
+                    <th className="text-left p-2">Assunto</th>
+                    <th className="text-left p-2">Nota</th>
+                    <th className="text-right p-2">Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {versions.map((v: any, idx: number) => {
+                    const isCurrent = idx === 0;
+                    return (
+                      <tr key={v.id} className="border-b border-border/20 align-top">
+                        <td className="p-2 text-xs whitespace-nowrap">
+                          {new Date(v.created_at).toLocaleString("pt-BR")}
+                          {isCurrent && (
+                            <span className="ml-2 px-2 py-0.5 rounded text-[10px] bg-emerald-600/30 text-emerald-200 border border-emerald-500/40">
+                              Atual
+                            </span>
+                          )}
+                        </td>
+                        <td className="p-2 text-xs max-w-[260px] truncate" title={v.subject_template}>
+                          {v.subject_template}
+                        </td>
+                        <td className="p-2 text-xs text-muted-foreground">{v.note ?? "—"}</td>
+                        <td className="p-2 text-right">
+                          <div className="inline-flex gap-1">
+                            <Button size="sm" variant="outline" onClick={() => setCompareVersion(v)}>
+                              Comparar
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => restoreVersion(v)}
+                              disabled={isCurrent}
+                              title={isCurrent ? "Já é a versão atual" : "Restaurar no formulário"}
+                            >
+                              <RotateCcw className="size-3.5 mr-1" />Restaurar
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              title="Excluir versão"
+                              disabled={isCurrent || deleteVersionMut.isPending}
+                              onClick={() => {
+                                if (confirm("Excluir esta versão do histórico?")) {
+                                  deleteVersionMut.mutate(v.id);
+                                }
+                              }}
+                            >
+                              <Trash2 className="size-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!compareVersion} onOpenChange={(o) => !o && setCompareVersion(null)}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="font-serif shimmer-text">Comparar com versão atual</DialogTitle>
+            {compareVersion && (
+              <p className="text-xs text-muted-foreground">
+                Versão de {new Date(compareVersion.created_at).toLocaleString("pt-BR")}
+                {compareVersion.note ? ` — ${compareVersion.note}` : ""}
+              </p>
+            )}
+          </DialogHeader>
+          {compareVersion && form && (
+            <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+              {(["subject_template", "body_template"] as const).map((field) => {
+                const label = field === "subject_template" ? "Assunto" : "Corpo";
+                const oldText = compareVersion[field] ?? "";
+                const newText = form[field] ?? "";
+                const lines = diffLines(oldText, newText);
+                return (
+                  <div key={field}>
+                    <Label className="text-sm">{label}</Label>
+                    <div className="rounded border border-border/40 bg-background/60 font-mono text-xs">
+                      {lines.length === 0 ? (
+                        <div className="p-2 text-muted-foreground">(vazio)</div>
+                      ) : (
+                        lines.map((ln, i) => (
+                          <div
+                            key={i}
+                            className={
+                              ln.kind === "old"
+                                ? "px-2 py-0.5 bg-red-500/15 text-red-200"
+                                : ln.kind === "new"
+                                  ? "px-2 py-0.5 bg-emerald-500/15 text-emerald-200"
+                                  : "px-2 py-0.5"
+                            }
+                          >
+                            <span className="inline-block w-4 select-none opacity-60">
+                              {ln.kind === "old" ? "−" : ln.kind === "new" ? "+" : " "}
+                            </span>
+                            {ln.text || "\u00A0"}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+              <p className="text-[11px] text-muted-foreground">
+                <span className="text-red-300">Vermelho</span>: versão antiga ·{" "}
+                <span className="text-emerald-300">Verde</span>: atual no formulário
+              </p>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setCompareVersion(null)}>Fechar</Button>
+                <Button onClick={() => restoreVersion(compareVersion)}>
+                  <RotateCcw className="size-4 mr-1" />Restaurar esta versão
+                </Button>
+              </DialogFooter>
             </div>
           )}
         </DialogContent>
