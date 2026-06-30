@@ -76,10 +76,26 @@ export function AdminCrm() {
   const [status, setStatus] = useState<string>("new");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [form, setForm] = useState<any | null>(null);
+  const [previewLeadId, setPreviewLeadId] = useState<string>("");
+  const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
     if (settings && !form) setForm(settings);
   }, [settings, form]);
+
+  function renderTemplate(tpl: string, lead: any) {
+    const vars: Record<string, string> = {
+      nome: lead?.full_name || "amigo(a)",
+      produto: lead?.landing_slug || "nosso produto",
+      email: lead?.email || "",
+    };
+    return (tpl ?? "").replace(/\{\{\s*(\w+)\s*\}\}/g, (_m, k) => vars[k] ?? "");
+  }
+
+  const previewLead =
+    (leads ?? []).find((l: any) => l.id === previewLeadId) ??
+    (leads ?? [])[0] ??
+    { full_name: "Maria Silva", email: "maria@exemplo.com", landing_slug: "mapa-astral" };
 
   const updateMut = useMutation({
     mutationFn: (vars: any) => updateFn({ data: vars }),
