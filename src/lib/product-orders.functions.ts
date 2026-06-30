@@ -704,6 +704,7 @@ export const updateCrmLead = createServerFn({ method: "POST" })
     notes: z.string().max(4000).nullable().optional(),
     last_contact_at: z.string().datetime().nullable().optional(),
     increment_followup: z.boolean().optional(),
+    followup_paused: z.boolean().optional(),
   }).parse(d))
   .handler(async ({ data, context }) => {
     const { data: isAdmin } = await context.supabase.rpc("has_role", {
@@ -712,15 +713,23 @@ export const updateCrmLead = createServerFn({ method: "POST" })
     if (!isAdmin) throw new Error("Forbidden");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const patch: Record<string, any> = {};
-    if (data.status) patch.status = data.status;
+    if (data.status) {
+      patch.status = data.status;
+      if (data.status === "converted" || data.status === "lost") {
+        patch.next_followup_at = null;
+      }
+    }
     if (data.notes !== undefined) patch.notes = data.notes;
     if (data.last_contact_at !== undefined) patch.last_contact_at = data.last_contact_at;
+    if (data.followup_paused !== undefined) patch.followup_paused = data.followup_paused;
     if (data.increment_followup) {
       const { data: cur } = await supabaseAdmin.from("crm_leads").select("followup_count").eq("id", data.id).maybeSingle();
       patch.followup_count = ((cur as any)?.followup_count ?? 0) + 1;
       patch.last_contact_at = new Date().toISOString();
+      patch.last_followup_at = patch.last_contact_at;
     }
     const { error } = await supabaseAdmin.from("crm_leads").update(patch as any).eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
