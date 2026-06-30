@@ -203,7 +203,7 @@ function AuthedLayout() {
       </header>
 
       <div className="relative z-10 flex">
-        {/* Sidebar */}
+        {!isAdminRoute && (
         <aside className={`${open ? "flex" : "hidden"} lg:flex flex-col fixed lg:sticky inset-0 lg:inset-auto lg:top-0 z-20 lg:z-auto h-screen w-full lg:w-64 border-r border-border bg-background/90 backdrop-blur-xl`}>
           <div className="hidden lg:flex items-center gap-2.5 px-6 py-6 border-b border-border shrink-0">
             <Logo sizeClassName="size-12" animation="float" />
