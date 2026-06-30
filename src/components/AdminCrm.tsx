@@ -53,7 +53,11 @@ export function AdminCrm() {
   const saveSettingsFn = useServerFn(saveCrmFollowupSettings);
   const runNowFn = useServerFn(runCrmFollowupsNow);
   const historyFn = useServerFn(listCrmFollowupHistory);
+  const listVersionsFn = useServerFn(listCrmTemplateVersions);
+  const deleteVersionFn = useServerFn(deleteCrmTemplateVersion);
   const [historyLead, setHistoryLead] = useState<any | null>(null);
+  const [versionsOpen, setVersionsOpen] = useState(false);
+  const [compareVersion, setCompareVersion] = useState<any | null>(null);
 
   const { data: history, isLoading: historyLoading } = useQuery({
     queryKey: ["admin-crm-followup-history", historyLead?.id],
