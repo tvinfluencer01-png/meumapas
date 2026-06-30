@@ -99,10 +99,15 @@ function ProductLandingPage() {
 
   const benefits = (landing.benefits as string[]) ?? [];
 
+  const priceFormatted = `R$ ${(landing.price_cents / 100).toFixed(2).replace(".", ",")}`;
+  const installment = `ou 3x de R$ ${(landing.price_cents / 300).toFixed(2).replace(".", ",")} sem juros`;
+
   return (
     <div className="relative min-h-screen bg-background text-foreground overflow-hidden">
-      <Starfield count={80} className="fixed" />
-      <header className="relative z-10 flex items-center justify-between px-6 py-4 border-b border-border/40">
+      <Starfield count={120} className="fixed" />
+      <div aria-hidden className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_at_top,color-mix(in_oklab,var(--gold)_12%,transparent),transparent_60%)]" />
+
+      <header className="relative z-10 flex items-center justify-between px-6 py-4 border-b border-border/40 backdrop-blur-sm bg-background/40">
         <Link to="/" className="flex items-center gap-2.5">
           <Logo sizeClassName="size-10" animation="float" />
           <span className="font-serif text-lg shimmer-text">Código Cósmico</span>
@@ -110,46 +115,50 @@ function ProductLandingPage() {
         <Button variant="ghost" size="sm" asChild><Link to="/auth">Já tenho conta</Link></Button>
       </header>
 
-      <main className="relative z-10 max-w-5xl mx-auto px-6 py-12 lg:py-20">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
+      {/* HERO */}
+      <main className="relative z-10 max-w-6xl mx-auto px-6 py-10 lg:py-16">
+        <div className="grid lg:grid-cols-[1.1fr_1fr] gap-10 lg:gap-16 items-center">
           <div>
-            <div className="inline-flex items-center gap-2 mb-4 rounded-full border border-gold/40 bg-gold/10 px-3 py-1 text-xs text-gold">
-              <Sparkles className="size-3" /> Relatório exclusivo
+            <div className="flex flex-wrap items-center gap-2 mb-5">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-gold/40 bg-gold/10 px-3 py-1 text-xs text-gold">
+                <Sparkles className="size-3" /> Relatório exclusivo
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-card/60 px-3 py-1 text-xs">
+                <Star className="size-3 fill-gold text-gold" />
+                <Star className="size-3 fill-gold text-gold" />
+                <Star className="size-3 fill-gold text-gold" />
+                <Star className="size-3 fill-gold text-gold" />
+                <Star className="size-3 fill-gold text-gold" />
+                <span className="ml-1 text-muted-foreground">+2.500 clientes</span>
+              </span>
             </div>
-            <h1 className="font-serif text-4xl sm:text-5xl shimmer-text leading-tight mb-4">{landing.title}</h1>
-            {landing.subtitle && <p className="text-lg text-stardust mb-6">{landing.subtitle}</p>}
-            {landing.description && (
-              <div className="prose prose-invert max-w-none text-muted-foreground whitespace-pre-wrap mb-8">
-                {landing.description}
-              </div>
-            )}
-            {benefits.length > 0 && (
-              <ul className="space-y-2 mb-8">
-                {benefits.map((b, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm">
-                    <Check className="size-4 text-gold mt-0.5 shrink-0" /><span>{b}</span>
-                  </li>
-                ))}
-              </ul>
+
+            <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl shimmer-text leading-[1.05] mb-5">
+              {landing.title}
+            </h1>
+            {landing.subtitle && (
+              <p className="text-lg sm:text-xl text-stardust/90 mb-7 leading-relaxed">{landing.subtitle}</p>
             )}
 
-            <Card className="border-gold/40 bg-gradient-to-br from-secondary/60 to-secondary/20">
-              <CardContent className="p-6">
-                <div className="text-xs uppercase tracking-widest text-gold/70 mb-1">Investimento único</div>
-                <div className="text-4xl font-serif text-gold mb-4">
-                  R$ {(landing.price_cents / 100).toFixed(2).replace(".", ",")}
-                </div>
-                <Button onClick={() => setOpen(true)} size="lg" className="w-full text-base font-medium">
-                  {landing.cta_text}
-                </Button>
-                <p className="text-xs text-muted-foreground mt-3 text-center">
-                  Sua conta é criada automaticamente após a confirmação do pagamento.
-                </p>
-              </CardContent>
-            </Card>
+            <div className="flex flex-col sm:flex-row gap-3 mb-6">
+              <Button onClick={() => setOpen(true)} size="lg" className="text-base font-medium px-8 shadow-[0_0_30px_-6px_color-mix(in_oklab,var(--gold)_60%,transparent)]">
+                {landing.cta_text} →
+              </Button>
+              <div className="flex flex-col justify-center">
+                <span className="text-2xl font-serif text-gold leading-none">{priceFormatted}</span>
+                <span className="text-xs text-muted-foreground">{installment}</span>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
+              <span className="inline-flex items-center gap-1.5"><Lock className="size-3.5 text-gold" /> Pagamento seguro</span>
+              <span className="inline-flex items-center gap-1.5"><Zap className="size-3.5 text-gold" /> Entrega imediata</span>
+              <span className="inline-flex items-center gap-1.5"><ShieldCheck className="size-3.5 text-gold" /> Garantia 7 dias</span>
+            </div>
           </div>
 
           <div className="relative">
+            <div aria-hidden className="absolute -inset-6 rounded-3xl bg-gold/10 blur-3xl" />
             {landing.hero_image_url ? (
               <img src={landing.hero_image_url} alt={landing.title}
                 style={{
@@ -158,19 +167,89 @@ function ProductLandingPage() {
                   maxWidth: "100%",
                   objectFit: "cover",
                 }}
-                className="rounded-2xl shadow-2xl border border-gold/30 mx-auto" />
+                className="relative rounded-2xl shadow-2xl border border-gold/30 mx-auto" />
             ) : (
-              <div className="aspect-[4/5] rounded-2xl border border-gold/30 bg-gradient-to-br from-secondary to-background grid place-items-center">
+              <div className="relative aspect-[4/5] rounded-2xl border border-gold/30 bg-gradient-to-br from-secondary to-background grid place-items-center">
                 <Logo sizeClassName="size-32" animation="float" />
               </div>
             )}
           </div>
         </div>
+
+        {/* DESCRIPTION */}
+        {landing.description && (
+          <section className="mt-16 lg:mt-24 max-w-3xl mx-auto text-center">
+            <h2 className="font-serif text-3xl sm:text-4xl shimmer-text mb-6">O que você vai descobrir</h2>
+            <div className="prose prose-invert max-w-none text-muted-foreground whitespace-pre-wrap text-left sm:text-center leading-relaxed">
+              {landing.description}
+            </div>
+          </section>
+        )}
+
+        {/* BENEFITS GRID */}
+        {benefits.length > 0 && (
+          <section className="mt-16 lg:mt-24">
+            <h2 className="font-serif text-3xl sm:text-4xl shimmer-text text-center mb-10">Benefícios exclusivos</h2>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {benefits.map((b, i) => (
+                <Card key={i} className="border-gold/20 bg-card/60 backdrop-blur-sm hover:border-gold/50 transition-colors">
+                  <CardContent className="p-5 flex gap-3">
+                    <div className="shrink-0 grid place-items-center size-9 rounded-full bg-gold/15 text-gold">
+                      <Check className="size-4" />
+                    </div>
+                    <p className="text-sm leading-relaxed">{b}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* HOW IT WORKS */}
+        <section className="mt-16 lg:mt-24">
+          <h2 className="font-serif text-3xl sm:text-4xl shimmer-text text-center mb-10">Como funciona</h2>
+          <div className="grid sm:grid-cols-3 gap-6">
+            {[
+              { icon: CreditCard, title: "1. Pagamento seguro", desc: "Cartão, Pix ou boleto pelo Mercado Pago." },
+              { icon: Sparkles, title: "2. Geração instantânea", desc: "Seu relatório é calculado e gerado automaticamente." },
+              { icon: Clock, title: "3. Receba em minutos", desc: "PDF enviado no seu e-mail e WhatsApp." },
+            ].map((s, i) => (
+              <div key={i} className="text-center p-6 rounded-xl border border-gold/20 bg-card/40">
+                <div className="mx-auto grid place-items-center size-12 rounded-full bg-gold/15 text-gold mb-4">
+                  <s.icon className="size-5" />
+                </div>
+                <h3 className="font-serif text-lg mb-2">{s.title}</h3>
+                <p className="text-sm text-muted-foreground">{s.desc}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* FINAL CTA */}
+        <section className="mt-16 lg:mt-24">
+          <Card className="border-gold/50 bg-gradient-to-br from-gold/10 via-secondary/40 to-background overflow-hidden relative">
+            <div aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,color-mix(in_oklab,var(--gold)_20%,transparent),transparent_60%)]" />
+            <CardContent className="relative p-8 sm:p-12 text-center">
+              <div className="text-xs uppercase tracking-[0.3em] text-gold/80 mb-3">Investimento único</div>
+              <div className="font-serif text-5xl sm:text-6xl text-gold mb-2">{priceFormatted}</div>
+              <p className="text-sm text-muted-foreground mb-6">{installment}</p>
+              <Button onClick={() => setOpen(true)} size="lg" className="text-base font-medium px-10 shadow-[0_0_40px_-8px_color-mix(in_oklab,var(--gold)_70%,transparent)]">
+                {landing.cta_text} →
+              </Button>
+              <div className="flex flex-wrap justify-center gap-5 mt-6 text-xs text-muted-foreground">
+                <span className="inline-flex items-center gap-1.5"><ShieldCheck className="size-3.5 text-gold" /> Garantia incondicional 7 dias</span>
+                <span className="inline-flex items-center gap-1.5"><Lock className="size-3.5 text-gold" /> Compra 100% segura</span>
+                <span className="inline-flex items-center gap-1.5"><Zap className="size-3.5 text-gold" /> Entrega automática</span>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
       </main>
 
-      <footer className="relative z-10 border-t border-border/40 py-6 text-center text-xs text-muted-foreground">
-        © {new Date().getFullYear()} Código Cósmico
+      <footer className="relative z-10 border-t border-border/40 py-6 text-center text-xs text-muted-foreground mt-10">
+        © {new Date().getFullYear()} Código Cósmico · Todos os direitos reservados
       </footer>
+
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-md">
