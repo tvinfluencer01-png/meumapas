@@ -236,7 +236,54 @@ function LandingForm({
   saving: boolean;
 }) {
   const upd = (patch: Partial<Landing>) => onChange({ ...landing, ...patch });
+  const uploadFn = useServerFn(uploadLandingHeroImage);
+  const genFn = useServerFn(generateLandingHeroImage);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState("");
+
+  const handleFile = async (file: File) => {
+    if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
+      showFeedback({ title: "Formato inválido", description: "Use PNG, JPG ou WebP.", type: "error" });
+      return;
+    }
+    setUploading(true);
+    try {
+      const buf = await file.arrayBuffer();
+      let bin = "";
+      const bytes = new Uint8Array(buf);
+      for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+      const base64 = btoa(bin);
+      const { url } = await uploadFn({ data: { base64, mime: file.type as "image/png" | "image/jpeg" | "image/webp" } });
+      upd({ hero_image_url: url });
+      showFeedback({ title: "Imagem enviada", type: "success" });
+    } catch (e: any) {
+      showFeedback({ title: "Falha no upload", description: e.message, type: "error" });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleGenerate = async () => {
+    if (!aiPrompt.trim()) {
+      showFeedback({ title: "Descreva a imagem", description: "Escreva o prompt para gerar.", type: "error" });
+      return;
+    }
+    setGenerating(true);
+    try {
+      const { url } = await genFn({ data: { prompt: aiPrompt.trim() } });
+      upd({ hero_image_url: url });
+      showFeedback({ title: "Imagem gerada", type: "success" });
+    } catch (e: any) {
+      showFeedback({ title: "Falha ao gerar", description: e.message, type: "error" });
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   return (
+
     <div className="space-y-4 py-2">
       <div className="grid sm:grid-cols-2 gap-3">
         <div>
