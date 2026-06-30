@@ -284,7 +284,8 @@ export function AdminProductOrders() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </Card>
+    </div>
+
   );
 }
 
