@@ -56,6 +56,13 @@ export function AdminCrm() {
   const listVersionsFn = useServerFn(listCrmTemplateVersions);
   const deleteVersionFn = useServerFn(deleteCrmTemplateVersion);
   const [historyLead, setHistoryLead] = useState<any | null>(null);
+  const [auditLead, setAuditLead] = useState<any | null>(null);
+  const auditFn = useServerFn(listCrmLeadStatusHistory);
+  const { data: audit, isLoading: auditLoading } = useQuery({
+    queryKey: ["admin-crm-lead-audit", auditLead?.id],
+    queryFn: () => auditFn({ data: { leadId: auditLead.id } }),
+    enabled: !!auditLead,
+  });
   const [versionsOpen, setVersionsOpen] = useState(false);
   const [compareVersion, setCompareVersion] = useState<any | null>(null);
 
