@@ -1,0 +1,1 @@
+ALTER TABLE public.product_orders ADD COLUMN IF NOT EXISTS whatsapp_sent_at timestamptz;
