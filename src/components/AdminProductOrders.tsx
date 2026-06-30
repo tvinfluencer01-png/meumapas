@@ -240,6 +240,15 @@ export function AdminProductOrders() {
                           >
                             {busy ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
                           </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            title="Enviar e-mail de definição de senha"
+                            disabled={busy}
+                            onClick={() => dispatchMutation.mutate({ id: o.id, action: "password_setup" })}
+                          >
+                            {busy ? <Loader2 className="size-4 animate-spin" /> : <KeyRound className="size-4" />}
+                          </Button>
                         </>
                       )}
                       <Button size="sm" variant="ghost" onClick={() => setSelected(o)}>
