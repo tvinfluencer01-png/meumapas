@@ -285,7 +285,7 @@ export const saveDispatchSettings = createServerFn({ method: "POST" })
     z
       .object({
         auto_enabled: z.boolean(),
-        delay_minutes: z.number().int().min(0).max(1440),
+        delay_minutes: z.number().int().min(0).max(60 * 24 * 30),
       })
       .parse(d),
   )
