@@ -402,7 +402,33 @@ async function generatePdfForOrder(order: any, landing: any): Promise<Uint8Array
     { type: "kv", rows },
   ];
 
-  if (descriptionParas.length) {
+  // === Mapa de Personalidade Numerológico — conteúdo completo ===
+  const isNumerologyPersonality =
+    String(landing.report_type ?? "") === "numerologia" ||
+    /numerolog/i.test(String(landing.slug ?? "")) ||
+    /personalidade.*numerolog/i.test(String(landing.title ?? ""));
+
+  if (isNumerologyPersonality) {
+    const customerName = String(cd.full_name ?? cd.name ?? "").trim();
+    const customerBirth = String(cd.birth_date ?? "").trim();
+    if (customerName && /^\d{4}-\d{2}-\d{2}/.test(customerBirth)) {
+      const { buildPersonalityNumerologyBlocks } = await import(
+        "@/lib/numerology-personality-report"
+      );
+      const { blocks: numBlocks } = buildPersonalityNumerologyBlocks(
+        customerName,
+        customerBirth,
+      );
+      for (const b of numBlocks) blocks.push(b);
+    } else {
+      blocks.push({ type: "h2", text: "Atenção" });
+      blocks.push({
+        type: "p",
+        text:
+          "Para gerar o mapa numerológico completo precisamos do nome completo de batismo e da data de nascimento. Por favor, responda ao e-mail de entrega com esses dados para que possamos enviar o mapa personalizado.",
+      });
+    }
+  } else if (descriptionParas.length) {
     blocks.push({ type: "h2", text: "Sobre o seu relatório" });
     for (const p of descriptionParas) blocks.push({ type: "p", text: p });
   } else {
@@ -413,6 +439,8 @@ async function generatePdfForOrder(order: any, landing: any): Promise<Uint8Array
     blocks.push({ type: "h2", text: "O que está incluso" });
     blocks.push({ type: "list", items: benefits });
   }
+
+
 
   blocks.push({ type: "h2", text: "Próximos passos" });
   blocks.push({
