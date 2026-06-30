@@ -277,7 +277,7 @@ export const listCrmFollowupHistory = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: rows, error } = await supabaseAdmin
       .from("crm_followup_history" as any)
-      .select("id,lead_id,attempt_number,status,subject,recipient_email,error_message,created_at")
+      .select("id,lead_id,attempt_number,status,subject,recipient_email,error_message,channel,trigger_type,created_at")
       .eq("lead_id", data.leadId)
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
@@ -289,6 +289,8 @@ export const listCrmFollowupHistory = createServerFn({ method: "POST" })
       subject: string | null;
       recipient_email: string;
       error_message: string | null;
+      channel: "email" | "whatsapp";
+      trigger_type: "scheduled" | "status_change" | "manual";
       created_at: string;
     }>;
   });
