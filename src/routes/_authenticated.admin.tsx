@@ -68,6 +68,8 @@ export const Route = createFileRoute("/_authenticated/admin")({
 });
 
 const ADMIN_MENU: { value: string; label: string; icon: typeof SettingsIcon }[] = [
+  { value: "pedidos", label: "Pedidos", icon: ShoppingCart },
+  { value: "crm", label: "CRM Leads", icon: Mail },
   { value: "settings", label: "Configurações", icon: SettingsIcon },
   { value: "users", label: "Usuários", icon: Users },
   { value: "costs", label: "Custos por ação", icon: CoinsIcon },
@@ -86,9 +88,8 @@ const ADMIN_MENU: { value: string; label: string; icon: typeof SettingsIcon }[] 
   { value: "smtp", label: "E-mail SMTP", icon: Mail },
   { value: "pwa", label: "PWA", icon: Smartphone },
   { value: "product-landings", label: "Landings Produtos", icon: FileText },
-  { value: "pedidos", label: "Pedidos", icon: ShoppingCart },
-  { value: "crm", label: "CRM Leads", icon: Mail },
 ];
+
 
 function AdminPage() {
   const isAdminFn = useServerFn(checkIsAdmin);
