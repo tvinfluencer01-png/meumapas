@@ -1,15 +1,23 @@
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, ExternalLink, Mail, MessageSquare, Eye, CheckCircle2, AlertTriangle } from "lucide-react";
+import { Loader2, ExternalLink, Eye, CheckCircle2, AlertTriangle, FileText, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { showFeedback } from "@/components/system-feedback";
-import { listAdminOrders, markOrdersViewed, updateOrderStatus } from "@/lib/product-orders.functions";
+import {
+  listAdminOrders,
+  markOrdersViewed,
+  updateOrderStatus,
+  dispatchProductOrder,
+  getDispatchSettings,
+  saveDispatchSettings,
+} from "@/lib/product-orders.functions";
 
 const STATUS_LABEL: Record<string, { label: string; color: string }> = {
   pending_payment: { label: "Aguardando pagamento", color: "bg-amber-600/30 text-amber-300 border border-amber-500/40" },

@@ -37,6 +37,7 @@ import { Route as AuthenticatedAdminLogsRouteImport } from './routes/_authentica
 import { Route as ApiPublicManifestWebmanifestRouteImport } from './routes/api/public/manifest.webmanifest'
 import { Route as ApiPublicManifestIconRouteImport } from './routes/api/public/manifest.icon'
 import { Route as ApiPublicHooksMercadopagoRouteImport } from './routes/api/public/hooks/mercadopago'
+import { Route as ApiPublicHooksDispatchOrdersRouteImport } from './routes/api/public/hooks/dispatch-orders'
 import { Route as ApiPublicHooksDailyHoroscopeRouteImport } from './routes/api/public/hooks/daily-horoscope'
 import { Route as AuthenticatedPSlugCheckoutRouteImport } from './routes/_authenticated.p.$slug.checkout'
 
@@ -185,6 +186,12 @@ const ApiPublicHooksMercadopagoRoute =
     path: '/api/public/hooks/mercadopago',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksDispatchOrdersRoute =
+  ApiPublicHooksDispatchOrdersRouteImport.update({
+    id: '/api/public/hooks/dispatch-orders',
+    path: '/api/public/hooks/dispatch-orders',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksDailyHoroscopeRoute =
   ApiPublicHooksDailyHoroscopeRouteImport.update({
     id: '/api/public/hooks/daily-horoscope',
@@ -225,6 +232,7 @@ export interface FileRoutesByFullPath {
   '/admin/logs': typeof AuthenticatedAdminLogsRoute
   '/p/$slug/checkout': typeof AuthenticatedPSlugCheckoutRoute
   '/api/public/hooks/daily-horoscope': typeof ApiPublicHooksDailyHoroscopeRoute
+  '/api/public/hooks/dispatch-orders': typeof ApiPublicHooksDispatchOrdersRoute
   '/api/public/hooks/mercadopago': typeof ApiPublicHooksMercadopagoRoute
   '/api/public/manifest/icon': typeof ApiPublicManifestIconRoute
   '/api/public/manifest/webmanifest': typeof ApiPublicManifestWebmanifestRoute
@@ -256,6 +264,7 @@ export interface FileRoutesByTo {
   '/admin/logs': typeof AuthenticatedAdminLogsRoute
   '/p/$slug/checkout': typeof AuthenticatedPSlugCheckoutRoute
   '/api/public/hooks/daily-horoscope': typeof ApiPublicHooksDailyHoroscopeRoute
+  '/api/public/hooks/dispatch-orders': typeof ApiPublicHooksDispatchOrdersRoute
   '/api/public/hooks/mercadopago': typeof ApiPublicHooksMercadopagoRoute
   '/api/public/manifest/icon': typeof ApiPublicManifestIconRoute
   '/api/public/manifest/webmanifest': typeof ApiPublicManifestWebmanifestRoute
@@ -289,6 +298,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/logs': typeof AuthenticatedAdminLogsRoute
   '/_authenticated/p/$slug/checkout': typeof AuthenticatedPSlugCheckoutRoute
   '/api/public/hooks/daily-horoscope': typeof ApiPublicHooksDailyHoroscopeRoute
+  '/api/public/hooks/dispatch-orders': typeof ApiPublicHooksDispatchOrdersRoute
   '/api/public/hooks/mercadopago': typeof ApiPublicHooksMercadopagoRoute
   '/api/public/manifest/icon': typeof ApiPublicManifestIconRoute
   '/api/public/manifest/webmanifest': typeof ApiPublicManifestWebmanifestRoute
@@ -322,6 +332,7 @@ export interface FileRouteTypes {
     | '/admin/logs'
     | '/p/$slug/checkout'
     | '/api/public/hooks/daily-horoscope'
+    | '/api/public/hooks/dispatch-orders'
     | '/api/public/hooks/mercadopago'
     | '/api/public/manifest/icon'
     | '/api/public/manifest/webmanifest'
@@ -353,6 +364,7 @@ export interface FileRouteTypes {
     | '/admin/logs'
     | '/p/$slug/checkout'
     | '/api/public/hooks/daily-horoscope'
+    | '/api/public/hooks/dispatch-orders'
     | '/api/public/hooks/mercadopago'
     | '/api/public/manifest/icon'
     | '/api/public/manifest/webmanifest'
@@ -385,6 +397,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/logs'
     | '/_authenticated/p/$slug/checkout'
     | '/api/public/hooks/daily-horoscope'
+    | '/api/public/hooks/dispatch-orders'
     | '/api/public/hooks/mercadopago'
     | '/api/public/manifest/icon'
     | '/api/public/manifest/webmanifest'
@@ -400,6 +413,7 @@ export interface RootRouteChildren {
   PSlugRoute: typeof PSlugRoute
   RTokenRoute: typeof RTokenRoute
   ApiPublicHooksDailyHoroscopeRoute: typeof ApiPublicHooksDailyHoroscopeRoute
+  ApiPublicHooksDispatchOrdersRoute: typeof ApiPublicHooksDispatchOrdersRoute
   ApiPublicHooksMercadopagoRoute: typeof ApiPublicHooksMercadopagoRoute
   ApiPublicManifestIconRoute: typeof ApiPublicManifestIconRoute
   ApiPublicManifestWebmanifestRoute: typeof ApiPublicManifestWebmanifestRoute
@@ -603,6 +617,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksMercadopagoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/dispatch-orders': {
+      id: '/api/public/hooks/dispatch-orders'
+      path: '/api/public/hooks/dispatch-orders'
+      fullPath: '/api/public/hooks/dispatch-orders'
+      preLoaderRoute: typeof ApiPublicHooksDispatchOrdersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/daily-horoscope': {
       id: '/api/public/hooks/daily-horoscope'
       path: '/api/public/hooks/daily-horoscope'
@@ -686,6 +707,7 @@ const rootRouteChildren: RootRouteChildren = {
   PSlugRoute: PSlugRoute,
   RTokenRoute: RTokenRoute,
   ApiPublicHooksDailyHoroscopeRoute: ApiPublicHooksDailyHoroscopeRoute,
+  ApiPublicHooksDispatchOrdersRoute: ApiPublicHooksDispatchOrdersRoute,
   ApiPublicHooksMercadopagoRoute: ApiPublicHooksMercadopagoRoute,
   ApiPublicManifestIconRoute: ApiPublicManifestIconRoute,
   ApiPublicManifestWebmanifestRoute: ApiPublicManifestWebmanifestRoute,
