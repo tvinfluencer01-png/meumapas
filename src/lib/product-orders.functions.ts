@@ -556,7 +556,20 @@ async function runDispatchForOrder(
         .from("reports")
         .createSignedUrl(path, 60 * 60 * 24 * 30);
       if (sErr) throw new Error(`Signed URL: ${sErr.message}`);
-      pdfUrl = signed?.signedUrl ?? null;
+      const longUrl = signed?.signedUrl ?? null;
+      if (longUrl) {
+        const { shortenUrl } = await import("./short-links.server");
+        try {
+          pdfUrl = await shortenUrl(longUrl, {
+            orderId: order.id,
+            expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
+          });
+        } catch {
+          pdfUrl = longUrl;
+        }
+      } else {
+        pdfUrl = null;
+      }
       patch.pdf_url = pdfUrl;
       patch.pdf_generated_at = new Date().toISOString();
     }
@@ -700,7 +713,16 @@ async function sendOrderWhatsapp(orderId: string) {
         .from("reports")
         .createSignedUrl(path, 60 * 60 * 24 * 30);
       if (sErr || !signed?.signedUrl) throw new Error(`Gerar link assinado falhou: ${sErr?.message ?? "sem URL"}`);
-      pdfUrl = signed.signedUrl;
+      const longUrl = signed.signedUrl;
+      try {
+        const { shortenUrl } = await import("./short-links.server");
+        pdfUrl = await shortenUrl(longUrl, {
+          orderId: order.id,
+          expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
+        });
+      } catch {
+        pdfUrl = longUrl;
+      }
       await supabaseAdmin
         .from("product_orders")
         .update({ pdf_url: pdfUrl, pdf_generated_at: new Date().toISOString() } as any)

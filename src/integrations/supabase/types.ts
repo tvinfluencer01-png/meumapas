@@ -1594,6 +1594,47 @@ export type Database = {
         }
         Relationships: []
       }
+      short_links: {
+        Row: {
+          clicks: number
+          created_at: string
+          expires_at: string | null
+          id: string
+          order_id: string | null
+          slug: string
+          target_url: string
+          updated_at: string
+        }
+        Insert: {
+          clicks?: number
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          order_id?: string | null
+          slug: string
+          target_url: string
+          updated_at?: string
+        }
+        Update: {
+          clicks?: number
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          order_id?: string | null
+          slug?: string
+          target_url?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "short_links_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "product_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       smtp_settings: {
         Row: {
           created_at: string

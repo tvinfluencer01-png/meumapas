@@ -14,6 +14,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AtivacaoRouteImport } from './routes/ativacao'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SSlugRouteImport } from './routes/s.$slug'
 import { Route as RTokenRouteImport } from './routes/r.$token'
 import { Route as PSlugRouteImport } from './routes/p.$slug'
 import { Route as ApiChatRouteImport } from './routes/api.chat'
@@ -64,6 +65,11 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SSlugRoute = SSlugRouteImport.update({
+  id: '/s/$slug',
+  path: '/s/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RTokenRoute = RTokenRouteImport.update({
@@ -236,6 +242,7 @@ export interface FileRoutesByFullPath {
   '/api/chat': typeof ApiChatRoute
   '/p/$slug': typeof PSlugRoute
   '/r/$token': typeof RTokenRoute
+  '/s/$slug': typeof SSlugRoute
   '/admin/logs': typeof AuthenticatedAdminLogsRoute
   '/p/$slug/checkout': typeof AuthenticatedPSlugCheckoutRoute
   '/api/public/hooks/crm-followups': typeof ApiPublicHooksCrmFollowupsRoute
@@ -269,6 +276,7 @@ export interface FileRoutesByTo {
   '/api/chat': typeof ApiChatRoute
   '/p/$slug': typeof PSlugRoute
   '/r/$token': typeof RTokenRoute
+  '/s/$slug': typeof SSlugRoute
   '/admin/logs': typeof AuthenticatedAdminLogsRoute
   '/p/$slug/checkout': typeof AuthenticatedPSlugCheckoutRoute
   '/api/public/hooks/crm-followups': typeof ApiPublicHooksCrmFollowupsRoute
@@ -304,6 +312,7 @@ export interface FileRoutesById {
   '/api/chat': typeof ApiChatRoute
   '/p/$slug': typeof PSlugRoute
   '/r/$token': typeof RTokenRoute
+  '/s/$slug': typeof SSlugRoute
   '/_authenticated/admin/logs': typeof AuthenticatedAdminLogsRoute
   '/_authenticated/p/$slug/checkout': typeof AuthenticatedPSlugCheckoutRoute
   '/api/public/hooks/crm-followups': typeof ApiPublicHooksCrmFollowupsRoute
@@ -339,6 +348,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/p/$slug'
     | '/r/$token'
+    | '/s/$slug'
     | '/admin/logs'
     | '/p/$slug/checkout'
     | '/api/public/hooks/crm-followups'
@@ -372,6 +382,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/p/$slug'
     | '/r/$token'
+    | '/s/$slug'
     | '/admin/logs'
     | '/p/$slug/checkout'
     | '/api/public/hooks/crm-followups'
@@ -406,6 +417,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/p/$slug'
     | '/r/$token'
+    | '/s/$slug'
     | '/_authenticated/admin/logs'
     | '/_authenticated/p/$slug/checkout'
     | '/api/public/hooks/crm-followups'
@@ -425,6 +437,7 @@ export interface RootRouteChildren {
   ApiChatRoute: typeof ApiChatRoute
   PSlugRoute: typeof PSlugRoute
   RTokenRoute: typeof RTokenRoute
+  SSlugRoute: typeof SSlugRoute
   ApiPublicHooksCrmFollowupsRoute: typeof ApiPublicHooksCrmFollowupsRoute
   ApiPublicHooksDailyHoroscopeRoute: typeof ApiPublicHooksDailyHoroscopeRoute
   ApiPublicHooksDispatchOrdersRoute: typeof ApiPublicHooksDispatchOrdersRoute
@@ -468,6 +481,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/s/$slug': {
+      id: '/s/$slug'
+      path: '/s/$slug'
+      fullPath: '/s/$slug'
+      preLoaderRoute: typeof SSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/r/$token': {
@@ -727,6 +747,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiChatRoute: ApiChatRoute,
   PSlugRoute: PSlugRoute,
   RTokenRoute: RTokenRoute,
+  SSlugRoute: SSlugRoute,
   ApiPublicHooksCrmFollowupsRoute: ApiPublicHooksCrmFollowupsRoute,
   ApiPublicHooksDailyHoroscopeRoute: ApiPublicHooksDailyHoroscopeRoute,
   ApiPublicHooksDispatchOrdersRoute: ApiPublicHooksDispatchOrdersRoute,
