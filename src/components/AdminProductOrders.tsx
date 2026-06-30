@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, ExternalLink, Eye, CheckCircle2, AlertTriangle, FileText, Send, KeyRound } from "lucide-react";
+import { Loader2, ExternalLink, Eye, CheckCircle2, AlertTriangle, FileText, Send, KeyRound, BadgeCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -250,6 +250,21 @@ export function AdminProductOrders() {
                             {busy ? <Loader2 className="size-4 animate-spin" /> : <KeyRound className="size-4" />}
                           </Button>
                         </>
+                      )}
+                      {!["paid", "processing", "delivered"].includes(o.status) && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          title="Aprovar pagamento manualmente"
+                          disabled={updateMutation.isPending}
+                          onClick={() => {
+                            if (confirm(`Confirmar aprovação manual do pagamento deste pedido (R$ ${(o.amount_cents / 100).toFixed(2)})?`)) {
+                              updateMutation.mutate({ id: o.id, status: "paid" });
+                            }
+                          }}
+                        >
+                          <BadgeCheck className="size-4 text-emerald-400" />
+                        </Button>
                       )}
                       <Button size="sm" variant="ghost" onClick={() => setSelected(o)}>
                         <Eye className="size-4 mr-1" /> Ver
