@@ -449,6 +449,7 @@ export type Database = {
         Row: {
           attempt_number: number
           body: string | null
+          channel: string
           created_at: string
           error_message: string | null
           id: string
@@ -457,10 +458,12 @@ export type Database = {
           recipient_email: string
           status: string
           subject: string | null
+          trigger_type: string
         }
         Insert: {
           attempt_number?: number
           body?: string | null
+          channel?: string
           created_at?: string
           error_message?: string | null
           id?: string
@@ -469,10 +472,12 @@ export type Database = {
           recipient_email: string
           status: string
           subject?: string | null
+          trigger_type?: string
         }
         Update: {
           attempt_number?: number
           body?: string | null
+          channel?: string
           created_at?: string
           error_message?: string | null
           id?: string
@@ -481,6 +486,7 @@ export type Database = {
           recipient_email?: string
           status?: string
           subject?: string | null
+          trigger_type?: string
         }
         Relationships: [
           {
@@ -662,6 +668,39 @@ export type Database = {
           source?: string | null
           status?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      crm_status_automations: {
+        Row: {
+          created_at: string
+          email_body: string
+          email_enabled: boolean
+          email_subject: string
+          status: string
+          updated_at: string
+          whatsapp_enabled: boolean
+          whatsapp_message: string
+        }
+        Insert: {
+          created_at?: string
+          email_body?: string
+          email_enabled?: boolean
+          email_subject?: string
+          status: string
+          updated_at?: string
+          whatsapp_enabled?: boolean
+          whatsapp_message?: string
+        }
+        Update: {
+          created_at?: string
+          email_body?: string
+          email_enabled?: boolean
+          email_subject?: string
+          status?: string
+          updated_at?: string
+          whatsapp_enabled?: boolean
+          whatsapp_message?: string
         }
         Relationships: []
       }
