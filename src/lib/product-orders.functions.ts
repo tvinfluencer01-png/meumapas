@@ -517,61 +517,102 @@ async function sendOrderWhatsapp(orderId: string) {
     .maybeSingle();
   if (error || !order) throw new Error("Pedido não encontrado.");
   const landing = (order as any).landing;
-  const cd = ((order as any).customer_data ?? {}) as Record<string, any>;
-  const phone = String(
-    cd.phone_e164 ?? cd.whatsapp ?? cd.phone ?? cd.telefone ?? "",
-  ).replace(/\D+/g, "");
-  if (!phone) throw new Error("Telefone do cliente não encontrado.");
+  if (!landing) throw new Error("Produto vinculado não encontrado.");
 
-  let pdfUrl: string | null = (order as any).pdf_url ?? null;
-  if (!pdfUrl) {
-    const bytes = await generatePdfForOrder(order, landing);
-    const path = `product-orders/${order.id}.pdf`;
-    const { error: upErr } = await supabaseAdmin.storage
-      .from("reports")
-      .upload(path, bytes, { contentType: "application/pdf", upsert: true });
-    if (upErr) throw new Error(`Upload PDF: ${upErr.message}`);
-    const { data: signed, error: sErr } = await supabaseAdmin.storage
-      .from("reports")
-      .createSignedUrl(path, 60 * 60 * 24 * 30);
-    if (sErr) throw new Error(`Signed URL: ${sErr.message}`);
-    pdfUrl = signed?.signedUrl ?? null;
+  const recordFailure = async (msg: string) => {
     await supabaseAdmin
       .from("product_orders")
-      .update({ pdf_url: pdfUrl, pdf_generated_at: new Date().toISOString() } as any)
+      .update({
+        dispatch_attempts: ((order as any).dispatch_attempts ?? 0) + 1,
+        error_message: msg,
+      } as any)
       .eq("id", order.id);
-  }
+  };
 
-  const { data: evo } = await supabaseAdmin
-    .from("evolution_settings" as any)
-    .select("*")
-    .eq("enabled", true)
-    .order("updated_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  const e = evo as any;
-  if (!e?.base_url || !e?.global_api_key || !e?.instance_name) {
-    throw new Error("Evolution API (WhatsApp) não configurada.");
+  try {
+    const cd = ((order as any).customer_data ?? {}) as Record<string, any>;
+    const rawPhone = String(
+      cd.phone_e164 ?? cd.whatsapp ?? cd.phone ?? cd.telefone ?? "",
+    ).replace(/\D+/g, "");
+    if (!rawPhone) throw new Error("Telefone do cliente não encontrado nos dados do pedido.");
+    // Add country code 55 (Brazil) if missing for typical 10/11-digit local numbers
+    const phone = rawPhone.length <= 11 ? `55${rawPhone}` : rawPhone;
+
+    let pdfUrl: string | null = (order as any).pdf_url ?? null;
+    if (!pdfUrl) {
+      let bytes: Uint8Array;
+      try {
+        bytes = await generatePdfForOrder(order, landing);
+      } catch (e: any) {
+        throw new Error(`Falha ao gerar PDF: ${e?.message ?? e}`);
+      }
+      const path = `product-orders/${order.id}.pdf`;
+      const { error: upErr } = await supabaseAdmin.storage
+        .from("reports")
+        .upload(path, bytes, { contentType: "application/pdf", upsert: true });
+      if (upErr) throw new Error(`Upload do PDF falhou: ${upErr.message}`);
+      const { data: signed, error: sErr } = await supabaseAdmin.storage
+        .from("reports")
+        .createSignedUrl(path, 60 * 60 * 24 * 30);
+      if (sErr || !signed?.signedUrl) throw new Error(`Gerar link assinado falhou: ${sErr?.message ?? "sem URL"}`);
+      pdfUrl = signed.signedUrl;
+      await supabaseAdmin
+        .from("product_orders")
+        .update({ pdf_url: pdfUrl, pdf_generated_at: new Date().toISOString() } as any)
+        .eq("id", order.id);
+    }
+
+    const { data: evo } = await supabaseAdmin
+      .from("evolution_settings" as any)
+      .select("*")
+      .eq("enabled", true)
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const e = evo as any;
+    if (!e?.base_url || !e?.global_api_key || !e?.instance_name) {
+      throw new Error("Evolution API (WhatsApp) não configurada ou desabilitada.");
+    }
+
+    const nome = cd.full_name ?? cd.name ?? "";
+    const text =
+      `Olá ${nome}! ✨\n\nSeu relatório "${landing?.title ?? "produto"}" está pronto.\n\n` +
+      `📄 Acesse seu PDF aqui:\n${pdfUrl}\n\n` +
+      `O link é válido por 30 dias. Guarde com carinho! 🌙`;
+    const base = String(e.base_url).replace(/\/+$/, "");
+    const url = `${base}/message/sendText/${encodeURIComponent(e.instance_name)}`;
+
+    let res: Response;
+    try {
+      res = await fetch(url, {
+        method: "POST",
+        headers: { apikey: e.global_api_key, "Content-Type": "application/json" },
+        body: JSON.stringify({ number: phone, text }),
+      });
+    } catch (netErr: any) {
+      throw new Error(`Falha de rede ao chamar Evolution: ${netErr?.message ?? netErr}`);
+    }
+    if (!res.ok) {
+      const t = await res.text().catch(() => "");
+      throw new Error(`Evolution retornou HTTP ${res.status}: ${t.slice(0, 200) || res.statusText}`);
+    }
+
+    await supabaseAdmin
+      .from("product_orders")
+      .update({
+        updated_at: new Date().toISOString(),
+        error_message: null,
+        dispatch_attempts: ((order as any).dispatch_attempts ?? 0) + 1,
+      } as any)
+      .eq("id", order.id);
+    return { ok: true, pdf_url: pdfUrl, phone };
+  } catch (e: any) {
+    const msg = e?.message ?? String(e);
+    await recordFailure(msg);
+    throw new Error(msg);
   }
-  const nome = cd.full_name ?? cd.name ?? "";
-  const text = `Olá ${nome}! Seu relatório "${landing?.title ?? "produto"}" está pronto.\n\nAcesse aqui: ${pdfUrl}`;
-  const base = String(e.base_url).replace(/\/+$/, "");
-  const url = `${base}/message/sendText/${encodeURIComponent(e.instance_name)}`;
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { apikey: e.global_api_key, "Content-Type": "application/json" },
-    body: JSON.stringify({ number: phone, text }),
-  });
-  if (!res.ok) {
-    const t = await res.text();
-    throw new Error(`Evolution falhou (${res.status}): ${t.slice(0, 200)}`);
-  }
-  await supabaseAdmin
-    .from("product_orders")
-    .update({ updated_at: new Date().toISOString() } as any)
-    .eq("id", order.id);
-  return { ok: true };
 }
+
 
 export async function runAutomaticDispatchSweep() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
