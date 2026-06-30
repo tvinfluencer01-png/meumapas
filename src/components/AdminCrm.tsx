@@ -116,13 +116,66 @@ export function AdminCrm() {
 
   const saveSettingsMut = useMutation({
     mutationFn: (vars: any) => saveSettingsFn({ data: vars }),
-    onSuccess: () => {
-      showFeedback({ title: "Configurações salvas", type: "success" });
+    onSuccess: (r: any) => {
+      showFeedback({
+        title: "Configurações salvas",
+        description: r?.versioned ? "Nova versão dos templates registrada." : undefined,
+        type: "success",
+      });
+      setVersionNote("");
       qc.invalidateQueries({ queryKey: ["admin-crm-followup-settings"] });
+      qc.invalidateQueries({ queryKey: ["admin-crm-template-versions"] });
       setSettingsOpen(false);
     },
     onError: (e: Error) => showFeedback({ title: "Erro", description: e.message, type: "error" }),
   });
+
+  const { data: versions } = useQuery({
+    queryKey: ["admin-crm-template-versions"],
+    queryFn: () => listVersionsFn(),
+    enabled: settingsOpen || versionsOpen,
+  });
+
+  const deleteVersionMut = useMutation({
+    mutationFn: (id: string) => deleteVersionFn({ data: { id } }),
+    onSuccess: () => {
+      showFeedback({ title: "Versão removida", type: "success" });
+      qc.invalidateQueries({ queryKey: ["admin-crm-template-versions"] });
+    },
+    onError: (e: Error) => showFeedback({ title: "Erro", description: e.message, type: "error" }),
+  });
+
+  function restoreVersion(v: any) {
+    if (!form) return;
+    setForm({ ...form, subject_template: v.subject_template, body_template: v.body_template });
+    setVersionNote(`Restaurado de ${new Date(v.created_at).toLocaleString("pt-BR")}`);
+    setCompareVersion(null);
+    setVersionsOpen(false);
+    showFeedback({
+      title: "Versão restaurada no formulário",
+      description: "Clique em Salvar para aplicar.",
+      type: "info",
+    });
+  }
+
+  function diffLines(a: string, b: string) {
+    const al = (a ?? "").split("\n");
+    const bl = (b ?? "").split("\n");
+    const max = Math.max(al.length, bl.length);
+    const out: Array<{ kind: "same" | "old" | "new"; text: string }> = [];
+    for (let i = 0; i < max; i++) {
+      const x = al[i];
+      const y = bl[i];
+      if (x === y) {
+        if (x !== undefined) out.push({ kind: "same", text: x });
+      } else {
+        if (x !== undefined) out.push({ kind: "old", text: x });
+        if (y !== undefined) out.push({ kind: "new", text: y });
+      }
+    }
+    return out;
+  }
+
 
   const runNowMut = useMutation({
     mutationFn: () => runNowFn(),
