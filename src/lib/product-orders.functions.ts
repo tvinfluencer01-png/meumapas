@@ -746,6 +746,7 @@ async function sendOrderWhatsapp(orderId: string) {
       .from("product_orders")
       .update({
         updated_at: new Date().toISOString(),
+        whatsapp_sent_at: new Date().toISOString(),
         error_message: null,
         dispatch_attempts: ((order as any).dispatch_attempts ?? 0) + 1,
       } as any)
