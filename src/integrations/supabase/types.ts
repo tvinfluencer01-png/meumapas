@@ -1360,7 +1360,9 @@ export type Database = {
           delivery_email_template: string | null
           delivery_whatsapp_template: string | null
           description: string | null
+          hero_image_height: number | null
           hero_image_url: string | null
+          hero_image_width: number | null
           id: string
           price_cents: number
           report_type: string
@@ -1382,7 +1384,9 @@ export type Database = {
           delivery_email_template?: string | null
           delivery_whatsapp_template?: string | null
           description?: string | null
+          hero_image_height?: number | null
           hero_image_url?: string | null
+          hero_image_width?: number | null
           id?: string
           price_cents: number
           report_type: string
@@ -1404,7 +1408,9 @@ export type Database = {
           delivery_email_template?: string | null
           delivery_whatsapp_template?: string | null
           description?: string | null
+          hero_image_height?: number | null
           hero_image_url?: string | null
+          hero_image_width?: number | null
           id?: string
           price_cents?: number
           report_type?: string

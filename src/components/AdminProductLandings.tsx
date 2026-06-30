@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -31,6 +32,8 @@ type Landing = {
   subtitle: string | null;
   description: string | null;
   hero_image_url: string | null;
+  hero_image_width: number | null;
+  hero_image_height: number | null;
   price_cents: number;
   report_type: string;
   required_fields: string[];
@@ -51,6 +54,8 @@ const EMPTY: Landing = {
   subtitle: "",
   description: "",
   hero_image_url: "",
+  hero_image_width: 480,
+  hero_image_height: 600,
   price_cents: 4990,
   report_type: "mapa_astral",
   required_fields: ["full_name", "email", "birth_date"],
@@ -87,6 +92,8 @@ export function AdminProductLandings() {
           subtitle: l.subtitle || null,
           description: l.description || null,
           hero_image_url: l.hero_image_url || null,
+          hero_image_width: l.hero_image_width ?? null,
+          hero_image_height: l.hero_image_height ?? null,
           price_cents: l.price_cents,
           report_type: l.report_type,
           required_fields: l.required_fields,
@@ -336,23 +343,58 @@ function LandingForm({
       <div className="space-y-2 rounded-lg border border-gold/20 p-3">
         <Label>Imagem de capa</Label>
         {landing.hero_image_url ? (
-          <div className="relative w-full max-w-sm">
-            <img
-              src={landing.hero_image_url}
-              alt="Capa"
-              className="w-full h-40 object-cover rounded border border-gold/20"
-            />
-            <Button
-              type="button"
-              size="icon"
-              variant="ghost"
-              className="absolute top-1 right-1 bg-background/80 hover:bg-background"
-              onClick={() => upd({ hero_image_url: "" })}
-              title="Remover imagem"
-            >
-              <X className="size-4" />
-            </Button>
-          </div>
+          <>
+            <div className="relative inline-block">
+              <img
+                src={landing.hero_image_url}
+                alt="Capa"
+                style={{
+                  width: `${landing.hero_image_width ?? 480}px`,
+                  height: `${landing.hero_image_height ?? 600}px`,
+                  maxWidth: "100%",
+                }}
+                className="object-cover rounded border border-gold/20"
+              />
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                className="absolute top-1 right-1 bg-background/80 hover:bg-background"
+                onClick={() => upd({ hero_image_url: "" })}
+                title="Remover imagem"
+              >
+                <X className="size-4" />
+              </Button>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-4 pt-2">
+              <div>
+                <div className="flex justify-between text-xs mb-1">
+                  <Label>Largura</Label>
+                  <span className="text-muted-foreground">{landing.hero_image_width ?? 480}px</span>
+                </div>
+                <Slider
+                  min={120}
+                  max={1600}
+                  step={10}
+                  value={[landing.hero_image_width ?? 480]}
+                  onValueChange={([v]) => upd({ hero_image_width: v })}
+                />
+              </div>
+              <div>
+                <div className="flex justify-between text-xs mb-1">
+                  <Label>Altura</Label>
+                  <span className="text-muted-foreground">{landing.hero_image_height ?? 600}px</span>
+                </div>
+                <Slider
+                  min={120}
+                  max={1600}
+                  step={10}
+                  value={[landing.hero_image_height ?? 600]}
+                  onValueChange={([v]) => upd({ hero_image_height: v })}
+                />
+              </div>
+            </div>
+          </>
         ) : (
           <p className="text-xs text-muted-foreground">Nenhuma imagem definida.</p>
         )}
