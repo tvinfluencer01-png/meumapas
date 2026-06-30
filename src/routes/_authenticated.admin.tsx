@@ -177,6 +177,12 @@ function AdminTabs() {
           <TabsTrigger value="pwa" className="gap-2">
             <Smartphone className="size-4" /> PWA
           </TabsTrigger>
+          <TabsTrigger value="product-landings" className="gap-2">
+            <FileText className="size-4" /> Landings Produtos
+          </TabsTrigger>
+          <TabsTrigger value="pedidos" className="gap-2">
+            <ShoppingCart className="size-4" /> Pedidos
+          </TabsTrigger>
         </TabsList>
 
 
@@ -232,11 +238,16 @@ function AdminTabs() {
         <TabsContent value="pwa" className="mt-0">
           <AdminPwa />
         </TabsContent>
+        <TabsContent value="product-landings" className="mt-0">
+          <AdminProductLandings />
+        </TabsContent>
+        <TabsContent value="pedidos" className="mt-0">
+          <AdminProductOrders />
+        </TabsContent>
       </Tabs>
-
-    </div>
   );
 }
+
 
 type AdminUserRow = {
   id: string;
