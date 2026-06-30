@@ -67,6 +67,29 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPage,
 });
 
+const ADMIN_MENU: { value: string; label: string; icon: typeof SettingsIcon }[] = [
+  { value: "settings", label: "Configurações", icon: SettingsIcon },
+  { value: "users", label: "Usuários", icon: Users },
+  { value: "costs", label: "Custos por ação", icon: CoinsIcon },
+  { value: "audit", label: "Histórico", icon: History },
+  { value: "twilio", label: "Twilio", icon: MessageSquare },
+  { value: "evolution", label: "Evolution API", icon: Zap },
+  { value: "mercadopago", label: "Mercado Pago", icon: Wallet },
+  { value: "credits", label: "Créditos/Pacotes", icon: Coins },
+  { value: "packages", label: "Pacotes", icon: Layers },
+  { value: "addons", label: "Add-ons", icon: Package },
+  { value: "migration", label: "Migração", icon: ArrowRightLeft },
+  { value: "cron", label: "Cron Jobs", icon: Clock },
+  { value: "backup", label: "Backup", icon: Database },
+  { value: "global", label: "Landing Page", icon: Phone },
+  { value: "marketing", label: "Marketing", icon: Megaphone },
+  { value: "smtp", label: "E-mail SMTP", icon: Mail },
+  { value: "pwa", label: "PWA", icon: Smartphone },
+  { value: "product-landings", label: "Landings Produtos", icon: FileText },
+  { value: "pedidos", label: "Pedidos", icon: ShoppingCart },
+  { value: "crm", label: "CRM Leads", icon: Mail },
+];
+
 function AdminPage() {
   const isAdminFn = useServerFn(checkIsAdmin);
   const { data: roleData, isLoading } = useQuery({
@@ -75,187 +98,162 @@ function AdminPage() {
   });
 
   if (isLoading) {
-    return <div className="text-muted-foreground">Carregando…</div>;
+    return <div className="p-8 text-muted-foreground">Carregando…</div>;
   }
   if (!roleData?.isAdmin) {
     return (
-      <Card className="max-w-xl">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-destructive">
-            <AlertTriangle className="size-5" /> Acesso restrito
-          </CardTitle>
-          <CardDescription>
-            Este painel é exclusivo para super administradores. Peça a um admin para conceder seu acesso na tabela <code>user_roles</code>.
-          </CardDescription>
-        </CardHeader>
-      </Card>
+      <div className="p-8">
+        <Card className="max-w-xl">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="size-5" /> Acesso restrito
+            </CardTitle>
+            <CardDescription>
+              Este painel é exclusivo para super administradores.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
     );
   }
 
-  return (
-    <div className="space-y-6">
-      <header className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Shield className="size-6 text-gold" />
-          <div>
-            <h1 className="text-2xl font-serif shimmer-text">Painel do Super Admin</h1>
-            <p className="text-sm text-muted-foreground">Configurações sensíveis, integrações e gestão de usuários.</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            asChild
-            className="border-gold/30 hover:bg-gold/10 text-gold"
-          >
-            <Link to="/">Ver Landing Page</Link>
-          </Button>
-        </div>
-      </header>
-
-      <AdminTabs />
-    </div>
-  );
+  return <AdminDashboard />;
 }
 
-function AdminTabs() {
+function AdminDashboard() {
   const initialTab =
     typeof window !== "undefined"
       ? new URLSearchParams(window.location.search).get("tab") ?? "settings"
       : "settings";
   const [tab, setTab] = useState(initialTab);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  function selectTab(value: string) {
+    setTab(value);
+    setMobileOpen(false);
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.set("tab", value);
+      window.history.replaceState({}, "", url.toString());
+    }
+  }
+
   return (
-      <Tabs value={tab} onValueChange={setTab} className="space-y-6">
-        <TabsList className="flex flex-wrap h-auto">
-          <TabsTrigger value="settings" className="gap-2">
-            <SettingsIcon className="size-4" /> Configurações
-          </TabsTrigger>
-          <TabsTrigger value="users" className="gap-2">
-            <Users className="size-4" /> Usuários
-          </TabsTrigger>
-          <TabsTrigger value="costs" className="gap-2">
-            <CoinsIcon className="size-4" /> Custos por ação
-          </TabsTrigger>
-          <TabsTrigger value="audit" className="gap-2">
-            <History className="size-4" /> Histórico
-          </TabsTrigger>
-          <TabsTrigger value="twilio" className="gap-2">
-            <MessageSquare className="size-4" /> Twilio
-          </TabsTrigger>
-          <TabsTrigger value="evolution" className="gap-2">
-            <Zap className="size-4" /> Evolution API
-          </TabsTrigger>
-          <TabsTrigger value="mercadopago" className="gap-2">
-            <Wallet className="size-4" /> Mercado Pago
-          </TabsTrigger>
-          <TabsTrigger value="credits" className="gap-2">
-            <Coins className="size-4" /> Créditos/Pacotes
-          </TabsTrigger>
-          <TabsTrigger value="packages" className="gap-2">
-            <Layers className="size-4" /> Pacotes
-          </TabsTrigger>
-          <TabsTrigger value="addons" className="gap-2">
-            <Package className="size-4" /> Add-ons
-          </TabsTrigger>
-          <TabsTrigger value="migration" className="gap-2">
-            <ArrowRightLeft className="size-4" /> Migração
-          </TabsTrigger>
-          <TabsTrigger value="cron" className="gap-2">
-            <Clock className="size-4" /> Cron Jobs
-          </TabsTrigger>
-          <TabsTrigger value="backup" className="gap-2">
-            <Database className="size-4" /> Backup
-          </TabsTrigger>
-          <TabsTrigger value="global" className="gap-2">
-            <Phone className="size-4" /> Landing Page
-          </TabsTrigger>
-          <TabsTrigger value="marketing" className="gap-2">
-            <Megaphone className="size-4" /> Marketing
-          </TabsTrigger>
-          <TabsTrigger value="smtp" className="gap-2">
-            <Mail className="size-4" /> E-mail SMTP
-          </TabsTrigger>
-          <TabsTrigger value="pwa" className="gap-2">
-            <Smartphone className="size-4" /> PWA
-          </TabsTrigger>
-          <TabsTrigger value="product-landings" className="gap-2">
-            <FileText className="size-4" /> Landings Produtos
-          </TabsTrigger>
-          <TabsTrigger value="pedidos" className="gap-2">
-            <ShoppingCart className="size-4" /> Pedidos
-          </TabsTrigger>
-          <TabsTrigger value="crm" className="gap-2">
-            <Mail className="size-4" /> CRM Leads
-          </TabsTrigger>
-        </TabsList>
+    <div className="min-h-screen flex bg-background">
+      {/* Mobile top bar */}
+      <header className="lg:hidden fixed top-0 inset-x-0 z-30 flex items-center justify-between border-b border-border bg-background/90 backdrop-blur px-4 py-3">
+        <div className="flex items-center gap-2">
+          <Shield className="size-5 text-gold" />
+          <span className="font-serif text-base shimmer-text">Super Admin</span>
+        </div>
+        <Button variant="ghost" size="icon" onClick={() => setMobileOpen((o) => !o)}>
+          {mobileOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+        </Button>
+      </header>
 
+      {/* Sidebar */}
+      <aside
+        className={`${mobileOpen ? "flex" : "hidden"} lg:flex flex-col fixed lg:sticky inset-0 lg:inset-auto lg:top-0 z-20 h-screen w-full lg:w-72 border-r border-border bg-background/95 backdrop-blur-xl`}
+      >
+        <div className="shrink-0 px-4 py-4 border-b border-border space-y-3">
+          <Link
+            to="/dashboard"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gold/30 bg-secondary/40 text-sm text-gold hover:bg-gold hover:text-white transition-colors"
+          >
+            <ArrowLeft className="size-4" />
+            <span>Voltar para o dashboard</span>
+          </Link>
+          <div className="flex items-center gap-2 px-1">
+            <Shield className="size-5 text-gold" />
+            <div>
+              <div className="font-serif text-lg shimmer-text leading-tight">Super Admin</div>
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                Painel de controle
+              </div>
+            </div>
+          </div>
+        </div>
 
+        <nav className="flex-1 overflow-y-auto p-3 space-y-1 scrollbar-gold">
+          {ADMIN_MENU.map((item) => {
+            const Icon = item.icon;
+            const isActive = tab === item.value;
+            return (
+              <button
+                key={item.value}
+                type="button"
+                onClick={() => selectTab(item.value)}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors text-left ${
+                  isActive
+                    ? "bg-secondary text-gold border border-gold/30"
+                    : "text-muted-foreground hover:text-gold hover:bg-secondary/40"
+                }`}
+              >
+                <Icon className="size-4 shrink-0" />
+                <span className="flex-1">{item.label}</span>
+              </button>
+            );
+          })}
+        </nav>
 
-        <TabsContent value="settings" className="mt-0">
-          <SettingsForm />
-        </TabsContent>
-        <TabsContent value="users" className="mt-0">
-          <UsersAdmin />
-        </TabsContent>
-        <TabsContent value="costs" className="mt-0">
-          <AdminCreditCosts />
-        </TabsContent>
-        <TabsContent value="audit" className="mt-0">
-          <RoleAuditLog />
-        </TabsContent>
-        <TabsContent value="twilio" className="mt-0">
-          <TwilioForm />
-        </TabsContent>
-        <TabsContent value="evolution" className="mt-0">
-          <EvolutionForm />
-        </TabsContent>
-        <TabsContent value="mercadopago" className="mt-0">
-          <MercadoPagoForm />
-        </TabsContent>
-        <TabsContent value="credits" className="mt-0 space-y-6">
-          <AdminCreditPackages />
-          <AdminCreditsManager />
-        </TabsContent>
-        <TabsContent value="packages" className="mt-0">
-          <AdminLandingPackages />
-        </TabsContent>
-        <TabsContent value="addons" className="mt-0">
-          <AdminAddons />
-        </TabsContent>
-        <TabsContent value="migration" className="mt-0">
-          <AdminPlanMigration />
-        </TabsContent>
-        <TabsContent value="cron" className="mt-0">
-          <AdminCronStatus />
-        </TabsContent>
-        <TabsContent value="backup" className="mt-0">
-          <BackupAdmin />
-        </TabsContent>
-        <TabsContent value="global" className="mt-0">
-          <AdminGlobalSettings />
-        </TabsContent>
-        <TabsContent value="marketing" className="mt-0">
-          <AdminMarketing />
-        </TabsContent>
-        <TabsContent value="smtp" className="mt-0">
-          <AdminSmtp />
-        </TabsContent>
-        <TabsContent value="pwa" className="mt-0">
-          <AdminPwa />
-        </TabsContent>
-        <TabsContent value="product-landings" className="mt-0">
-          <AdminProductLandings />
-        </TabsContent>
-        <TabsContent value="pedidos" className="mt-0">
-          <AdminProductOrders />
-        </TabsContent>
-        <TabsContent value="crm" className="mt-0">
-          <AdminCrm />
-        </TabsContent>
-      </Tabs>
+        <div className="shrink-0 p-3 border-t border-border">
+          <Button variant="outline" size="sm" asChild className="w-full border-gold/30 hover:bg-gold/10 text-gold">
+            <Link to="/">Ver Landing Page</Link>
+          </Button>
+        </div>
+      </aside>
 
+      {/* Content */}
+      <main className="flex-1 min-h-screen pt-14 lg:pt-0">
+        <div className="p-4 lg:p-8 max-w-7xl mx-auto space-y-6">
+          <header className="flex items-center gap-3">
+            <Shield className="size-6 text-gold" />
+            <div>
+              <h1 className="text-2xl font-serif shimmer-text">
+                {ADMIN_MENU.find((m) => m.value === tab)?.label ?? "Painel do Super Admin"}
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                Configurações sensíveis, integrações e gestão do sistema.
+              </p>
+            </div>
+          </header>
+
+          <AdminTabContent tab={tab} />
+        </div>
+      </main>
+    </div>
   );
+}
+
+function AdminTabContent({ tab }: { tab: string }) {
+  switch (tab) {
+    case "settings": return <SettingsForm />;
+    case "users": return <UsersAdmin />;
+    case "costs": return <AdminCreditCosts />;
+    case "audit": return <RoleAuditLog />;
+    case "twilio": return <TwilioForm />;
+    case "evolution": return <EvolutionForm />;
+    case "mercadopago": return <MercadoPagoForm />;
+    case "credits": return (
+      <div className="space-y-6">
+        <AdminCreditPackages />
+        <AdminCreditsManager />
+      </div>
+    );
+    case "packages": return <AdminLandingPackages />;
+    case "addons": return <AdminAddons />;
+    case "migration": return <AdminPlanMigration />;
+    case "cron": return <AdminCronStatus />;
+    case "backup": return <BackupAdmin />;
+    case "global": return <AdminGlobalSettings />;
+    case "marketing": return <AdminMarketing />;
+    case "smtp": return <AdminSmtp />;
+    case "pwa": return <AdminPwa />;
+    case "product-landings": return <AdminProductLandings />;
+    case "pedidos": return <AdminProductOrders />;
+    case "crm": return <AdminCrm />;
+    default: return <SettingsForm />;
+  }
 }
 
 
