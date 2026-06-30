@@ -118,60 +118,121 @@ export function AdminProductOrders() {
   });
 
   return (
-    <Card className="border-gold/30">
-      <CardHeader>
-        <CardTitle className="font-serif shimmer-text">Pedidos de Produtos Avulsos</CardTitle>
-        <CardDescription>Pedidos das landing pages individuais (Mapa Astral, Numerologia, etc.)</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="flex flex-wrap gap-2">
-          <Input
-            placeholder="Buscar por cliente ou produto..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="max-w-xs"
-          />
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os status</SelectItem>
-              {Object.entries(STATUS_LABEL).map(([k, v]) => (
-                <SelectItem key={k} value={k}>{v.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+    <div className="space-y-4">
+      <Card className="border-gold/30">
+        <CardHeader>
+          <CardTitle className="font-serif shimmer-text">Envio Automático</CardTitle>
+          <CardDescription>
+            Quando ligado, os pedidos pagos são processados automaticamente (PDF + e-mail) após o tempo de espera.
+            Quando desligado, use os ícones em cada pedido pago para enviar manualmente.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-wrap items-end gap-4">
+          <div className="flex items-center gap-2">
+            <Switch checked={autoEnabled} onCheckedChange={setAutoEnabled} id="auto-dispatch" />
+            <Label htmlFor="auto-dispatch">Envio automático ativado</Label>
+          </div>
+          <div className="flex flex-col gap-1">
+            <Label htmlFor="delay-min">Delay (minutos)</Label>
+            <Input
+              id="delay-min"
+              type="number"
+              min={0}
+              max={1440}
+              value={delayMin}
+              onChange={(e) => setDelayMin(Number(e.target.value) || 0)}
+              disabled={!autoEnabled}
+              className="w-32"
+            />
+          </div>
+          <Button onClick={() => settingsMutation.mutate()} disabled={settingsMutation.isPending}>
+            {settingsMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : "Salvar"}
+          </Button>
+        </CardContent>
+      </Card>
 
-        {isLoading ? (
-          <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="size-4 animate-spin" /> Carregando…</div>
-        ) : !filtered.length ? (
-          <p className="text-sm text-muted-foreground">Nenhum pedido encontrado.</p>
-        ) : (
-          <div className="space-y-2">
-            {filtered.map((o: any) => {
-              const st = STATUS_LABEL[o.status] ?? { label: o.status, color: "bg-secondary" };
-              return (
-                <div key={o.id} className="flex flex-col gap-2 rounded-lg border border-gold/20 bg-secondary/30 p-3 sm:flex-row sm:items-center">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-serif text-gold truncate">{o.landing?.title ?? "—"}</span>
-                      <span className={`text-[10px] uppercase px-2 py-0.5 rounded font-bold ${st.color}`}>{st.label}</span>
+      <Card className="border-gold/30">
+        <CardHeader>
+          <CardTitle className="font-serif shimmer-text">Pedidos de Produtos Avulsos</CardTitle>
+          <CardDescription>Pedidos das landing pages individuais (Mapa Astral, Numerologia, etc.)</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex flex-wrap gap-2">
+            <Input
+              placeholder="Buscar por cliente ou produto..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="max-w-xs"
+            />
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os status</SelectItem>
+                {Object.entries(STATUS_LABEL).map(([k, v]) => (
+                  <SelectItem key={k} value={k}>{v.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {isLoading ? (
+            <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="size-4 animate-spin" /> Carregando…</div>
+          ) : !filtered.length ? (
+            <p className="text-sm text-muted-foreground">Nenhum pedido encontrado.</p>
+          ) : (
+            <div className="space-y-2">
+              {filtered.map((o: any) => {
+                const st = STATUS_LABEL[o.status] ?? { label: o.status, color: "bg-secondary" };
+                const canDispatch = ["paid", "processing", "failed"].includes(o.status);
+                const busy = dispatchingId === o.id;
+                return (
+                  <div key={o.id} className="flex flex-col gap-2 rounded-lg border border-gold/20 bg-secondary/30 p-3 sm:flex-row sm:items-center">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-serif text-gold truncate">{o.landing?.title ?? "—"}</span>
+                        <span className={`text-[10px] uppercase px-2 py-0.5 rounded font-bold ${st.color}`}>{st.label}</span>
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-0.5 flex flex-wrap gap-x-3">
+                        <span>{o.user_name ?? "—"} · {o.user_email ?? "—"}</span>
+                        <span>R$ {(o.amount_cents / 100).toFixed(2)}</span>
+                        <span>{new Date(o.created_at).toLocaleString("pt-BR")}</span>
+                      </div>
                     </div>
-                    <div className="text-xs text-muted-foreground mt-0.5 flex flex-wrap gap-x-3">
-                      <span>{o.user_name ?? "—"} · {o.user_email ?? "—"}</span>
-                      <span>R$ {(o.amount_cents / 100).toFixed(2)}</span>
-                      <span>{new Date(o.created_at).toLocaleString("pt-BR")}</span>
+                    <div className="flex items-center gap-1">
+                      {canDispatch && (
+                        <>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            title="Gerar e anexar PDF"
+                            disabled={busy}
+                            onClick={() => dispatchMutation.mutate({ id: o.id, action: "pdf" })}
+                          >
+                            {busy ? <Loader2 className="size-4 animate-spin" /> : <FileText className="size-4" />}
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            title="Enviar e-mail com PDF"
+                            disabled={busy}
+                            onClick={() => dispatchMutation.mutate({ id: o.id, action: "both" })}
+                          >
+                            {busy ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+                          </Button>
+                        </>
+                      )}
+                      <Button size="sm" variant="ghost" onClick={() => setSelected(o)}>
+                        <Eye className="size-4 mr-1" /> Ver
+                      </Button>
                     </div>
                   </div>
-                  <Button size="sm" variant="ghost" onClick={() => setSelected(o)}>
-                    <Eye className="size-4 mr-1" /> Ver
-                  </Button>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </CardContent>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
 
       <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto border-gold/30">
