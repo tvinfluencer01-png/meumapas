@@ -253,3 +253,230 @@ export const getOrderByToken = createServerFn({ method: "GET" })
     if (!order) throw new Error("not_found");
     return order;
   });
+
+// ============================================================
+// Dispatch (PDF + Email) — automatic or manual
+// ============================================================
+
+export const getDispatchSettings = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: isAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (!isAdmin) throw new Error("Forbidden");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data } = await supabaseAdmin
+      .from("product_dispatch_settings" as any)
+      .select("*")
+      .eq("id", "global")
+      .maybeSingle();
+    const r = (data as any) ?? {};
+    return {
+      auto_enabled: !!r.auto_enabled,
+      delay_minutes: typeof r.delay_minutes === "number" ? r.delay_minutes : 5,
+    };
+  });
+
+export const saveDispatchSettings = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        auto_enabled: z.boolean(),
+        delay_minutes: z.number().int().min(0).max(1440),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: isAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (!isAdmin) throw new Error("Forbidden");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("product_dispatch_settings" as any)
+      .upsert(
+        {
+          id: "global",
+          auto_enabled: data.auto_enabled,
+          delay_minutes: data.delay_minutes,
+          updated_at: new Date().toISOString(),
+          updated_by: context.userId,
+        },
+        { onConflict: "id" },
+      );
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+async function generatePdfForOrder(order: any, landing: any): Promise<Uint8Array> {
+  const { buildSimplePdf } = await import("@/lib/simple-pdf");
+  const cd = (order.customer_data ?? {}) as Record<string, any>;
+  const rows = Object.entries(cd)
+    .filter(([, v]) => v !== null && v !== undefined && String(v).trim() !== "")
+    .map(([k, v]) => ({ k: String(k), v: String(v) }));
+  return await buildSimplePdf({
+    brand: "Código Cósmico",
+    eyebrow: landing.title,
+    title: landing.title,
+    subtitle: landing.subtitle ?? undefined,
+    consultantName: cd.full_name ?? cd.name ?? undefined,
+    meta: [`Pedido: ${order.id.slice(0, 8)}`, `Data: ${new Date().toLocaleDateString("pt-BR")}`],
+    blocks: [
+      { type: "h2", text: "Dados do Pedido" },
+      { type: "kv", rows },
+      { type: "p", text: landing.description ?? "Seu relatório personalizado está sendo preparado." },
+    ],
+  });
+}
+
+async function sendOrderEmail(order: any, landing: any, pdfUrl: string | null) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data: smtp } = await supabaseAdmin
+    .from("smtp_settings" as any)
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const s = smtp as any;
+  if (!s?.enabled || !s.host || !s.username || !s.password || !s.from_email) {
+    throw new Error("SMTP não configurado.");
+  }
+  const cd = (order.customer_data ?? {}) as Record<string, any>;
+  const to = cd.email;
+  if (!to) throw new Error("E-mail do cliente não encontrado nos dados do pedido.");
+
+  const subject = landing.delivery_email_subject || `Seu ${landing.title} está pronto`;
+  const tpl =
+    landing.delivery_email_template ||
+    `<p>Olá {{name}},</p><p>Seu relatório <strong>{{title}}</strong> está pronto.</p>{{download}}<p>Obrigado!</p>`;
+  const downloadHtml = pdfUrl
+    ? `<p><a href="${pdfUrl}" style="background:#d4af37;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;display:inline-block">Baixar PDF</a></p>`
+    : "";
+  const html = tpl
+    .replace(/\{\{name\}\}/g, String(cd.full_name ?? cd.name ?? "cliente"))
+    .replace(/\{\{title\}\}/g, landing.title)
+    .replace(/\{\{download\}\}/g, downloadHtml);
+
+  const nodemailer = (await import("nodemailer")).default;
+  const transporter = nodemailer.createTransport({
+    host: s.host,
+    port: s.port,
+    secure: !!s.secure,
+    auth: { user: s.username, pass: s.password },
+  });
+  await transporter.sendMail({
+    from: `"${s.from_name || s.from_email}" <${s.from_email}>`,
+    to,
+    replyTo: s.reply_to || undefined,
+    subject,
+    html,
+  });
+}
+
+async function runDispatchForOrder(
+  orderId: string,
+  action: "pdf" | "email" | "both",
+) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data: order, error } = await supabaseAdmin
+    .from("product_orders")
+    .select("*, landing:product_landings(*)")
+    .eq("id", orderId)
+    .maybeSingle();
+  if (error || !order) throw new Error("Pedido não encontrado.");
+  const landing = (order as any).landing;
+  if (!landing) throw new Error("Produto vinculado não encontrado.");
+
+  const patch: Record<string, any> = {
+    dispatch_attempts: ((order as any).dispatch_attempts ?? 0) + 1,
+  };
+  let pdfUrl: string | null = (order as any).pdf_url ?? null;
+
+  try {
+    if (action === "pdf" || action === "both") {
+      const bytes = await generatePdfForOrder(order, landing);
+      const path = `product-orders/${order.id}.pdf`;
+      const { error: upErr } = await supabaseAdmin.storage
+        .from("reports")
+        .upload(path, bytes, { contentType: "application/pdf", upsert: true });
+      if (upErr) throw new Error(`Upload PDF: ${upErr.message}`);
+      const { data: signed, error: sErr } = await supabaseAdmin.storage
+        .from("reports")
+        .createSignedUrl(path, 60 * 60 * 24 * 30);
+      if (sErr) throw new Error(`Signed URL: ${sErr.message}`);
+      pdfUrl = signed?.signedUrl ?? null;
+      patch.pdf_url = pdfUrl;
+      patch.pdf_generated_at = new Date().toISOString();
+    }
+    if (action === "email" || action === "both") {
+      await sendOrderEmail(order, landing, pdfUrl);
+      patch.email_sent_at = new Date().toISOString();
+    }
+    if (action === "both" || (action === "email" && pdfUrl)) {
+      patch.status = "delivered";
+      patch.delivered_at = new Date().toISOString();
+    } else if (action === "pdf") {
+      if (((order as any).status ?? "") === "paid") patch.status = "processing";
+    }
+    patch.error_message = null;
+  } catch (e: any) {
+    patch.status = "failed";
+    patch.error_message = e?.message ?? String(e);
+    await supabaseAdmin.from("product_orders").update(patch as any).eq("id", order.id);
+    throw e;
+  }
+  await supabaseAdmin.from("product_orders").update(patch as any).eq("id", order.id);
+  return { ok: true, pdf_url: pdfUrl };
+}
+
+export const dispatchProductOrder = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        action: z.enum(["pdf", "email", "both"]).default("both"),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: isAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (!isAdmin) throw new Error("Forbidden");
+    return await runDispatchForOrder(data.id, data.action);
+  });
+
+export async function runAutomaticDispatchSweep() {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data: cfg } = await supabaseAdmin
+    .from("product_dispatch_settings" as any)
+    .select("*")
+    .eq("id", "global")
+    .maybeSingle();
+  const c = cfg as any;
+  if (!c?.auto_enabled) return { ran: 0, skipped: "disabled" as const };
+  const delay = typeof c.delay_minutes === "number" ? c.delay_minutes : 5;
+  const cutoff = new Date(Date.now() - delay * 60_000).toISOString();
+  const { data: orders } = await supabaseAdmin
+    .from("product_orders")
+    .select("id")
+    .eq("status", "paid")
+    .lte("updated_at", cutoff)
+    .limit(20);
+  let ran = 0;
+  for (const o of (orders ?? []) as Array<{ id: string }>) {
+    try {
+      await runDispatchForOrder(o.id, "both");
+      ran++;
+    } catch {
+      /* logged in order */
+    }
+  }
+  return { ran };
+}

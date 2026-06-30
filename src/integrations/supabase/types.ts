@@ -1066,6 +1066,30 @@ export type Database = {
         }
         Relationships: []
       }
+      product_dispatch_settings: {
+        Row: {
+          auto_enabled: boolean
+          delay_minutes: number
+          id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          auto_enabled?: boolean
+          delay_minutes?: number
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          auto_enabled?: boolean
+          delay_minutes?: number
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       product_landings: {
         Row: {
           active: boolean
@@ -1142,11 +1166,14 @@ export type Database = {
           created_at: string
           customer_data: Json
           delivered_at: string | null
+          dispatch_attempts: number
+          email_sent_at: string | null
           error_message: string | null
           id: string
           landing_id: string
           mp_payment_id: string | null
           mp_preference_id: string | null
+          pdf_generated_at: string | null
           pdf_url: string | null
           report_id: string | null
           status: string
@@ -1160,11 +1187,14 @@ export type Database = {
           created_at?: string
           customer_data?: Json
           delivered_at?: string | null
+          dispatch_attempts?: number
+          email_sent_at?: string | null
           error_message?: string | null
           id?: string
           landing_id: string
           mp_payment_id?: string | null
           mp_preference_id?: string | null
+          pdf_generated_at?: string | null
           pdf_url?: string | null
           report_id?: string | null
           status?: string
@@ -1178,11 +1208,14 @@ export type Database = {
           created_at?: string
           customer_data?: Json
           delivered_at?: string | null
+          dispatch_attempts?: number
+          email_sent_at?: string | null
           error_message?: string | null
           id?: string
           landing_id?: string
           mp_payment_id?: string | null
           mp_preference_id?: string | null
+          pdf_generated_at?: string | null
           pdf_url?: string | null
           report_id?: string | null
           status?: string

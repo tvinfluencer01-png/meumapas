@@ -1,15 +1,23 @@
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, ExternalLink, Mail, MessageSquare, Eye, CheckCircle2, AlertTriangle } from "lucide-react";
+import { Loader2, ExternalLink, Eye, CheckCircle2, AlertTriangle, FileText, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { showFeedback } from "@/components/system-feedback";
-import { listAdminOrders, markOrdersViewed, updateOrderStatus } from "@/lib/product-orders.functions";
+import {
+  listAdminOrders,
+  markOrdersViewed,
+  updateOrderStatus,
+  dispatchProductOrder,
+  getDispatchSettings,
+  saveDispatchSettings,
+} from "@/lib/product-orders.functions";
 
 const STATUS_LABEL: Record<string, { label: string; color: string }> = {
   pending_payment: { label: "Aguardando pagamento", color: "bg-amber-600/30 text-amber-300 border border-amber-500/40" },
@@ -25,11 +33,37 @@ export function AdminProductOrders() {
   const listFn = useServerFn(listAdminOrders);
   const markFn = useServerFn(markOrdersViewed);
   const updateFn = useServerFn(updateOrderStatus);
+  const dispatchFn = useServerFn(dispatchProductOrder);
+  const getSettingsFn = useServerFn(getDispatchSettings);
+  const saveSettingsFn = useServerFn(saveDispatchSettings);
 
   const { data: orders, isLoading } = useQuery({
     queryKey: ["admin-product-orders"],
     queryFn: () => listFn(),
     refetchInterval: 30_000,
+  });
+
+  const { data: settings } = useQuery({
+    queryKey: ["dispatch-settings"],
+    queryFn: () => getSettingsFn(),
+  });
+
+  const [autoEnabled, setAutoEnabled] = useState(false);
+  const [delayMin, setDelayMin] = useState(5);
+  useEffect(() => {
+    if (settings) {
+      setAutoEnabled(settings.auto_enabled);
+      setDelayMin(settings.delay_minutes);
+    }
+  }, [settings]);
+
+  const settingsMutation = useMutation({
+    mutationFn: () => saveSettingsFn({ data: { auto_enabled: autoEnabled, delay_minutes: delayMin } }),
+    onSuccess: () => {
+      showFeedback({ title: "Configurações salvas", type: "success" });
+      qc.invalidateQueries({ queryKey: ["dispatch-settings"] });
+    },
+    onError: (e: Error) => showFeedback({ title: "Erro", description: e.message, type: "error" }),
   });
 
   // Marca todos como visualizados ao abrir
@@ -42,6 +76,7 @@ export function AdminProductOrders() {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<any | null>(null);
+  const [dispatchingId, setDispatchingId] = useState<string | null>(null);
 
   const updateMutation = useMutation({
     mutationFn: (vars: { id: string; status: any; pdf_url?: string | null }) =>
@@ -52,6 +87,21 @@ export function AdminProductOrders() {
       setSelected(null);
     },
     onError: (e: Error) => showFeedback({ title: "Erro", description: e.message, type: "error" }),
+  });
+
+  const dispatchMutation = useMutation({
+    mutationFn: (vars: { id: string; action: "pdf" | "email" | "both" }) =>
+      dispatchFn({ data: vars }),
+    onMutate: (vars) => setDispatchingId(vars.id),
+    onSettled: () => setDispatchingId(null),
+    onSuccess: (_, vars) => {
+      showFeedback({
+        title: vars.action === "pdf" ? "PDF gerado" : vars.action === "email" ? "E-mail enviado" : "Pedido despachado",
+        type: "success",
+      });
+      qc.invalidateQueries({ queryKey: ["admin-product-orders"] });
+    },
+    onError: (e: Error) => showFeedback({ title: "Erro ao despachar", description: e.message, type: "error" }),
   });
 
   const filtered = (orders ?? []).filter((o: any) => {
@@ -68,60 +118,121 @@ export function AdminProductOrders() {
   });
 
   return (
-    <Card className="border-gold/30">
-      <CardHeader>
-        <CardTitle className="font-serif shimmer-text">Pedidos de Produtos Avulsos</CardTitle>
-        <CardDescription>Pedidos das landing pages individuais (Mapa Astral, Numerologia, etc.)</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="flex flex-wrap gap-2">
-          <Input
-            placeholder="Buscar por cliente ou produto..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="max-w-xs"
-          />
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os status</SelectItem>
-              {Object.entries(STATUS_LABEL).map(([k, v]) => (
-                <SelectItem key={k} value={k}>{v.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+    <div className="space-y-4">
+      <Card className="border-gold/30">
+        <CardHeader>
+          <CardTitle className="font-serif shimmer-text">Envio Automático</CardTitle>
+          <CardDescription>
+            Quando ligado, os pedidos pagos são processados automaticamente (PDF + e-mail) após o tempo de espera.
+            Quando desligado, use os ícones em cada pedido pago para enviar manualmente.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-wrap items-end gap-4">
+          <div className="flex items-center gap-2">
+            <Switch checked={autoEnabled} onCheckedChange={setAutoEnabled} id="auto-dispatch" />
+            <Label htmlFor="auto-dispatch">Envio automático ativado</Label>
+          </div>
+          <div className="flex flex-col gap-1">
+            <Label htmlFor="delay-min">Delay (minutos)</Label>
+            <Input
+              id="delay-min"
+              type="number"
+              min={0}
+              max={1440}
+              value={delayMin}
+              onChange={(e) => setDelayMin(Number(e.target.value) || 0)}
+              disabled={!autoEnabled}
+              className="w-32"
+            />
+          </div>
+          <Button onClick={() => settingsMutation.mutate()} disabled={settingsMutation.isPending}>
+            {settingsMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : "Salvar"}
+          </Button>
+        </CardContent>
+      </Card>
 
-        {isLoading ? (
-          <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="size-4 animate-spin" /> Carregando…</div>
-        ) : !filtered.length ? (
-          <p className="text-sm text-muted-foreground">Nenhum pedido encontrado.</p>
-        ) : (
-          <div className="space-y-2">
-            {filtered.map((o: any) => {
-              const st = STATUS_LABEL[o.status] ?? { label: o.status, color: "bg-secondary" };
-              return (
-                <div key={o.id} className="flex flex-col gap-2 rounded-lg border border-gold/20 bg-secondary/30 p-3 sm:flex-row sm:items-center">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-serif text-gold truncate">{o.landing?.title ?? "—"}</span>
-                      <span className={`text-[10px] uppercase px-2 py-0.5 rounded font-bold ${st.color}`}>{st.label}</span>
+      <Card className="border-gold/30">
+        <CardHeader>
+          <CardTitle className="font-serif shimmer-text">Pedidos de Produtos Avulsos</CardTitle>
+          <CardDescription>Pedidos das landing pages individuais (Mapa Astral, Numerologia, etc.)</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex flex-wrap gap-2">
+            <Input
+              placeholder="Buscar por cliente ou produto..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="max-w-xs"
+            />
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os status</SelectItem>
+                {Object.entries(STATUS_LABEL).map(([k, v]) => (
+                  <SelectItem key={k} value={k}>{v.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {isLoading ? (
+            <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="size-4 animate-spin" /> Carregando…</div>
+          ) : !filtered.length ? (
+            <p className="text-sm text-muted-foreground">Nenhum pedido encontrado.</p>
+          ) : (
+            <div className="space-y-2">
+              {filtered.map((o: any) => {
+                const st = STATUS_LABEL[o.status] ?? { label: o.status, color: "bg-secondary" };
+                const canDispatch = ["paid", "processing", "failed"].includes(o.status);
+                const busy = dispatchingId === o.id;
+                return (
+                  <div key={o.id} className="flex flex-col gap-2 rounded-lg border border-gold/20 bg-secondary/30 p-3 sm:flex-row sm:items-center">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-serif text-gold truncate">{o.landing?.title ?? "—"}</span>
+                        <span className={`text-[10px] uppercase px-2 py-0.5 rounded font-bold ${st.color}`}>{st.label}</span>
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-0.5 flex flex-wrap gap-x-3">
+                        <span>{o.user_name ?? "—"} · {o.user_email ?? "—"}</span>
+                        <span>R$ {(o.amount_cents / 100).toFixed(2)}</span>
+                        <span>{new Date(o.created_at).toLocaleString("pt-BR")}</span>
+                      </div>
                     </div>
-                    <div className="text-xs text-muted-foreground mt-0.5 flex flex-wrap gap-x-3">
-                      <span>{o.user_name ?? "—"} · {o.user_email ?? "—"}</span>
-                      <span>R$ {(o.amount_cents / 100).toFixed(2)}</span>
-                      <span>{new Date(o.created_at).toLocaleString("pt-BR")}</span>
+                    <div className="flex items-center gap-1">
+                      {canDispatch && (
+                        <>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            title="Gerar e anexar PDF"
+                            disabled={busy}
+                            onClick={() => dispatchMutation.mutate({ id: o.id, action: "pdf" })}
+                          >
+                            {busy ? <Loader2 className="size-4 animate-spin" /> : <FileText className="size-4" />}
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            title="Enviar e-mail com PDF"
+                            disabled={busy}
+                            onClick={() => dispatchMutation.mutate({ id: o.id, action: "both" })}
+                          >
+                            {busy ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+                          </Button>
+                        </>
+                      )}
+                      <Button size="sm" variant="ghost" onClick={() => setSelected(o)}>
+                        <Eye className="size-4 mr-1" /> Ver
+                      </Button>
                     </div>
                   </div>
-                  <Button size="sm" variant="ghost" onClick={() => setSelected(o)}>
-                    <Eye className="size-4 mr-1" /> Ver
-                  </Button>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </CardContent>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
 
       <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto border-gold/30">
@@ -173,7 +284,8 @@ export function AdminProductOrders() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </Card>
+    </div>
+
   );
 }
 
