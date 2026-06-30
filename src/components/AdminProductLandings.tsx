@@ -91,6 +91,8 @@ export function AdminProductLandings() {
           subtitle: l.subtitle || null,
           description: l.description || null,
           hero_image_url: l.hero_image_url || null,
+          hero_image_width: l.hero_image_width ?? null,
+          hero_image_height: l.hero_image_height ?? null,
           price_cents: l.price_cents,
           report_type: l.report_type,
           required_fields: l.required_fields,
