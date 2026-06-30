@@ -279,7 +279,7 @@ export function AdminCrm() {
                     const id = e.dataTransfer.getData("text/plain");
                     const lead = (leads ?? []).find((x: any) => x.id === id);
                     if (id && lead && lead.status !== statusKey) {
-                      updateMut.mutate({ id, status: statusKey });
+                      updateMut.mutate({ id, status: statusKey, source: "kanban", change_note: `Movido para ${STATUS_LABEL[statusKey].label} via Kanban` });
                     }
                   }}
                   className="rounded-lg border border-border/40 bg-secondary/20 p-2 min-h-[400px] flex flex-col"
