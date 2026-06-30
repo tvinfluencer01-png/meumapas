@@ -436,13 +436,52 @@ async function runDispatchForOrder(
   return { ok: true, pdf_url: pdfUrl };
 }
 
+async function sendPasswordSetupEmail(order: any) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const cd = (order.customer_data ?? {}) as Record<string, any>;
+  const to = cd.email ?? order.guest_email;
+  if (!to) throw new Error("E-mail do cliente não encontrado.");
+
+  const { data: linkData, error: lErr } = await supabaseAdmin.auth.admin.generateLink({
+    type: "recovery",
+    email: to,
+  });
+  if (lErr) throw new Error(`generateLink: ${lErr.message}`);
+  const recoveryUrl = linkData?.properties?.action_link;
+  if (!recoveryUrl) throw new Error("Não foi possível gerar o link de recuperação.");
+
+  const { data: smtp } = await supabaseAdmin
+    .from("smtp_settings" as any)
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const s = smtp as any;
+  if (!s?.enabled || !s.host || !s.username || !s.password || !s.from_email) {
+    throw new Error("SMTP não configurado.");
+  }
+  const nodemailer = (await import("nodemailer")).default;
+  const transporter = nodemailer.createTransport({
+    host: s.host, port: s.port, secure: !!s.secure,
+    auth: { user: s.username, pass: s.password },
+  });
+  await transporter.sendMail({
+    from: `"${s.from_name || s.from_email}" <${s.from_email}>`,
+    to,
+    subject: "Defina sua senha — Código Cósmico",
+    html: `<p>Olá ${cd.full_name ?? cd.name ?? ""},</p>
+           <p>Sua conta no Código Cósmico está pronta. Clique abaixo para definir sua senha e acessar.</p>
+           <p><a href="${recoveryUrl}" style="background:#d4af37;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;display:inline-block">Definir minha senha</a></p>`,
+  });
+}
+
 export const dispatchProductOrder = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) =>
     z
       .object({
         id: z.string().uuid(),
-        action: z.enum(["pdf", "email", "both"]).default("both"),
+        action: z.enum(["pdf", "email", "both", "password_setup"]).default("both"),
       })
       .parse(d),
   )
@@ -452,6 +491,17 @@ export const dispatchProductOrder = createServerFn({ method: "POST" })
       _role: "admin",
     });
     if (!isAdmin) throw new Error("Forbidden");
+    if (data.action === "password_setup") {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: order, error } = await supabaseAdmin
+        .from("product_orders")
+        .select("*")
+        .eq("id", data.id)
+        .maybeSingle();
+      if (error || !order) throw new Error("Pedido não encontrado.");
+      await sendPasswordSetupEmail(order);
+      return { ok: true };
+    }
     return await runDispatchForOrder(data.id, data.action);
   });
 
