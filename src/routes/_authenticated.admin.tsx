@@ -262,6 +262,7 @@ function AdminTabContent({ tab }: { tab: string }) {
     case "product-landings": return <AdminProductLandings />;
     case "pedidos": return <AdminProductOrders />;
     case "crm": return <AdminCrm />;
+    case "affiliate": return <AdminAffiliatePanel />;
     default: return <SettingsForm />;
   }
 }
