@@ -18,6 +18,7 @@ import { AdminPwa } from "@/components/AdminPwa";
 import { AdminProductLandings } from "@/components/AdminProductLandings";
 import { AdminProductOrders } from "@/components/AdminProductOrders";
 import { AdminCrm } from "@/components/AdminCrm";
+import { AdminAffiliatePanel } from "@/modules/affiliate/ui/AdminAffiliatePanel";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -70,6 +71,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
 const ADMIN_MENU: { value: string; label: string; icon: typeof SettingsIcon }[] = [
   { value: "pedidos", label: "Pedidos", icon: ShoppingCart },
   { value: "crm", label: "CRM Leads", icon: Mail },
+  { value: "affiliate", label: "Affiliate Center", icon: Users },
   { value: "settings", label: "Configurações", icon: SettingsIcon },
   { value: "users", label: "Usuários", icon: Users },
   { value: "costs", label: "Custos por ação", icon: CoinsIcon },
@@ -260,6 +262,7 @@ function AdminTabContent({ tab }: { tab: string }) {
     case "product-landings": return <AdminProductLandings />;
     case "pedidos": return <AdminProductOrders />;
     case "crm": return <AdminCrm />;
+    case "affiliate": return <AdminAffiliatePanel />;
     default: return <SettingsForm />;
   }
 }

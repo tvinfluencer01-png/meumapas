@@ -1,111 +1,120 @@
+# Affiliate Center — FASE 1 (Base Estrutural)
 
-# Landing Pages Avulsas + Pedidos no Admin
+Módulo **totalmente isolado** do sistema atual. Nenhum arquivo existente do sistema principal será modificado, com **uma única exceção controlada**: adicionar um item de menu "Affiliate Center" na sidebar do Super Admin para acesso ao painel (sem alterar nenhuma lógica existente).
 
-Sistema para publicar landing pages individuais por produto (Mapa Astral, Numerologia, etc.), captar dados do cliente, processar pagamento avulso via Mercado Pago, gerar e entregar o relatório, e gerenciar pedidos no painel admin.
+Tudo vive sob namespaces próprios: `affiliate_*` no banco, `src/modules/affiliate/` no código, `/api/public/affiliate/*` e `/_authenticated/affiliate/*` nas rotas.
 
-## Fluxo do Cliente
+## Banco de dados (schema `public`, prefixo `affiliate_`)
+
+Tabelas criadas em uma única migração com `GRANT` + RLS + políticas:
+
+- `affiliate_profiles` — perfil do afiliado (linkado a `auth.users`): nome, email, whatsapp, cpf (único), status (`pending|approved|rejected|suspended`), affiliate_code (único), api_key_hash, token_hash, approved_at, approved_by
+- `affiliate_links` — links exclusivos por afiliado (slug único, destino, label, ativo)
+- `affiliate_clicks` — cada clique (link_id, ip, user_agent, country, region, city, device, os, browser, referrer, utm_source/medium/campaign/term/content, landed_at)
+- `affiliate_sessions` — sessão de visitante (session_token, click_id inicial, first_seen, last_seen, fingerprint)
+- `affiliate_conversions` — visitante converteu (session_id, type: signup/lead/order, value_cents)
+- `affiliate_orders` — pedidos atribuídos (order_ref, customer_ref, amount_cents, status)
+- `affiliate_commissions` — comissões geradas (order_id, affiliate_id, amount_cents, rate, status: pending/approved/paid/canceled, available_at)
+- `affiliate_withdraws` — solicitações de saque (amount_cents, method, bank_account_id/pix_key_id, status: requested/processing/paid/rejected)
+- `affiliate_bank_accounts` — contas bancárias do afiliado
+- `affiliate_pix_keys` — chaves PIX
+- `affiliate_notifications` — notificações internas (afiliado/admin, lida)
+- `affiliate_messages` — mensagens entre admin e afiliado
+- `affiliate_audit_logs` — auditoria de ações (actor_id, action, entity, entity_id, diff jsonb, ip)
+- `affiliate_settings` — config global (auto-approve on/off, default commission rate, cookie window dias)
+
+### RBAC
+
+- Novo enum `affiliate_role`: `affiliate_admin`, `affiliate`
+- Tabela `affiliate_user_roles (user_id, role)` separada (não tocar em `user_roles` existente)
+- Função `has_affiliate_role(_user, _role)` security definer
+- Super Admin do sistema = automaticamente `affiliate_admin` (via `public.has_role(uid,'admin') OR has_affiliate_role(...)` nas policies)
+
+### RLS
+
+- Afiliado vê apenas suas próprias linhas em todas as tabelas (`affiliate_id = profile do auth.uid()`)
+- `affiliate_admin` vê tudo
+- `affiliate_clicks` e `affiliate_sessions` aceitam INSERT anônimo (rastreamento público) com políticas restritivas
+- `service_role` total em todas
+
+## Estrutura de código (Clean Architecture)
 
 ```text
-/p/{slug}  →  ver oferta (hero, descrição, preço)
-   ↓
-"Comprar agora"  →  criar conta / login (se já tem)
-   ↓
-formulário de dados (campos dinâmicos por produto)
-   ↓
-Mercado Pago (checkout do valor do produto)
-   ↓
-webhook confirma pagamento  →  gera relatório  →  entrega
-   ↓
-cliente recebe: email (PDF) + WhatsApp + link único de acesso
+src/modules/affiliate/
+  domain/
+    entities/        (Affiliate, Link, Click, Order, Commission, Withdraw…)
+    events/          (AffiliateApproved, ClickRegistered, ConversionRecorded…)
+  application/
+    services/        (AffiliateService, TrackingService, CommissionService, WithdrawService, NotificationService)
+    use-cases/       (RegisterAffiliate, ApproveAffiliate, RegisterClick, RegisterConversion, RequestWithdraw…)
+    events/          (event bus simples in-process; handlers registrados aqui)
+  infrastructure/
+    repositories/    (Repository Pattern sobre Supabase: AffiliateRepository, LinkRepository, ClickRepository, OrderRepository, CommissionRepository, WithdrawRepository, AuditRepository)
+    tracking/        (geo lookup via header CF-IPCountry, UA parser leve)
+    security/        (gera affiliate_code, api_key, token; hash com sha256)
+  interfaces/
+    http/
+      middleware/    (requireAffiliate, requireAffiliateAdmin, requireApiKey, auditMiddleware)
+      controllers/   (AuthController, AffiliateController, LinkController, TrackingController, CommissionController, WithdrawController, AdminController)
+      schemas/       (zod schemas para todos os inputs)
+  server-fns/        (createServerFn wrappers consumidos pelo painel)
 ```
 
-Conta obrigatória antes do checkout (conforme escolhido) — assim o pedido já fica vinculado e o cliente acessa o histórico depois.
+## API REST pública — `src/routes/api/public/affiliate/*`
 
-## Painel "Pedidos" (Super Admin)
+Todas com Zod, rate-limit por IP, audit log:
 
-- Novo item de menu **acima de Dashboard** com ícone de carrinho
-- Badge dourado com contagem de **pedidos não visualizados** pelo admin
-- Lista: cliente, produto, valor, status (aguardando pagamento / pago / processando / entregue / falhou), data
-- Ações por pedido: ver dados, reenviar entrega (email/WhatsApp), marcar como resolvido, ver PDF gerado
-- Filtros: produto, status, período
-- Ao abrir a tela, marca todos como visualizados (zera o badge)
+- `POST /api/public/affiliate/register` — cadastro (Nome, Email, WhatsApp, CPF, Senha, Confirmação)
+- `POST /api/public/affiliate/track/click` — registra clique (slug do link + UTM + ctx)
+- `POST /api/public/affiliate/track/visit` — registra visita/sessão
+- `POST /api/public/affiliate/track/checkout` — checkout iniciado
+- `POST /api/public/affiliate/track/order` — compra concluída (autenticado via X-API-Key do parceiro)
+- `POST /api/public/affiliate/track/commission` — emissão manual de comissão (admin via API key admin)
+- `POST /api/public/affiliate/track/withdraw` — registro externo de saque
+- `GET  /api/public/affiliate/r/:slug` — short-redirect que registra clique e redireciona
 
-## Painel "Landing Pages de Produto" (Super Admin)
+## Rotas internas (server functions + UI)
 
-CMS simples para o admin cadastrar landings sem código:
+- `/_authenticated/affiliate/dashboard` — painel do afiliado (cliques, conversões, comissões, link)
+- `/_authenticated/affiliate/links`, `/wallet`, `/withdraws`, `/messages`
+- `/_authenticated/admin/affiliate` — painel super admin (aprovar, suspender, ver tudo, configurar)
 
-- Slug (`mapa-personalidade`), título, subtítulo, descrição rica
-- Imagem hero, badges/benefícios, depoimentos
-- Tipo de relatório vinculado (mapa_astral | numerologia | cabalistica | tarot | empresarial | leitura_semanal)
-- Preço em centavos
-- Campos do formulário necessários (nome, data nasc, hora nasc, cidade, email, whatsapp, etc.) — checkbox de quais coletar
-- Texto de CTA, copy do email de entrega, mensagem do WhatsApp
-- Ativo/inativo, SEO (meta title/description)
+Server functions sob `src/modules/affiliate/server-fns/` usando `requireSupabaseAuth` + verificação de role.
 
-## Estrutura Técnica
+## Sistema de rastreamento
 
-### Banco de dados (novas tabelas)
+`TrackingService.captureContext(request)` extrai: IP (`cf-connecting-ip`/`x-forwarded-for`), país/região/cidade (`cf-ipcountry`, `cf-iplongitude`/headers Cloudflare), UA parse (browser, OS, device), referrer, UTM da query, timestamp. Persiste em `affiliate_clicks` e abre/atualiza `affiliate_sessions` por cookie `aff_sid`.
 
-- **`product_landings`** — landings configuradas pelo admin
-  - slug (unique), title, subtitle, description, hero_image_url, price_cents, report_type, required_fields (jsonb), benefits (jsonb), cta_text, delivery_email_template, delivery_whatsapp_template, active, seo_title, seo_description, created_by
-- **`product_orders`** — pedidos avulsos
-  - user_id, landing_id, status, amount_cents, mp_preference_id, mp_payment_id, customer_data (jsonb: dados do form), report_id (fk → reports), pdf_url, access_token (uuid p/ link único), delivered_at, viewed_by_admin (bool), error_message
-- Triggers: marca `viewed_by_admin = false` em INSERT; função `unviewed_orders_count()` para o badge.
-- RLS: cliente vê só os próprios pedidos; admin vê todos; landings ativas têm SELECT público (anon) para campos seguros.
+## Event-Driven
 
-### Rotas
+Event bus simples in-process (`EventEmitter`) no `application/events`. Eventos: `affiliate.registered`, `affiliate.approved`, `click.registered`, `conversion.recorded`, `commission.created`, `withdraw.requested`. Handlers gravam notificações, audit logs e disparam comissões automaticamente.
 
-- **`/p/$slug`** (público) — landing dinâmica baseada em `product_landings`
-  - Loader carrega via server fn pública (publishable client)
-  - SEO: head() com meta tags do CMS, og:image = hero_image_url
-- **`/p/$slug/checkout`** (`_authenticated`) — formulário + cria pedido + redireciona pro MP
-- **`/r/$token`** (público com token) — página de visualização do relatório entregue (download PDF)
-- **`/_authenticated/admin/pedidos`** — painel de gestão
-- **`/_authenticated/admin/landing-pages`** — CMS das landings
+## Segurança
 
-### Server functions / routes
+- Senhas via Supabase Auth (cria usuário no auth + perfil em `affiliate_profiles`)
+- `api_key` e `token` gerados com `crypto.randomBytes(32)`, armazenados como SHA-256 hash; valor cru mostrado **uma única vez** ao afiliado
+- CPF validado por algoritmo e armazenado com unique constraint
+- Todas as mutations passam por `auditMiddleware` → `affiliate_audit_logs`
 
-- `createProductOrder` (auth): valida form, cria order, cria preferência MP, retorna init_point
-- `listAdminOrders` (auth + admin): lista paginada, filtros, contagem de não vistos
-- `markOrdersViewed` (auth + admin): zera badge
-- `resendDelivery` (auth + admin): reenvia email/WhatsApp
-- `getPublicLanding` (público): retorna landing por slug
-- Webhook MP existente (`/api/public/hooks/mercadopago`) estendido: ao confirmar pagamento de um `product_order`, dispara geração do relatório → upload PDF → envio email (SMTP existente) + WhatsApp (Evolution/Twilio existente) → marca `delivered_at`
+## Toque mínimo no sistema atual
 
-### Integração com geradores existentes
+- Adicionar **um único item** ao menu do Super Admin em `src/routes/_authenticated.admin.tsx` apontando para `/_authenticated/admin/affiliate` (label "Affiliate Center", ícone Users)
+- Nenhum outro arquivo existente é alterado
 
-Reaproveita as funções já existentes em `src/lib/`:
-- `astrology.functions.ts` → mapa astral
-- `numerology.ts` → numerologia (pitagórica e cabalística)
-- `tarot.functions.ts`, `business.functions.ts`, `weekly-reading.functions.ts`
-- `reports-pdf.ts` / `simple-pdf.ts` → geração de PDF com branding
-- `smtp.functions.ts` → email
-- Evolution/Twilio settings → WhatsApp
+## Entregáveis FASE 1 (nesta ordem)
 
-Um dispatcher (`generateProductReport(order)`) escolhe o gerador certo pelo `report_type`.
+1. Migração: enums, tabelas, GRANTs, RLS, policies, função `has_affiliate_role`, trigger de `updated_at`, settings default
+2. Camada de domínio + entidades + eventos
+3. Repositórios (infrastructure)
+4. Serviços + use cases + event bus
+5. Middlewares HTTP + schemas Zod
+6. Rotas API públicas de rastreamento e registro
+7. Server functions do painel
+8. UIs mínimas: cadastro público (`/affiliate/register`), dashboard afiliado, painel admin (lista + aprovação)
+9. Item de menu no admin
 
-### Sidebar Admin
+Ao terminar todos os 9 passos, **parar e aguardar FASE 2** (relatórios, pagamentos automáticos, gamificação, etc.) conforme instruído.
 
-Ajuste em `src/routes/_authenticated.tsx`:
-- Novo item "Pedidos" antes de Dashboard, visível apenas para admins
-- Query polling leve (30s) na contagem de não visualizados → badge dourado com número
-- Animação pulse quando > 0
+## Fora de escopo (FASE 2+)
 
-## Entregáveis em ordem
-
-1. Migração: tabelas `product_landings`, `product_orders` + RLS + GRANTs + função de contagem
-2. CMS admin: tela para criar/editar landings
-3. Página pública `/p/$slug` com SEO dinâmico
-4. Fluxo de checkout + integração Mercado Pago
-5. Extensão do webhook MP para processar pedidos avulsos
-6. Dispatcher de geração de relatório + entrega multi-canal
-7. Painel admin "Pedidos" + item de menu com badge
-8. Página `/r/$token` para visualização pública do relatório entregue
-
-## Pontos de atenção
-
-- **Preço variável por produto**: cada landing tem seu próprio `price_cents`, independente dos pacotes de assinatura
-- **Cliente sem assinatura**: o gate atual de `/ativacao` precisa abrir exceção quando o usuário está acessando `/p/$slug/checkout` ou `/r/$token` (compra avulsa não exige plano)
-- **Idempotência do webhook**: garantir que reentrega de webhook não gere PDF duplicado nem cobre 2x
-- **PDF storage**: usar bucket existente `reports` (já configurado)
-- **Token de acesso**: UUID v4 + expiração opcional (90 dias) para o link público de download
+Integração de pagamento real para saque, cálculo automático de comissão a partir do checkout do sistema principal, e-mails de boas-vindas, dashboards avançados, gamificação, multi-nível.
