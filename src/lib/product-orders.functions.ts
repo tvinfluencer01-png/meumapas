@@ -435,6 +435,13 @@ async function generatePdfForOrder(order: any, landing: any): Promise<Uint8Array
     blocks.push({ type: "p", text: "Seu relatório personalizado está sendo preparado." });
   }
 
+  if (benefits.length) {
+    blocks.push({ type: "h2", text: "O que está incluso" });
+    blocks.push({ type: "list", items: benefits });
+  }
+
+
+
   blocks.push({ type: "h2", text: "Próximos passos" });
   blocks.push({
     type: "p",
