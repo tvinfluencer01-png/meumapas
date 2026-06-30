@@ -97,7 +97,7 @@ export function AdminProductOrders() {
   });
 
   const dispatchMutation = useMutation({
-    mutationFn: (vars: { id: string; action: "pdf" | "email" | "both" | "password_setup" }) =>
+    mutationFn: (vars: { id: string; action: "pdf" | "email" | "both" | "password_setup" | "whatsapp" }) =>
       dispatchFn({ data: vars }),
     onMutate: (vars) => setDispatchingId(vars.id),
     onSettled: () => setDispatchingId(null),
