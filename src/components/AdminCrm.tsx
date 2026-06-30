@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, Mail, MessageCircle, Pause, Play, Send, Settings as SettingsIcon, History, GitBranch, RotateCcw, Trash2, ClipboardList, ArrowRight } from "lucide-react";
+import { Loader2, Mail, MessageCircle, Pause, Play, Send, Settings as SettingsIcon, History, GitBranch, RotateCcw, Trash2, ClipboardList, ArrowRight, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
