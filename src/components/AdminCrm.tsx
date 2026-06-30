@@ -367,6 +367,47 @@ export function AdminCrm() {
                 </p>
               </div>
 
+              <div className="rounded border border-gold/30 p-3 space-y-2 bg-secondary/20">
+                <div className="flex items-center justify-between gap-2">
+                  <Label className="text-sm">Pré-visualização</Label>
+                  <Button type="button" size="sm" variant="outline" onClick={() => setShowPreview((v) => !v)}>
+                    {showPreview ? "Ocultar" : "Mostrar"}
+                  </Button>
+                </div>
+                {showPreview && (
+                  <>
+                    <div>
+                      <Label className="text-xs">Lead de exemplo</Label>
+                      <Select value={previewLeadId || (previewLead?.id ?? "")} onValueChange={setPreviewLeadId}>
+                        <SelectTrigger><SelectValue placeholder="Selecione um lead..." /></SelectTrigger>
+                        <SelectContent>
+                          {(leads ?? []).slice(0, 50).map((l: any) => (
+                            <SelectItem key={l.id} value={l.id}>
+                              {(l.full_name ?? "—")} · {l.email}
+                            </SelectItem>
+                          ))}
+                          {(leads ?? []).length === 0 && (
+                            <SelectItem value="__demo">Maria Silva · maria@exemplo.com (demo)</SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Renderizado para: <strong>{previewLead?.full_name ?? "—"}</strong> ({previewLead?.email}) · {previewLead?.landing_slug ?? "—"}
+                    </div>
+                    <div className="rounded bg-background/60 p-2">
+                      <div className="text-[10px] uppercase text-muted-foreground">Assunto</div>
+                      <div className="text-sm">{renderTemplate(form.subject_template, previewLead)}</div>
+                    </div>
+                    <div className="rounded bg-background/60 p-2">
+                      <div className="text-[10px] uppercase text-muted-foreground">Corpo</div>
+                      <div className="text-sm whitespace-pre-wrap">{renderTemplate(form.body_template, previewLead)}</div>
+                    </div>
+                  </>
+                )}
+              </div>
+
+
               <DialogFooter>
                 <Button variant="outline" onClick={() => setSettingsOpen(false)}>Cancelar</Button>
                 <Button onClick={() => saveSettingsMut.mutate(form)} disabled={saveSettingsMut.isPending}>
