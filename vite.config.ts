@@ -118,6 +118,9 @@ export default defineConfig({
         strategies: "generateSW",
         devOptions: { enabled: false },
         workbox: {
+          clientsClaim: true,
+          skipWaiting: true,
+          cleanupOutdatedCaches: true,
           navigateFallbackDenylist: [/^\/~oauth/, /^\/api\//],
           globPatterns: ["**/*.{js,css,html,svg,ico,woff,woff2}"],
           maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
