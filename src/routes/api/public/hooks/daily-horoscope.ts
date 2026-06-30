@@ -261,7 +261,8 @@ async function handler({ request }: { request: Request }) {
     await supabaseAdmin
       .from("horoscope_subscriptions")
       .update({ last_sent_on: today })
-      .eq("user_id", s.user_id);
+      .eq("id", s.id);
+
   }
 
   return Response.json({ ok: true, processed, delivered });
