@@ -394,6 +394,17 @@ function LandingForm({
                 />
               </div>
             </div>
+            <div className="pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => upd({ hero_image_width: 480, hero_image_height: 600 })}
+              >
+                <Maximize className="size-4 mr-2" /> Autocentralizar
+              </Button>
+              <p className="text-[10px] text-muted-foreground mt-1">Volta as dimensões para o padrão (480×600) para caber no espaço da landing.</p>
+            </div>
           </>
         ) : (
           <p className="text-xs text-muted-foreground">Nenhuma imagem definida.</p>
