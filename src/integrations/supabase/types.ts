@@ -555,6 +555,50 @@ export type Database = {
         }
         Relationships: []
       }
+      crm_lead_status_history: {
+        Row: {
+          changed_by: string | null
+          changed_by_email: string | null
+          created_at: string
+          from_status: string | null
+          id: string
+          lead_id: string
+          note: string | null
+          source: string
+          to_status: string
+        }
+        Insert: {
+          changed_by?: string | null
+          changed_by_email?: string | null
+          created_at?: string
+          from_status?: string | null
+          id?: string
+          lead_id: string
+          note?: string | null
+          source?: string
+          to_status: string
+        }
+        Update: {
+          changed_by?: string | null
+          changed_by_email?: string | null
+          created_at?: string
+          from_status?: string | null
+          id?: string
+          lead_id?: string
+          note?: string | null
+          source?: string
+          to_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_lead_status_history_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "crm_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       crm_leads: {
         Row: {
           converted_order_id: string | null
