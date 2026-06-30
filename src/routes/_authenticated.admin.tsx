@@ -18,6 +18,7 @@ import { AdminPwa } from "@/components/AdminPwa";
 import { AdminProductLandings } from "@/components/AdminProductLandings";
 import { AdminProductOrders } from "@/components/AdminProductOrders";
 import { AdminCrm } from "@/components/AdminCrm";
+import { AdminAffiliatePanel } from "@/modules/affiliate/ui/AdminAffiliatePanel";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
