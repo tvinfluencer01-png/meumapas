@@ -1010,6 +1010,8 @@ export const updateCrmLead = createServerFn({ method: "POST" })
     last_contact_at: z.string().datetime().nullable().optional(),
     increment_followup: z.boolean().optional(),
     followup_paused: z.boolean().optional(),
+    source: z.enum(["kanban", "edit", "system", "api"]).optional(),
+    change_note: z.string().max(500).optional(),
   }).parse(d))
   .handler(async ({ data, context }) => {
     const { data: isAdmin } = await context.supabase.rpc("has_role", {
@@ -1017,6 +1019,14 @@ export const updateCrmLead = createServerFn({ method: "POST" })
     });
     if (!isAdmin) throw new Error("Forbidden");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    let previousStatus: string | null = null;
+    if (data.status) {
+      const { data: cur } = await supabaseAdmin
+        .from("crm_leads").select("status").eq("id", data.id).maybeSingle();
+      previousStatus = (cur as any)?.status ?? null;
+    }
+
     const patch: Record<string, any> = {};
     if (data.status) {
       patch.status = data.status;
@@ -1035,6 +1045,38 @@ export const updateCrmLead = createServerFn({ method: "POST" })
     }
     const { error } = await supabaseAdmin.from("crm_leads").update(patch as any).eq("id", data.id);
     if (error) throw new Error(error.message);
+
+    if (data.status && data.status !== previousStatus) {
+      await supabaseAdmin.from("crm_lead_status_history").insert({
+        lead_id: data.id,
+        from_status: previousStatus,
+        to_status: data.status,
+        changed_by: context.userId,
+        changed_by_email: (context.claims as any)?.email ?? null,
+        source: data.source ?? "edit",
+        note: data.change_note ?? null,
+      } as any);
+    }
+
     return { ok: true };
+  });
+
+export const listCrmLeadStatusHistory = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ leadId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: isAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId, _role: "admin",
+    });
+    if (!isAdmin) throw new Error("Forbidden");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows, error } = await supabaseAdmin
+      .from("crm_lead_status_history")
+      .select("*")
+      .eq("lead_id", data.leadId)
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (error) throw new Error(error.message);
+    return rows ?? [];
   });
 
