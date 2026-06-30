@@ -84,6 +84,7 @@ export function AdminCrm() {
   const [form, setForm] = useState<any | null>(null);
   const [previewLeadId, setPreviewLeadId] = useState<string>("");
   const [showPreview, setShowPreview] = useState(false);
+  const [versionNote, setVersionNote] = useState("");
 
   useEffect(() => {
     if (settings && !form) setForm(settings);
