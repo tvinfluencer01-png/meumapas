@@ -67,6 +67,8 @@ const LandingInputSchema = z.object({
   subtitle: z.string().max(300).nullable().optional(),
   description: z.string().max(8000).nullable().optional(),
   hero_image_url: z.string().url().nullable().optional().or(z.literal("")),
+  hero_image_width: z.number().int().min(120).max(1600).nullable().optional(),
+  hero_image_height: z.number().int().min(120).max(1600).nullable().optional(),
   price_cents: z.number().int().min(0).max(10_000_000),
   report_type: z.string().min(1).max(60),
   required_fields: z.array(z.string()).min(1),
