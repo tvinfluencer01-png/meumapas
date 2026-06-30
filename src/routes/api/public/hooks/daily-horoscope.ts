@@ -44,7 +44,9 @@ async function handler({ request }: { request: Request }) {
   // BRT (-3). dia da semana local: 0=domingo..6=sábado
   const localDow = (new Date(now.getTime() - 3 * 3600 * 1000)).getUTCDay();
   const subs = (allSubs ?? []).filter((s: any) => {
-    if ((s.send_hour_utc ?? 10) !== currentUtcHour) return false;
+    // Permite retry no mesmo dia: hora agendada já passou e ainda não foi enviado hoje
+    const scheduledHour = s.send_hour_utc ?? 10;
+    if (currentUtcHour < scheduledHour) return false;
     const freq = s.frequency ?? "daily";
     if (freq === "weekly") {
       return s.send_weekday != null && s.send_weekday === localDow;
@@ -57,6 +59,7 @@ async function handler({ request }: { request: Request }) {
     }
     return true;
   });
+
 
   const { data: twilio } = await supabaseAdmin
     .from("twilio_settings")
