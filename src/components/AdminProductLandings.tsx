@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Plus, Pencil, Trash2, Loader2, ExternalLink, Copy, Upload, Sparkles, X } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, ExternalLink, Copy, Upload, Sparkles, X, Maximize } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -393,6 +393,17 @@ function LandingForm({
                   onValueChange={([v]) => upd({ hero_image_height: v })}
                 />
               </div>
+            </div>
+            <div className="pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => upd({ hero_image_width: 480, hero_image_height: 600 })}
+              >
+                <Maximize className="size-4 mr-2" /> Autocentralizar
+              </Button>
+              <p className="text-[10px] text-muted-foreground mt-1">Volta as dimensões para o padrão (480×600) para caber no espaço da landing.</p>
             </div>
           </>
         ) : (
