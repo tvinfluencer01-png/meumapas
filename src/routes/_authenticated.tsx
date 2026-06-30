@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet, Link, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Outlet, Link, useRouter, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -71,6 +71,8 @@ const MAIN_MENU_BADGES: Record<string, { label: string; addonId: string }> = {
 function AuthedLayout() {
   const { signOut, user, loading } = useAuth();
   const router = useRouter();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isAdminRoute = pathname.startsWith("/admin");
   const checkAdminFn = useServerFn(getMyAdminStatus);
   const [open, setOpen] = useState(false);
   const [profileChecked, setProfileChecked] = useState(false);
@@ -201,7 +203,7 @@ function AuthedLayout() {
       </header>
 
       <div className="relative z-10 flex">
-        {/* Sidebar */}
+        {!isAdminRoute && (
         <aside className={`${open ? "flex" : "hidden"} lg:flex flex-col fixed lg:sticky inset-0 lg:inset-auto lg:top-0 z-20 lg:z-auto h-screen w-full lg:w-64 border-r border-border bg-background/90 backdrop-blur-xl`}>
           <div className="hidden lg:flex items-center gap-2.5 px-6 py-6 border-b border-border shrink-0">
             <Logo sizeClassName="size-12" animation="float" />
@@ -320,12 +322,13 @@ function AuthedLayout() {
             </Button>
           </div>
         </aside>
+        )}
 
         <UserProfileDialog open={profileOpen} onOpenChange={setProfileOpen} />
 
         <main className="flex-1 min-h-screen lg:pl-0">
-          <div className="p-4 lg:p-8 max-w-7xl mx-auto">
-            <ActiveContextBanner />
+          <div className={isAdminRoute ? "min-h-screen" : "p-4 lg:p-8 max-w-7xl mx-auto"}>
+            {!isAdminRoute && <ActiveContextBanner />}
             <Outlet />
           </div>
         </main>
