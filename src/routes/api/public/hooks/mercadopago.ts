@@ -117,45 +117,17 @@ async function handler({ request }: { request: Request }) {
             email: guestEmail,
             password: tempPassword,
             email_confirm: true,
-            user_metadata: { full_name: cd.full_name ?? cd.name ?? null },
+            user_metadata: {
+              full_name: cd.full_name ?? cd.name ?? null,
+              source: "direct_sale",
+            },
           });
           if (cErr) {
             console.error("createUser failed:", cErr.message);
           } else if (created?.user) {
             resolvedUserId = created.user.id;
-            // Send password setup email via SMTP (best-effort)
-            try {
-              const { data: linkData } = await supabaseAdmin.auth.admin.generateLink({
-                type: "recovery",
-                email: guestEmail,
-              });
-              const recoveryUrl = linkData?.properties?.action_link;
-              const { data: smtp } = await supabaseAdmin
-                .from("smtp_settings" as any)
-                .select("*")
-                .order("created_at", { ascending: false })
-                .limit(1)
-                .maybeSingle();
-              const s = smtp as any;
-              if (recoveryUrl && s?.enabled && s.host && s.username && s.password && s.from_email) {
-                const nodemailer = (await import("nodemailer")).default;
-                const transporter = nodemailer.createTransport({
-                  host: s.host, port: s.port, secure: !!s.secure,
-                  auth: { user: s.username, pass: s.password },
-                });
-                await transporter.sendMail({
-                  from: `"${s.from_name || s.from_email}" <${s.from_email}>`,
-                  to: guestEmail,
-                  subject: "Sua conta foi criada — defina sua senha",
-                  html: `<p>Olá ${cd.full_name ?? ""},</p>
-                         <p>Recebemos seu pagamento e criamos sua conta no Código Cósmico.</p>
-                         <p><a href="${recoveryUrl}" style="background:#d4af37;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;display:inline-block">Definir minha senha</a></p>
-                         <p>Em breve você receberá seu relatório por e-mail.</p>`,
-                });
-              }
-            } catch (e) {
-              console.error("welcome email failed", e);
-            }
+            // Não enviamos e-mail de "definir senha" automaticamente.
+            // O admin pode disparar manualmente pelo painel de Pedidos.
           }
         }
       } catch (e) {
