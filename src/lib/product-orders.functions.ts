@@ -670,7 +670,7 @@ export const updateCrmLead = createServerFn({ method: "POST" })
       patch.followup_count = ((cur as any)?.followup_count ?? 0) + 1;
       patch.last_contact_at = new Date().toISOString();
     }
-    const { error } = await supabaseAdmin.from("crm_leads").update(patch).eq("id", data.id);
+    const { error } = await supabaseAdmin.from("crm_leads").update(patch as any).eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
