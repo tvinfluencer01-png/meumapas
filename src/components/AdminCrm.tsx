@@ -20,6 +20,7 @@ import {
   listCrmTemplateVersions,
   deleteCrmTemplateVersion,
 } from "@/lib/crm-followups.functions";
+import { CrmStatusAutomationsDialog } from "@/components/CrmStatusAutomationsDialog";
 
 const STATUS_LABEL: Record<string, { label: string; color: string }> = {
   new: { label: "Novo", color: "bg-blue-600/30 text-blue-200 border-blue-500/40" },
@@ -88,6 +89,7 @@ export function AdminCrm() {
   const [notes, setNotes] = useState("");
   const [status, setStatus] = useState<string>("new");
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [automationsOpen, setAutomationsOpen] = useState(false);
   const [form, setForm] = useState<any | null>(null);
   const [previewLeadId, setPreviewLeadId] = useState<string>("");
   const [showPreview, setShowPreview] = useState(false);
@@ -238,6 +240,9 @@ export function AdminCrm() {
             </Button>
             <Button size="sm" variant="outline" onClick={() => setSettingsOpen(true)}>
               <SettingsIcon className="size-4 mr-1" />Follow-ups
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => setAutomationsOpen(true)}>
+              <SettingsIcon className="size-4 mr-1" />Automações por status
             </Button>
           </div>
         </div>
@@ -775,6 +780,7 @@ export function AdminCrm() {
           )}
         </DialogContent>
       </Dialog>
+      <CrmStatusAutomationsDialog open={automationsOpen} onOpenChange={setAutomationsOpen} />
     </Card>
   );
 }
