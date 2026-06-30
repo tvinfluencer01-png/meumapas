@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Plus, Pencil, Trash2, Loader2, ExternalLink, Copy } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, ExternalLink, Copy, Upload, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,9 +17,12 @@ import {
   listAdminLandings,
   upsertLanding,
   deleteLanding,
+  uploadLandingHeroImage,
+  generateLandingHeroImage,
   REPORT_TYPES,
   AVAILABLE_FIELDS,
 } from "@/lib/product-landings.functions";
+
 
 type Landing = {
   id: string;
