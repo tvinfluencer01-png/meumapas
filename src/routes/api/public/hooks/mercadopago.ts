@@ -82,6 +82,29 @@ async function handler({ request }: { request: Request }) {
     return Response.json({ ok: false, reason: "no order_id" });
   }
 
+  // Verifica se é um pedido de produto avulso (product_orders)
+  const metadataKind = pay?.metadata?.kind;
+  if (metadataKind === "product_order") {
+    const { data: prodOrder } = await supabaseAdmin
+      .from("product_orders")
+      .select("*")
+      .eq("id", orderId)
+      .maybeSingle();
+    if (!prodOrder) return Response.json({ ok: false, reason: "product order not found" });
+    if (prodOrder.status !== "pending_payment") {
+      return Response.json({ ok: true, idempotent: true });
+    }
+    await supabaseAdmin
+      .from("product_orders")
+      .update({
+        status: "paid",
+        mp_payment_id: String(paymentId),
+        viewed_by_admin: false,
+      })
+      .eq("id", prodOrder.id);
+    return Response.json({ ok: true, kind: "product_order" });
+  }
+
   const { data: order } = await supabaseAdmin
     .from("payment_orders")
     .select("*")
