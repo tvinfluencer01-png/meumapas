@@ -54,7 +54,7 @@ export function CrmStatusAutomationsDialog({
       showFeedback({ title: "Automação salva", description: "As configurações foram atualizadas." });
     },
     onError: (e: any) =>
-      showFeedback({ title: "Erro ao salvar", description: e?.message ?? String(e), variant: "destructive" }),
+      showFeedback({ title: "Erro ao salvar", description: e?.message ?? String(e) }),
   });
 
   return (
