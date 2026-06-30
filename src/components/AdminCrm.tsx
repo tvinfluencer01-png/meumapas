@@ -248,6 +248,9 @@ export function AdminCrm() {
                           >
                             {l.followup_paused ? <Play className="size-4" /> : <Pause className="size-4" />}
                           </Button>
+                          <Button size="icon" variant="ghost" title="Histórico de follow-ups" onClick={() => setHistoryLead(l)}>
+                            <History className="size-4" />
+                          </Button>
                           <Button size="sm" variant="outline" onClick={() => openEdit(l)}>Editar</Button>
                         </div>
                       </td>
