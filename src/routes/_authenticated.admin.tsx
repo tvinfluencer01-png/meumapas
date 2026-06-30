@@ -182,15 +182,22 @@ function AdminDashboard() {
               <button
                 key={item.value}
                 type="button"
+                ref={(el) => {
+                  if (isActive && el) {
+                    el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+                  }
+                }}
+                aria-current={isActive ? "page" : undefined}
                 onClick={() => selectTab(item.value)}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors text-left ${
                   isActive
-                    ? "bg-secondary text-gold border border-gold/30"
-                    : "text-muted-foreground hover:text-gold hover:bg-secondary/40"
+                    ? "bg-gold/15 text-gold border border-gold/40 shadow-[0_0_10px_rgba(212,175,55,0.15)] font-medium"
+                    : "text-muted-foreground hover:text-gold hover:bg-secondary/40 border border-transparent"
                 }`}
               >
-                <Icon className="size-4 shrink-0" />
+                <Icon className={`size-4 shrink-0 ${isActive ? "text-gold" : ""}`} />
                 <span className="flex-1">{item.label}</span>
+                {isActive && <span className="size-1.5 rounded-full bg-gold shadow-[0_0_6px_rgba(212,175,55,0.8)]" />}
               </button>
             );
           })}
