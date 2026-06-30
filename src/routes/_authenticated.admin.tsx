@@ -185,7 +185,11 @@ function AdminTabs() {
           <TabsTrigger value="pedidos" className="gap-2">
             <ShoppingCart className="size-4" /> Pedidos
           </TabsTrigger>
+          <TabsTrigger value="crm" className="gap-2">
+            <Mail className="size-4" /> CRM Leads
+          </TabsTrigger>
         </TabsList>
+
 
 
         <TabsContent value="settings" className="mt-0">
