@@ -152,8 +152,9 @@ function AuthedLayout() {
         return;
       }
       // Gate de pacote: sem pacote ativo, envia para a página de ativação.
-      // Admins têm acesso liberado; onboarding é permitido para coletar dados.
-      if (activeSubs.length === 0 && !userIsAdmin && path !== "/onboarding") {
+      // Admins têm acesso liberado; onboarding e checkout de produto avulso (/p/.../checkout) também passam.
+      const isProductCheckout = path.startsWith("/p/") && path.endsWith("/checkout");
+      if (activeSubs.length === 0 && !userIsAdmin && path !== "/onboarding" && !isProductCheckout) {
         router.navigate({ to: "/ativacao", replace: true });
         return;
       }
