@@ -98,6 +98,8 @@ export const upsertLanding = createServerFn({ method: "POST" })
       subtitle: data.subtitle || null,
       description: data.description || null,
       hero_image_url: data.hero_image_url || null,
+      hero_image_width: data.hero_image_width ?? null,
+      hero_image_height: data.hero_image_height ?? null,
       price_cents: data.price_cents,
       report_type: data.report_type,
       required_fields: data.required_fields,
