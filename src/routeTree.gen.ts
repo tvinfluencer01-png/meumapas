@@ -14,6 +14,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AtivacaoRouteImport } from './routes/ativacao'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SSlugRouteImport } from './routes/s.$slug'
 import { Route as RTokenRouteImport } from './routes/r.$token'
 import { Route as PSlugRouteImport } from './routes/p.$slug'
 import { Route as ApiChatRouteImport } from './routes/api.chat'
@@ -34,7 +35,6 @@ import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated.admin'
 import { Route as AuthenticatedAddonsRouteImport } from './routes/_authenticated.addons'
 import { Route as AuthenticatedAdminLogsRouteImport } from './routes/_authenticated.admin.logs'
-import { Route as ApiPublicSSlugRouteImport } from './routes/api/public/s.$slug'
 import { Route as ApiPublicManifestWebmanifestRouteImport } from './routes/api/public/manifest.webmanifest'
 import { Route as ApiPublicManifestIconRouteImport } from './routes/api/public/manifest.icon'
 import { Route as ApiPublicHooksMercadopagoRouteImport } from './routes/api/public/hooks/mercadopago'
@@ -65,6 +65,11 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SSlugRoute = SSlugRouteImport.update({
+  id: '/s/$slug',
+  path: '/s/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RTokenRoute = RTokenRouteImport.update({
@@ -171,11 +176,6 @@ const AuthenticatedAdminLogsRoute = AuthenticatedAdminLogsRouteImport.update({
   path: '/logs',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
-const ApiPublicSSlugRoute = ApiPublicSSlugRouteImport.update({
-  id: '/api/public/s/$slug',
-  path: '/api/public/s/$slug',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiPublicManifestWebmanifestRoute =
   ApiPublicManifestWebmanifestRouteImport.update({
     id: '/api/public/manifest/webmanifest',
@@ -242,6 +242,7 @@ export interface FileRoutesByFullPath {
   '/api/chat': typeof ApiChatRoute
   '/p/$slug': typeof PSlugRoute
   '/r/$token': typeof RTokenRoute
+  '/s/$slug': typeof SSlugRoute
   '/admin/logs': typeof AuthenticatedAdminLogsRoute
   '/p/$slug/checkout': typeof AuthenticatedPSlugCheckoutRoute
   '/api/public/hooks/crm-followups': typeof ApiPublicHooksCrmFollowupsRoute
@@ -250,7 +251,6 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/mercadopago': typeof ApiPublicHooksMercadopagoRoute
   '/api/public/manifest/icon': typeof ApiPublicManifestIconRoute
   '/api/public/manifest/webmanifest': typeof ApiPublicManifestWebmanifestRoute
-  '/api/public/s/$slug': typeof ApiPublicSSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -276,6 +276,7 @@ export interface FileRoutesByTo {
   '/api/chat': typeof ApiChatRoute
   '/p/$slug': typeof PSlugRoute
   '/r/$token': typeof RTokenRoute
+  '/s/$slug': typeof SSlugRoute
   '/admin/logs': typeof AuthenticatedAdminLogsRoute
   '/p/$slug/checkout': typeof AuthenticatedPSlugCheckoutRoute
   '/api/public/hooks/crm-followups': typeof ApiPublicHooksCrmFollowupsRoute
@@ -284,7 +285,6 @@ export interface FileRoutesByTo {
   '/api/public/hooks/mercadopago': typeof ApiPublicHooksMercadopagoRoute
   '/api/public/manifest/icon': typeof ApiPublicManifestIconRoute
   '/api/public/manifest/webmanifest': typeof ApiPublicManifestWebmanifestRoute
-  '/api/public/s/$slug': typeof ApiPublicSSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -312,6 +312,7 @@ export interface FileRoutesById {
   '/api/chat': typeof ApiChatRoute
   '/p/$slug': typeof PSlugRoute
   '/r/$token': typeof RTokenRoute
+  '/s/$slug': typeof SSlugRoute
   '/_authenticated/admin/logs': typeof AuthenticatedAdminLogsRoute
   '/_authenticated/p/$slug/checkout': typeof AuthenticatedPSlugCheckoutRoute
   '/api/public/hooks/crm-followups': typeof ApiPublicHooksCrmFollowupsRoute
@@ -320,7 +321,6 @@ export interface FileRoutesById {
   '/api/public/hooks/mercadopago': typeof ApiPublicHooksMercadopagoRoute
   '/api/public/manifest/icon': typeof ApiPublicManifestIconRoute
   '/api/public/manifest/webmanifest': typeof ApiPublicManifestWebmanifestRoute
-  '/api/public/s/$slug': typeof ApiPublicSSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -348,6 +348,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/p/$slug'
     | '/r/$token'
+    | '/s/$slug'
     | '/admin/logs'
     | '/p/$slug/checkout'
     | '/api/public/hooks/crm-followups'
@@ -356,7 +357,6 @@ export interface FileRouteTypes {
     | '/api/public/hooks/mercadopago'
     | '/api/public/manifest/icon'
     | '/api/public/manifest/webmanifest'
-    | '/api/public/s/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -382,6 +382,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/p/$slug'
     | '/r/$token'
+    | '/s/$slug'
     | '/admin/logs'
     | '/p/$slug/checkout'
     | '/api/public/hooks/crm-followups'
@@ -390,7 +391,6 @@ export interface FileRouteTypes {
     | '/api/public/hooks/mercadopago'
     | '/api/public/manifest/icon'
     | '/api/public/manifest/webmanifest'
-    | '/api/public/s/$slug'
   id:
     | '__root__'
     | '/'
@@ -417,6 +417,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/p/$slug'
     | '/r/$token'
+    | '/s/$slug'
     | '/_authenticated/admin/logs'
     | '/_authenticated/p/$slug/checkout'
     | '/api/public/hooks/crm-followups'
@@ -425,7 +426,6 @@ export interface FileRouteTypes {
     | '/api/public/hooks/mercadopago'
     | '/api/public/manifest/icon'
     | '/api/public/manifest/webmanifest'
-    | '/api/public/s/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -437,13 +437,13 @@ export interface RootRouteChildren {
   ApiChatRoute: typeof ApiChatRoute
   PSlugRoute: typeof PSlugRoute
   RTokenRoute: typeof RTokenRoute
+  SSlugRoute: typeof SSlugRoute
   ApiPublicHooksCrmFollowupsRoute: typeof ApiPublicHooksCrmFollowupsRoute
   ApiPublicHooksDailyHoroscopeRoute: typeof ApiPublicHooksDailyHoroscopeRoute
   ApiPublicHooksDispatchOrdersRoute: typeof ApiPublicHooksDispatchOrdersRoute
   ApiPublicHooksMercadopagoRoute: typeof ApiPublicHooksMercadopagoRoute
   ApiPublicManifestIconRoute: typeof ApiPublicManifestIconRoute
   ApiPublicManifestWebmanifestRoute: typeof ApiPublicManifestWebmanifestRoute
-  ApiPublicSSlugRoute: typeof ApiPublicSSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -481,6 +481,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/s/$slug': {
+      id: '/s/$slug'
+      path: '/s/$slug'
+      fullPath: '/s/$slug'
+      preLoaderRoute: typeof SSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/r/$token': {
@@ -623,13 +630,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminLogsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
-    '/api/public/s/$slug': {
-      id: '/api/public/s/$slug'
-      path: '/api/public/s/$slug'
-      fullPath: '/api/public/s/$slug'
-      preLoaderRoute: typeof ApiPublicSSlugRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/public/manifest/webmanifest': {
       id: '/api/public/manifest/webmanifest'
       path: '/api/public/manifest/webmanifest'
@@ -747,13 +747,13 @@ const rootRouteChildren: RootRouteChildren = {
   ApiChatRoute: ApiChatRoute,
   PSlugRoute: PSlugRoute,
   RTokenRoute: RTokenRoute,
+  SSlugRoute: SSlugRoute,
   ApiPublicHooksCrmFollowupsRoute: ApiPublicHooksCrmFollowupsRoute,
   ApiPublicHooksDailyHoroscopeRoute: ApiPublicHooksDailyHoroscopeRoute,
   ApiPublicHooksDispatchOrdersRoute: ApiPublicHooksDispatchOrdersRoute,
   ApiPublicHooksMercadopagoRoute: ApiPublicHooksMercadopagoRoute,
   ApiPublicManifestIconRoute: ApiPublicManifestIconRoute,
   ApiPublicManifestWebmanifestRoute: ApiPublicManifestWebmanifestRoute,
-  ApiPublicSSlugRoute: ApiPublicSSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
