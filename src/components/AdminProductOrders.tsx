@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, ExternalLink, Eye, CheckCircle2, AlertTriangle, FileText, Send } from "lucide-react";
+import { Loader2, ExternalLink, Eye, CheckCircle2, AlertTriangle, FileText, Send, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -97,13 +97,17 @@ export function AdminProductOrders() {
   });
 
   const dispatchMutation = useMutation({
-    mutationFn: (vars: { id: string; action: "pdf" | "email" | "both" }) =>
+    mutationFn: (vars: { id: string; action: "pdf" | "email" | "both" | "password_setup" }) =>
       dispatchFn({ data: vars }),
     onMutate: (vars) => setDispatchingId(vars.id),
     onSettled: () => setDispatchingId(null),
     onSuccess: (_, vars) => {
       showFeedback({
-        title: vars.action === "pdf" ? "PDF gerado" : vars.action === "email" ? "E-mail enviado" : "Pedido despachado",
+        title:
+          vars.action === "pdf" ? "PDF gerado"
+          : vars.action === "email" ? "E-mail enviado"
+          : vars.action === "password_setup" ? "E-mail de definição de senha enviado"
+          : "Pedido despachado",
         type: "success",
       });
       qc.invalidateQueries({ queryKey: ["admin-product-orders"] });
@@ -235,6 +239,15 @@ export function AdminProductOrders() {
                             onClick={() => dispatchMutation.mutate({ id: o.id, action: "both" })}
                           >
                             {busy ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            title="Enviar e-mail de definição de senha"
+                            disabled={busy}
+                            onClick={() => dispatchMutation.mutate({ id: o.id, action: "password_setup" })}
+                          >
+                            {busy ? <Loader2 className="size-4 animate-spin" /> : <KeyRound className="size-4" />}
                           </Button>
                         </>
                       )}
