@@ -86,7 +86,8 @@ async function handler({ request }: { request: Request }) {
   let processed = 0;
   let delivered = 0;
 
-  for (const s of subs ?? []) {
+  const processOne = async (s: any) => {
+
     if (!s.sun_sign) {
       await supabaseAdmin.from("horoscope_log").insert({
         user_id: s.user_id, date: today, channel: "system", status: "skipped",
