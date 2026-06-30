@@ -1056,6 +1056,14 @@ export const updateCrmLead = createServerFn({ method: "POST" })
         source: data.source ?? "edit",
         note: data.change_note ?? null,
       } as any);
+
+      // Fire-and-await automations (email + WhatsApp) for relevant statuses
+      try {
+        const { runStatusAutomation } = await import("./crm-status-automations.functions");
+        await runStatusAutomation(data.id, data.status);
+      } catch (e) {
+        console.error("[updateCrmLead] status automation failed", e);
+      }
     }
 
     return { ok: true };
