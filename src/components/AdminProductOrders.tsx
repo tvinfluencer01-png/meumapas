@@ -213,10 +213,28 @@ export function AdminProductOrders() {
                         <span className="font-serif text-gold truncate">{o.landing?.title ?? "—"}</span>
                         <span className={`text-[10px] uppercase px-2 py-0.5 rounded font-bold ${st.color}`}>{st.label}</span>
                       </div>
-                      <div className="text-xs text-muted-foreground mt-0.5 flex flex-wrap gap-x-3">
+                      <div className="text-xs text-muted-foreground mt-0.5 flex flex-wrap gap-x-3 gap-y-1 items-center">
                         <span>{o.user_name ?? "—"} · {o.user_email ?? "—"}</span>
                         <span>R$ {(o.amount_cents / 100).toFixed(2)}</span>
                         <span>{new Date(o.created_at).toLocaleString("pt-BR")}</span>
+                        {o.email_sent_at && (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-600/20 text-emerald-300 border border-emerald-500/30">
+                            <Send className="size-3" /> E-mail enviado {new Date(o.email_sent_at).toLocaleString("pt-BR")}
+                          </span>
+                        )}
+                        {o.whatsapp_sent_at && (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-600/20 text-emerald-300 border border-emerald-500/30">
+                            <MessageCircle className="size-3" /> WhatsApp enviado {new Date(o.whatsapp_sent_at).toLocaleString("pt-BR")}
+                          </span>
+                        )}
+                        {o.error_message && (
+                          <span
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-red-600/20 text-red-300 border border-red-500/30 max-w-[320px] truncate"
+                            title={o.error_message}
+                          >
+                            <AlertTriangle className="size-3" /> Erro: {o.error_message}
+                          </span>
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center gap-1">
