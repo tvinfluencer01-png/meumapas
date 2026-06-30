@@ -17,6 +17,8 @@ import {
   saveCrmFollowupSettings,
   runCrmFollowupsNow,
   listCrmFollowupHistory,
+  listCrmTemplateVersions,
+  deleteCrmTemplateVersion,
 } from "@/lib/crm-followups.functions";
 
 const STATUS_LABEL: Record<string, { label: string; color: string }> = {
