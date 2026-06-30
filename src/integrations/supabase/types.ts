@@ -528,6 +528,33 @@ export type Database = {
         }
         Relationships: []
       }
+      crm_followup_template_versions: {
+        Row: {
+          body_template: string
+          created_at: string
+          created_by: string | null
+          id: string
+          note: string | null
+          subject_template: string
+        }
+        Insert: {
+          body_template: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          note?: string | null
+          subject_template: string
+        }
+        Update: {
+          body_template?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          note?: string | null
+          subject_template?: string
+        }
+        Relationships: []
+      }
       crm_leads: {
         Row: {
           converted_order_id: string | null
