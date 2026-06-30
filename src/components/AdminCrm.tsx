@@ -361,6 +361,67 @@ export function AdminCrm() {
           )}
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!historyLead} onOpenChange={(o) => !o && setHistoryLead(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="font-serif shimmer-text">
+              Histórico de follow-ups
+            </DialogTitle>
+            {historyLead && (
+              <p className="text-xs text-muted-foreground">
+                {historyLead.full_name ?? historyLead.email} — {historyLead.email}
+              </p>
+            )}
+          </DialogHeader>
+          {historyLoading ? (
+            <div className="py-8 text-center"><Loader2 className="size-5 animate-spin inline" /></div>
+          ) : !history || history.length === 0 ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              Nenhum follow-up registrado para este lead.
+            </p>
+          ) : (
+            <div className="max-h-[60vh] overflow-y-auto">
+              <table className="w-full text-sm">
+                <thead className="text-xs uppercase text-muted-foreground border-b border-border/40">
+                  <tr>
+                    <th className="text-left p-2">Data</th>
+                    <th className="text-left p-2">Tentativa</th>
+                    <th className="text-left p-2">Status</th>
+                    <th className="text-left p-2">Assunto</th>
+                    <th className="text-left p-2">Motivo da falha</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {history.map((h) => {
+                    const cls =
+                      h.status === "sent"
+                        ? "bg-emerald-600/30 text-emerald-200 border-emerald-500/40"
+                        : h.status === "failed"
+                          ? "bg-red-600/30 text-red-200 border-red-500/40"
+                          : "bg-amber-600/30 text-amber-200 border-amber-500/40";
+                    const label =
+                      h.status === "sent" ? "Enviado" : h.status === "failed" ? "Falhou" : "Tentativa";
+                    return (
+                      <tr key={h.id} className="border-b border-border/20 align-top">
+                        <td className="p-2 text-xs whitespace-nowrap">
+                          {new Date(h.created_at).toLocaleString("pt-BR")}
+                        </td>
+                        <td className="p-2 text-xs">#{h.attempt_number}</td>
+                        <td className="p-2">
+                          <span className={`px-2 py-1 rounded text-xs border ${cls}`}>{label}</span>
+                        </td>
+                        <td className="p-2 text-xs">{h.subject ?? "—"}</td>
+                        <td className="p-2 text-xs text-red-200">{h.error_message ?? "—"}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
