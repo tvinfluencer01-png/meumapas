@@ -838,6 +838,84 @@ export function AdminCrm() {
         </DialogContent>
       </Dialog>
       <CrmStatusAutomationsDialog open={automationsOpen} onOpenChange={setAutomationsOpen} />
+
+      <Dialog open={quickOpen} onOpenChange={(o) => { if (!o) { setQuickOpen(false); setQuickErrors({}); } }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-serif shimmer-text">Novo lead</DialogTitle>
+          </DialogHeader>
+          <form
+            className="space-y-3"
+            onSubmit={(e) => { e.preventDefault(); submitQuickCreate(); }}
+          >
+            <div>
+              <Label>Nome completo *</Label>
+              <Input
+                value={quick.full_name}
+                maxLength={120}
+                onChange={(e) => setQuick({ ...quick, full_name: e.target.value })}
+                autoFocus
+              />
+              {quickErrors.full_name && <p className="text-xs text-red-400 mt-1">{quickErrors.full_name}</p>}
+            </div>
+            <div>
+              <Label>E-mail *</Label>
+              <Input
+                type="email"
+                value={quick.email}
+                maxLength={255}
+                onChange={(e) => setQuick({ ...quick, email: e.target.value })}
+              />
+              {quickErrors.email && <p className="text-xs text-red-400 mt-1">{quickErrors.email}</p>}
+            </div>
+            <div>
+              <Label>Telefone (WhatsApp)</Label>
+              <Input
+                value={quick.phone}
+                maxLength={40}
+                placeholder="55 11 99999-9999"
+                onChange={(e) => setQuick({ ...quick, phone: e.target.value })}
+              />
+              {quickErrors.phone && <p className="text-xs text-red-400 mt-1">{quickErrors.phone}</p>}
+            </div>
+            <div>
+              <Label>Produto / Landing</Label>
+              <Input
+                value={quick.landing_slug}
+                maxLength={120}
+                placeholder="ex.: mapa-astral"
+                onChange={(e) => setQuick({ ...quick, landing_slug: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>Status</Label>
+              <Select value={quick.status} onValueChange={(v) => setQuick({ ...quick, status: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {Object.entries(STATUS_LABEL).map(([k, v]) => (
+                    <SelectItem key={k} value={k}>{v.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Anotações</Label>
+              <Textarea
+                value={quick.notes}
+                maxLength={2000}
+                rows={3}
+                onChange={(e) => setQuick({ ...quick, notes: e.target.value })}
+              />
+            </div>
+            <DialogFooter className="gap-2">
+              <Button type="button" variant="outline" onClick={() => setQuickOpen(false)}>Cancelar</Button>
+              <Button type="submit" disabled={createMut.isPending}>
+                {createMut.isPending ? <Loader2 className="size-4 animate-spin" /> : "Criar lead"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
