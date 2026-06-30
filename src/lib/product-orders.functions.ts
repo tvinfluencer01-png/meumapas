@@ -140,7 +140,9 @@ export const listAdminOrders = createServerFn({ method: "GET" })
       .limit(500);
     if (error) throw new Error(error.message);
 
-    const userIds = Array.from(new Set((orders ?? []).map((o) => o.user_id)));
+    const userIds = Array.from(
+      new Set((orders ?? []).map((o) => o.user_id).filter((x): x is string => !!x)),
+    );
     let userMap: Record<string, { email: string | null; full_name: string | null }> = {};
     if (userIds.length) {
       const [{ data: profiles }] = await Promise.all([
@@ -167,10 +169,11 @@ export const listAdminOrders = createServerFn({ method: "GET" })
 
     return (orders ?? []).map((o) => ({
       ...o,
-      user_email: userMap[o.user_id]?.email ?? null,
-      user_name: userMap[o.user_id]?.full_name ?? null,
+      user_email: (o.user_id && userMap[o.user_id]?.email) ?? (o as any).guest_email ?? null,
+      user_name: (o.user_id && userMap[o.user_id]?.full_name) ?? (o.customer_data as any)?.full_name ?? null,
     }));
   });
+
 
 export const countUnviewedOrders = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
