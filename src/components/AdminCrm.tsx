@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, Mail, MessageCircle, Pause, Play, Send, Settings as SettingsIcon } from "lucide-react";
+import { Loader2, Mail, MessageCircle, Pause, Play, Send, Settings as SettingsIcon, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,6 +16,7 @@ import {
   getCrmFollowupSettings,
   saveCrmFollowupSettings,
   runCrmFollowupsNow,
+  listCrmFollowupHistory,
 } from "@/lib/crm-followups.functions";
 
 const STATUS_LABEL: Record<string, { label: string; color: string }> = {
@@ -49,6 +50,14 @@ export function AdminCrm() {
   const getSettingsFn = useServerFn(getCrmFollowupSettings);
   const saveSettingsFn = useServerFn(saveCrmFollowupSettings);
   const runNowFn = useServerFn(runCrmFollowupsNow);
+  const historyFn = useServerFn(listCrmFollowupHistory);
+  const [historyLead, setHistoryLead] = useState<any | null>(null);
+
+  const { data: history, isLoading: historyLoading } = useQuery({
+    queryKey: ["admin-crm-followup-history", historyLead?.id],
+    queryFn: () => historyFn({ data: { leadId: historyLead.id } }),
+    enabled: !!historyLead,
+  });
 
   const { data: leads, isLoading } = useQuery({
     queryKey: ["admin-crm-leads"],
@@ -239,6 +248,9 @@ export function AdminCrm() {
                           >
                             {l.followup_paused ? <Play className="size-4" /> : <Pause className="size-4" />}
                           </Button>
+                          <Button size="icon" variant="ghost" title="Histórico de follow-ups" onClick={() => setHistoryLead(l)}>
+                            <History className="size-4" />
+                          </Button>
                           <Button size="sm" variant="outline" onClick={() => openEdit(l)}>Editar</Button>
                         </div>
                       </td>
@@ -345,6 +357,67 @@ export function AdminCrm() {
                   {saveSettingsMut.isPending ? <Loader2 className="size-4 animate-spin" /> : "Salvar"}
                 </Button>
               </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!historyLead} onOpenChange={(o) => !o && setHistoryLead(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="font-serif shimmer-text">
+              Histórico de follow-ups
+            </DialogTitle>
+            {historyLead && (
+              <p className="text-xs text-muted-foreground">
+                {historyLead.full_name ?? historyLead.email} — {historyLead.email}
+              </p>
+            )}
+          </DialogHeader>
+          {historyLoading ? (
+            <div className="py-8 text-center"><Loader2 className="size-5 animate-spin inline" /></div>
+          ) : !history || history.length === 0 ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              Nenhum follow-up registrado para este lead.
+            </p>
+          ) : (
+            <div className="max-h-[60vh] overflow-y-auto">
+              <table className="w-full text-sm">
+                <thead className="text-xs uppercase text-muted-foreground border-b border-border/40">
+                  <tr>
+                    <th className="text-left p-2">Data</th>
+                    <th className="text-left p-2">Tentativa</th>
+                    <th className="text-left p-2">Status</th>
+                    <th className="text-left p-2">Assunto</th>
+                    <th className="text-left p-2">Motivo da falha</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {history.map((h) => {
+                    const cls =
+                      h.status === "sent"
+                        ? "bg-emerald-600/30 text-emerald-200 border-emerald-500/40"
+                        : h.status === "failed"
+                          ? "bg-red-600/30 text-red-200 border-red-500/40"
+                          : "bg-amber-600/30 text-amber-200 border-amber-500/40";
+                    const label =
+                      h.status === "sent" ? "Enviado" : h.status === "failed" ? "Falhou" : "Tentativa";
+                    return (
+                      <tr key={h.id} className="border-b border-border/20 align-top">
+                        <td className="p-2 text-xs whitespace-nowrap">
+                          {new Date(h.created_at).toLocaleString("pt-BR")}
+                        </td>
+                        <td className="p-2 text-xs">#{h.attempt_number}</td>
+                        <td className="p-2">
+                          <span className={`px-2 py-1 rounded text-xs border ${cls}`}>{label}</span>
+                        </td>
+                        <td className="p-2 text-xs">{h.subject ?? "—"}</td>
+                        <td className="p-2 text-xs text-red-200">{h.error_message ?? "—"}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           )}
         </DialogContent>

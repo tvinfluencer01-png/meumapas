@@ -159,14 +159,17 @@ export async function dispatchPendingFollowups() {
     };
     const fill = (t: string) =>
       t.replace(/\{\{\s*(\w+)\s*\}\}/g, (_m, k) => vars[k] ?? "");
+    const attempt = (l.followup_count ?? 0) + 1;
+    const subject = fill(s.subject_template);
+    const body = fill(s.body_template);
     try {
       await transporter.sendMail({
         from: `"${sm.from_name || sm.from_email}" <${sm.from_email}>`,
         to: l.email,
         replyTo: sm.reply_to || undefined,
-        subject: fill(s.subject_template),
-        text: fill(s.body_template),
-        html: `<p>${fill(s.body_template).replace(/\n/g, "<br/>")}</p>`,
+        subject,
+        text: body,
+        html: `<p>${body.replace(/\n/g, "<br/>")}</p>`,
       });
       const nowIso = new Date().toISOString();
       const nextAt = new Date(now + s.days_after_last_email * 86400_000).toISOString();
@@ -175,16 +178,32 @@ export async function dispatchPendingFollowups() {
         .update({
           last_followup_at: nowIso,
           last_contact_at: nowIso,
-          followup_count: (l.followup_count ?? 0) + 1,
-          next_followup_at:
-            (l.followup_count ?? 0) + 1 >= s.max_followups ? null : nextAt,
+          followup_count: attempt,
+          next_followup_at: attempt >= s.max_followups ? null : nextAt,
           status: l.status === "new" ? "contacted" : l.status,
         } as any)
         .eq("id", l.id);
+      await supabaseAdmin.from("crm_followup_history" as any).insert({
+        lead_id: l.id,
+        attempt_number: attempt,
+        status: "sent",
+        subject,
+        body,
+        recipient_email: l.email,
+      } as any);
       sent++;
-    } catch (e) {
+    } catch (e: any) {
       skipped++;
       console.error("[crm-followup] failed", l.id, e);
+      await supabaseAdmin.from("crm_followup_history" as any).insert({
+        lead_id: l.id,
+        attempt_number: attempt,
+        status: "failed",
+        subject,
+        body,
+        recipient_email: l.email,
+        error_message: e?.message ?? String(e),
+      } as any);
     }
   }
   return { sent, skipped };
@@ -195,4 +214,28 @@ export const runCrmFollowupsNow = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     await assertAdmin(context.supabase, context.userId);
     return dispatchPendingFollowups();
+  });
+
+export const listCrmFollowupHistory = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ leadId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows, error } = await supabaseAdmin
+      .from("crm_followup_history" as any)
+      .select("id,lead_id,attempt_number,status,subject,recipient_email,error_message,created_at")
+      .eq("lead_id", data.leadId)
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return (rows ?? []) as unknown as Array<{
+      id: string;
+      lead_id: string;
+      attempt_number: number;
+      status: "sent" | "failed" | "attempt";
+      subject: string | null;
+      recipient_email: string;
+      error_message: string | null;
+      created_at: string;
+    }>;
   });
