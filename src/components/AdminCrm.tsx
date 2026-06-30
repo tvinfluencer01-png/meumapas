@@ -50,6 +50,14 @@ export function AdminCrm() {
   const getSettingsFn = useServerFn(getCrmFollowupSettings);
   const saveSettingsFn = useServerFn(saveCrmFollowupSettings);
   const runNowFn = useServerFn(runCrmFollowupsNow);
+  const historyFn = useServerFn(listCrmFollowupHistory);
+  const [historyLead, setHistoryLead] = useState<any | null>(null);
+
+  const { data: history, isLoading: historyLoading } = useQuery({
+    queryKey: ["admin-crm-followup-history", historyLead?.id],
+    queryFn: () => historyFn({ data: { leadId: historyLead.id } }),
+    enabled: !!historyLead,
+  });
 
   const { data: leads, isLoading } = useQuery({
     queryKey: ["admin-crm-leads"],
