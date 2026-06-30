@@ -44,7 +44,9 @@ async function handler({ request }: { request: Request }) {
   // BRT (-3). dia da semana local: 0=domingo..6=sábado
   const localDow = (new Date(now.getTime() - 3 * 3600 * 1000)).getUTCDay();
   const subs = (allSubs ?? []).filter((s: any) => {
-    if ((s.send_hour_utc ?? 10) !== currentUtcHour) return false;
+    // Permite retry no mesmo dia: hora agendada já passou e ainda não foi enviado hoje
+    const scheduledHour = s.send_hour_utc ?? 10;
+    if (currentUtcHour < scheduledHour) return false;
     const freq = s.frequency ?? "daily";
     if (freq === "weekly") {
       return s.send_weekday != null && s.send_weekday === localDow;
@@ -57,6 +59,7 @@ async function handler({ request }: { request: Request }) {
     }
     return true;
   });
+
 
   const { data: twilio } = await supabaseAdmin
     .from("twilio_settings")
@@ -83,13 +86,15 @@ async function handler({ request }: { request: Request }) {
   let processed = 0;
   let delivered = 0;
 
-  for (const s of subs ?? []) {
+  const processOne = async (s: any) => {
+
     if (!s.sun_sign) {
       await supabaseAdmin.from("horoscope_log").insert({
         user_id: s.user_id, date: today, channel: "system", status: "skipped",
         detail: "sun_sign missing", sign: null,
       });
-      continue;
+      return;
+
     }
 
     // Resolve birth_date do contexto (client_profile ativo > birth_data primário)
@@ -149,7 +154,7 @@ async function handler({ request }: { request: Request }) {
         user_id: s.user_id, date: today, channel: "ai", status: "error",
         detail: String(e?.message ?? e).slice(0, 240), sign: s.sun_sign,
       });
-      continue;
+      return;
     }
 
     // Registra os ângulos do dia para evitar repetição nos próximos
@@ -258,8 +263,11 @@ async function handler({ request }: { request: Request }) {
     await supabaseAdmin
       .from("horoscope_subscriptions")
       .update({ last_sent_on: today })
-      .eq("user_id", s.user_id);
-  }
+      .eq("id", s.id);
+  };
+
+  await Promise.allSettled((subs ?? []).map((s) => processOne(s).catch(() => {})));
+
 
   return Response.json({ ok: true, processed, delivered });
 }
