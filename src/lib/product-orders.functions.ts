@@ -568,7 +568,7 @@ async function sendOrderWhatsapp(orderId: string) {
   }
   await supabaseAdmin
     .from("product_orders")
-    .update({ whatsapp_sent_at: new Date().toISOString() } as any)
+    .update({ updated_at: new Date().toISOString() } as any)
     .eq("id", order.id);
   return { ok: true };
 }
