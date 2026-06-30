@@ -89,6 +89,7 @@ export function AdminCrm() {
   const [notes, setNotes] = useState("");
   const [status, setStatus] = useState<string>("new");
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [automationsOpen, setAutomationsOpen] = useState(false);
   const [form, setForm] = useState<any | null>(null);
   const [previewLeadId, setPreviewLeadId] = useState<string>("");
   const [showPreview, setShowPreview] = useState(false);
