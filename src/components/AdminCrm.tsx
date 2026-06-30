@@ -343,9 +343,19 @@ export function AdminCrm() {
                   }}
                   className="rounded-lg border border-border/40 bg-secondary/20 p-2 min-h-[400px] flex flex-col"
                 >
-                  <div className={`px-2 py-1 mb-2 rounded text-xs border flex items-center justify-between ${meta.color}`}>
+                  <div className={`px-2 py-1 mb-2 rounded text-xs border flex items-center justify-between gap-2 ${meta.color}`}>
                     <span className="font-semibold">{meta.label}</span>
-                    <span className="opacity-80">{columnLeads.length}</span>
+                    <div className="flex items-center gap-1">
+                      <span className="opacity-80">{columnLeads.length}</span>
+                      <button
+                        type="button"
+                        title="Adicionar lead nesta coluna"
+                        onClick={() => openQuickCreate(statusKey)}
+                        className="rounded p-0.5 hover:bg-background/30"
+                      >
+                        <Plus className="size-3.5" />
+                      </button>
+                    </div>
                   </div>
                   <div className="space-y-2 flex-1">
                     {columnLeads.map((l: any) => {
