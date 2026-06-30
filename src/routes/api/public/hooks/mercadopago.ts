@@ -94,16 +94,98 @@ async function handler({ request }: { request: Request }) {
     if (prodOrder.status !== "pending_payment") {
       return Response.json({ ok: true, idempotent: true });
     }
+
+    // Provision user account if this was a guest checkout
+    let resolvedUserId: string | null = (prodOrder as any).user_id ?? null;
+    const guestEmail: string | null =
+      (prodOrder as any).guest_email ??
+      ((prodOrder.customer_data as any)?.email ?? null);
+
+    if (!resolvedUserId && guestEmail) {
+      try {
+        // Look up existing user by email (paginate small set)
+        const { data: list } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 200 });
+        const found = list?.users?.find(
+          (u) => (u.email ?? "").toLowerCase() === guestEmail.toLowerCase(),
+        );
+        if (found) {
+          resolvedUserId = found.id;
+        } else {
+          const cd = (prodOrder.customer_data ?? {}) as any;
+          const tempPassword = `${crypto.randomUUID()}A!1`;
+          const { data: created, error: cErr } = await supabaseAdmin.auth.admin.createUser({
+            email: guestEmail,
+            password: tempPassword,
+            email_confirm: true,
+            user_metadata: { full_name: cd.full_name ?? cd.name ?? null },
+          });
+          if (cErr) {
+            console.error("createUser failed:", cErr.message);
+          } else if (created?.user) {
+            resolvedUserId = created.user.id;
+            // Send password setup email via SMTP (best-effort)
+            try {
+              const { data: linkData } = await supabaseAdmin.auth.admin.generateLink({
+                type: "recovery",
+                email: guestEmail,
+              });
+              const recoveryUrl = linkData?.properties?.action_link;
+              const { data: smtp } = await supabaseAdmin
+                .from("smtp_settings" as any)
+                .select("*")
+                .order("created_at", { ascending: false })
+                .limit(1)
+                .maybeSingle();
+              const s = smtp as any;
+              if (recoveryUrl && s?.enabled && s.host && s.username && s.password && s.from_email) {
+                const nodemailer = (await import("nodemailer")).default;
+                const transporter = nodemailer.createTransport({
+                  host: s.host, port: s.port, secure: !!s.secure,
+                  auth: { user: s.username, pass: s.password },
+                });
+                await transporter.sendMail({
+                  from: `"${s.from_name || s.from_email}" <${s.from_email}>`,
+                  to: guestEmail,
+                  subject: "Sua conta foi criada — defina sua senha",
+                  html: `<p>Olá ${cd.full_name ?? ""},</p>
+                         <p>Recebemos seu pagamento e criamos sua conta no Código Cósmico.</p>
+                         <p><a href="${recoveryUrl}" style="background:#d4af37;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;display:inline-block">Definir minha senha</a></p>
+                         <p>Em breve você receberá seu relatório por e-mail.</p>`,
+                });
+              }
+            } catch (e) {
+              console.error("welcome email failed", e);
+            }
+          }
+        }
+      } catch (e) {
+        console.error("guest provisioning failed", e);
+      }
+    }
+
     await supabaseAdmin
       .from("product_orders")
       .update({
         status: "paid",
         mp_payment_id: String(paymentId),
         viewed_by_admin: false,
+        ...(resolvedUserId ? { user_id: resolvedUserId } : {}),
       })
       .eq("id", prodOrder.id);
-    return Response.json({ ok: true, kind: "product_order" });
+
+    // Mark CRM lead as converted
+    const leadId = (prodOrder as any).lead_id;
+    if (leadId) {
+      await supabaseAdmin.from("crm_leads").update({
+        status: "converted",
+        converted_order_id: prodOrder.id,
+        converted_user_id: resolvedUserId,
+      }).eq("id", leadId);
+    }
+
+    return Response.json({ ok: true, kind: "product_order", user_id: resolvedUserId });
   }
+
 
   const { data: order } = await supabaseAdmin
     .from("payment_orders")
