@@ -97,13 +97,17 @@ export function AdminProductOrders() {
   });
 
   const dispatchMutation = useMutation({
-    mutationFn: (vars: { id: string; action: "pdf" | "email" | "both" }) =>
+    mutationFn: (vars: { id: string; action: "pdf" | "email" | "both" | "password_setup" }) =>
       dispatchFn({ data: vars }),
     onMutate: (vars) => setDispatchingId(vars.id),
     onSettled: () => setDispatchingId(null),
     onSuccess: (_, vars) => {
       showFeedback({
-        title: vars.action === "pdf" ? "PDF gerado" : vars.action === "email" ? "E-mail enviado" : "Pedido despachado",
+        title:
+          vars.action === "pdf" ? "PDF gerado"
+          : vars.action === "email" ? "E-mail enviado"
+          : vars.action === "password_setup" ? "E-mail de definição de senha enviado"
+          : "Pedido despachado",
         type: "success",
       });
       qc.invalidateQueries({ queryKey: ["admin-product-orders"] });
