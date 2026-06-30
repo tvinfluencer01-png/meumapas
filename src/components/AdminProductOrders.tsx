@@ -49,13 +49,19 @@ export function AdminProductOrders() {
   });
 
   const [autoEnabled, setAutoEnabled] = useState(false);
-  const [delayMin, setDelayMin] = useState(5);
+  const [delayValue, setDelayValue] = useState<number>(5);
+  const [delayUnit, setDelayUnit] = useState<"minutes" | "hours" | "days">("minutes");
   useEffect(() => {
     if (settings) {
       setAutoEnabled(settings.auto_enabled);
-      setDelayMin(settings.delay_minutes);
+      const m = settings.delay_minutes ?? 0;
+      if (m > 0 && m % 1440 === 0) { setDelayUnit("days"); setDelayValue(m / 1440); }
+      else if (m > 0 && m % 60 === 0) { setDelayUnit("hours"); setDelayValue(m / 60); }
+      else { setDelayUnit("minutes"); setDelayValue(m); }
     }
   }, [settings]);
+
+  const delayMin = delayUnit === "days" ? delayValue * 1440 : delayUnit === "hours" ? delayValue * 60 : delayValue;
 
   const settingsMutation = useMutation({
     mutationFn: () => saveSettingsFn({ data: { auto_enabled: autoEnabled, delay_minutes: delayMin } }),
@@ -65,6 +71,7 @@ export function AdminProductOrders() {
     },
     onError: (e: Error) => showFeedback({ title: "Erro", description: e.message, type: "error" }),
   });
+
 
   // Marca todos como visualizados ao abrir
   useEffect(() => {
@@ -133,18 +140,28 @@ export function AdminProductOrders() {
             <Label htmlFor="auto-dispatch">Envio automático ativado</Label>
           </div>
           <div className="flex flex-col gap-1">
-            <Label htmlFor="delay-min">Delay (minutos)</Label>
-            <Input
-              id="delay-min"
-              type="number"
-              min={0}
-              max={1440}
-              value={delayMin}
-              onChange={(e) => setDelayMin(Number(e.target.value) || 0)}
-              disabled={!autoEnabled}
-              className="w-32"
-            />
+            <Label htmlFor="delay-val">Delay</Label>
+            <div className="flex gap-2">
+              <Input
+                id="delay-val"
+                type="number"
+                min={0}
+                value={delayValue}
+                onChange={(e) => setDelayValue(Number(e.target.value) || 0)}
+                disabled={!autoEnabled}
+                className="w-28"
+              />
+              <Select value={delayUnit} onValueChange={(v) => setDelayUnit(v as any)} disabled={!autoEnabled}>
+                <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="minutes">Minutos</SelectItem>
+                  <SelectItem value="hours">Horas</SelectItem>
+                  <SelectItem value="days">Dias</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
+
           <Button onClick={() => settingsMutation.mutate()} disabled={settingsMutation.isPending}>
             {settingsMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : "Salvar"}
           </Button>
