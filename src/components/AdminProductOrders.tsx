@@ -251,6 +251,21 @@ export function AdminProductOrders() {
                           </Button>
                         </>
                       )}
+                      {!["paid", "processing", "delivered"].includes(o.status) && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          title="Aprovar pagamento manualmente"
+                          disabled={updateMutation.isPending}
+                          onClick={() => {
+                            if (confirm(`Confirmar aprovação manual do pagamento deste pedido (R$ ${(o.amount_cents / 100).toFixed(2)})?`)) {
+                              updateMutation.mutate({ id: o.id, status: "paid" });
+                            }
+                          }}
+                        >
+                          <BadgeCheck className="size-4 text-emerald-400" />
+                        </Button>
+                      )}
                       <Button size="sm" variant="ghost" onClick={() => setSelected(o)}>
                         <Eye className="size-4 mr-1" /> Ver
                       </Button>
