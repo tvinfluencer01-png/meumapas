@@ -267,6 +267,7 @@ type AdminUserRow = {
   is_admin: boolean;
   plans: string[];
   addons: string[];
+  direct_sale?: boolean;
 };
 
 
