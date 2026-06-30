@@ -33,11 +33,37 @@ export function AdminProductOrders() {
   const listFn = useServerFn(listAdminOrders);
   const markFn = useServerFn(markOrdersViewed);
   const updateFn = useServerFn(updateOrderStatus);
+  const dispatchFn = useServerFn(dispatchProductOrder);
+  const getSettingsFn = useServerFn(getDispatchSettings);
+  const saveSettingsFn = useServerFn(saveDispatchSettings);
 
   const { data: orders, isLoading } = useQuery({
     queryKey: ["admin-product-orders"],
     queryFn: () => listFn(),
     refetchInterval: 30_000,
+  });
+
+  const { data: settings } = useQuery({
+    queryKey: ["dispatch-settings"],
+    queryFn: () => getSettingsFn(),
+  });
+
+  const [autoEnabled, setAutoEnabled] = useState(false);
+  const [delayMin, setDelayMin] = useState(5);
+  useEffect(() => {
+    if (settings) {
+      setAutoEnabled(settings.auto_enabled);
+      setDelayMin(settings.delay_minutes);
+    }
+  }, [settings]);
+
+  const settingsMutation = useMutation({
+    mutationFn: () => saveSettingsFn({ data: { auto_enabled: autoEnabled, delay_minutes: delayMin } }),
+    onSuccess: () => {
+      showFeedback({ title: "Configurações salvas", type: "success" });
+      qc.invalidateQueries({ queryKey: ["dispatch-settings"] });
+    },
+    onError: (e: Error) => showFeedback({ title: "Erro", description: e.message, type: "error" }),
   });
 
   // Marca todos como visualizados ao abrir
@@ -50,6 +76,7 @@ export function AdminProductOrders() {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<any | null>(null);
+  const [dispatchingId, setDispatchingId] = useState<string | null>(null);
 
   const updateMutation = useMutation({
     mutationFn: (vars: { id: string; status: any; pdf_url?: string | null }) =>
@@ -60,6 +87,21 @@ export function AdminProductOrders() {
       setSelected(null);
     },
     onError: (e: Error) => showFeedback({ title: "Erro", description: e.message, type: "error" }),
+  });
+
+  const dispatchMutation = useMutation({
+    mutationFn: (vars: { id: string; action: "pdf" | "email" | "both" }) =>
+      dispatchFn({ data: vars }),
+    onMutate: (vars) => setDispatchingId(vars.id),
+    onSettled: () => setDispatchingId(null),
+    onSuccess: (_, vars) => {
+      showFeedback({
+        title: vars.action === "pdf" ? "PDF gerado" : vars.action === "email" ? "E-mail enviado" : "Pedido despachado",
+        type: "success",
+      });
+      qc.invalidateQueries({ queryKey: ["admin-product-orders"] });
+    },
+    onError: (e: Error) => showFeedback({ title: "Erro ao despachar", description: e.message, type: "error" }),
   });
 
   const filtered = (orders ?? []).filter((o: any) => {
