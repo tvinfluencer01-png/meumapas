@@ -215,3 +215,27 @@ export const runCrmFollowupsNow = createServerFn({ method: "POST" })
     await assertAdmin(context.supabase, context.userId);
     return dispatchPendingFollowups();
   });
+
+export const listCrmFollowupHistory = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ leadId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows, error } = await supabaseAdmin
+      .from("crm_followup_history" as any)
+      .select("id,lead_id,attempt_number,status,subject,recipient_email,error_message,created_at")
+      .eq("lead_id", data.leadId)
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return (rows ?? []) as Array<{
+      id: string;
+      lead_id: string;
+      attempt_number: number;
+      status: "sent" | "failed" | "attempt";
+      subject: string | null;
+      recipient_email: string;
+      error_message: string | null;
+      created_at: string;
+    }>;
+  });
