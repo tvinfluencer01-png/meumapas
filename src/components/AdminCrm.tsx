@@ -288,6 +288,9 @@ export function AdminCrm() {
             <Button size="sm" variant="outline" onClick={() => setAutomationsOpen(true)}>
               <SettingsIcon className="size-4 mr-1" />Automações por status
             </Button>
+            <Button size="sm" onClick={() => openQuickCreate("new")}>
+              <Plus className="size-4 mr-1" />Novo lead
+            </Button>
           </div>
         </div>
         <div className="flex flex-wrap gap-2 pt-2 text-xs">
