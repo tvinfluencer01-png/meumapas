@@ -264,8 +264,10 @@ async function handler({ request }: { request: Request }) {
       .from("horoscope_subscriptions")
       .update({ last_sent_on: today })
       .eq("id", s.id);
+  };
 
-  }
+  await Promise.allSettled((subs ?? []).map((s) => processOne(s).catch(() => {})));
+
 
   return Response.json({ ok: true, processed, delivered });
 }
