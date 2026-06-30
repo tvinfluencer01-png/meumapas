@@ -71,6 +71,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
 const ADMIN_MENU: { value: string; label: string; icon: typeof SettingsIcon }[] = [
   { value: "pedidos", label: "Pedidos", icon: ShoppingCart },
   { value: "crm", label: "CRM Leads", icon: Mail },
+  { value: "affiliate", label: "Affiliate Center", icon: Users },
   { value: "settings", label: "Configurações", icon: SettingsIcon },
   { value: "users", label: "Usuários", icon: Users },
   { value: "costs", label: "Custos por ação", icon: CoinsIcon },
