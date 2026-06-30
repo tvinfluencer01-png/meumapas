@@ -154,7 +154,7 @@ async function handler({ request }: { request: Request }) {
         user_id: s.user_id, date: today, channel: "ai", status: "error",
         detail: String(e?.message ?? e).slice(0, 240), sign: s.sun_sign,
       });
-      continue;
+      return;
     }
 
     // Registra os ângulos do dia para evitar repetição nos próximos
