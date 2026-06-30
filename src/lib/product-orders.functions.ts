@@ -483,3 +483,194 @@ export async function runAutomaticDispatchSweep() {
   }
   return { ran };
 }
+
+// ============================================================
+// Guest checkout — order created BEFORE login; user created post-payment
+// ============================================================
+
+const GuestOrderSchema = z.object({
+  landing_id: z.string().uuid(),
+  customer_data: z.record(z.string(), z.any()),
+});
+
+export const createGuestProductOrder = createServerFn({ method: "POST" })
+  .inputValidator((d) => GuestOrderSchema.parse(d))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: landing, error: lErr } = await supabaseAdmin
+      .from("product_landings")
+      .select("*")
+      .eq("id", data.landing_id)
+      .eq("active", true)
+      .maybeSingle();
+    if (lErr || !landing) throw new Error("Landing não encontrada ou inativa.");
+
+    const cd = data.customer_data ?? {};
+    const email = String(cd.email ?? "").trim().toLowerCase();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      throw new Error("E-mail inválido.");
+    }
+    cd.email = email;
+
+    // required fields + always require email + full_name for guest flow
+    const required = Array.from(new Set([...(landing.required_fields as string[] ?? []), "email", "full_name"]));
+    for (const k of required) {
+      const v = cd[k];
+      if (v === undefined || v === null || String(v).trim() === "") {
+        throw new Error(`Campo obrigatório ausente: ${k}`);
+      }
+    }
+
+    // Upsert CRM lead (one per email+landing)
+    const { data: existingLead } = await supabaseAdmin
+      .from("crm_leads")
+      .select("id")
+      .eq("email", email)
+      .eq("landing_id", landing.id)
+      .maybeSingle();
+
+    let leadId: string;
+    if (existingLead) {
+      leadId = existingLead.id;
+      await supabaseAdmin.from("crm_leads").update({
+        full_name: cd.full_name ?? null,
+        phone: cd.phone ?? null,
+        customer_data: cd,
+        status: "new",
+      }).eq("id", leadId);
+    } else {
+      const { data: newLead, error: leadErr } = await supabaseAdmin.from("crm_leads").insert({
+        email,
+        full_name: cd.full_name ?? null,
+        phone: cd.phone ?? null,
+        source: "landing",
+        landing_slug: landing.slug,
+        landing_id: landing.id,
+        customer_data: cd,
+        status: "new",
+      }).select("id").single();
+      if (leadErr) throw new Error(leadErr.message);
+      leadId = newLead.id;
+    }
+
+    const { data: mp } = await supabaseAdmin
+      .from("mercado_pago_settings")
+      .select("access_token, enabled, environment")
+      .eq("id", true)
+      .maybeSingle();
+    if (!mp?.enabled || !mp.access_token) {
+      throw new Error("Pagamentos indisponíveis no momento.");
+    }
+
+    const { data: order, error: oErr } = await supabaseAdmin
+      .from("product_orders")
+      .insert({
+        user_id: null,
+        lead_id: leadId,
+        guest_email: email,
+        landing_id: landing.id,
+        status: "pending_payment",
+        amount_cents: landing.price_cents,
+        customer_data: cd,
+      } as any)
+      .select("id, access_token")
+      .single();
+    if (oErr) throw new Error(oErr.message);
+
+    let origin = process.env.PUBLIC_APP_URL;
+    if (!origin) {
+      try {
+        const req = getRequest();
+        const url = new URL(req.url);
+        const fh = req.headers.get("x-forwarded-host") ?? req.headers.get("host");
+        const fp = req.headers.get("x-forwarded-proto") ?? url.protocol.replace(":", "");
+        origin = `${fp}://${fh ?? url.host}`;
+      } catch {
+        origin = "https://meumapas.lovable.app";
+      }
+    }
+
+    const prefBody = {
+      items: [{
+        id: landing.slug,
+        title: landing.title,
+        quantity: 1,
+        currency_id: "BRL",
+        unit_price: landing.price_cents / 100,
+      }],
+      payer: { email },
+      external_reference: order.id,
+      metadata: { order_id: order.id, kind: "product_order", landing_id: landing.id, lead_id: leadId },
+      back_urls: {
+        success: `${origin}/p/${landing.slug}?status=success&order=${order.id}`,
+        pending: `${origin}/p/${landing.slug}?status=pending&order=${order.id}`,
+        failure: `${origin}/p/${landing.slug}?status=failure&order=${order.id}`,
+      },
+      auto_return: "approved",
+      notification_url: `${origin}/api/public/hooks/mercadopago`,
+    };
+
+    const res = await fetch("https://api.mercadopago.com/checkout/preferences", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${mp.access_token}`, "Content-Type": "application/json" },
+      body: JSON.stringify(prefBody),
+    });
+    const json: any = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(`Falha ao criar checkout: ${json?.message ?? `HTTP ${res.status}`}`);
+    const checkoutUrl = mp.environment === "production" ? json.init_point : json.sandbox_init_point ?? json.init_point;
+    if (!checkoutUrl || !json.id) throw new Error("Resposta inesperada do Mercado Pago.");
+
+    await supabaseAdmin.from("product_orders").update({ mp_preference_id: json.id }).eq("id", order.id);
+    return { checkout_url: checkoutUrl, order_id: order.id, access_token: order.access_token };
+  });
+
+// ============================================================
+// CRM Leads
+// ============================================================
+
+export const listCrmLeads = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: isAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId, _role: "admin",
+    });
+    if (!isAdmin) throw new Error("Forbidden");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
+      .from("crm_leads")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(1000);
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
+
+export const updateCrmLead = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({
+    id: z.string().uuid(),
+    status: z.enum(["new", "contacted", "negotiating", "converted", "lost"]).optional(),
+    notes: z.string().max(4000).nullable().optional(),
+    last_contact_at: z.string().datetime().nullable().optional(),
+    increment_followup: z.boolean().optional(),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: isAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId, _role: "admin",
+    });
+    if (!isAdmin) throw new Error("Forbidden");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const patch: Record<string, any> = {};
+    if (data.status) patch.status = data.status;
+    if (data.notes !== undefined) patch.notes = data.notes;
+    if (data.last_contact_at !== undefined) patch.last_contact_at = data.last_contact_at;
+    if (data.increment_followup) {
+      const { data: cur } = await supabaseAdmin.from("crm_leads").select("followup_count").eq("id", data.id).maybeSingle();
+      patch.followup_count = ((cur as any)?.followup_count ?? 0) + 1;
+      patch.last_contact_at = new Date().toISOString();
+    }
+    const { error } = await supabaseAdmin.from("crm_leads").update(patch).eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
