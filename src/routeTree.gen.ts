@@ -42,6 +42,13 @@ import { Route as ApiPublicHooksDispatchOrdersRouteImport } from './routes/api/p
 import { Route as ApiPublicHooksDailyHoroscopeRouteImport } from './routes/api/public/hooks/daily-horoscope'
 import { Route as ApiPublicHooksCrmFollowupsRouteImport } from './routes/api/public/hooks/crm-followups'
 import { Route as AuthenticatedPSlugCheckoutRouteImport } from './routes/_authenticated.p.$slug.checkout'
+import { Route as ApiPublicAffiliateTrackWithdrawRouteImport } from './routes/api/public/affiliate/track.withdraw'
+import { Route as ApiPublicAffiliateTrackVisitRouteImport } from './routes/api/public/affiliate/track.visit'
+import { Route as ApiPublicAffiliateTrackOrderRouteImport } from './routes/api/public/affiliate/track.order'
+import { Route as ApiPublicAffiliateTrackCommissionRouteImport } from './routes/api/public/affiliate/track.commission'
+import { Route as ApiPublicAffiliateTrackClickRouteImport } from './routes/api/public/affiliate/track.click'
+import { Route as ApiPublicAffiliateTrackCheckoutRouteImport } from './routes/api/public/affiliate/track.checkout'
+import { Route as ApiPublicAffiliateRSlugRouteImport } from './routes/api/public/affiliate/r.$slug'
 
 const ProfissionaisRoute = ProfissionaisRouteImport.update({
   id: '/profissionais',
@@ -217,6 +224,47 @@ const AuthenticatedPSlugCheckoutRoute =
     path: '/p/$slug/checkout',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const ApiPublicAffiliateTrackWithdrawRoute =
+  ApiPublicAffiliateTrackWithdrawRouteImport.update({
+    id: '/api/public/affiliate/track/withdraw',
+    path: '/api/public/affiliate/track/withdraw',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicAffiliateTrackVisitRoute =
+  ApiPublicAffiliateTrackVisitRouteImport.update({
+    id: '/api/public/affiliate/track/visit',
+    path: '/api/public/affiliate/track/visit',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicAffiliateTrackOrderRoute =
+  ApiPublicAffiliateTrackOrderRouteImport.update({
+    id: '/api/public/affiliate/track/order',
+    path: '/api/public/affiliate/track/order',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicAffiliateTrackCommissionRoute =
+  ApiPublicAffiliateTrackCommissionRouteImport.update({
+    id: '/api/public/affiliate/track/commission',
+    path: '/api/public/affiliate/track/commission',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicAffiliateTrackClickRoute =
+  ApiPublicAffiliateTrackClickRouteImport.update({
+    id: '/api/public/affiliate/track/click',
+    path: '/api/public/affiliate/track/click',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicAffiliateTrackCheckoutRoute =
+  ApiPublicAffiliateTrackCheckoutRouteImport.update({
+    id: '/api/public/affiliate/track/checkout',
+    path: '/api/public/affiliate/track/checkout',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicAffiliateRSlugRoute = ApiPublicAffiliateRSlugRouteImport.update({
+  id: '/api/public/affiliate/r/$slug',
+  path: '/api/public/affiliate/r/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -251,6 +299,13 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/mercadopago': typeof ApiPublicHooksMercadopagoRoute
   '/api/public/manifest/icon': typeof ApiPublicManifestIconRoute
   '/api/public/manifest/webmanifest': typeof ApiPublicManifestWebmanifestRoute
+  '/api/public/affiliate/r/$slug': typeof ApiPublicAffiliateRSlugRoute
+  '/api/public/affiliate/track/checkout': typeof ApiPublicAffiliateTrackCheckoutRoute
+  '/api/public/affiliate/track/click': typeof ApiPublicAffiliateTrackClickRoute
+  '/api/public/affiliate/track/commission': typeof ApiPublicAffiliateTrackCommissionRoute
+  '/api/public/affiliate/track/order': typeof ApiPublicAffiliateTrackOrderRoute
+  '/api/public/affiliate/track/visit': typeof ApiPublicAffiliateTrackVisitRoute
+  '/api/public/affiliate/track/withdraw': typeof ApiPublicAffiliateTrackWithdrawRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -285,6 +340,13 @@ export interface FileRoutesByTo {
   '/api/public/hooks/mercadopago': typeof ApiPublicHooksMercadopagoRoute
   '/api/public/manifest/icon': typeof ApiPublicManifestIconRoute
   '/api/public/manifest/webmanifest': typeof ApiPublicManifestWebmanifestRoute
+  '/api/public/affiliate/r/$slug': typeof ApiPublicAffiliateRSlugRoute
+  '/api/public/affiliate/track/checkout': typeof ApiPublicAffiliateTrackCheckoutRoute
+  '/api/public/affiliate/track/click': typeof ApiPublicAffiliateTrackClickRoute
+  '/api/public/affiliate/track/commission': typeof ApiPublicAffiliateTrackCommissionRoute
+  '/api/public/affiliate/track/order': typeof ApiPublicAffiliateTrackOrderRoute
+  '/api/public/affiliate/track/visit': typeof ApiPublicAffiliateTrackVisitRoute
+  '/api/public/affiliate/track/withdraw': typeof ApiPublicAffiliateTrackWithdrawRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -321,6 +383,13 @@ export interface FileRoutesById {
   '/api/public/hooks/mercadopago': typeof ApiPublicHooksMercadopagoRoute
   '/api/public/manifest/icon': typeof ApiPublicManifestIconRoute
   '/api/public/manifest/webmanifest': typeof ApiPublicManifestWebmanifestRoute
+  '/api/public/affiliate/r/$slug': typeof ApiPublicAffiliateRSlugRoute
+  '/api/public/affiliate/track/checkout': typeof ApiPublicAffiliateTrackCheckoutRoute
+  '/api/public/affiliate/track/click': typeof ApiPublicAffiliateTrackClickRoute
+  '/api/public/affiliate/track/commission': typeof ApiPublicAffiliateTrackCommissionRoute
+  '/api/public/affiliate/track/order': typeof ApiPublicAffiliateTrackOrderRoute
+  '/api/public/affiliate/track/visit': typeof ApiPublicAffiliateTrackVisitRoute
+  '/api/public/affiliate/track/withdraw': typeof ApiPublicAffiliateTrackWithdrawRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -357,6 +426,13 @@ export interface FileRouteTypes {
     | '/api/public/hooks/mercadopago'
     | '/api/public/manifest/icon'
     | '/api/public/manifest/webmanifest'
+    | '/api/public/affiliate/r/$slug'
+    | '/api/public/affiliate/track/checkout'
+    | '/api/public/affiliate/track/click'
+    | '/api/public/affiliate/track/commission'
+    | '/api/public/affiliate/track/order'
+    | '/api/public/affiliate/track/visit'
+    | '/api/public/affiliate/track/withdraw'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -391,6 +467,13 @@ export interface FileRouteTypes {
     | '/api/public/hooks/mercadopago'
     | '/api/public/manifest/icon'
     | '/api/public/manifest/webmanifest'
+    | '/api/public/affiliate/r/$slug'
+    | '/api/public/affiliate/track/checkout'
+    | '/api/public/affiliate/track/click'
+    | '/api/public/affiliate/track/commission'
+    | '/api/public/affiliate/track/order'
+    | '/api/public/affiliate/track/visit'
+    | '/api/public/affiliate/track/withdraw'
   id:
     | '__root__'
     | '/'
@@ -426,6 +509,13 @@ export interface FileRouteTypes {
     | '/api/public/hooks/mercadopago'
     | '/api/public/manifest/icon'
     | '/api/public/manifest/webmanifest'
+    | '/api/public/affiliate/r/$slug'
+    | '/api/public/affiliate/track/checkout'
+    | '/api/public/affiliate/track/click'
+    | '/api/public/affiliate/track/commission'
+    | '/api/public/affiliate/track/order'
+    | '/api/public/affiliate/track/visit'
+    | '/api/public/affiliate/track/withdraw'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -444,6 +534,13 @@ export interface RootRouteChildren {
   ApiPublicHooksMercadopagoRoute: typeof ApiPublicHooksMercadopagoRoute
   ApiPublicManifestIconRoute: typeof ApiPublicManifestIconRoute
   ApiPublicManifestWebmanifestRoute: typeof ApiPublicManifestWebmanifestRoute
+  ApiPublicAffiliateRSlugRoute: typeof ApiPublicAffiliateRSlugRoute
+  ApiPublicAffiliateTrackCheckoutRoute: typeof ApiPublicAffiliateTrackCheckoutRoute
+  ApiPublicAffiliateTrackClickRoute: typeof ApiPublicAffiliateTrackClickRoute
+  ApiPublicAffiliateTrackCommissionRoute: typeof ApiPublicAffiliateTrackCommissionRoute
+  ApiPublicAffiliateTrackOrderRoute: typeof ApiPublicAffiliateTrackOrderRoute
+  ApiPublicAffiliateTrackVisitRoute: typeof ApiPublicAffiliateTrackVisitRoute
+  ApiPublicAffiliateTrackWithdrawRoute: typeof ApiPublicAffiliateTrackWithdrawRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -679,6 +776,55 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPSlugCheckoutRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/api/public/affiliate/track/withdraw': {
+      id: '/api/public/affiliate/track/withdraw'
+      path: '/api/public/affiliate/track/withdraw'
+      fullPath: '/api/public/affiliate/track/withdraw'
+      preLoaderRoute: typeof ApiPublicAffiliateTrackWithdrawRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/affiliate/track/visit': {
+      id: '/api/public/affiliate/track/visit'
+      path: '/api/public/affiliate/track/visit'
+      fullPath: '/api/public/affiliate/track/visit'
+      preLoaderRoute: typeof ApiPublicAffiliateTrackVisitRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/affiliate/track/order': {
+      id: '/api/public/affiliate/track/order'
+      path: '/api/public/affiliate/track/order'
+      fullPath: '/api/public/affiliate/track/order'
+      preLoaderRoute: typeof ApiPublicAffiliateTrackOrderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/affiliate/track/commission': {
+      id: '/api/public/affiliate/track/commission'
+      path: '/api/public/affiliate/track/commission'
+      fullPath: '/api/public/affiliate/track/commission'
+      preLoaderRoute: typeof ApiPublicAffiliateTrackCommissionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/affiliate/track/click': {
+      id: '/api/public/affiliate/track/click'
+      path: '/api/public/affiliate/track/click'
+      fullPath: '/api/public/affiliate/track/click'
+      preLoaderRoute: typeof ApiPublicAffiliateTrackClickRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/affiliate/track/checkout': {
+      id: '/api/public/affiliate/track/checkout'
+      path: '/api/public/affiliate/track/checkout'
+      fullPath: '/api/public/affiliate/track/checkout'
+      preLoaderRoute: typeof ApiPublicAffiliateTrackCheckoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/affiliate/r/$slug': {
+      id: '/api/public/affiliate/r/$slug'
+      path: '/api/public/affiliate/r/$slug'
+      fullPath: '/api/public/affiliate/r/$slug'
+      preLoaderRoute: typeof ApiPublicAffiliateRSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -754,6 +900,14 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksMercadopagoRoute: ApiPublicHooksMercadopagoRoute,
   ApiPublicManifestIconRoute: ApiPublicManifestIconRoute,
   ApiPublicManifestWebmanifestRoute: ApiPublicManifestWebmanifestRoute,
+  ApiPublicAffiliateRSlugRoute: ApiPublicAffiliateRSlugRoute,
+  ApiPublicAffiliateTrackCheckoutRoute: ApiPublicAffiliateTrackCheckoutRoute,
+  ApiPublicAffiliateTrackClickRoute: ApiPublicAffiliateTrackClickRoute,
+  ApiPublicAffiliateTrackCommissionRoute:
+    ApiPublicAffiliateTrackCommissionRoute,
+  ApiPublicAffiliateTrackOrderRoute: ApiPublicAffiliateTrackOrderRoute,
+  ApiPublicAffiliateTrackVisitRoute: ApiPublicAffiliateTrackVisitRoute,
+  ApiPublicAffiliateTrackWithdrawRoute: ApiPublicAffiliateTrackWithdrawRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
