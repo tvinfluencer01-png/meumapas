@@ -445,6 +445,53 @@ export type Database = {
         }
         Relationships: []
       }
+      crm_followup_history: {
+        Row: {
+          attempt_number: number
+          body: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          lead_id: string
+          metadata: Json
+          recipient_email: string
+          status: string
+          subject: string | null
+        }
+        Insert: {
+          attempt_number?: number
+          body?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          lead_id: string
+          metadata?: Json
+          recipient_email: string
+          status: string
+          subject?: string | null
+        }
+        Update: {
+          attempt_number?: number
+          body?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          lead_id?: string
+          metadata?: Json
+          recipient_email?: string
+          status?: string
+          subject?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_followup_history_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "crm_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       crm_followup_settings: {
         Row: {
           body_template: string
