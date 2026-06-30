@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, ExternalLink, Eye, CheckCircle2, AlertTriangle, FileText, Send, KeyRound, BadgeCheck } from "lucide-react";
+import { Loader2, ExternalLink, Eye, CheckCircle2, AlertTriangle, FileText, Send, KeyRound, BadgeCheck, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -97,7 +97,7 @@ export function AdminProductOrders() {
   });
 
   const dispatchMutation = useMutation({
-    mutationFn: (vars: { id: string; action: "pdf" | "email" | "both" | "password_setup" }) =>
+    mutationFn: (vars: { id: string; action: "pdf" | "email" | "both" | "password_setup" | "whatsapp" }) =>
       dispatchFn({ data: vars }),
     onMutate: (vars) => setDispatchingId(vars.id),
     onSettled: () => setDispatchingId(null),
@@ -239,6 +239,15 @@ export function AdminProductOrders() {
                             onClick={() => dispatchMutation.mutate({ id: o.id, action: "both" })}
                           >
                             {busy ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            title="Enviar PDF por WhatsApp"
+                            disabled={busy}
+                            onClick={() => dispatchMutation.mutate({ id: o.id, action: "whatsapp" })}
+                          >
+                            {busy ? <Loader2 className="size-4 animate-spin" /> : <MessageCircle className="size-4 text-emerald-400" />}
                           </Button>
                           <Button
                             size="icon"
