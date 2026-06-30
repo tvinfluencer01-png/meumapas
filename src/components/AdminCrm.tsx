@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, Mail, MessageCircle, Pause, Play, Send, Settings as SettingsIcon, History, GitBranch, RotateCcw, Trash2 } from "lucide-react";
+import { Loader2, Mail, MessageCircle, Pause, Play, Send, Settings as SettingsIcon, History, GitBranch, RotateCcw, Trash2, ClipboardList, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { showFeedback } from "@/components/system-feedback";
-import { listCrmLeads, updateCrmLead } from "@/lib/product-orders.functions";
+import { listCrmLeads, updateCrmLead, listCrmLeadStatusHistory } from "@/lib/product-orders.functions";
 import {
   getCrmFollowupSettings,
   saveCrmFollowupSettings,
@@ -56,6 +56,13 @@ export function AdminCrm() {
   const listVersionsFn = useServerFn(listCrmTemplateVersions);
   const deleteVersionFn = useServerFn(deleteCrmTemplateVersion);
   const [historyLead, setHistoryLead] = useState<any | null>(null);
+  const [auditLead, setAuditLead] = useState<any | null>(null);
+  const auditFn = useServerFn(listCrmLeadStatusHistory);
+  const { data: audit, isLoading: auditLoading } = useQuery({
+    queryKey: ["admin-crm-lead-audit", auditLead?.id],
+    queryFn: () => auditFn({ data: { leadId: auditLead.id } }),
+    enabled: !!auditLead,
+  });
   const [versionsOpen, setVersionsOpen] = useState(false);
   const [compareVersion, setCompareVersion] = useState<any | null>(null);
 
@@ -279,7 +286,7 @@ export function AdminCrm() {
                     const id = e.dataTransfer.getData("text/plain");
                     const lead = (leads ?? []).find((x: any) => x.id === id);
                     if (id && lead && lead.status !== statusKey) {
-                      updateMut.mutate({ id, status: statusKey });
+                      updateMut.mutate({ id, status: statusKey, source: "kanban", change_note: `Movido para ${STATUS_LABEL[statusKey].label} via Kanban` });
                     }
                   }}
                   className="rounded-lg border border-border/40 bg-secondary/20 p-2 min-h-[400px] flex flex-col"
@@ -334,8 +341,11 @@ export function AdminCrm() {
                             >
                               {l.followup_paused ? <Play className="size-3" /> : <Pause className="size-3" />}
                             </Button>
-                            <Button size="icon" variant="ghost" className="h-6 w-6" title="Histórico" onClick={() => setHistoryLead(l)}>
+                            <Button size="icon" variant="ghost" className="h-6 w-6" title="Histórico de follow-ups" onClick={() => setHistoryLead(l)}>
                               <History className="size-3" />
+                            </Button>
+                            <Button size="icon" variant="ghost" className="h-6 w-6" title="Auditoria de status" onClick={() => setAuditLead(l)}>
+                              <ClipboardList className="size-3" />
                             </Button>
                           </div>
                         </div>
@@ -385,7 +395,7 @@ export function AdminCrm() {
                 <Button variant="outline" onClick={() => updateMut.mutate({ id: editing.id, increment_followup: true })}>
                   + Follow-up manual
                 </Button>
-                <Button onClick={() => updateMut.mutate({ id: editing.id, status, notes })} disabled={updateMut.isPending}>
+                <Button onClick={() => updateMut.mutate({ id: editing.id, status, notes, source: "edit" })} disabled={updateMut.isPending}>
                   {updateMut.isPending ? <Loader2 className="size-4 animate-spin" /> : "Salvar"}
                 </Button>
               </DialogFooter>
@@ -712,6 +722,55 @@ export function AdminCrm() {
                   <RotateCcw className="size-4 mr-1" />Restaurar esta versão
                 </Button>
               </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!auditLead} onOpenChange={(o) => !o && setAuditLead(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-serif shimmer-text">Auditoria de status</DialogTitle>
+          </DialogHeader>
+          {auditLead && (
+            <div className="space-y-3">
+              <div className="text-sm">
+                <strong>{auditLead.full_name ?? auditLead.email}</strong>
+                <div className="text-xs text-muted-foreground">{auditLead.email}</div>
+              </div>
+              {auditLoading ? (
+                <div className="py-6 text-center"><Loader2 className="size-5 animate-spin inline" /></div>
+              ) : !audit || audit.length === 0 ? (
+                <p className="py-6 text-center text-sm text-muted-foreground">Sem mudanças registradas ainda.</p>
+              ) : (
+                <ul className="space-y-2">
+                  {audit.map((h: any) => {
+                    const fromMeta = h.from_status ? STATUS_LABEL[h.from_status] : null;
+                    const toMeta = STATUS_LABEL[h.to_status] ?? STATUS_LABEL.new;
+                    return (
+                      <li key={h.id} className="border border-border/40 rounded p-2 text-xs">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {fromMeta ? (
+                            <span className={`px-2 py-0.5 rounded border ${fromMeta.color}`}>{fromMeta.label}</span>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                          <ArrowRight className="size-3 text-muted-foreground" />
+                          <span className={`px-2 py-0.5 rounded border ${toMeta.color}`}>{toMeta.label}</span>
+                          <span className="ml-auto text-muted-foreground">
+                            {new Date(h.created_at).toLocaleString("pt-BR")}
+                          </span>
+                        </div>
+                        <div className="mt-1 text-muted-foreground">
+                          Origem: <span className="text-foreground">{h.source ?? "system"}</span>
+                          {h.changed_by_email && <> · Por: <span className="text-foreground">{h.changed_by_email}</span></>}
+                        </div>
+                        {h.note && <div className="mt-1 italic">"{h.note}"</div>}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
             </div>
           )}
         </DialogContent>
