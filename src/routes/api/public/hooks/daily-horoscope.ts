@@ -93,7 +93,8 @@ async function handler({ request }: { request: Request }) {
         user_id: s.user_id, date: today, channel: "system", status: "skipped",
         detail: "sun_sign missing", sign: null,
       });
-      continue;
+      return;
+
     }
 
     // Resolve birth_date do contexto (client_profile ativo > birth_data primário)
