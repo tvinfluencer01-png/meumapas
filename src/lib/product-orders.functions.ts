@@ -412,10 +412,10 @@ async function generatePdfForOrder(order: any, landing: any): Promise<Uint8Array
     const customerName = String(cd.full_name ?? cd.name ?? "").trim();
     const customerBirth = String(cd.birth_date ?? "").trim();
     if (customerName && /^\d{4}-\d{2}-\d{2}/.test(customerBirth)) {
-      const { buildPersonalityNumerologyBlocks } = await import(
-        "@/lib/numerology-personality-report"
+      const { buildAiPersonalityNumerologyBlocks } = await import(
+        "@/lib/numerology-ai-report.server"
       );
-      const { blocks: numBlocks } = buildPersonalityNumerologyBlocks(
+      const { blocks: numBlocks } = await buildAiPersonalityNumerologyBlocks(
         customerName,
         customerBirth,
       );
