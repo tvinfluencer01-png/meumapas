@@ -726,6 +726,55 @@ export function AdminCrm() {
           )}
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!auditLead} onOpenChange={(o) => !o && setAuditLead(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-serif shimmer-text">Auditoria de status</DialogTitle>
+          </DialogHeader>
+          {auditLead && (
+            <div className="space-y-3">
+              <div className="text-sm">
+                <strong>{auditLead.full_name ?? auditLead.email}</strong>
+                <div className="text-xs text-muted-foreground">{auditLead.email}</div>
+              </div>
+              {auditLoading ? (
+                <div className="py-6 text-center"><Loader2 className="size-5 animate-spin inline" /></div>
+              ) : !audit || audit.length === 0 ? (
+                <p className="py-6 text-center text-sm text-muted-foreground">Sem mudanças registradas ainda.</p>
+              ) : (
+                <ul className="space-y-2">
+                  {audit.map((h: any) => {
+                    const fromMeta = h.from_status ? STATUS_LABEL[h.from_status] : null;
+                    const toMeta = STATUS_LABEL[h.to_status] ?? STATUS_LABEL.new;
+                    return (
+                      <li key={h.id} className="border border-border/40 rounded p-2 text-xs">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {fromMeta ? (
+                            <span className={`px-2 py-0.5 rounded border ${fromMeta.color}`}>{fromMeta.label}</span>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                          <ArrowRight className="size-3 text-muted-foreground" />
+                          <span className={`px-2 py-0.5 rounded border ${toMeta.color}`}>{toMeta.label}</span>
+                          <span className="ml-auto text-muted-foreground">
+                            {new Date(h.created_at).toLocaleString("pt-BR")}
+                          </span>
+                        </div>
+                        <div className="mt-1 text-muted-foreground">
+                          Origem: <span className="text-foreground">{h.source ?? "system"}</span>
+                          {h.changed_by_email && <> · Por: <span className="text-foreground">{h.changed_by_email}</span></>}
+                        </div>
+                        {h.note && <div className="mt-1 italic">"{h.note}"</div>}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
