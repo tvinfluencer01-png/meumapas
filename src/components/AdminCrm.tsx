@@ -467,10 +467,34 @@ export function AdminCrm() {
                 )}
               </div>
 
+              <div className="rounded border border-border/40 p-3 space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <div>
+                    <Label className="text-sm">Versionamento dos templates</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Cada alteração de assunto/corpo cria uma versão. {versions?.length ?? 0} versão(ões) registradas.
+                    </p>
+                  </div>
+                  <Button type="button" size="sm" variant="outline" onClick={() => setVersionsOpen(true)}>
+                    <GitBranch className="size-4 mr-1" />Histórico
+                  </Button>
+                </div>
+                <div>
+                  <Label className="text-xs">Nota da nova versão (opcional)</Label>
+                  <Input
+                    placeholder="Ex.: ajustei o tom para soar mais próximo"
+                    value={versionNote}
+                    onChange={(e) => setVersionNote(e.target.value)}
+                  />
+                </div>
+              </div>
 
               <DialogFooter>
                 <Button variant="outline" onClick={() => setSettingsOpen(false)}>Cancelar</Button>
-                <Button onClick={() => saveSettingsMut.mutate(form)} disabled={saveSettingsMut.isPending}>
+                <Button
+                  onClick={() => saveSettingsMut.mutate({ ...form, version_note: versionNote || undefined })}
+                  disabled={saveSettingsMut.isPending}
+                >
                   {saveSettingsMut.isPending ? <Loader2 className="size-4 animate-spin" /> : "Salvar"}
                 </Button>
               </DialogFooter>
