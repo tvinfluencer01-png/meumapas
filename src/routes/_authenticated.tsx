@@ -8,7 +8,7 @@ import { Starfield } from "@/components/Starfield";
 import { UserProfileDialog } from "@/components/UserProfileDialog";
 import { Logo } from "@/components/Logo";
 import {
-  LayoutDashboard, CircleDot, Hash, MessageCircle, LogOut, Menu, X, ScrollText, Shield, Settings, Coins, Wand2, TreePine, Crown, Infinity as InfinityIcon, FileBadge, User as UserIcon, Palette, Users, UserCircle2, Loader2, Sun, Building2,
+  LayoutDashboard, CircleDot, Hash, MessageCircle, LogOut, Menu, X, ScrollText, Shield, Settings, Coins, Wand2, TreePine, Crown, Infinity as InfinityIcon, FileBadge, User as UserIcon, Palette, Users, UserCircle2, Loader2, Sun, Building2, ShoppingCart,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,6 +22,7 @@ import { showFeedback } from "@/components/system-feedback";
 import { getMyAdminStatus } from "@/lib/roles.functions";
 
 import { listClientProfiles, setActiveClientProfile } from "@/lib/client-profiles.functions";
+import { countUnviewedOrders } from "@/lib/product-orders.functions";
 
 const SELF_VALUE = "__self__";
 
