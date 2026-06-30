@@ -31,6 +31,8 @@ type Landing = {
   subtitle: string | null;
   description: string | null;
   hero_image_url: string | null;
+  hero_image_width: number | null;
+  hero_image_height: number | null;
   price_cents: number;
   report_type: string;
   required_fields: string[];
