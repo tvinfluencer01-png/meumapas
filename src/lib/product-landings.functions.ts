@@ -143,3 +143,87 @@ export const deleteLanding = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+/* ---------- Imagem de capa: upload + geração por IA ---------- */
+
+const LANDING_BUCKET = "product-landings";
+const SIGNED_URL_TTL = 60 * 60 * 24 * 365 * 10; // 10 anos
+
+async function ensureAdmin(context: any) {
+  const { data: isAdmin } = await context.supabase.rpc("has_role", {
+    _user_id: context.userId,
+    _role: "admin",
+  });
+  if (!isAdmin) throw new Error("Forbidden");
+}
+
+async function storeAndSign(bytes: Buffer, ext: "png" | "jpg", mime: string) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const path = `hero/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const { error: upErr } = await supabaseAdmin.storage
+    .from(LANDING_BUCKET)
+    .upload(path, bytes, { contentType: mime, upsert: false });
+  if (upErr) throw new Error(upErr.message);
+  const { data: signed, error: sErr } = await supabaseAdmin.storage
+    .from(LANDING_BUCKET)
+    .createSignedUrl(path, SIGNED_URL_TTL);
+  if (sErr || !signed?.signedUrl) throw new Error(sErr?.message ?? "Falha ao gerar URL");
+  return signed.signedUrl;
+}
+
+export const uploadLandingHeroImage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        base64: z.string().min(20),
+        mime: z.enum(["image/png", "image/jpeg", "image/webp"]),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await ensureAdmin(context);
+    const bytes = Buffer.from(data.base64, "base64");
+    if (bytes.byteLength > 5 * 1024 * 1024) {
+      throw new Error("Imagem acima de 5MB. Comprima antes de enviar.");
+    }
+    const ext = data.mime === "image/png" ? "png" : "jpg";
+    const url = await storeAndSign(bytes, ext, data.mime);
+    return { url };
+  });
+
+export const generateLandingHeroImage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({ prompt: z.string().min(3).max(1000) }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await ensureAdmin(context);
+    const key = process.env.LOVABLE_API_KEY;
+    if (!key) throw new Error("LOVABLE_API_KEY ausente");
+
+    const res = await fetch("https://ai.gateway.lovable.dev/v1/images/generations", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "openai/gpt-image-2",
+        prompt: data.prompt,
+        size: "1024x1024",
+        quality: "low",
+        n: 1,
+      }),
+    });
+    if (!res.ok) {
+      const txt = await res.text().catch(() => "");
+      if (res.status === 429) throw new Error("Limite de geração atingido. Tente novamente em instantes.");
+      if (res.status === 402) throw new Error("Créditos de IA esgotados na workspace.");
+      throw new Error(`Falha na geração (${res.status}): ${txt.slice(0, 200)}`);
+    }
+    const json = await res.json();
+    const b64 = json?.data?.[0]?.b64_json;
+    if (!b64) throw new Error("Resposta da IA sem imagem.");
+    const bytes = Buffer.from(b64, "base64");
+    const url = await storeAndSign(bytes, "png", "image/png");
+    return { url };
+  });
+
