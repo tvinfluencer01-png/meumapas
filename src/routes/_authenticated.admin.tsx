@@ -17,6 +17,8 @@ import { AdminSmtp } from "@/components/AdminSmtp";
 import { AdminPwa } from "@/components/AdminPwa";
 import { AdminProductLandings } from "@/components/AdminProductLandings";
 import { AdminProductOrders } from "@/components/AdminProductOrders";
+import { AdminCrm } from "@/components/AdminCrm";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
