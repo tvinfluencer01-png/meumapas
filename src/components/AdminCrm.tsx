@@ -20,6 +20,7 @@ import {
   listCrmTemplateVersions,
   deleteCrmTemplateVersion,
 } from "@/lib/crm-followups.functions";
+import { CrmStatusAutomationsDialog } from "@/components/CrmStatusAutomationsDialog";
 
 const STATUS_LABEL: Record<string, { label: string; color: string }> = {
   new: { label: "Novo", color: "bg-blue-600/30 text-blue-200 border-blue-500/40" },
