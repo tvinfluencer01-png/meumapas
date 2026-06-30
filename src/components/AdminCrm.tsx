@@ -341,8 +341,11 @@ export function AdminCrm() {
                             >
                               {l.followup_paused ? <Play className="size-3" /> : <Pause className="size-3" />}
                             </Button>
-                            <Button size="icon" variant="ghost" className="h-6 w-6" title="Histórico" onClick={() => setHistoryLead(l)}>
+                            <Button size="icon" variant="ghost" className="h-6 w-6" title="Histórico de follow-ups" onClick={() => setHistoryLead(l)}>
                               <History className="size-3" />
+                            </Button>
+                            <Button size="icon" variant="ghost" className="h-6 w-6" title="Auditoria de status" onClick={() => setAuditLead(l)}>
+                              <ClipboardList className="size-3" />
                             </Button>
                           </div>
                         </div>
