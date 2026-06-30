@@ -228,7 +228,7 @@ export const listCrmFollowupHistory = createServerFn({ method: "POST" })
       .eq("lead_id", data.leadId)
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
-    return (rows ?? []) as Array<{
+    return (rows ?? []) as unknown as Array<{
       id: string;
       lead_id: string;
       attempt_number: number;
