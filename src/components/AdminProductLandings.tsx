@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Plus, Pencil, Trash2, Loader2, ExternalLink, Copy } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, ExternalLink, Copy, Upload, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,9 +17,12 @@ import {
   listAdminLandings,
   upsertLanding,
   deleteLanding,
+  uploadLandingHeroImage,
+  generateLandingHeroImage,
   REPORT_TYPES,
   AVAILABLE_FIELDS,
 } from "@/lib/product-landings.functions";
+
 
 type Landing = {
   id: string;
@@ -233,7 +236,54 @@ function LandingForm({
   saving: boolean;
 }) {
   const upd = (patch: Partial<Landing>) => onChange({ ...landing, ...patch });
+  const uploadFn = useServerFn(uploadLandingHeroImage);
+  const genFn = useServerFn(generateLandingHeroImage);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState("");
+
+  const handleFile = async (file: File) => {
+    if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
+      showFeedback({ title: "Formato inválido", description: "Use PNG, JPG ou WebP.", type: "error" });
+      return;
+    }
+    setUploading(true);
+    try {
+      const buf = await file.arrayBuffer();
+      let bin = "";
+      const bytes = new Uint8Array(buf);
+      for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+      const base64 = btoa(bin);
+      const { url } = await uploadFn({ data: { base64, mime: file.type as "image/png" | "image/jpeg" | "image/webp" } });
+      upd({ hero_image_url: url });
+      showFeedback({ title: "Imagem enviada", type: "success" });
+    } catch (e: any) {
+      showFeedback({ title: "Falha no upload", description: e.message, type: "error" });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleGenerate = async () => {
+    if (!aiPrompt.trim()) {
+      showFeedback({ title: "Descreva a imagem", description: "Escreva o prompt para gerar.", type: "error" });
+      return;
+    }
+    setGenerating(true);
+    try {
+      const { url } = await genFn({ data: { prompt: aiPrompt.trim() } });
+      upd({ hero_image_url: url });
+      showFeedback({ title: "Imagem gerada", type: "success" });
+    } catch (e: any) {
+      showFeedback({ title: "Falha ao gerar", description: e.message, type: "error" });
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   return (
+
     <div className="space-y-4 py-2">
       <div className="grid sm:grid-cols-2 gap-3">
         <div>
@@ -283,10 +333,69 @@ function LandingForm({
         </div>
       </div>
 
-      <div>
-        <Label>Imagem de capa (URL)</Label>
-        <Input value={landing.hero_image_url ?? ""} onChange={(e) => upd({ hero_image_url: e.target.value })} placeholder="https://..." />
+      <div className="space-y-2 rounded-lg border border-gold/20 p-3">
+        <Label>Imagem de capa</Label>
+        {landing.hero_image_url ? (
+          <div className="relative w-full max-w-sm">
+            <img
+              src={landing.hero_image_url}
+              alt="Capa"
+              className="w-full h-40 object-cover rounded border border-gold/20"
+            />
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              className="absolute top-1 right-1 bg-background/80 hover:bg-background"
+              onClick={() => upd({ hero_image_url: "" })}
+              title="Remover imagem"
+            >
+              <X className="size-4" />
+            </Button>
+          </div>
+        ) : (
+          <p className="text-xs text-muted-foreground">Nenhuma imagem definida.</p>
+        )}
+
+        <Input
+          value={landing.hero_image_url ?? ""}
+          onChange={(e) => upd({ hero_image_url: e.target.value })}
+          placeholder="URL https://... (ou use os botões abaixo)"
+        />
+
+        <div className="flex flex-wrap gap-2 items-center">
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) handleFile(f);
+              e.target.value = "";
+            }}
+          />
+          <Button type="button" variant="outline" size="sm" disabled={uploading} onClick={() => fileRef.current?.click()}>
+            {uploading ? <Loader2 className="size-4 animate-spin mr-2" /> : <Upload className="size-4 mr-2" />}
+            Enviar arquivo
+          </Button>
+        </div>
+
+        <div className="flex gap-2 items-start pt-1">
+          <Textarea
+            rows={2}
+            value={aiPrompt}
+            onChange={(e) => setAiPrompt(e.target.value)}
+            placeholder="Descreva a imagem para a IA gerar (ex: mandala dourada com céu estrelado, estilo místico)"
+            className="flex-1"
+          />
+          <Button type="button" variant="outline" size="sm" disabled={generating} onClick={handleGenerate}>
+            {generating ? <Loader2 className="size-4 animate-spin mr-2" /> : <Sparkles className="size-4 mr-2" />}
+            Gerar com IA
+          </Button>
+        </div>
       </div>
+
 
       <div>
         <Label>Campos a coletar do cliente</Label>
