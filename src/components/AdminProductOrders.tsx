@@ -303,6 +303,47 @@ export function AdminProductOrders() {
                           </Button>
                         </>
                       )}
+                      {o.pdf_url && (o.email_sent_at || o.whatsapp_sent_at) && (() => {
+                        const emailR = resendState[resendKey(o.id, "email")];
+                        const waR = resendState[resendKey(o.id, "whatsapp")];
+                        const emailBusy = emailR?.status === "pending";
+                        const waBusy = waR?.status === "pending";
+                        return (
+                          <>
+                            {o.email_sent_at && (
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                title={emailR?.status === "error" ? `Falhou: ${emailR.message}` : "Reenviar e-mail (URL curta já registrada)"}
+                                disabled={emailBusy}
+                                onClick={() => resendMutation.mutate({ id: o.id, action: "email" })}
+                                className={
+                                  emailR?.status === "success" ? "ring-1 ring-emerald-400/60" :
+                                  emailR?.status === "error" ? "ring-1 ring-red-500/60" : ""
+                                }
+                              >
+                                {emailBusy ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4 text-blue-300" />}
+                              </Button>
+                            )}
+                            {o.whatsapp_sent_at && (
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                title={waR?.status === "error" ? `Falhou: ${waR.message}` : "Reenviar WhatsApp (URL curta já registrada)"}
+                                disabled={waBusy}
+                                onClick={() => resendMutation.mutate({ id: o.id, action: "whatsapp" })}
+                                className={
+                                  waR?.status === "success" ? "ring-1 ring-emerald-400/60" :
+                                  waR?.status === "error" ? "ring-1 ring-red-500/60" : ""
+                                }
+                              >
+                                {waBusy ? <Loader2 className="size-4 animate-spin" /> : <MessageCircle className="size-4 text-emerald-300" />}
+                              </Button>
+                            )}
+                          </>
+                        );
+                      })()}
+
                       {!["paid", "processing", "delivered"].includes(o.status) && (
                         <Button
                           size="icon"
