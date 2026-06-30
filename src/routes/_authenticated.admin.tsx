@@ -112,7 +112,19 @@ function AdminPage() {
         </div>
       </header>
 
-      <Tabs defaultValue="settings" className="space-y-6">
+      <AdminTabs />
+    </div>
+  );
+}
+
+function AdminTabs() {
+  const initialTab =
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("tab") ?? "settings"
+      : "settings";
+  const [tab, setTab] = useState(initialTab);
+  return (
+      <Tabs value={tab} onValueChange={setTab} className="space-y-6">
         <TabsList className="flex flex-wrap h-auto">
           <TabsTrigger value="settings" className="gap-2">
             <SettingsIcon className="size-4" /> Configurações
