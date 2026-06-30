@@ -250,7 +250,11 @@ function AdminTabs() {
         <TabsContent value="pedidos" className="mt-0">
           <AdminProductOrders />
         </TabsContent>
+        <TabsContent value="crm" className="mt-0">
+          <AdminCrm />
+        </TabsContent>
       </Tabs>
+
   );
 }
 
