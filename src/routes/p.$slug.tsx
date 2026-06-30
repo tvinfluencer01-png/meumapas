@@ -152,7 +152,13 @@ function ProductLandingPage() {
           <div className="relative">
             {landing.hero_image_url ? (
               <img src={landing.hero_image_url} alt={landing.title}
-                className="rounded-2xl shadow-2xl border border-gold/30 w-full" />
+                style={{
+                  width: landing.hero_image_width ? `${landing.hero_image_width}px` : undefined,
+                  height: landing.hero_image_height ? `${landing.hero_image_height}px` : undefined,
+                  maxWidth: "100%",
+                  objectFit: "cover",
+                }}
+                className="rounded-2xl shadow-2xl border border-gold/30 mx-auto" />
             ) : (
               <div className="aspect-[4/5] rounded-2xl border border-gold/30 bg-gradient-to-br from-secondary to-background grid place-items-center">
                 <Logo sizeClassName="size-32" animation="float" />
