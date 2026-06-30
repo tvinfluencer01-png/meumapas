@@ -132,6 +132,7 @@ export const listAdminUsers = createServerFn({ method: "POST" })
         is_admin: adminSet.has(u.id),
         plans: plansByUser.get(u.id) ?? [],
         addons: addonsByUser.get(u.id) ?? [],
+        direct_sale: (u.user_metadata?.source as string | undefined) === "direct_sale",
       }))
       .filter((u) =>
         q
