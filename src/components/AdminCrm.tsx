@@ -563,6 +563,144 @@ export function AdminCrm() {
           )}
         </DialogContent>
       </Dialog>
+
+      <Dialog open={versionsOpen} onOpenChange={setVersionsOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="font-serif shimmer-text">Versões dos templates</DialogTitle>
+          </DialogHeader>
+          {!versions || versions.length === 0 ? (
+            <p className="py-8 text-center text-sm text-muted-foreground">
+              Nenhuma versão registrada ainda. A próxima alteração de assunto/corpo será salva como versão.
+            </p>
+          ) : (
+            <div className="overflow-x-auto max-h-[60vh]">
+              <table className="w-full text-sm">
+                <thead className="text-xs uppercase text-muted-foreground border-b border-border/40">
+                  <tr>
+                    <th className="text-left p-2">Data</th>
+                    <th className="text-left p-2">Assunto</th>
+                    <th className="text-left p-2">Nota</th>
+                    <th className="text-right p-2">Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {versions.map((v: any, idx: number) => {
+                    const isCurrent = idx === 0;
+                    return (
+                      <tr key={v.id} className="border-b border-border/20 align-top">
+                        <td className="p-2 text-xs whitespace-nowrap">
+                          {new Date(v.created_at).toLocaleString("pt-BR")}
+                          {isCurrent && (
+                            <span className="ml-2 px-2 py-0.5 rounded text-[10px] bg-emerald-600/30 text-emerald-200 border border-emerald-500/40">
+                              Atual
+                            </span>
+                          )}
+                        </td>
+                        <td className="p-2 text-xs max-w-[260px] truncate" title={v.subject_template}>
+                          {v.subject_template}
+                        </td>
+                        <td className="p-2 text-xs text-muted-foreground">{v.note ?? "—"}</td>
+                        <td className="p-2 text-right">
+                          <div className="inline-flex gap-1">
+                            <Button size="sm" variant="outline" onClick={() => setCompareVersion(v)}>
+                              Comparar
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => restoreVersion(v)}
+                              disabled={isCurrent}
+                              title={isCurrent ? "Já é a versão atual" : "Restaurar no formulário"}
+                            >
+                              <RotateCcw className="size-3.5 mr-1" />Restaurar
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              title="Excluir versão"
+                              disabled={isCurrent || deleteVersionMut.isPending}
+                              onClick={() => {
+                                if (confirm("Excluir esta versão do histórico?")) {
+                                  deleteVersionMut.mutate(v.id);
+                                }
+                              }}
+                            >
+                              <Trash2 className="size-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!compareVersion} onOpenChange={(o) => !o && setCompareVersion(null)}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="font-serif shimmer-text">Comparar com versão atual</DialogTitle>
+            {compareVersion && (
+              <p className="text-xs text-muted-foreground">
+                Versão de {new Date(compareVersion.created_at).toLocaleString("pt-BR")}
+                {compareVersion.note ? ` — ${compareVersion.note}` : ""}
+              </p>
+            )}
+          </DialogHeader>
+          {compareVersion && form && (
+            <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+              {(["subject_template", "body_template"] as const).map((field) => {
+                const label = field === "subject_template" ? "Assunto" : "Corpo";
+                const oldText = compareVersion[field] ?? "";
+                const newText = form[field] ?? "";
+                const lines = diffLines(oldText, newText);
+                return (
+                  <div key={field}>
+                    <Label className="text-sm">{label}</Label>
+                    <div className="rounded border border-border/40 bg-background/60 font-mono text-xs">
+                      {lines.length === 0 ? (
+                        <div className="p-2 text-muted-foreground">(vazio)</div>
+                      ) : (
+                        lines.map((ln, i) => (
+                          <div
+                            key={i}
+                            className={
+                              ln.kind === "old"
+                                ? "px-2 py-0.5 bg-red-500/15 text-red-200"
+                                : ln.kind === "new"
+                                  ? "px-2 py-0.5 bg-emerald-500/15 text-emerald-200"
+                                  : "px-2 py-0.5"
+                            }
+                          >
+                            <span className="inline-block w-4 select-none opacity-60">
+                              {ln.kind === "old" ? "−" : ln.kind === "new" ? "+" : " "}
+                            </span>
+                            {ln.text || "\u00A0"}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+              <p className="text-[11px] text-muted-foreground">
+                <span className="text-red-300">Vermelho</span>: versão antiga ·{" "}
+                <span className="text-emerald-300">Verde</span>: atual no formulário
+              </p>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setCompareVersion(null)}>Fechar</Button>
+                <Button onClick={() => restoreVersion(compareVersion)}>
+                  <RotateCcw className="size-4 mr-1" />Restaurar esta versão
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
