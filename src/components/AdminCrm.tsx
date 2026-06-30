@@ -265,76 +265,91 @@ export function AdminCrm() {
         ) : filtered.length === 0 ? (
           <p className="py-8 text-center text-sm text-muted-foreground">Nenhum lead encontrado.</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="text-xs uppercase text-muted-foreground border-b border-border/40">
-                <tr>
-                  <th className="text-left p-2">Lead</th>
-                  <th className="text-left p-2">Produto</th>
-                  <th className="text-left p-2">Status</th>
-                  <th className="text-left p-2">Follow-ups</th>
-                  <th className="text-left p-2">Último envio</th>
-                  <th className="text-left p-2">Próximo</th>
-                  <th className="text-left p-2">Criado</th>
-                  <th className="text-right p-2">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((l: any) => {
-                  const st = STATUS_LABEL[l.status] ?? STATUS_LABEL.new;
-                  const next = nextFollowupFor(l, settings);
-                  return (
-                    <tr key={l.id} className="border-b border-border/20 hover:bg-secondary/30">
-                      <td className="p-2">
-                        <div className="font-medium">{l.full_name ?? "—"}</div>
-                        <div className="text-xs text-muted-foreground">{l.email}</div>
-                        {l.phone && <div className="text-xs text-muted-foreground">{l.phone}</div>}
-                      </td>
-                      <td className="p-2 text-xs">{l.landing_slug ?? "—"}</td>
-                      <td className="p-2">
-                        <span className={`px-2 py-1 rounded text-xs border ${st.color}`}>{st.label}</span>
-                      </td>
-                      <td className="p-2 text-xs">{l.followup_count}{settings ? ` / ${settings.max_followups}` : ""}</td>
-                      <td className="p-2 text-xs">{fmtDate(l.last_followup_at ?? l.last_contact_at)}</td>
-                      <td className="p-2 text-xs">
-                        {l.followup_paused
-                          ? <span className="text-amber-300">Pausado</span>
-                          : next
-                            ? <span className={next.getTime() <= Date.now() ? "text-emerald-300" : ""}>{next.toLocaleDateString("pt-BR")}</span>
-                            : "—"}
-                      </td>
-                      <td className="p-2 text-xs">{fmtDate(l.created_at)}</td>
-                      <td className="p-2 text-right">
-                        <div className="inline-flex gap-1">
-                          <Button size="icon" variant="ghost" asChild title="E-mail">
-                            <a href={`mailto:${l.email}`}><Mail className="size-4" /></a>
-                          </Button>
-                          {l.phone && (
-                            <Button size="icon" variant="ghost" asChild title="WhatsApp">
-                              <a href={`https://wa.me/${String(l.phone).replace(/\D/g, "")}`} target="_blank" rel="noreferrer">
-                                <MessageCircle className="size-4" />
-                              </a>
-                            </Button>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+            {Object.entries(STATUS_LABEL).map(([statusKey, meta]) => {
+              const columnLeads = filtered.filter((l: any) => (l.status ?? "new") === statusKey);
+              return (
+                <div
+                  key={statusKey}
+                  onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add("ring-1", "ring-gold/40"); }}
+                  onDragLeave={(e) => e.currentTarget.classList.remove("ring-1", "ring-gold/40")}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    e.currentTarget.classList.remove("ring-1", "ring-gold/40");
+                    const id = e.dataTransfer.getData("text/plain");
+                    const lead = (leads ?? []).find((x: any) => x.id === id);
+                    if (id && lead && lead.status !== statusKey) {
+                      updateMut.mutate({ id, status: statusKey });
+                    }
+                  }}
+                  className="rounded-lg border border-border/40 bg-secondary/20 p-2 min-h-[400px] flex flex-col"
+                >
+                  <div className={`px-2 py-1 mb-2 rounded text-xs border flex items-center justify-between ${meta.color}`}>
+                    <span className="font-semibold">{meta.label}</span>
+                    <span className="opacity-80">{columnLeads.length}</span>
+                  </div>
+                  <div className="space-y-2 flex-1">
+                    {columnLeads.map((l: any) => {
+                      const next = nextFollowupFor(l, settings);
+                      return (
+                        <div
+                          key={l.id}
+                          draggable
+                          onDragStart={(e) => e.dataTransfer.setData("text/plain", l.id)}
+                          onClick={() => openEdit(l)}
+                          className="rounded-md border border-border/40 bg-background/60 p-2 text-xs cursor-grab active:cursor-grabbing hover:border-gold/40 transition"
+                        >
+                          <div className="font-medium text-sm truncate">{l.full_name ?? "—"}</div>
+                          <div className="text-muted-foreground truncate">{l.email}</div>
+                          {l.landing_slug && (
+                            <div className="mt-1 text-[11px] text-muted-foreground truncate">📦 {l.landing_slug}</div>
                           )}
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            title={l.followup_paused ? "Retomar follow-ups" : "Pausar follow-ups"}
-                            onClick={() => updateMut.mutate({ id: l.id, followup_paused: !l.followup_paused })}
-                          >
-                            {l.followup_paused ? <Play className="size-4" /> : <Pause className="size-4" />}
-                          </Button>
-                          <Button size="icon" variant="ghost" title="Histórico de follow-ups" onClick={() => setHistoryLead(l)}>
-                            <History className="size-4" />
-                          </Button>
-                          <Button size="sm" variant="outline" onClick={() => openEdit(l)}>Editar</Button>
+                          <div className="mt-2 flex items-center justify-between gap-1 text-[11px] text-muted-foreground">
+                            <span>FU: {l.followup_count ?? 0}{settings ? `/${settings.max_followups}` : ""}</span>
+                            <span>{fmtDate(l.created_at)}</span>
+                          </div>
+                          {next && !l.followup_paused && (
+                            <div className={`mt-1 text-[11px] ${next.getTime() <= Date.now() ? "text-emerald-300" : "text-muted-foreground"}`}>
+                              Próx.: {next.toLocaleDateString("pt-BR")}
+                            </div>
+                          )}
+                          {l.followup_paused && <div className="mt-1 text-[11px] text-amber-300">Pausado</div>}
+                          <div className="mt-2 flex gap-1" onClick={(e) => e.stopPropagation()}>
+                            <Button size="icon" variant="ghost" asChild title="E-mail" className="h-6 w-6">
+                              <a href={`mailto:${l.email}`}><Mail className="size-3" /></a>
+                            </Button>
+                            {l.phone && (
+                              <Button size="icon" variant="ghost" asChild title="WhatsApp" className="h-6 w-6">
+                                <a href={`https://wa.me/${String(l.phone).replace(/\D/g, "")}`} target="_blank" rel="noreferrer">
+                                  <MessageCircle className="size-3" />
+                                </a>
+                              </Button>
+                            )}
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-6 w-6"
+                              title={l.followup_paused ? "Retomar" : "Pausar"}
+                              onClick={() => updateMut.mutate({ id: l.id, followup_paused: !l.followup_paused })}
+                            >
+                              {l.followup_paused ? <Play className="size-3" /> : <Pause className="size-3" />}
+                            </Button>
+                            <Button size="icon" variant="ghost" className="h-6 w-6" title="Histórico" onClick={() => setHistoryLead(l)}>
+                              <History className="size-3" />
+                            </Button>
+                          </div>
                         </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                      );
+                    })}
+                    {columnLeads.length === 0 && (
+                      <div className="text-[11px] text-muted-foreground text-center py-6 border border-dashed border-border/30 rounded">
+                        Arraste leads aqui
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </CardContent>
