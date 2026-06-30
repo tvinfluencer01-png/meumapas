@@ -39,6 +39,7 @@ import { Route as ApiPublicManifestIconRouteImport } from './routes/api/public/m
 import { Route as ApiPublicHooksMercadopagoRouteImport } from './routes/api/public/hooks/mercadopago'
 import { Route as ApiPublicHooksDispatchOrdersRouteImport } from './routes/api/public/hooks/dispatch-orders'
 import { Route as ApiPublicHooksDailyHoroscopeRouteImport } from './routes/api/public/hooks/daily-horoscope'
+import { Route as ApiPublicHooksCrmFollowupsRouteImport } from './routes/api/public/hooks/crm-followups'
 import { Route as AuthenticatedPSlugCheckoutRouteImport } from './routes/_authenticated.p.$slug.checkout'
 
 const ProfissionaisRoute = ProfissionaisRouteImport.update({
@@ -198,6 +199,12 @@ const ApiPublicHooksDailyHoroscopeRoute =
     path: '/api/public/hooks/daily-horoscope',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksCrmFollowupsRoute =
+  ApiPublicHooksCrmFollowupsRouteImport.update({
+    id: '/api/public/hooks/crm-followups',
+    path: '/api/public/hooks/crm-followups',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedPSlugCheckoutRoute =
   AuthenticatedPSlugCheckoutRouteImport.update({
     id: '/p/$slug/checkout',
@@ -231,6 +238,7 @@ export interface FileRoutesByFullPath {
   '/r/$token': typeof RTokenRoute
   '/admin/logs': typeof AuthenticatedAdminLogsRoute
   '/p/$slug/checkout': typeof AuthenticatedPSlugCheckoutRoute
+  '/api/public/hooks/crm-followups': typeof ApiPublicHooksCrmFollowupsRoute
   '/api/public/hooks/daily-horoscope': typeof ApiPublicHooksDailyHoroscopeRoute
   '/api/public/hooks/dispatch-orders': typeof ApiPublicHooksDispatchOrdersRoute
   '/api/public/hooks/mercadopago': typeof ApiPublicHooksMercadopagoRoute
@@ -263,6 +271,7 @@ export interface FileRoutesByTo {
   '/r/$token': typeof RTokenRoute
   '/admin/logs': typeof AuthenticatedAdminLogsRoute
   '/p/$slug/checkout': typeof AuthenticatedPSlugCheckoutRoute
+  '/api/public/hooks/crm-followups': typeof ApiPublicHooksCrmFollowupsRoute
   '/api/public/hooks/daily-horoscope': typeof ApiPublicHooksDailyHoroscopeRoute
   '/api/public/hooks/dispatch-orders': typeof ApiPublicHooksDispatchOrdersRoute
   '/api/public/hooks/mercadopago': typeof ApiPublicHooksMercadopagoRoute
@@ -297,6 +306,7 @@ export interface FileRoutesById {
   '/r/$token': typeof RTokenRoute
   '/_authenticated/admin/logs': typeof AuthenticatedAdminLogsRoute
   '/_authenticated/p/$slug/checkout': typeof AuthenticatedPSlugCheckoutRoute
+  '/api/public/hooks/crm-followups': typeof ApiPublicHooksCrmFollowupsRoute
   '/api/public/hooks/daily-horoscope': typeof ApiPublicHooksDailyHoroscopeRoute
   '/api/public/hooks/dispatch-orders': typeof ApiPublicHooksDispatchOrdersRoute
   '/api/public/hooks/mercadopago': typeof ApiPublicHooksMercadopagoRoute
@@ -331,6 +341,7 @@ export interface FileRouteTypes {
     | '/r/$token'
     | '/admin/logs'
     | '/p/$slug/checkout'
+    | '/api/public/hooks/crm-followups'
     | '/api/public/hooks/daily-horoscope'
     | '/api/public/hooks/dispatch-orders'
     | '/api/public/hooks/mercadopago'
@@ -363,6 +374,7 @@ export interface FileRouteTypes {
     | '/r/$token'
     | '/admin/logs'
     | '/p/$slug/checkout'
+    | '/api/public/hooks/crm-followups'
     | '/api/public/hooks/daily-horoscope'
     | '/api/public/hooks/dispatch-orders'
     | '/api/public/hooks/mercadopago'
@@ -396,6 +408,7 @@ export interface FileRouteTypes {
     | '/r/$token'
     | '/_authenticated/admin/logs'
     | '/_authenticated/p/$slug/checkout'
+    | '/api/public/hooks/crm-followups'
     | '/api/public/hooks/daily-horoscope'
     | '/api/public/hooks/dispatch-orders'
     | '/api/public/hooks/mercadopago'
@@ -412,6 +425,7 @@ export interface RootRouteChildren {
   ApiChatRoute: typeof ApiChatRoute
   PSlugRoute: typeof PSlugRoute
   RTokenRoute: typeof RTokenRoute
+  ApiPublicHooksCrmFollowupsRoute: typeof ApiPublicHooksCrmFollowupsRoute
   ApiPublicHooksDailyHoroscopeRoute: typeof ApiPublicHooksDailyHoroscopeRoute
   ApiPublicHooksDispatchOrdersRoute: typeof ApiPublicHooksDispatchOrdersRoute
   ApiPublicHooksMercadopagoRoute: typeof ApiPublicHooksMercadopagoRoute
@@ -631,6 +645,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksDailyHoroscopeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/crm-followups': {
+      id: '/api/public/hooks/crm-followups'
+      path: '/api/public/hooks/crm-followups'
+      fullPath: '/api/public/hooks/crm-followups'
+      preLoaderRoute: typeof ApiPublicHooksCrmFollowupsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/p/$slug/checkout': {
       id: '/_authenticated/p/$slug/checkout'
       path: '/p/$slug/checkout'
@@ -706,6 +727,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiChatRoute: ApiChatRoute,
   PSlugRoute: PSlugRoute,
   RTokenRoute: RTokenRoute,
+  ApiPublicHooksCrmFollowupsRoute: ApiPublicHooksCrmFollowupsRoute,
   ApiPublicHooksDailyHoroscopeRoute: ApiPublicHooksDailyHoroscopeRoute,
   ApiPublicHooksDispatchOrdersRoute: ApiPublicHooksDispatchOrdersRoute,
   ApiPublicHooksMercadopagoRoute: ApiPublicHooksMercadopagoRoute,
