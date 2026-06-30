@@ -108,6 +108,16 @@ function AuthedLayout() {
   const peak = credits?.peak ?? 5;
   const pct = Math.max(0, Math.min(100, (balance / peak) * 100));
 
+  // Badge de pedidos não vistos (apenas admin)
+  const unviewedFn = useServerFn(countUnviewedOrders);
+  const { data: unviewed } = useQuery({
+    queryKey: ["admin-unviewed-orders"],
+    queryFn: () => unviewedFn(),
+    enabled: isAdmin,
+    refetchInterval: 30_000,
+  });
+  const unviewedCount = unviewed?.count ?? 0;
+
   useEffect(() => {
     if (!loading || !user) {
       setProfileChecked(false);
