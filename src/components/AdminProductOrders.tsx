@@ -49,13 +49,19 @@ export function AdminProductOrders() {
   });
 
   const [autoEnabled, setAutoEnabled] = useState(false);
-  const [delayMin, setDelayMin] = useState(5);
+  const [delayValue, setDelayValue] = useState<number>(5);
+  const [delayUnit, setDelayUnit] = useState<"minutes" | "hours" | "days">("minutes");
   useEffect(() => {
     if (settings) {
       setAutoEnabled(settings.auto_enabled);
-      setDelayMin(settings.delay_minutes);
+      const m = settings.delay_minutes ?? 0;
+      if (m > 0 && m % 1440 === 0) { setDelayUnit("days"); setDelayValue(m / 1440); }
+      else if (m > 0 && m % 60 === 0) { setDelayUnit("hours"); setDelayValue(m / 60); }
+      else { setDelayUnit("minutes"); setDelayValue(m); }
     }
   }, [settings]);
+
+  const delayMin = delayUnit === "days" ? delayValue * 1440 : delayUnit === "hours" ? delayValue * 60 : delayValue;
 
   const settingsMutation = useMutation({
     mutationFn: () => saveSettingsFn({ data: { auto_enabled: autoEnabled, delay_minutes: delayMin } }),
@@ -65,6 +71,7 @@ export function AdminProductOrders() {
     },
     onError: (e: Error) => showFeedback({ title: "Erro", description: e.message, type: "error" }),
   });
+
 
   // Marca todos como visualizados ao abrir
   useEffect(() => {
