@@ -385,7 +385,7 @@ export function AdminCrm() {
                 <Button variant="outline" onClick={() => updateMut.mutate({ id: editing.id, increment_followup: true })}>
                   + Follow-up manual
                 </Button>
-                <Button onClick={() => updateMut.mutate({ id: editing.id, status, notes })} disabled={updateMut.isPending}>
+                <Button onClick={() => updateMut.mutate({ id: editing.id, status, notes, source: "edit" })} disabled={updateMut.isPending}>
                   {updateMut.isPending ? <Loader2 className="size-4 animate-spin" /> : "Salvar"}
                 </Button>
               </DialogFooter>
