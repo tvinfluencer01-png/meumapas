@@ -315,24 +315,169 @@ export const saveDispatchSettings = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+const FIELD_LABELS: Record<string, string> = {
+  full_name: "Nome completo",
+  name: "Nome",
+  email: "E-mail",
+  phone: "Telefone",
+  whatsapp: "WhatsApp",
+  birth_date: "Data de nascimento",
+  birth_time: "Horário de nascimento",
+  birth_city: "Cidade de nascimento",
+  birth_country: "País de nascimento",
+  city: "Cidade",
+  country: "País",
+  question: "Pergunta",
+  notes: "Observações",
+};
+
+function labelOf(key: string): string {
+  return FIELD_LABELS[key] ?? key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+async function fetchAdminBranding(): Promise<any | null> {
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data } = await supabaseAdmin
+      .from("pdf_branding")
+      .select("*")
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    return data ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function fetchBytes(url: string | null | undefined): Promise<{ bytes: Uint8Array; mime: "image/png" | "image/jpeg" } | null> {
+  if (!url) return null;
+  try {
+    const r = await fetch(url);
+    if (!r.ok) return null;
+    const buf = new Uint8Array(await r.arrayBuffer());
+    const ct = (r.headers.get("content-type") ?? "").toLowerCase();
+    const mime: "image/png" | "image/jpeg" = ct.includes("png") || url.toLowerCase().endsWith(".png") ? "image/png" : "image/jpeg";
+    return { bytes: buf, mime };
+  } catch {
+    return null;
+  }
+}
+
 async function generatePdfForOrder(order: any, landing: any): Promise<Uint8Array> {
   const { buildSimplePdf } = await import("@/lib/simple-pdf");
   const cd = (order.customer_data ?? {}) as Record<string, any>;
-  const rows = Object.entries(cd)
-    .filter(([, v]) => v !== null && v !== undefined && String(v).trim() !== "")
-    .map(([k, v]) => ({ k: String(k), v: String(v) }));
+
+  const orderedKeys = [
+    "full_name", "name", "email", "phone", "whatsapp",
+    "birth_date", "birth_time", "birth_city", "birth_country", "city", "country",
+    "question", "notes",
+  ];
+  const seen = new Set<string>();
+  const rows: { k: string; v: string }[] = [];
+  for (const k of orderedKeys) {
+    const v = cd[k];
+    if (v !== null && v !== undefined && String(v).trim() !== "") {
+      rows.push({ k: labelOf(k), v: String(v) });
+      seen.add(k);
+    }
+  }
+  for (const [k, v] of Object.entries(cd)) {
+    if (seen.has(k)) continue;
+    if (v === null || v === undefined || String(v).trim() === "") continue;
+    rows.push({ k: labelOf(k), v: String(v) });
+  }
+
+  const benefits = Array.isArray(landing.benefits)
+    ? (landing.benefits as any[]).map((b) => String(b)).filter(Boolean)
+    : [];
+
+  const descriptionParas = String(landing.description ?? "")
+    .split(/\n{2,}/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+
+  const blocks: any[] = [
+    { type: "h2", text: "Dados do Pedido" },
+    { type: "kv", rows },
+  ];
+
+  if (descriptionParas.length) {
+    blocks.push({ type: "h2", text: "Sobre o seu relatório" });
+    for (const p of descriptionParas) blocks.push({ type: "p", text: p });
+  } else {
+    blocks.push({ type: "p", text: "Seu relatório personalizado está sendo preparado." });
+  }
+
+  if (benefits.length) {
+    blocks.push({ type: "h2", text: "O que está incluso" });
+    blocks.push({ type: "list", items: benefits });
+  }
+
+  blocks.push({ type: "h2", text: "Próximos passos" });
+  blocks.push({
+    type: "p",
+    text:
+      "Você receberá orientações detalhadas por e-mail. Em caso de dúvidas, responda ao e-mail de entrega que retornaremos o mais breve possível.",
+  });
+  blocks.push({
+    type: "p",
+    text: `Pedido nº ${String(order.id).slice(0, 8).toUpperCase()} — emitido em ${new Date().toLocaleDateString("pt-BR")}.`,
+  });
+
+  // Carrega branding do admin (logo, cores, capa, rodapé)
+  const brand = await fetchAdminBranding();
+  let branding: any | undefined;
+  if (brand) {
+    const [logo, cover, pageBg, watermark] = await Promise.all([
+      fetchBytes(brand.logo_url),
+      fetchBytes(brand.cover_image_url),
+      fetchBytes(brand.page_bg_image_url),
+      fetchBytes(brand.watermark_image_url),
+    ]);
+    branding = {
+      displayName: brand.display_name ?? undefined,
+      logoBytes: logo?.bytes,
+      logoMime: logo?.mime,
+      coverImageBytes: cover?.bytes,
+      coverImageMime: cover?.mime,
+      pageBgImageBytes: pageBg?.bytes,
+      pageBgImageMime: pageBg?.mime,
+      watermarkImageBytes: watermark?.bytes,
+      watermarkImageMime: watermark?.mime,
+      watermarkOpacity: brand.watermark_opacity ?? undefined,
+      coverBgColor: brand.cover_bg_color ?? undefined,
+      coverAccentColor: brand.cover_accent_color ?? undefined,
+      coverTitlePosition: brand.cover_title_position ?? undefined,
+      headerBgColor: brand.header_bg_color ?? undefined,
+      footerBgColor: brand.footer_bg_color ?? undefined,
+      headerTextColor: brand.header_text_color ?? undefined,
+      bodyTextColor: brand.body_text_color ?? undefined,
+      headingTextColor: brand.heading_text_color ?? undefined,
+      pageBgColor: brand.page_bg_color ?? undefined,
+      bodyFontSize: brand.body_font_size ?? undefined,
+      lineHeight: brand.line_height ?? undefined,
+      fontFamily: brand.font_family ?? undefined,
+      frameStyle: brand.frame_style ?? undefined,
+      footerEnabled: brand.footer_enabled ?? true,
+      footerName: brand.footer_name ?? undefined,
+      footerSite: brand.footer_site ?? undefined,
+      footerPhone: brand.footer_phone ?? undefined,
+    };
+  }
+
   return await buildSimplePdf({
-    brand: "Código Cósmico",
-    eyebrow: landing.title,
+    brand: branding?.displayName || "Código Cósmico",
+    eyebrow: landing.subtitle || landing.title,
     title: landing.title,
     subtitle: landing.subtitle ?? undefined,
     consultantName: cd.full_name ?? cd.name ?? undefined,
-    meta: [`Pedido: ${order.id.slice(0, 8)}`, `Data: ${new Date().toLocaleDateString("pt-BR")}`],
-    blocks: [
-      { type: "h2", text: "Dados do Pedido" },
-      { type: "kv", rows },
-      { type: "p", text: landing.description ?? "Seu relatório personalizado está sendo preparado." },
+    meta: [
+      `Pedido: ${String(order.id).slice(0, 8).toUpperCase()}`,
+      `Data: ${new Date().toLocaleDateString("pt-BR")}`,
     ],
+    blocks,
+    branding,
   });
 }
 
