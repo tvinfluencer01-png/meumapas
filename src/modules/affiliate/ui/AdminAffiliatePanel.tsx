@@ -36,12 +36,16 @@ import {
   Megaphone, Trophy, FileBarChart, Settings as SettingsIcon, ScrollText, Download,
   Shield, Plus, Trash2, Pencil, Send, Loader2,
   CreditCard, Layers, Banknote, BookOpen,
+  Radio, ShieldAlert, BarChart3, Cookie,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
   CheckoutProvidersSection, CommissionOverridesSection, CommissionTiersSection,
   PayoutBatchesSection, LedgerSection,
 } from "./AdminMonetizationSections";
+import {
+  PixelsSection, FraudAiSection, RoiSection, CookieConsentsSection,
+} from "./AdminIntelligenceSections";
 
 const SECTIONS = [
   { id: "dashboard", label: "Dashboard Geral", icon: LayoutDashboard },
@@ -54,6 +58,10 @@ const SECTIONS = [
   { id: "withdraws", label: "Saques", icon: HandCoins },
   { id: "batches", label: "Lotes Pagto", icon: Banknote },
   { id: "ledger", label: "Livro-razão", icon: BookOpen },
+  { id: "pixels", label: "Pixels", icon: Radio },
+  { id: "fraud_ai", label: "Antifraude IA", icon: ShieldAlert },
+  { id: "roi", label: "ROI / ROAS", icon: BarChart3 },
+  { id: "consents", label: "Consentimentos", icon: Cookie },
   { id: "messages", label: "Mensagens", icon: MessageSquare },
   { id: "materials", label: "Materiais", icon: ImageIcon },
   { id: "campaigns", label: "Campanhas", icon: Megaphone },
@@ -100,6 +108,10 @@ export function AdminAffiliatePanel() {
         {section === "withdraws" && <WithdrawsSection />}
         {section === "batches" && <PayoutBatchesSection />}
         {section === "ledger" && <LedgerSection />}
+        {section === "pixels" && <PixelsSection />}
+        {section === "fraud_ai" && <FraudAiSection />}
+        {section === "roi" && <RoiSection />}
+        {section === "consents" && <CookieConsentsSection />}
         {section === "messages" && <MessagesSection />}
         {section === "materials" && <MaterialsSection />}
         {section === "campaigns" && <CampaignsSection />}
