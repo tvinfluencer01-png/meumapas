@@ -865,6 +865,50 @@ function SettingsSection() {
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader><CardTitle>Cookie & Atribuição</CardTitle></CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <Label>Duração do cookie (dias)</Label>
+            <Select
+              value={String(form.cookie_lifetime_days ?? 30)}
+              onValueChange={(v) => setForm({ ...form, cookie_lifetime_days: Number(v), cookie_lifetime_lifetime: false })}
+              disabled={!!form.cookie_lifetime_lifetime}
+            >
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {[7, 15, 30, 60, 90, 180, 365].map((d) => (
+                  <SelectItem key={d} value={String(d)}>{d} dias</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-2 mt-6">
+            <Switch
+              checked={!!form.cookie_lifetime_lifetime}
+              onCheckedChange={(v) => setForm({ ...form, cookie_lifetime_lifetime: v })}
+            />
+            <Label>Cookie vitalício</Label>
+          </div>
+          <div className="md:col-span-2">
+            <Label>Modelo de atribuição</Label>
+            <Select
+              value={form.attribution_model ?? "last_click"}
+              onValueChange={(v) => setForm({ ...form, attribution_model: v })}
+            >
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="first_click">Primeiro clique</SelectItem>
+                <SelectItem value="last_click">Último clique</SelectItem>
+                <SelectItem value="linear">Linear</SelectItem>
+                <SelectItem value="custom">Personalizado</SelectItem>
+                <SelectItem value="hybrid">Híbrido</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
       <Button onClick={() => save.mutate(form)} disabled={save.isPending}>Salvar configurações</Button>
     </div>
   );

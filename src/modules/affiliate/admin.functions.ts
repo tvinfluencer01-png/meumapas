@@ -536,6 +536,9 @@ const ExtendedSettingsSchema = z.object({
   auto_notify_email: z.boolean(),
   auto_notify_whatsapp: z.boolean(),
   auto_notify_push: z.boolean(),
+  cookie_lifetime_days: z.number().int().min(1).max(365).optional(),
+  cookie_lifetime_lifetime: z.boolean().optional(),
+  attribution_model: z.enum(["first_click", "last_click", "linear", "custom", "hybrid"]).optional(),
 });
 
 export const adminUpdateExtendedSettings = createServerFn({ method: "POST" })

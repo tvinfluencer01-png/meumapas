@@ -53,6 +53,8 @@ import { Route as ApiPublicHooksMercadopagoRouteImport } from './routes/api/publ
 import { Route as ApiPublicHooksDispatchOrdersRouteImport } from './routes/api/public/hooks/dispatch-orders'
 import { Route as ApiPublicHooksDailyHoroscopeRouteImport } from './routes/api/public/hooks/daily-horoscope'
 import { Route as ApiPublicHooksCrmFollowupsRouteImport } from './routes/api/public/hooks/crm-followups'
+import { Route as ApiPublicHooksAffiliateQueueRouteImport } from './routes/api/public/hooks/affiliate-queue'
+import { Route as ApiPublicAffiliateCollectRouteImport } from './routes/api/public/affiliate/collect'
 import { Route as AuthenticatedPSlugCheckoutRouteImport } from './routes/_authenticated.p.$slug.checkout'
 import { Route as ApiPublicAffiliateWebhookProviderRouteImport } from './routes/api/public/affiliate/webhook.$provider'
 import { Route as ApiPublicAffiliateTrackWithdrawRouteImport } from './routes/api/public/affiliate/track.withdraw'
@@ -61,6 +63,7 @@ import { Route as ApiPublicAffiliateTrackOrderRouteImport } from './routes/api/p
 import { Route as ApiPublicAffiliateTrackCommissionRouteImport } from './routes/api/public/affiliate/track.commission'
 import { Route as ApiPublicAffiliateTrackClickRouteImport } from './routes/api/public/affiliate/track.click'
 import { Route as ApiPublicAffiliateTrackCheckoutRouteImport } from './routes/api/public/affiliate/track.checkout'
+import { Route as ApiPublicAffiliateSdkJsRouteImport } from './routes/api/public/affiliate/sdk.js'
 import { Route as ApiPublicAffiliateRSlugRouteImport } from './routes/api/public/affiliate/r.$slug'
 
 const ProfissionaisRoute = ProfissionaisRouteImport.update({
@@ -291,6 +294,18 @@ const ApiPublicHooksCrmFollowupsRoute =
     path: '/api/public/hooks/crm-followups',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksAffiliateQueueRoute =
+  ApiPublicHooksAffiliateQueueRouteImport.update({
+    id: '/api/public/hooks/affiliate-queue',
+    path: '/api/public/hooks/affiliate-queue',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicAffiliateCollectRoute =
+  ApiPublicAffiliateCollectRouteImport.update({
+    id: '/api/public/affiliate/collect',
+    path: '/api/public/affiliate/collect',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedPSlugCheckoutRoute =
   AuthenticatedPSlugCheckoutRouteImport.update({
     id: '/p/$slug/checkout',
@@ -339,6 +354,11 @@ const ApiPublicAffiliateTrackCheckoutRoute =
     path: '/api/public/affiliate/track/checkout',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicAffiliateSdkJsRoute = ApiPublicAffiliateSdkJsRouteImport.update({
+  id: '/api/public/affiliate/sdk/js',
+  path: '/api/public/affiliate/sdk/js',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicAffiliateRSlugRoute = ApiPublicAffiliateRSlugRouteImport.update({
   id: '/api/public/affiliate/r/$slug',
   path: '/api/public/affiliate/r/$slug',
@@ -384,6 +404,8 @@ export interface FileRoutesByFullPath {
   '/s/$slug': typeof SSlugRoute
   '/admin/logs': typeof AuthenticatedAdminLogsRoute
   '/p/$slug/checkout': typeof AuthenticatedPSlugCheckoutRoute
+  '/api/public/affiliate/collect': typeof ApiPublicAffiliateCollectRoute
+  '/api/public/hooks/affiliate-queue': typeof ApiPublicHooksAffiliateQueueRoute
   '/api/public/hooks/crm-followups': typeof ApiPublicHooksCrmFollowupsRoute
   '/api/public/hooks/daily-horoscope': typeof ApiPublicHooksDailyHoroscopeRoute
   '/api/public/hooks/dispatch-orders': typeof ApiPublicHooksDispatchOrdersRoute
@@ -391,6 +413,7 @@ export interface FileRoutesByFullPath {
   '/api/public/manifest/icon': typeof ApiPublicManifestIconRoute
   '/api/public/manifest/webmanifest': typeof ApiPublicManifestWebmanifestRoute
   '/api/public/affiliate/r/$slug': typeof ApiPublicAffiliateRSlugRoute
+  '/api/public/affiliate/sdk/js': typeof ApiPublicAffiliateSdkJsRoute
   '/api/public/affiliate/track/checkout': typeof ApiPublicAffiliateTrackCheckoutRoute
   '/api/public/affiliate/track/click': typeof ApiPublicAffiliateTrackClickRoute
   '/api/public/affiliate/track/commission': typeof ApiPublicAffiliateTrackCommissionRoute
@@ -438,6 +461,8 @@ export interface FileRoutesByTo {
   '/s/$slug': typeof SSlugRoute
   '/admin/logs': typeof AuthenticatedAdminLogsRoute
   '/p/$slug/checkout': typeof AuthenticatedPSlugCheckoutRoute
+  '/api/public/affiliate/collect': typeof ApiPublicAffiliateCollectRoute
+  '/api/public/hooks/affiliate-queue': typeof ApiPublicHooksAffiliateQueueRoute
   '/api/public/hooks/crm-followups': typeof ApiPublicHooksCrmFollowupsRoute
   '/api/public/hooks/daily-horoscope': typeof ApiPublicHooksDailyHoroscopeRoute
   '/api/public/hooks/dispatch-orders': typeof ApiPublicHooksDispatchOrdersRoute
@@ -445,6 +470,7 @@ export interface FileRoutesByTo {
   '/api/public/manifest/icon': typeof ApiPublicManifestIconRoute
   '/api/public/manifest/webmanifest': typeof ApiPublicManifestWebmanifestRoute
   '/api/public/affiliate/r/$slug': typeof ApiPublicAffiliateRSlugRoute
+  '/api/public/affiliate/sdk/js': typeof ApiPublicAffiliateSdkJsRoute
   '/api/public/affiliate/track/checkout': typeof ApiPublicAffiliateTrackCheckoutRoute
   '/api/public/affiliate/track/click': typeof ApiPublicAffiliateTrackClickRoute
   '/api/public/affiliate/track/commission': typeof ApiPublicAffiliateTrackCommissionRoute
@@ -494,6 +520,8 @@ export interface FileRoutesById {
   '/s/$slug': typeof SSlugRoute
   '/_authenticated/admin/logs': typeof AuthenticatedAdminLogsRoute
   '/_authenticated/p/$slug/checkout': typeof AuthenticatedPSlugCheckoutRoute
+  '/api/public/affiliate/collect': typeof ApiPublicAffiliateCollectRoute
+  '/api/public/hooks/affiliate-queue': typeof ApiPublicHooksAffiliateQueueRoute
   '/api/public/hooks/crm-followups': typeof ApiPublicHooksCrmFollowupsRoute
   '/api/public/hooks/daily-horoscope': typeof ApiPublicHooksDailyHoroscopeRoute
   '/api/public/hooks/dispatch-orders': typeof ApiPublicHooksDispatchOrdersRoute
@@ -501,6 +529,7 @@ export interface FileRoutesById {
   '/api/public/manifest/icon': typeof ApiPublicManifestIconRoute
   '/api/public/manifest/webmanifest': typeof ApiPublicManifestWebmanifestRoute
   '/api/public/affiliate/r/$slug': typeof ApiPublicAffiliateRSlugRoute
+  '/api/public/affiliate/sdk/js': typeof ApiPublicAffiliateSdkJsRoute
   '/api/public/affiliate/track/checkout': typeof ApiPublicAffiliateTrackCheckoutRoute
   '/api/public/affiliate/track/click': typeof ApiPublicAffiliateTrackClickRoute
   '/api/public/affiliate/track/commission': typeof ApiPublicAffiliateTrackCommissionRoute
@@ -550,6 +579,8 @@ export interface FileRouteTypes {
     | '/s/$slug'
     | '/admin/logs'
     | '/p/$slug/checkout'
+    | '/api/public/affiliate/collect'
+    | '/api/public/hooks/affiliate-queue'
     | '/api/public/hooks/crm-followups'
     | '/api/public/hooks/daily-horoscope'
     | '/api/public/hooks/dispatch-orders'
@@ -557,6 +588,7 @@ export interface FileRouteTypes {
     | '/api/public/manifest/icon'
     | '/api/public/manifest/webmanifest'
     | '/api/public/affiliate/r/$slug'
+    | '/api/public/affiliate/sdk/js'
     | '/api/public/affiliate/track/checkout'
     | '/api/public/affiliate/track/click'
     | '/api/public/affiliate/track/commission'
@@ -604,6 +636,8 @@ export interface FileRouteTypes {
     | '/s/$slug'
     | '/admin/logs'
     | '/p/$slug/checkout'
+    | '/api/public/affiliate/collect'
+    | '/api/public/hooks/affiliate-queue'
     | '/api/public/hooks/crm-followups'
     | '/api/public/hooks/daily-horoscope'
     | '/api/public/hooks/dispatch-orders'
@@ -611,6 +645,7 @@ export interface FileRouteTypes {
     | '/api/public/manifest/icon'
     | '/api/public/manifest/webmanifest'
     | '/api/public/affiliate/r/$slug'
+    | '/api/public/affiliate/sdk/js'
     | '/api/public/affiliate/track/checkout'
     | '/api/public/affiliate/track/click'
     | '/api/public/affiliate/track/commission'
@@ -659,6 +694,8 @@ export interface FileRouteTypes {
     | '/s/$slug'
     | '/_authenticated/admin/logs'
     | '/_authenticated/p/$slug/checkout'
+    | '/api/public/affiliate/collect'
+    | '/api/public/hooks/affiliate-queue'
     | '/api/public/hooks/crm-followups'
     | '/api/public/hooks/daily-horoscope'
     | '/api/public/hooks/dispatch-orders'
@@ -666,6 +703,7 @@ export interface FileRouteTypes {
     | '/api/public/manifest/icon'
     | '/api/public/manifest/webmanifest'
     | '/api/public/affiliate/r/$slug'
+    | '/api/public/affiliate/sdk/js'
     | '/api/public/affiliate/track/checkout'
     | '/api/public/affiliate/track/click'
     | '/api/public/affiliate/track/commission'
@@ -697,6 +735,8 @@ export interface RootRouteChildren {
   PSlugRoute: typeof PSlugRoute
   RTokenRoute: typeof RTokenRoute
   SSlugRoute: typeof SSlugRoute
+  ApiPublicAffiliateCollectRoute: typeof ApiPublicAffiliateCollectRoute
+  ApiPublicHooksAffiliateQueueRoute: typeof ApiPublicHooksAffiliateQueueRoute
   ApiPublicHooksCrmFollowupsRoute: typeof ApiPublicHooksCrmFollowupsRoute
   ApiPublicHooksDailyHoroscopeRoute: typeof ApiPublicHooksDailyHoroscopeRoute
   ApiPublicHooksDispatchOrdersRoute: typeof ApiPublicHooksDispatchOrdersRoute
@@ -704,6 +744,7 @@ export interface RootRouteChildren {
   ApiPublicManifestIconRoute: typeof ApiPublicManifestIconRoute
   ApiPublicManifestWebmanifestRoute: typeof ApiPublicManifestWebmanifestRoute
   ApiPublicAffiliateRSlugRoute: typeof ApiPublicAffiliateRSlugRoute
+  ApiPublicAffiliateSdkJsRoute: typeof ApiPublicAffiliateSdkJsRoute
   ApiPublicAffiliateTrackCheckoutRoute: typeof ApiPublicAffiliateTrackCheckoutRoute
   ApiPublicAffiliateTrackClickRoute: typeof ApiPublicAffiliateTrackClickRoute
   ApiPublicAffiliateTrackCommissionRoute: typeof ApiPublicAffiliateTrackCommissionRoute
@@ -1023,6 +1064,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksCrmFollowupsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/affiliate-queue': {
+      id: '/api/public/hooks/affiliate-queue'
+      path: '/api/public/hooks/affiliate-queue'
+      fullPath: '/api/public/hooks/affiliate-queue'
+      preLoaderRoute: typeof ApiPublicHooksAffiliateQueueRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/affiliate/collect': {
+      id: '/api/public/affiliate/collect'
+      path: '/api/public/affiliate/collect'
+      fullPath: '/api/public/affiliate/collect'
+      preLoaderRoute: typeof ApiPublicAffiliateCollectRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/p/$slug/checkout': {
       id: '/_authenticated/p/$slug/checkout'
       path: '/p/$slug/checkout'
@@ -1077,6 +1132,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/affiliate/track/checkout'
       fullPath: '/api/public/affiliate/track/checkout'
       preLoaderRoute: typeof ApiPublicAffiliateTrackCheckoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/affiliate/sdk/js': {
+      id: '/api/public/affiliate/sdk/js'
+      path: '/api/public/affiliate/sdk/js'
+      fullPath: '/api/public/affiliate/sdk/js'
+      preLoaderRoute: typeof ApiPublicAffiliateSdkJsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/affiliate/r/$slug': {
@@ -1167,6 +1229,8 @@ const rootRouteChildren: RootRouteChildren = {
   PSlugRoute: PSlugRoute,
   RTokenRoute: RTokenRoute,
   SSlugRoute: SSlugRoute,
+  ApiPublicAffiliateCollectRoute: ApiPublicAffiliateCollectRoute,
+  ApiPublicHooksAffiliateQueueRoute: ApiPublicHooksAffiliateQueueRoute,
   ApiPublicHooksCrmFollowupsRoute: ApiPublicHooksCrmFollowupsRoute,
   ApiPublicHooksDailyHoroscopeRoute: ApiPublicHooksDailyHoroscopeRoute,
   ApiPublicHooksDispatchOrdersRoute: ApiPublicHooksDispatchOrdersRoute,
@@ -1174,6 +1238,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicManifestIconRoute: ApiPublicManifestIconRoute,
   ApiPublicManifestWebmanifestRoute: ApiPublicManifestWebmanifestRoute,
   ApiPublicAffiliateRSlugRoute: ApiPublicAffiliateRSlugRoute,
+  ApiPublicAffiliateSdkJsRoute: ApiPublicAffiliateSdkJsRoute,
   ApiPublicAffiliateTrackCheckoutRoute: ApiPublicAffiliateTrackCheckoutRoute,
   ApiPublicAffiliateTrackClickRoute: ApiPublicAffiliateTrackClickRoute,
   ApiPublicAffiliateTrackCommissionRoute:
