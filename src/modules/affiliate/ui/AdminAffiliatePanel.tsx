@@ -36,7 +36,7 @@ import {
   Megaphone, Trophy, FileBarChart, Settings as SettingsIcon, ScrollText, Download,
   Shield, Plus, Trash2, Pencil, Send, Loader2,
   CreditCard, Layers, Banknote, BookOpen,
-  Radio, ShieldAlert, BarChart3, Cookie,
+  Radio, ShieldAlert, BarChart3, Cookie, Bell, Webhook, History,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
