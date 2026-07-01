@@ -18,6 +18,7 @@ import { Route as SSlugRouteImport } from './routes/s.$slug'
 import { Route as RTokenRouteImport } from './routes/r.$token'
 import { Route as PSlugRouteImport } from './routes/p.$slug'
 import { Route as ApiChatRouteImport } from './routes/api.chat'
+import { Route as AffiliateWithdrawRouteImport } from './routes/affiliate.withdraw'
 import { Route as AffiliateRegisterRouteImport } from './routes/affiliate.register'
 import { Route as AffiliateMaterialsRouteImport } from './routes/affiliate.materials'
 import { Route as AffiliateLinkRouteImport } from './routes/affiliate.link'
@@ -97,6 +98,11 @@ const PSlugRoute = PSlugRouteImport.update({
 const ApiChatRoute = ApiChatRouteImport.update({
   id: '/api/chat',
   path: '/api/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AffiliateWithdrawRoute = AffiliateWithdrawRouteImport.update({
+  id: '/affiliate/withdraw',
+  path: '/affiliate/withdraw',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AffiliateRegisterRoute = AffiliateRegisterRouteImport.update({
@@ -322,6 +328,7 @@ export interface FileRoutesByFullPath {
   '/affiliate/link': typeof AffiliateLinkRoute
   '/affiliate/materials': typeof AffiliateMaterialsRoute
   '/affiliate/register': typeof AffiliateRegisterRoute
+  '/affiliate/withdraw': typeof AffiliateWithdrawRoute
   '/api/chat': typeof ApiChatRoute
   '/p/$slug': typeof PSlugRoute
   '/r/$token': typeof RTokenRoute
@@ -368,6 +375,7 @@ export interface FileRoutesByTo {
   '/affiliate/link': typeof AffiliateLinkRoute
   '/affiliate/materials': typeof AffiliateMaterialsRoute
   '/affiliate/register': typeof AffiliateRegisterRoute
+  '/affiliate/withdraw': typeof AffiliateWithdrawRoute
   '/api/chat': typeof ApiChatRoute
   '/p/$slug': typeof PSlugRoute
   '/r/$token': typeof RTokenRoute
@@ -416,6 +424,7 @@ export interface FileRoutesById {
   '/affiliate/link': typeof AffiliateLinkRoute
   '/affiliate/materials': typeof AffiliateMaterialsRoute
   '/affiliate/register': typeof AffiliateRegisterRoute
+  '/affiliate/withdraw': typeof AffiliateWithdrawRoute
   '/api/chat': typeof ApiChatRoute
   '/p/$slug': typeof PSlugRoute
   '/r/$token': typeof RTokenRoute
@@ -464,6 +473,7 @@ export interface FileRouteTypes {
     | '/affiliate/link'
     | '/affiliate/materials'
     | '/affiliate/register'
+    | '/affiliate/withdraw'
     | '/api/chat'
     | '/p/$slug'
     | '/r/$token'
@@ -510,6 +520,7 @@ export interface FileRouteTypes {
     | '/affiliate/link'
     | '/affiliate/materials'
     | '/affiliate/register'
+    | '/affiliate/withdraw'
     | '/api/chat'
     | '/p/$slug'
     | '/r/$token'
@@ -557,6 +568,7 @@ export interface FileRouteTypes {
     | '/affiliate/link'
     | '/affiliate/materials'
     | '/affiliate/register'
+    | '/affiliate/withdraw'
     | '/api/chat'
     | '/p/$slug'
     | '/r/$token'
@@ -589,6 +601,7 @@ export interface RootRouteChildren {
   AffiliateLinkRoute: typeof AffiliateLinkRoute
   AffiliateMaterialsRoute: typeof AffiliateMaterialsRoute
   AffiliateRegisterRoute: typeof AffiliateRegisterRoute
+  AffiliateWithdrawRoute: typeof AffiliateWithdrawRoute
   ApiChatRoute: typeof ApiChatRoute
   PSlugRoute: typeof PSlugRoute
   RTokenRoute: typeof RTokenRoute
@@ -671,6 +684,13 @@ declare module '@tanstack/react-router' {
       path: '/api/chat'
       fullPath: '/api/chat'
       preLoaderRoute: typeof ApiChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/affiliate/withdraw': {
+      id: '/affiliate/withdraw'
+      path: '/affiliate/withdraw'
+      fullPath: '/affiliate/withdraw'
+      preLoaderRoute: typeof AffiliateWithdrawRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/affiliate/register': {
@@ -995,6 +1015,7 @@ const rootRouteChildren: RootRouteChildren = {
   AffiliateLinkRoute: AffiliateLinkRoute,
   AffiliateMaterialsRoute: AffiliateMaterialsRoute,
   AffiliateRegisterRoute: AffiliateRegisterRoute,
+  AffiliateWithdrawRoute: AffiliateWithdrawRoute,
   ApiChatRoute: ApiChatRoute,
   PSlugRoute: PSlugRoute,
   RTokenRoute: RTokenRoute,
