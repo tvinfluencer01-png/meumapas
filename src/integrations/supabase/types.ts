@@ -86,6 +86,90 @@ export type Database = {
         }
         Relationships: []
       }
+      affiliate_badge_awards: {
+        Row: {
+          affiliate_id: string
+          awarded_at: string
+          badge_id: string
+          context: Json | null
+          id: string
+        }
+        Insert: {
+          affiliate_id: string
+          awarded_at?: string
+          badge_id: string
+          context?: Json | null
+          id?: string
+        }
+        Update: {
+          affiliate_id?: string
+          awarded_at?: string
+          badge_id?: string
+          context?: Json | null
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_badge_awards_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_badge_awards_badge_id_fkey"
+            columns: ["badge_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_badges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_badges: {
+        Row: {
+          active: boolean
+          color: string | null
+          created_at: string
+          criteria: Json
+          description: string | null
+          icon: string | null
+          id: string
+          name: string
+          points_reward: number
+          rarity: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          color?: string | null
+          created_at?: string
+          criteria?: Json
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+          points_reward?: number
+          rarity?: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          color?: string | null
+          created_at?: string
+          criteria?: Json
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+          points_reward?: number
+          rarity?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       affiliate_bank_accounts: {
         Row: {
           account_number: string
@@ -1040,6 +1124,36 @@ export type Database = {
           },
         ]
       }
+      affiliate_leaderboard_snapshots: {
+        Row: {
+          created_at: string
+          id: string
+          metric: string
+          period: string
+          period_end: string
+          period_start: string
+          rankings: Json
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          metric?: string
+          period: string
+          period_end: string
+          period_start: string
+          rankings?: Json
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          metric?: string
+          period?: string
+          period_end?: string
+          period_start?: string
+          rankings?: Json
+        }
+        Relationships: []
+      }
       affiliate_ledger: {
         Row: {
           affiliate_id: string
@@ -1089,6 +1203,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      affiliate_levels: {
+        Row: {
+          active: boolean
+          color: string | null
+          commission_bonus_bps: number
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          min_conversions: number
+          min_points: number
+          min_revenue_cents: number
+          name: string
+          perks: Json
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          color?: string | null
+          commission_bonus_bps?: number
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          min_conversions?: number
+          min_points?: number
+          min_revenue_cents?: number
+          name: string
+          perks?: Json
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          color?: string | null
+          commission_bonus_bps?: number
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          min_conversions?: number
+          min_points?: number
+          min_revenue_cents?: number
+          name?: string
+          perks?: Json
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       affiliate_links: {
         Row: {
@@ -1282,6 +1450,113 @@ export type Database = {
             columns: ["affiliate_id"]
             isOneToOne: false
             referencedRelation: "affiliate_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_mission_progress: {
+        Row: {
+          affiliate_id: string
+          claimed_at: string | null
+          completed_at: string | null
+          current_value: number
+          id: string
+          mission_id: string
+          updated_at: string
+        }
+        Insert: {
+          affiliate_id: string
+          claimed_at?: string | null
+          completed_at?: string | null
+          current_value?: number
+          id?: string
+          mission_id: string
+          updated_at?: string
+        }
+        Update: {
+          affiliate_id?: string
+          claimed_at?: string | null
+          completed_at?: string | null
+          current_value?: number
+          id?: string
+          mission_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_mission_progress_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_mission_progress_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_missions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_missions: {
+        Row: {
+          active: boolean
+          badge_id: string | null
+          bonus_cents: number
+          created_at: string
+          description: string | null
+          ends_at: string
+          goal_metric: string
+          goal_value: number
+          id: string
+          mission_type: string
+          points_reward: number
+          slug: string
+          starts_at: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          badge_id?: string | null
+          bonus_cents?: number
+          created_at?: string
+          description?: string | null
+          ends_at: string
+          goal_metric: string
+          goal_value: number
+          id?: string
+          mission_type?: string
+          points_reward?: number
+          slug: string
+          starts_at?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          badge_id?: string | null
+          bonus_cents?: number
+          created_at?: string
+          description?: string | null
+          ends_at?: string
+          goal_metric?: string
+          goal_value?: number
+          id?: string
+          mission_type?: string
+          points_reward?: number
+          slug?: string
+          starts_at?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_missions_badge_id_fkey"
+            columns: ["badge_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_badges"
             referencedColumns: ["id"]
           },
         ]
@@ -1584,6 +1859,80 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      affiliate_points: {
+        Row: {
+          affiliate_id: string
+          level_id: string | null
+          points: number
+          updated_at: string
+        }
+        Insert: {
+          affiliate_id: string
+          level_id?: string | null
+          points?: number
+          updated_at?: string
+        }
+        Update: {
+          affiliate_id?: string
+          level_id?: string | null
+          points?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_points_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: true
+            referencedRelation: "affiliate_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_points_level_id_fkey"
+            columns: ["level_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_levels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_points_ledger: {
+        Row: {
+          affiliate_id: string
+          created_at: string
+          delta: number
+          id: string
+          metadata: Json | null
+          reason: string
+          reference: string | null
+        }
+        Insert: {
+          affiliate_id: string
+          created_at?: string
+          delta: number
+          id?: string
+          metadata?: Json | null
+          reason: string
+          reference?: string | null
+        }
+        Update: {
+          affiliate_id?: string
+          created_at?: string
+          delta?: number
+          id?: string
+          metadata?: Json | null
+          reason?: string
+          reference?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_points_ledger_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       affiliate_processing_queue: {
         Row: {
