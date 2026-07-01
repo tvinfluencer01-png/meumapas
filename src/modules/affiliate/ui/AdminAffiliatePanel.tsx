@@ -46,6 +46,9 @@ import {
 import {
   PixelsSection, FraudAiSection, RoiSection, CookieConsentsSection,
 } from "./AdminIntelligenceSections";
+import {
+  LevelsSection, BadgesSection, MissionsSection, LeaderboardSection,
+} from "./AdminGamificationSections";
 
 const SECTIONS = [
   { id: "dashboard", label: "Dashboard Geral", icon: LayoutDashboard },
@@ -65,7 +68,11 @@ const SECTIONS = [
   { id: "messages", label: "Mensagens", icon: MessageSquare },
   { id: "materials", label: "Materiais", icon: ImageIcon },
   { id: "campaigns", label: "Campanhas", icon: Megaphone },
-  { id: "ranking", label: "Ranking", icon: Trophy },
+  { id: "levels", label: "Níveis", icon: Layers },
+  { id: "badges", label: "Badges", icon: Trophy },
+  { id: "missions", label: "Missões", icon: Trophy },
+  { id: "leaderboard", label: "Leaderboard", icon: Trophy },
+  { id: "ranking", label: "Ranking (legado)", icon: Trophy },
   { id: "reports", label: "Relatórios", icon: FileBarChart },
   { id: "settings", label: "Configurações", icon: SettingsIcon },
   { id: "logs", label: "Logs & Antifraude", icon: ScrollText },
@@ -115,6 +122,10 @@ export function AdminAffiliatePanel() {
         {section === "messages" && <MessagesSection />}
         {section === "materials" && <MaterialsSection />}
         {section === "campaigns" && <CampaignsSection />}
+        {section === "levels" && <LevelsSection />}
+        {section === "badges" && <BadgesSection />}
+        {section === "missions" && <MissionsSection />}
+        {section === "leaderboard" && <LeaderboardSection />}
         {section === "ranking" && <RankingSection />}
         {section === "reports" && <ReportsSection />}
         {section === "settings" && <SettingsSection />}
