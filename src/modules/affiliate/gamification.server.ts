@@ -67,7 +67,7 @@ export async function recalcLevel(supabase: Db, affiliateId: string) {
 
   const { data: pts } = await supabase
     .from("affiliate_points")
-    .select("points")
+    .select("points, level_id")
     .eq("affiliate_id", affiliateId)
     .maybeSingle();
 
@@ -88,6 +88,7 @@ export async function recalcLevel(supabase: Db, affiliateId: string) {
     .not("converted_at", "is", null);
 
   const points = pts?.points ?? 0;
+  const prevLevelId = (pts as any)?.level_id ?? null;
 
   let matched: LevelRow = levels[0];
   for (const lvl of levels as LevelRow[]) {
@@ -103,6 +104,23 @@ export async function recalcLevel(supabase: Db, affiliateId: string) {
   await supabase
     .from("affiliate_points")
     .upsert({ affiliate_id: affiliateId, level_id: matched.id, updated_at: new Date().toISOString() });
+
+  if (prevLevelId && prevLevelId !== matched.id) {
+    try {
+      const { dispatchEvent } = await import("./notifications.server");
+      await dispatchEvent(supabase, {
+        event_key: "level.up",
+        affiliate_id: affiliateId,
+        variables: {
+          level_slug: matched.slug,
+          level_name: matched.name,
+          level_color: matched.color,
+          commission_bonus_bps: matched.commission_bonus_bps,
+          points,
+        },
+      });
+    } catch (e) { console.error("[gamification] level.up dispatchEvent failed", e); }
+  }
 
   return matched;
 }
