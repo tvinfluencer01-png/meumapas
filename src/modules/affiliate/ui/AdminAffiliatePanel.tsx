@@ -122,6 +122,10 @@ export function AdminAffiliatePanel() {
         {section === "messages" && <MessagesSection />}
         {section === "materials" && <MaterialsSection />}
         {section === "campaigns" && <CampaignsSection />}
+        {section === "levels" && <LevelsSection />}
+        {section === "badges" && <BadgesSection />}
+        {section === "missions" && <MissionsSection />}
+        {section === "leaderboard" && <LeaderboardSection />}
         {section === "ranking" && <RankingSection />}
         {section === "reports" && <ReportsSection />}
         {section === "settings" && <SettingsSection />}
