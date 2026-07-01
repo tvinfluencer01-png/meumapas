@@ -109,3 +109,16 @@
 /* Utilitários de marca (.font-serif, .glass-card, .shimmer-text, .gold-glow,
    .nebula-bg, .animate-twinkle, .animate-slow-spin, etc.) e seus keyframes
    vivem em src/styles/brand.css. */
+
+/* Affiliate Center — light theme override scope */
+.affiliate-light {
+  --background: 0 0% 100%;
+  --foreground: 240 10% 15%;
+  --card: 0 0% 98%;
+  --card-foreground: 240 10% 15%;
+  --border: 240 6% 88%;
+  --muted: 240 5% 96%;
+  --muted-foreground: 240 4% 40%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 240 10% 15%;
+}
