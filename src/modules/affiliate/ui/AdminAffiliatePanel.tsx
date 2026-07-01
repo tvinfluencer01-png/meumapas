@@ -49,6 +49,10 @@ import {
 import {
   LevelsSection, BadgesSection, MissionsSection, LeaderboardSection,
 } from "./AdminGamificationSections";
+import {
+  NotificationTemplatesSection, NotificationRulesSection,
+  OutboundWebhooksSection, NotificationDispatchesSection,
+} from "./AdminIntegrationsSections";
 
 const SECTIONS = [
   { id: "dashboard", label: "Dashboard Geral", icon: LayoutDashboard },
