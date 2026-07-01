@@ -51,7 +51,7 @@ export function LevelsSection() {
         </div>
         <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setEdit(null); }}>
           <DialogTrigger asChild><Button size="sm"><Plus className="size-4" /> Novo nível</Button></DialogTrigger>
-          <LevelDialog initial={edit} onSave={(p) => save.mutate(p)} saving={save.isPending} />
+          <LevelDialog initial={edit} onSave={(p: any) => save.mutate(p)} saving={save.isPending} />
         </Dialog>
       </div>
 
@@ -142,7 +142,7 @@ export function BadgesSection() {
         </div>
         <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setEdit(null); }}>
           <DialogTrigger asChild><Button size="sm"><Plus className="size-4" /> Novo badge</Button></DialogTrigger>
-          <BadgeDialog initial={edit} onSave={(p) => save.mutate(p)} saving={save.isPending} />
+          <BadgeDialog initial={edit} onSave={(p: any) => save.mutate(p)} saving={save.isPending} />
         </Dialog>
       </div>
       {isLoading ? <Loader2 className="animate-spin" /> : (
@@ -256,7 +256,7 @@ export function MissionsSection() {
         </div>
         <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setEdit(null); }}>
           <DialogTrigger asChild><Button size="sm"><Plus className="size-4" /> Nova missão</Button></DialogTrigger>
-          <MissionDialog initial={edit} onSave={(p) => save.mutate(p)} saving={save.isPending} />
+          <MissionDialog initial={edit} onSave={(p: any) => save.mutate(p)} saving={save.isPending} />
         </Dialog>
       </div>
       {isLoading ? <Loader2 className="animate-spin" /> : (
