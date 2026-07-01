@@ -54,6 +54,7 @@ import { Route as ApiPublicHooksDispatchOrdersRouteImport } from './routes/api/p
 import { Route as ApiPublicHooksDailyHoroscopeRouteImport } from './routes/api/public/hooks/daily-horoscope'
 import { Route as ApiPublicHooksCrmFollowupsRouteImport } from './routes/api/public/hooks/crm-followups'
 import { Route as ApiPublicHooksAffiliateQueueRouteImport } from './routes/api/public/hooks/affiliate-queue'
+import { Route as ApiPublicAffiliateConsentRouteImport } from './routes/api/public/affiliate/consent'
 import { Route as ApiPublicAffiliateCollectRouteImport } from './routes/api/public/affiliate/collect'
 import { Route as AuthenticatedPSlugCheckoutRouteImport } from './routes/_authenticated.p.$slug.checkout'
 import { Route as ApiPublicAffiliateWebhookProviderRouteImport } from './routes/api/public/affiliate/webhook.$provider'
@@ -302,6 +303,12 @@ const ApiPublicHooksAffiliateQueueRoute =
     path: '/api/public/hooks/affiliate-queue',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicAffiliateConsentRoute =
+  ApiPublicAffiliateConsentRouteImport.update({
+    id: '/api/public/affiliate/consent',
+    path: '/api/public/affiliate/consent',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicAffiliateCollectRoute =
   ApiPublicAffiliateCollectRouteImport.update({
     id: '/api/public/affiliate/collect',
@@ -419,6 +426,7 @@ export interface FileRoutesByFullPath {
   '/admin/logs': typeof AuthenticatedAdminLogsRoute
   '/p/$slug/checkout': typeof AuthenticatedPSlugCheckoutRoute
   '/api/public/affiliate/collect': typeof ApiPublicAffiliateCollectRoute
+  '/api/public/affiliate/consent': typeof ApiPublicAffiliateConsentRoute
   '/api/public/hooks/affiliate-queue': typeof ApiPublicHooksAffiliateQueueRoute
   '/api/public/hooks/crm-followups': typeof ApiPublicHooksCrmFollowupsRoute
   '/api/public/hooks/daily-horoscope': typeof ApiPublicHooksDailyHoroscopeRoute
@@ -478,6 +486,7 @@ export interface FileRoutesByTo {
   '/admin/logs': typeof AuthenticatedAdminLogsRoute
   '/p/$slug/checkout': typeof AuthenticatedPSlugCheckoutRoute
   '/api/public/affiliate/collect': typeof ApiPublicAffiliateCollectRoute
+  '/api/public/affiliate/consent': typeof ApiPublicAffiliateConsentRoute
   '/api/public/hooks/affiliate-queue': typeof ApiPublicHooksAffiliateQueueRoute
   '/api/public/hooks/crm-followups': typeof ApiPublicHooksCrmFollowupsRoute
   '/api/public/hooks/daily-horoscope': typeof ApiPublicHooksDailyHoroscopeRoute
@@ -539,6 +548,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/logs': typeof AuthenticatedAdminLogsRoute
   '/_authenticated/p/$slug/checkout': typeof AuthenticatedPSlugCheckoutRoute
   '/api/public/affiliate/collect': typeof ApiPublicAffiliateCollectRoute
+  '/api/public/affiliate/consent': typeof ApiPublicAffiliateConsentRoute
   '/api/public/hooks/affiliate-queue': typeof ApiPublicHooksAffiliateQueueRoute
   '/api/public/hooks/crm-followups': typeof ApiPublicHooksCrmFollowupsRoute
   '/api/public/hooks/daily-horoscope': typeof ApiPublicHooksDailyHoroscopeRoute
@@ -600,6 +610,7 @@ export interface FileRouteTypes {
     | '/admin/logs'
     | '/p/$slug/checkout'
     | '/api/public/affiliate/collect'
+    | '/api/public/affiliate/consent'
     | '/api/public/hooks/affiliate-queue'
     | '/api/public/hooks/crm-followups'
     | '/api/public/hooks/daily-horoscope'
@@ -659,6 +670,7 @@ export interface FileRouteTypes {
     | '/admin/logs'
     | '/p/$slug/checkout'
     | '/api/public/affiliate/collect'
+    | '/api/public/affiliate/consent'
     | '/api/public/hooks/affiliate-queue'
     | '/api/public/hooks/crm-followups'
     | '/api/public/hooks/daily-horoscope'
@@ -719,6 +731,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/logs'
     | '/_authenticated/p/$slug/checkout'
     | '/api/public/affiliate/collect'
+    | '/api/public/affiliate/consent'
     | '/api/public/hooks/affiliate-queue'
     | '/api/public/hooks/crm-followups'
     | '/api/public/hooks/daily-horoscope'
@@ -762,6 +775,7 @@ export interface RootRouteChildren {
   RTokenRoute: typeof RTokenRoute
   SSlugRoute: typeof SSlugRoute
   ApiPublicAffiliateCollectRoute: typeof ApiPublicAffiliateCollectRoute
+  ApiPublicAffiliateConsentRoute: typeof ApiPublicAffiliateConsentRoute
   ApiPublicHooksAffiliateQueueRoute: typeof ApiPublicHooksAffiliateQueueRoute
   ApiPublicHooksCrmFollowupsRoute: typeof ApiPublicHooksCrmFollowupsRoute
   ApiPublicHooksDailyHoroscopeRoute: typeof ApiPublicHooksDailyHoroscopeRoute
@@ -1099,6 +1113,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksAffiliateQueueRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/affiliate/consent': {
+      id: '/api/public/affiliate/consent'
+      path: '/api/public/affiliate/consent'
+      fullPath: '/api/public/affiliate/consent'
+      preLoaderRoute: typeof ApiPublicAffiliateConsentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/affiliate/collect': {
       id: '/api/public/affiliate/collect'
       path: '/api/public/affiliate/collect'
@@ -1272,6 +1293,7 @@ const rootRouteChildren: RootRouteChildren = {
   RTokenRoute: RTokenRoute,
   SSlugRoute: SSlugRoute,
   ApiPublicAffiliateCollectRoute: ApiPublicAffiliateCollectRoute,
+  ApiPublicAffiliateConsentRoute: ApiPublicAffiliateConsentRoute,
   ApiPublicHooksAffiliateQueueRoute: ApiPublicHooksAffiliateQueueRoute,
   ApiPublicHooksCrmFollowupsRoute: ApiPublicHooksCrmFollowupsRoute,
   ApiPublicHooksDailyHoroscopeRoute: ApiPublicHooksDailyHoroscopeRoute,
