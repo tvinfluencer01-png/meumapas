@@ -65,6 +65,7 @@ import { Route as ApiPublicAffiliateTrackClickRouteImport } from './routes/api/p
 import { Route as ApiPublicAffiliateTrackCheckoutRouteImport } from './routes/api/public/affiliate/track.checkout'
 import { Route as ApiPublicAffiliateSdkJsRouteImport } from './routes/api/public/affiliate/sdk.js'
 import { Route as ApiPublicAffiliateRSlugRouteImport } from './routes/api/public/affiliate/r.$slug'
+import { Route as ApiPublicAffiliateCheckoutCreateRouteImport } from './routes/api/public/affiliate/checkout.create'
 
 const ProfissionaisRoute = ProfissionaisRouteImport.update({
   id: '/profissionais',
@@ -364,6 +365,12 @@ const ApiPublicAffiliateRSlugRoute = ApiPublicAffiliateRSlugRouteImport.update({
   path: '/api/public/affiliate/r/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicAffiliateCheckoutCreateRoute =
+  ApiPublicAffiliateCheckoutCreateRouteImport.update({
+    id: '/api/public/affiliate/checkout/create',
+    path: '/api/public/affiliate/checkout/create',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -412,6 +419,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/mercadopago': typeof ApiPublicHooksMercadopagoRoute
   '/api/public/manifest/icon': typeof ApiPublicManifestIconRoute
   '/api/public/manifest/webmanifest': typeof ApiPublicManifestWebmanifestRoute
+  '/api/public/affiliate/checkout/create': typeof ApiPublicAffiliateCheckoutCreateRoute
   '/api/public/affiliate/r/$slug': typeof ApiPublicAffiliateRSlugRoute
   '/api/public/affiliate/sdk/js': typeof ApiPublicAffiliateSdkJsRoute
   '/api/public/affiliate/track/checkout': typeof ApiPublicAffiliateTrackCheckoutRoute
@@ -469,6 +477,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/mercadopago': typeof ApiPublicHooksMercadopagoRoute
   '/api/public/manifest/icon': typeof ApiPublicManifestIconRoute
   '/api/public/manifest/webmanifest': typeof ApiPublicManifestWebmanifestRoute
+  '/api/public/affiliate/checkout/create': typeof ApiPublicAffiliateCheckoutCreateRoute
   '/api/public/affiliate/r/$slug': typeof ApiPublicAffiliateRSlugRoute
   '/api/public/affiliate/sdk/js': typeof ApiPublicAffiliateSdkJsRoute
   '/api/public/affiliate/track/checkout': typeof ApiPublicAffiliateTrackCheckoutRoute
@@ -528,6 +537,7 @@ export interface FileRoutesById {
   '/api/public/hooks/mercadopago': typeof ApiPublicHooksMercadopagoRoute
   '/api/public/manifest/icon': typeof ApiPublicManifestIconRoute
   '/api/public/manifest/webmanifest': typeof ApiPublicManifestWebmanifestRoute
+  '/api/public/affiliate/checkout/create': typeof ApiPublicAffiliateCheckoutCreateRoute
   '/api/public/affiliate/r/$slug': typeof ApiPublicAffiliateRSlugRoute
   '/api/public/affiliate/sdk/js': typeof ApiPublicAffiliateSdkJsRoute
   '/api/public/affiliate/track/checkout': typeof ApiPublicAffiliateTrackCheckoutRoute
@@ -587,6 +597,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/mercadopago'
     | '/api/public/manifest/icon'
     | '/api/public/manifest/webmanifest'
+    | '/api/public/affiliate/checkout/create'
     | '/api/public/affiliate/r/$slug'
     | '/api/public/affiliate/sdk/js'
     | '/api/public/affiliate/track/checkout'
@@ -644,6 +655,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/mercadopago'
     | '/api/public/manifest/icon'
     | '/api/public/manifest/webmanifest'
+    | '/api/public/affiliate/checkout/create'
     | '/api/public/affiliate/r/$slug'
     | '/api/public/affiliate/sdk/js'
     | '/api/public/affiliate/track/checkout'
@@ -702,6 +714,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/mercadopago'
     | '/api/public/manifest/icon'
     | '/api/public/manifest/webmanifest'
+    | '/api/public/affiliate/checkout/create'
     | '/api/public/affiliate/r/$slug'
     | '/api/public/affiliate/sdk/js'
     | '/api/public/affiliate/track/checkout'
@@ -743,6 +756,7 @@ export interface RootRouteChildren {
   ApiPublicHooksMercadopagoRoute: typeof ApiPublicHooksMercadopagoRoute
   ApiPublicManifestIconRoute: typeof ApiPublicManifestIconRoute
   ApiPublicManifestWebmanifestRoute: typeof ApiPublicManifestWebmanifestRoute
+  ApiPublicAffiliateCheckoutCreateRoute: typeof ApiPublicAffiliateCheckoutCreateRoute
   ApiPublicAffiliateRSlugRoute: typeof ApiPublicAffiliateRSlugRoute
   ApiPublicAffiliateSdkJsRoute: typeof ApiPublicAffiliateSdkJsRoute
   ApiPublicAffiliateTrackCheckoutRoute: typeof ApiPublicAffiliateTrackCheckoutRoute
@@ -1148,6 +1162,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicAffiliateRSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/affiliate/checkout/create': {
+      id: '/api/public/affiliate/checkout/create'
+      path: '/api/public/affiliate/checkout/create'
+      fullPath: '/api/public/affiliate/checkout/create'
+      preLoaderRoute: typeof ApiPublicAffiliateCheckoutCreateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -1237,6 +1258,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksMercadopagoRoute: ApiPublicHooksMercadopagoRoute,
   ApiPublicManifestIconRoute: ApiPublicManifestIconRoute,
   ApiPublicManifestWebmanifestRoute: ApiPublicManifestWebmanifestRoute,
+  ApiPublicAffiliateCheckoutCreateRoute: ApiPublicAffiliateCheckoutCreateRoute,
   ApiPublicAffiliateRSlugRoute: ApiPublicAffiliateRSlugRoute,
   ApiPublicAffiliateSdkJsRoute: ApiPublicAffiliateSdkJsRoute,
   ApiPublicAffiliateTrackCheckoutRoute: ApiPublicAffiliateTrackCheckoutRoute,
