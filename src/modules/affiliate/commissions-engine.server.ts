@@ -232,5 +232,20 @@ export async function recordCommissionAndLedger(params: {
     description: `Comissão pedido ${params.input.orderRef ?? params.orderId} (${res.source})`,
     metadata: res.memo,
   });
+  try {
+    const { dispatchEvent } = await import("./notifications.server");
+    await dispatchEvent(supabaseAdmin, {
+      event_key: "commission.created",
+      affiliate_id: params.input.affiliateId,
+      variables: {
+        commission_id: (data as any).id,
+        order_id: params.orderId,
+        order_ref: params.input.orderRef ?? null,
+        amount_cents: res.commissionCents,
+        amount_brl: (res.commissionCents / 100).toFixed(2),
+        source: res.source,
+      },
+    });
+  } catch (e) { console.error("[commissions] dispatchEvent failed", e); }
   return { commissionId: (data as any).id, ...res };
 }
