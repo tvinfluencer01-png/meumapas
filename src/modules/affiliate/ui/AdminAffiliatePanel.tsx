@@ -46,6 +46,9 @@ import {
 import {
   PixelsSection, FraudAiSection, RoiSection, CookieConsentsSection,
 } from "./AdminIntelligenceSections";
+import {
+  LevelsSection, BadgesSection, MissionsSection, LeaderboardSection,
+} from "./AdminGamificationSections";
 
 const SECTIONS = [
   { id: "dashboard", label: "Dashboard Geral", icon: LayoutDashboard },
