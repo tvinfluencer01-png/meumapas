@@ -27,6 +27,7 @@ import { Route as AffiliateMessagesRouteImport } from './routes/affiliate.messag
 import { Route as AffiliateMaterialsRouteImport } from './routes/affiliate.materials'
 import { Route as AffiliateLinkRouteImport } from './routes/affiliate.link'
 import { Route as AffiliateHistoryRouteImport } from './routes/affiliate.history'
+import { Route as AffiliateGamificationRouteImport } from './routes/affiliate.gamification'
 import { Route as AffiliateFinancialRouteImport } from './routes/affiliate.financial'
 import { Route as AffiliateDashboardRouteImport } from './routes/affiliate.dashboard'
 import { Route as AffiliateAccountRouteImport } from './routes/affiliate.account'
@@ -156,6 +157,11 @@ const AffiliateLinkRoute = AffiliateLinkRouteImport.update({
 const AffiliateHistoryRoute = AffiliateHistoryRouteImport.update({
   id: '/affiliate/history',
   path: '/affiliate/history',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AffiliateGamificationRoute = AffiliateGamificationRouteImport.update({
+  id: '/affiliate/gamification',
+  path: '/affiliate/gamification',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AffiliateFinancialRoute = AffiliateFinancialRouteImport.update({
@@ -410,6 +416,7 @@ export interface FileRoutesByFullPath {
   '/affiliate/account': typeof AffiliateAccountRoute
   '/affiliate/dashboard': typeof AffiliateDashboardRoute
   '/affiliate/financial': typeof AffiliateFinancialRoute
+  '/affiliate/gamification': typeof AffiliateGamificationRoute
   '/affiliate/history': typeof AffiliateHistoryRoute
   '/affiliate/link': typeof AffiliateLinkRoute
   '/affiliate/materials': typeof AffiliateMaterialsRoute
@@ -470,6 +477,7 @@ export interface FileRoutesByTo {
   '/affiliate/account': typeof AffiliateAccountRoute
   '/affiliate/dashboard': typeof AffiliateDashboardRoute
   '/affiliate/financial': typeof AffiliateFinancialRoute
+  '/affiliate/gamification': typeof AffiliateGamificationRoute
   '/affiliate/history': typeof AffiliateHistoryRoute
   '/affiliate/link': typeof AffiliateLinkRoute
   '/affiliate/materials': typeof AffiliateMaterialsRoute
@@ -532,6 +540,7 @@ export interface FileRoutesById {
   '/affiliate/account': typeof AffiliateAccountRoute
   '/affiliate/dashboard': typeof AffiliateDashboardRoute
   '/affiliate/financial': typeof AffiliateFinancialRoute
+  '/affiliate/gamification': typeof AffiliateGamificationRoute
   '/affiliate/history': typeof AffiliateHistoryRoute
   '/affiliate/link': typeof AffiliateLinkRoute
   '/affiliate/materials': typeof AffiliateMaterialsRoute
@@ -594,6 +603,7 @@ export interface FileRouteTypes {
     | '/affiliate/account'
     | '/affiliate/dashboard'
     | '/affiliate/financial'
+    | '/affiliate/gamification'
     | '/affiliate/history'
     | '/affiliate/link'
     | '/affiliate/materials'
@@ -654,6 +664,7 @@ export interface FileRouteTypes {
     | '/affiliate/account'
     | '/affiliate/dashboard'
     | '/affiliate/financial'
+    | '/affiliate/gamification'
     | '/affiliate/history'
     | '/affiliate/link'
     | '/affiliate/materials'
@@ -715,6 +726,7 @@ export interface FileRouteTypes {
     | '/affiliate/account'
     | '/affiliate/dashboard'
     | '/affiliate/financial'
+    | '/affiliate/gamification'
     | '/affiliate/history'
     | '/affiliate/link'
     | '/affiliate/materials'
@@ -761,6 +773,7 @@ export interface RootRouteChildren {
   AffiliateAccountRoute: typeof AffiliateAccountRoute
   AffiliateDashboardRoute: typeof AffiliateDashboardRoute
   AffiliateFinancialRoute: typeof AffiliateFinancialRoute
+  AffiliateGamificationRoute: typeof AffiliateGamificationRoute
   AffiliateHistoryRoute: typeof AffiliateHistoryRoute
   AffiliateLinkRoute: typeof AffiliateLinkRoute
   AffiliateMaterialsRoute: typeof AffiliateMaterialsRoute
@@ -922,6 +935,13 @@ declare module '@tanstack/react-router' {
       path: '/affiliate/history'
       fullPath: '/affiliate/history'
       preLoaderRoute: typeof AffiliateHistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/affiliate/gamification': {
+      id: '/affiliate/gamification'
+      path: '/affiliate/gamification'
+      fullPath: '/affiliate/gamification'
+      preLoaderRoute: typeof AffiliateGamificationRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/affiliate/financial': {
@@ -1279,6 +1299,7 @@ const rootRouteChildren: RootRouteChildren = {
   AffiliateAccountRoute: AffiliateAccountRoute,
   AffiliateDashboardRoute: AffiliateDashboardRoute,
   AffiliateFinancialRoute: AffiliateFinancialRoute,
+  AffiliateGamificationRoute: AffiliateGamificationRoute,
   AffiliateHistoryRoute: AffiliateHistoryRoute,
   AffiliateLinkRoute: AffiliateLinkRoute,
   AffiliateMaterialsRoute: AffiliateMaterialsRoute,
