@@ -18,16 +18,18 @@ export async function computeRoi(f: RoiFilters) {
   const { count: clicks } = await clicksQ;
 
   let ordersQ = supabaseAdmin.from("affiliate_orders")
-    .select("gross_cents, commission_cents", { count: "exact" })
+    .select("amount_cents, metadata", { count: "exact" })
     .gte("created_at", f.period_start)
     .lte("created_at", f.period_end + "T23:59:59")
     .eq("status", "paid");
   if (f.affiliate_id) ordersQ = ordersQ.eq("affiliate_id", f.affiliate_id);
-  if (f.product_id) ordersQ = ordersQ.eq("product_id", f.product_id);
   const { data: orders, count: conversions } = await ordersQ;
 
-  const revenue_cents = (orders ?? []).reduce((s, o: any) => s + (o.gross_cents ?? 0), 0);
-  const commission_cents = (orders ?? []).reduce((s, o: any) => s + (o.commission_cents ?? 0), 0);
+  const filtered = f.product_id
+    ? (orders ?? []).filter((o: any) => (o.metadata as any)?.product_id === f.product_id)
+    : (orders ?? []);
+  const revenue_cents = filtered.reduce((s, o: any) => s + (o.amount_cents ?? 0), 0);
+  const commission_cents = filtered.reduce((s, o: any) => s + Number((o.metadata as any)?.commission_cents ?? 0), 0);
   const ad_spend_cents = f.ad_spend_cents ?? 0;
   const roas = ad_spend_cents > 0 ? revenue_cents / ad_spend_cents : 0;
   const epc_cents = (clicks ?? 0) > 0 ? Math.round(revenue_cents / (clicks ?? 1)) : 0;
