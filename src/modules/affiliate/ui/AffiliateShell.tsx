@@ -22,6 +22,7 @@ const MENU = [
   { to: "/affiliate/withdraw", label: "Solicitar Saque", icon: HandCoins },
   { to: "/affiliate/history", label: "Histórico", icon: History },
   { to: "/affiliate/ranking", label: "Ranking & Metas", icon: Trophy },
+  { to: "/affiliate/gamification", label: "Gamificação", icon: Sparkles },
   { to: "/affiliate/notifications", label: "Notificações", icon: Bell },
   { to: "/affiliate/messages", label: "Mensagens", icon: MessageSquare },
   { to: "/affiliate/account", label: "Minha Conta", icon: User },
