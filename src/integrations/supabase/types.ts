@@ -196,6 +196,152 @@ export type Database = {
         }
         Relationships: []
       }
+      affiliate_checkout_providers: {
+        Row: {
+          created_at: string
+          credentials: Json
+          currency: string
+          enabled: boolean
+          fee_fixed_cents: number
+          fee_percent: number
+          id: string
+          label: string
+          metadata: Json
+          provider: string
+          sandbox: boolean
+          updated_at: string
+          webhook_secret: string | null
+        }
+        Insert: {
+          created_at?: string
+          credentials?: Json
+          currency?: string
+          enabled?: boolean
+          fee_fixed_cents?: number
+          fee_percent?: number
+          id?: string
+          label: string
+          metadata?: Json
+          provider: string
+          sandbox?: boolean
+          updated_at?: string
+          webhook_secret?: string | null
+        }
+        Update: {
+          created_at?: string
+          credentials?: Json
+          currency?: string
+          enabled?: boolean
+          fee_fixed_cents?: number
+          fee_percent?: number
+          id?: string
+          label?: string
+          metadata?: Json
+          provider?: string
+          sandbox?: boolean
+          updated_at?: string
+          webhook_secret?: string | null
+        }
+        Relationships: []
+      }
+      affiliate_checkout_sessions: {
+        Row: {
+          affiliate_id: string | null
+          amount_cents: number
+          campaign_id: string | null
+          checkout_url: string | null
+          coupon_id: string | null
+          created_at: string
+          currency: string
+          customer_email: string | null
+          customer_name: string | null
+          expires_at: string | null
+          id: string
+          metadata: Json
+          paid_at: string | null
+          product_id: string | null
+          provider: string
+          provider_ref: string | null
+          session_token: string | null
+          status: string
+          updated_at: string
+          utm: Json
+        }
+        Insert: {
+          affiliate_id?: string | null
+          amount_cents: number
+          campaign_id?: string | null
+          checkout_url?: string | null
+          coupon_id?: string | null
+          created_at?: string
+          currency?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          expires_at?: string | null
+          id?: string
+          metadata?: Json
+          paid_at?: string | null
+          product_id?: string | null
+          provider: string
+          provider_ref?: string | null
+          session_token?: string | null
+          status?: string
+          updated_at?: string
+          utm?: Json
+        }
+        Update: {
+          affiliate_id?: string | null
+          amount_cents?: number
+          campaign_id?: string | null
+          checkout_url?: string | null
+          coupon_id?: string | null
+          created_at?: string
+          currency?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          expires_at?: string | null
+          id?: string
+          metadata?: Json
+          paid_at?: string | null
+          product_id?: string | null
+          provider?: string
+          provider_ref?: string | null
+          session_token?: string | null
+          status?: string
+          updated_at?: string
+          utm?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_checkout_sessions_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_checkout_sessions_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_checkout_sessions_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_coupons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_checkout_sessions_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       affiliate_clicks: {
         Row: {
           affiliate_id: string
@@ -280,6 +426,75 @@ export type Database = {
           },
         ]
       }
+      affiliate_commission_overrides: {
+        Row: {
+          active: boolean
+          affiliate_id: string | null
+          amount_cents: number | null
+          created_at: string
+          ends_at: string | null
+          id: string
+          kind: string
+          notes: string | null
+          priority: number
+          product_id: string | null
+          rate_percent: number | null
+          recurrence_limit: number | null
+          scope: string
+          starts_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          affiliate_id?: string | null
+          amount_cents?: number | null
+          created_at?: string
+          ends_at?: string | null
+          id?: string
+          kind: string
+          notes?: string | null
+          priority?: number
+          product_id?: string | null
+          rate_percent?: number | null
+          recurrence_limit?: number | null
+          scope: string
+          starts_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          affiliate_id?: string | null
+          amount_cents?: number | null
+          created_at?: string
+          ends_at?: string | null
+          id?: string
+          kind?: string
+          notes?: string | null
+          priority?: number
+          product_id?: string | null
+          rate_percent?: number | null
+          recurrence_limit?: number | null
+          scope?: string
+          starts_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_commission_overrides_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_commission_overrides_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       affiliate_commission_rules: {
         Row: {
           active: boolean
@@ -287,12 +502,17 @@ export type Database = {
           created_at: string
           id: string
           kind: string
+          lifetime: boolean
           metadata: Json
           model: string
           name: string
           priority: number
+          recurrence_limit: number | null
           scope: string
           scope_ref: string | null
+          tier_enabled: boolean
+          tier_metric: string | null
+          tier_period: string | null
           updated_at: string
           value: number
         }
@@ -302,12 +522,17 @@ export type Database = {
           created_at?: string
           id?: string
           kind: string
+          lifetime?: boolean
           metadata?: Json
           model?: string
           name: string
           priority?: number
+          recurrence_limit?: number | null
           scope: string
           scope_ref?: string | null
+          tier_enabled?: boolean
+          tier_metric?: string | null
+          tier_period?: string | null
           updated_at?: string
           value: number
         }
@@ -317,12 +542,17 @@ export type Database = {
           created_at?: string
           id?: string
           kind?: string
+          lifetime?: boolean
           metadata?: Json
           model?: string
           name?: string
           priority?: number
+          recurrence_limit?: number | null
           scope?: string
           scope_ref?: string | null
+          tier_enabled?: boolean
+          tier_metric?: string | null
+          tier_period?: string | null
           updated_at?: string
           value?: number
         }
@@ -332,6 +562,82 @@ export type Database = {
             columns: ["affiliate_id"]
             isOneToOne: false
             referencedRelation: "affiliate_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_commission_tiers: {
+        Row: {
+          active: boolean
+          affiliate_id: string | null
+          amount_cents: number | null
+          created_at: string
+          id: string
+          max_count: number | null
+          max_volume_cents: number | null
+          min_count: number | null
+          min_volume_cents: number
+          period: string
+          priority: number
+          product_id: string | null
+          rate_percent: number | null
+          rule_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          affiliate_id?: string | null
+          amount_cents?: number | null
+          created_at?: string
+          id?: string
+          max_count?: number | null
+          max_volume_cents?: number | null
+          min_count?: number | null
+          min_volume_cents?: number
+          period?: string
+          priority?: number
+          product_id?: string | null
+          rate_percent?: number | null
+          rule_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          affiliate_id?: string | null
+          amount_cents?: number | null
+          created_at?: string
+          id?: string
+          max_count?: number | null
+          max_volume_cents?: number | null
+          min_count?: number | null
+          min_volume_cents?: number
+          period?: string
+          priority?: number
+          product_id?: string | null
+          rate_percent?: number | null
+          rule_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_commission_tiers_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_commission_tiers_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_commission_tiers_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_commission_rules"
             referencedColumns: ["id"]
           },
         ]
@@ -656,6 +962,56 @@ export type Database = {
           },
         ]
       }
+      affiliate_ledger: {
+        Row: {
+          affiliate_id: string
+          amount_cents: number
+          balance_after_cents: number
+          created_at: string
+          description: string | null
+          direction: string
+          entry_type: string
+          id: string
+          metadata: Json
+          reference_id: string | null
+          reference_type: string | null
+        }
+        Insert: {
+          affiliate_id: string
+          amount_cents: number
+          balance_after_cents: number
+          created_at?: string
+          description?: string | null
+          direction: string
+          entry_type: string
+          id?: string
+          metadata?: Json
+          reference_id?: string | null
+          reference_type?: string | null
+        }
+        Update: {
+          affiliate_id?: string
+          amount_cents?: number
+          balance_after_cents?: number
+          created_at?: string
+          description?: string | null
+          direction?: string
+          entry_type?: string
+          id?: string
+          metadata?: Json
+          reference_id?: string | null
+          reference_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_ledger_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       affiliate_links: {
         Row: {
           active: boolean
@@ -949,6 +1305,127 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      affiliate_payout_batch_items: {
+        Row: {
+          affiliate_id: string
+          amount_cents: number
+          batch_id: string
+          created_at: string
+          external_ref: string | null
+          fee_cents: number
+          id: string
+          net_cents: number
+          notes: string | null
+          receipt_url: string | null
+          status: string
+          updated_at: string
+          withdraw_id: string | null
+        }
+        Insert: {
+          affiliate_id: string
+          amount_cents: number
+          batch_id: string
+          created_at?: string
+          external_ref?: string | null
+          fee_cents?: number
+          id?: string
+          net_cents: number
+          notes?: string | null
+          receipt_url?: string | null
+          status?: string
+          updated_at?: string
+          withdraw_id?: string | null
+        }
+        Update: {
+          affiliate_id?: string
+          amount_cents?: number
+          batch_id?: string
+          created_at?: string
+          external_ref?: string | null
+          fee_cents?: number
+          id?: string
+          net_cents?: number
+          notes?: string | null
+          receipt_url?: string | null
+          status?: string
+          updated_at?: string
+          withdraw_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_payout_batch_items_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_payout_batch_items_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_payout_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_payout_batch_items_withdraw_id_fkey"
+            columns: ["withdraw_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_withdraws"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_payout_batches: {
+        Row: {
+          batch_code: string
+          created_at: string
+          created_by: string | null
+          fee_cents: number
+          id: string
+          items_count: number
+          method: string
+          notes: string | null
+          processed_at: string | null
+          reference: string | null
+          scheduled_for: string | null
+          status: string
+          total_cents: number
+          updated_at: string
+        }
+        Insert: {
+          batch_code: string
+          created_at?: string
+          created_by?: string | null
+          fee_cents?: number
+          id?: string
+          items_count?: number
+          method: string
+          notes?: string | null
+          processed_at?: string | null
+          reference?: string | null
+          scheduled_for?: string | null
+          status?: string
+          total_cents?: number
+          updated_at?: string
+        }
+        Update: {
+          batch_code?: string
+          created_at?: string
+          created_by?: string | null
+          fee_cents?: number
+          id?: string
+          items_count?: number
+          method?: string
+          notes?: string | null
+          processed_at?: string | null
+          reference?: string | null
+          scheduled_for?: string | null
+          status?: string
+          total_cents?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       affiliate_pix_keys: {
         Row: {
@@ -1245,8 +1722,15 @@ export type Database = {
           default_commission_rate: number
           hold_days: number
           id: string
+          mercadopago_enabled: boolean
           metadata: Json
           min_withdraw_cents: number
+          payout_batch_day: number
+          payout_batch_min_cents: number
+          paypal_enabled: boolean
+          pix_fee_cents: number
+          reconciliation_enabled: boolean
+          ted_fee_cents: number
           updated_at: string
         }
         Insert: {
@@ -1268,8 +1752,15 @@ export type Database = {
           default_commission_rate?: number
           hold_days?: number
           id?: string
+          mercadopago_enabled?: boolean
           metadata?: Json
           min_withdraw_cents?: number
+          payout_batch_day?: number
+          payout_batch_min_cents?: number
+          paypal_enabled?: boolean
+          pix_fee_cents?: number
+          reconciliation_enabled?: boolean
+          ted_fee_cents?: number
           updated_at?: string
         }
         Update: {
@@ -1291,8 +1782,15 @@ export type Database = {
           default_commission_rate?: number
           hold_days?: number
           id?: string
+          mercadopago_enabled?: boolean
           metadata?: Json
           min_withdraw_cents?: number
+          payout_batch_day?: number
+          payout_batch_min_cents?: number
+          paypal_enabled?: boolean
+          pix_fee_cents?: number
+          reconciliation_enabled?: boolean
+          ted_fee_cents?: number
           updated_at?: string
         }
         Relationships: []
