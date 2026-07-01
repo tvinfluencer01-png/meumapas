@@ -24,12 +24,12 @@ async function collectSignals(input: FraudInput): Promise<Signal[]> {
 
   if (input.ip) {
     const { count } = await supabaseAdmin
-      .from("affiliate_tracking_events")
+      .from("affiliate_tracking_sessions")
       .select("id", { count: "exact", head: true })
       .eq("ip", input.ip)
       .gte("created_at", since);
-    if ((count ?? 0) > 30) signals.push({ code: "ip_velocity", weight: 35, detail: `${count} eventos/10min` });
-    else if ((count ?? 0) > 10) signals.push({ code: "ip_burst", weight: 15, detail: `${count} eventos/10min` });
+    if ((count ?? 0) > 30) signals.push({ code: "ip_velocity", weight: 35, detail: `${count} sessões/10min` });
+    else if ((count ?? 0) > 10) signals.push({ code: "ip_burst", weight: 15, detail: `${count} sessões/10min` });
   }
 
   if (input.user_agent) {
