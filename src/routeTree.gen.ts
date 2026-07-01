@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ProgramaAfiliadosRouteImport } from './routes/programa-afiliados'
 import { Route as ProfissionaisRouteImport } from './routes/profissionais'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AtivacaoRouteImport } from './routes/ativacao'
@@ -70,6 +71,11 @@ import { Route as ApiPublicAffiliateRSlugRouteImport } from './routes/api/public
 import { Route as ApiPublicAffiliateCheckoutCreateRouteImport } from './routes/api/public/affiliate/checkout.create'
 import { Route as ApiPublicAffiliateCheckoutWebhookProviderRouteImport } from './routes/api/public/affiliate/checkout.webhook.$provider'
 
+const ProgramaAfiliadosRoute = ProgramaAfiliadosRouteImport.update({
+  id: '/programa-afiliados',
+  path: '/programa-afiliados',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProfissionaisRoute = ProfissionaisRouteImport.update({
   id: '/profissionais',
   path: '/profissionais',
@@ -397,6 +403,7 @@ export interface FileRoutesByFullPath {
   '/ativacao': typeof AtivacaoRoute
   '/auth': typeof AuthRoute
   '/profissionais': typeof ProfissionaisRoute
+  '/programa-afiliados': typeof ProgramaAfiliadosRoute
   '/addons': typeof AuthenticatedAddonsRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/clientes': typeof AuthenticatedClientesRoute
@@ -458,6 +465,7 @@ export interface FileRoutesByTo {
   '/ativacao': typeof AtivacaoRoute
   '/auth': typeof AuthRoute
   '/profissionais': typeof ProfissionaisRoute
+  '/programa-afiliados': typeof ProgramaAfiliadosRoute
   '/addons': typeof AuthenticatedAddonsRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/clientes': typeof AuthenticatedClientesRoute
@@ -521,6 +529,7 @@ export interface FileRoutesById {
   '/ativacao': typeof AtivacaoRoute
   '/auth': typeof AuthRoute
   '/profissionais': typeof ProfissionaisRoute
+  '/programa-afiliados': typeof ProgramaAfiliadosRoute
   '/_authenticated/addons': typeof AuthenticatedAddonsRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/clientes': typeof AuthenticatedClientesRoute
@@ -584,6 +593,7 @@ export interface FileRouteTypes {
     | '/ativacao'
     | '/auth'
     | '/profissionais'
+    | '/programa-afiliados'
     | '/addons'
     | '/admin'
     | '/clientes'
@@ -645,6 +655,7 @@ export interface FileRouteTypes {
     | '/ativacao'
     | '/auth'
     | '/profissionais'
+    | '/programa-afiliados'
     | '/addons'
     | '/admin'
     | '/clientes'
@@ -707,6 +718,7 @@ export interface FileRouteTypes {
     | '/ativacao'
     | '/auth'
     | '/profissionais'
+    | '/programa-afiliados'
     | '/_authenticated/addons'
     | '/_authenticated/admin'
     | '/_authenticated/clientes'
@@ -770,6 +782,7 @@ export interface RootRouteChildren {
   AtivacaoRoute: typeof AtivacaoRoute
   AuthRoute: typeof AuthRoute
   ProfissionaisRoute: typeof ProfissionaisRoute
+  ProgramaAfiliadosRoute: typeof ProgramaAfiliadosRoute
   AffiliateAccountRoute: typeof AffiliateAccountRoute
   AffiliateDashboardRoute: typeof AffiliateDashboardRoute
   AffiliateFinancialRoute: typeof AffiliateFinancialRoute
@@ -811,6 +824,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/programa-afiliados': {
+      id: '/programa-afiliados'
+      path: '/programa-afiliados'
+      fullPath: '/programa-afiliados'
+      preLoaderRoute: typeof ProgramaAfiliadosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/profissionais': {
       id: '/profissionais'
       path: '/profissionais'
@@ -1296,6 +1316,7 @@ const rootRouteChildren: RootRouteChildren = {
   AtivacaoRoute: AtivacaoRoute,
   AuthRoute: AuthRoute,
   ProfissionaisRoute: ProfissionaisRoute,
+  ProgramaAfiliadosRoute: ProgramaAfiliadosRoute,
   AffiliateAccountRoute: AffiliateAccountRoute,
   AffiliateDashboardRoute: AffiliateDashboardRoute,
   AffiliateFinancialRoute: AffiliateFinancialRoute,
