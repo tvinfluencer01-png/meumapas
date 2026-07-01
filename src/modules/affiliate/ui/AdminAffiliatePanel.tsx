@@ -819,7 +819,7 @@ function SettingsSection() {
   const setFn = useServerFn(adminUpdateExtendedSettings);
   const { data } = useQuery({ queryKey: ["adm-settings-ext"], queryFn: () => getFn() });
   const [form, setForm] = useState<any>(null);
-  useMemo(() => { if (data && !form) setForm(data); return null; }, [data, form]);
+  useEffect(() => { if (data && !form) setForm(data); }, [data, form]);
   const save = useMutation({
     mutationFn: (v: any) => setFn({ data: v }),
     onSuccess: () => { toast.success("Salvo"); qc.invalidateQueries({ queryKey: ["adm-settings-ext"] }); },
