@@ -319,6 +319,53 @@ export type Database = {
           },
         ]
       }
+      affiliate_goals: {
+        Row: {
+          affiliate_id: string | null
+          created_at: string
+          id: string
+          period_end: string
+          period_start: string
+          reward: string | null
+          target_cents: number | null
+          target_conversions: number | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          affiliate_id?: string | null
+          created_at?: string
+          id?: string
+          period_end: string
+          period_start: string
+          reward?: string | null
+          target_cents?: number | null
+          target_conversions?: number | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          affiliate_id?: string | null
+          created_at?: string
+          id?: string
+          period_end?: string
+          period_start?: string
+          reward?: string | null
+          target_cents?: number | null
+          target_conversions?: number | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_goals_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       affiliate_links: {
         Row: {
           active: boolean
@@ -359,6 +406,123 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      affiliate_materials: {
+        Row: {
+          active: boolean
+          content: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          kind: string
+          tags: string[]
+          thumb_url: string | null
+          title: string
+          updated_at: string
+          url: string | null
+        }
+        Insert: {
+          active?: boolean
+          content?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          kind: string
+          tags?: string[]
+          thumb_url?: string | null
+          title: string
+          updated_at?: string
+          url?: string | null
+        }
+        Update: {
+          active?: boolean
+          content?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          kind?: string
+          tags?: string[]
+          thumb_url?: string | null
+          title?: string
+          updated_at?: string
+          url?: string | null
+        }
+        Relationships: []
+      }
+      affiliate_medal_awards: {
+        Row: {
+          affiliate_id: string
+          awarded_at: string
+          id: string
+          medal_id: string
+        }
+        Insert: {
+          affiliate_id: string
+          awarded_at?: string
+          id?: string
+          medal_id: string
+        }
+        Update: {
+          affiliate_id?: string
+          awarded_at?: string
+          id?: string
+          medal_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_medal_awards_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_medal_awards_medal_id_fkey"
+            columns: ["medal_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_medals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_medals: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          criteria: Json
+          description: string | null
+          icon: string | null
+          id: string
+          name: string
+          tier: string
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          criteria?: Json
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+          tier?: string
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          criteria?: Json
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+          tier?: string
+        }
+        Relationships: []
       }
       affiliate_messages: {
         Row: {
@@ -537,15 +701,22 @@ export type Database = {
           api_key_hash: string | null
           approved_at: string | null
           approved_by: string | null
+          avatar_url: string | null
           cpf: string
           created_at: string
           default_commission_rate: number | null
+          document_url: string | null
           email: string
           full_name: string
           id: string
           metadata: Json
+          notify_email: boolean
+          notify_push: boolean
+          notify_toast: boolean
+          push_subscription: Json | null
           rejection_reason: string | null
           status: Database["public"]["Enums"]["affiliate_status"]
+          theme: string
           token_hash: string | null
           updated_at: string
           user_id: string
@@ -556,15 +727,22 @@ export type Database = {
           api_key_hash?: string | null
           approved_at?: string | null
           approved_by?: string | null
+          avatar_url?: string | null
           cpf: string
           created_at?: string
           default_commission_rate?: number | null
+          document_url?: string | null
           email: string
           full_name: string
           id?: string
           metadata?: Json
+          notify_email?: boolean
+          notify_push?: boolean
+          notify_toast?: boolean
+          push_subscription?: Json | null
           rejection_reason?: string | null
           status?: Database["public"]["Enums"]["affiliate_status"]
+          theme?: string
           token_hash?: string | null
           updated_at?: string
           user_id: string
@@ -575,15 +753,22 @@ export type Database = {
           api_key_hash?: string | null
           approved_at?: string | null
           approved_by?: string | null
+          avatar_url?: string | null
           cpf?: string
           created_at?: string
           default_commission_rate?: number | null
+          document_url?: string | null
           email?: string
           full_name?: string
           id?: string
           metadata?: Json
+          notify_email?: boolean
+          notify_push?: boolean
+          notify_toast?: boolean
+          push_subscription?: Json | null
           rejection_reason?: string | null
           status?: Database["public"]["Enums"]["affiliate_status"]
+          theme?: string
           token_hash?: string | null
           updated_at?: string
           user_id?: string
