@@ -35,15 +35,25 @@ import {
   LayoutDashboard, Users, Package, Percent, HandCoins, MessageSquare, ImageIcon,
   Megaphone, Trophy, FileBarChart, Settings as SettingsIcon, ScrollText, Download,
   Shield, Plus, Trash2, Pencil, Send, Loader2,
+  CreditCard, Layers, Banknote, BookOpen,
 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  CheckoutProvidersSection, CommissionOverridesSection, CommissionTiersSection,
+  PayoutBatchesSection, LedgerSection,
+} from "./AdminMonetizationSections";
 
 const SECTIONS = [
   { id: "dashboard", label: "Dashboard Geral", icon: LayoutDashboard },
   { id: "affiliates", label: "Afiliados", icon: Users },
   { id: "products", label: "Produtos", icon: Package },
   { id: "commissions", label: "Comissões", icon: Percent },
+  { id: "overrides", label: "Overrides", icon: Percent },
+  { id: "tiers", label: "Faixas", icon: Layers },
+  { id: "checkouts", label: "Gateways", icon: CreditCard },
   { id: "withdraws", label: "Saques", icon: HandCoins },
+  { id: "batches", label: "Lotes Pagto", icon: Banknote },
+  { id: "ledger", label: "Livro-razão", icon: BookOpen },
   { id: "messages", label: "Mensagens", icon: MessageSquare },
   { id: "materials", label: "Materiais", icon: ImageIcon },
   { id: "campaigns", label: "Campanhas", icon: Megaphone },
