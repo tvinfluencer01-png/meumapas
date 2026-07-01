@@ -54,6 +54,7 @@ import { Route as ApiPublicHooksDispatchOrdersRouteImport } from './routes/api/p
 import { Route as ApiPublicHooksDailyHoroscopeRouteImport } from './routes/api/public/hooks/daily-horoscope'
 import { Route as ApiPublicHooksCrmFollowupsRouteImport } from './routes/api/public/hooks/crm-followups'
 import { Route as AuthenticatedPSlugCheckoutRouteImport } from './routes/_authenticated.p.$slug.checkout'
+import { Route as ApiPublicAffiliateWebhookProviderRouteImport } from './routes/api/public/affiliate/webhook.$provider'
 import { Route as ApiPublicAffiliateTrackWithdrawRouteImport } from './routes/api/public/affiliate/track.withdraw'
 import { Route as ApiPublicAffiliateTrackVisitRouteImport } from './routes/api/public/affiliate/track.visit'
 import { Route as ApiPublicAffiliateTrackOrderRouteImport } from './routes/api/public/affiliate/track.order'
@@ -296,6 +297,12 @@ const AuthenticatedPSlugCheckoutRoute =
     path: '/p/$slug/checkout',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const ApiPublicAffiliateWebhookProviderRoute =
+  ApiPublicAffiliateWebhookProviderRouteImport.update({
+    id: '/api/public/affiliate/webhook/$provider',
+    path: '/api/public/affiliate/webhook/$provider',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicAffiliateTrackWithdrawRoute =
   ApiPublicAffiliateTrackWithdrawRouteImport.update({
     id: '/api/public/affiliate/track/withdraw',
@@ -390,6 +397,7 @@ export interface FileRoutesByFullPath {
   '/api/public/affiliate/track/order': typeof ApiPublicAffiliateTrackOrderRoute
   '/api/public/affiliate/track/visit': typeof ApiPublicAffiliateTrackVisitRoute
   '/api/public/affiliate/track/withdraw': typeof ApiPublicAffiliateTrackWithdrawRoute
+  '/api/public/affiliate/webhook/$provider': typeof ApiPublicAffiliateWebhookProviderRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -443,6 +451,7 @@ export interface FileRoutesByTo {
   '/api/public/affiliate/track/order': typeof ApiPublicAffiliateTrackOrderRoute
   '/api/public/affiliate/track/visit': typeof ApiPublicAffiliateTrackVisitRoute
   '/api/public/affiliate/track/withdraw': typeof ApiPublicAffiliateTrackWithdrawRoute
+  '/api/public/affiliate/webhook/$provider': typeof ApiPublicAffiliateWebhookProviderRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -498,6 +507,7 @@ export interface FileRoutesById {
   '/api/public/affiliate/track/order': typeof ApiPublicAffiliateTrackOrderRoute
   '/api/public/affiliate/track/visit': typeof ApiPublicAffiliateTrackVisitRoute
   '/api/public/affiliate/track/withdraw': typeof ApiPublicAffiliateTrackWithdrawRoute
+  '/api/public/affiliate/webhook/$provider': typeof ApiPublicAffiliateWebhookProviderRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -553,6 +563,7 @@ export interface FileRouteTypes {
     | '/api/public/affiliate/track/order'
     | '/api/public/affiliate/track/visit'
     | '/api/public/affiliate/track/withdraw'
+    | '/api/public/affiliate/webhook/$provider'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -606,6 +617,7 @@ export interface FileRouteTypes {
     | '/api/public/affiliate/track/order'
     | '/api/public/affiliate/track/visit'
     | '/api/public/affiliate/track/withdraw'
+    | '/api/public/affiliate/webhook/$provider'
   id:
     | '__root__'
     | '/'
@@ -660,6 +672,7 @@ export interface FileRouteTypes {
     | '/api/public/affiliate/track/order'
     | '/api/public/affiliate/track/visit'
     | '/api/public/affiliate/track/withdraw'
+    | '/api/public/affiliate/webhook/$provider'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -697,6 +710,7 @@ export interface RootRouteChildren {
   ApiPublicAffiliateTrackOrderRoute: typeof ApiPublicAffiliateTrackOrderRoute
   ApiPublicAffiliateTrackVisitRoute: typeof ApiPublicAffiliateTrackVisitRoute
   ApiPublicAffiliateTrackWithdrawRoute: typeof ApiPublicAffiliateTrackWithdrawRoute
+  ApiPublicAffiliateWebhookProviderRoute: typeof ApiPublicAffiliateWebhookProviderRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1016,6 +1030,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPSlugCheckoutRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/api/public/affiliate/webhook/$provider': {
+      id: '/api/public/affiliate/webhook/$provider'
+      path: '/api/public/affiliate/webhook/$provider'
+      fullPath: '/api/public/affiliate/webhook/$provider'
+      preLoaderRoute: typeof ApiPublicAffiliateWebhookProviderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/affiliate/track/withdraw': {
       id: '/api/public/affiliate/track/withdraw'
       path: '/api/public/affiliate/track/withdraw'
@@ -1160,6 +1181,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAffiliateTrackOrderRoute: ApiPublicAffiliateTrackOrderRoute,
   ApiPublicAffiliateTrackVisitRoute: ApiPublicAffiliateTrackVisitRoute,
   ApiPublicAffiliateTrackWithdrawRoute: ApiPublicAffiliateTrackWithdrawRoute,
+  ApiPublicAffiliateWebhookProviderRoute:
+    ApiPublicAffiliateWebhookProviderRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

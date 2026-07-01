@@ -1,120 +1,79 @@
-# Affiliate Center — FASE 1 (Base Estrutural)
+# Affiliate Center — FASE 3
 
-Módulo **totalmente isolado** do sistema atual. Nenhum arquivo existente do sistema principal será modificado, com **uma única exceção controlada**: adicionar um item de menu "Affiliate Center" na sidebar do Super Admin para acesso ao painel (sem alterar nenhuma lógica existente).
+Painel administrativo completo do módulo Affiliate integrado ao Super Admin existente, sem alterar funcionalidades atuais.
 
-Tudo vive sob namespaces próprios: `affiliate_*` no banco, `src/modules/affiliate/` no código, `/api/public/affiliate/*` e `/_authenticated/affiliate/*` nas rotas.
+## 1. Banco de dados (nova migration)
 
-## Banco de dados (schema `public`, prefixo `affiliate_`)
+Novas tabelas em `public`:
+- `affiliate_products` — catálogo de produtos afiliáveis (nome, slug, preço, categoria, ativo, comissão override).
+- `affiliate_coupons` — cupons vinculados a afiliados (código, desconto, uso, validade).
+- `affiliate_campaigns` — campanhas de marketing (nome, período, meta, bônus).
+- `affiliate_commission_rules` — regras de comissão configuráveis: escopo (produto/categoria/afiliado/global), tipo (fixa/percentual), modelo (primeira/recorrente/vitalícia), valor.
+- `affiliate_fraud_flags` — flags antifraude (motivo, evidência, ação: bloqueado/liberado, meta json).
+- `affiliate_webhook_events` — eventos brutos recebidos de gateways externos (payload, provider, status).
+- `affiliate_processing_queue` — fila de processamento assíncrono (job, payload, status, tentativas).
+- Extensões em `affiliate_settings`: min_withdraw, hold_days, cookie_days, auto_approve, antifraud flags (same_cpf/ip/card/vpn/self_purchase).
+- Extensões em `affiliate_profiles`: cpf, ip_signup para detecção de fraude.
 
-Tabelas criadas em uma única migração com `GRANT` + RLS + políticas:
+Todas com GRANTs + RLS (admin via `has_role('admin')` ou `has_affiliate_role('affiliate_admin')`).
 
-- `affiliate_profiles` — perfil do afiliado (linkado a `auth.users`): nome, email, whatsapp, cpf (único), status (`pending|approved|rejected|suspended`), affiliate_code (único), api_key_hash, token_hash, approved_at, approved_by
-- `affiliate_links` — links exclusivos por afiliado (slug único, destino, label, ativo)
-- `affiliate_clicks` — cada clique (link_id, ip, user_agent, country, region, city, device, os, browser, referrer, utm_source/medium/campaign/term/content, landed_at)
-- `affiliate_sessions` — sessão de visitante (session_token, click_id inicial, first_seen, last_seen, fingerprint)
-- `affiliate_conversions` — visitante converteu (session_id, type: signup/lead/order, value_cents)
-- `affiliate_orders` — pedidos atribuídos (order_ref, customer_ref, amount_cents, status)
-- `affiliate_commissions` — comissões geradas (order_id, affiliate_id, amount_cents, rate, status: pending/approved/paid/canceled, available_at)
-- `affiliate_withdraws` — solicitações de saque (amount_cents, method, bank_account_id/pix_key_id, status: requested/processing/paid/rejected)
-- `affiliate_bank_accounts` — contas bancárias do afiliado
-- `affiliate_pix_keys` — chaves PIX
-- `affiliate_notifications` — notificações internas (afiliado/admin, lida)
-- `affiliate_messages` — mensagens entre admin e afiliado
-- `affiliate_audit_logs` — auditoria de ações (actor_id, action, entity, entity_id, diff jsonb, ip)
-- `affiliate_settings` — config global (auto-approve on/off, default commission rate, cookie window dias)
+## 2. Server functions
 
-### RBAC
+`src/modules/affiliate/admin.functions.ts`:
+- `adminDashboardStats` — KPIs, séries temporais, geo, top produtos/afiliados.
+- CRUD: `adminListAffiliates/updateStatus`, `adminListProducts/upsert`, `adminListCoupons/upsert`, `adminListCampaigns/upsert`, `adminListMaterials/upsert`, `adminListCommissionRules/upsert`.
+- Comissões/saques: `adminListCommissions`, `adminApproveCommission`, `adminListWithdraws`, `adminPayWithdraw`.
+- Mensagens broadcast: `adminSendMessage`, `adminSendNotification`.
+- Antifraude: `adminListFraudFlags`, `adminResolveFraudFlag`.
+- Exportação: `adminExport({ entity, format: csv|excel|pdf })`.
+- Logs/auditoria: `adminListAuditLogs`.
 
-- Novo enum `affiliate_role`: `affiliate_admin`, `affiliate`
-- Tabela `affiliate_user_roles (user_id, role)` separada (não tocar em `user_roles` existente)
-- Função `has_affiliate_role(_user, _role)` security definer
-- Super Admin do sistema = automaticamente `affiliate_admin` (via `public.has_role(uid,'admin') OR has_affiliate_role(...)` nas policies)
+`src/modules/affiliate/fraud.server.ts` — detector centralizado (CPF/IP/cartão/VPN/auto-compra).
+`src/modules/affiliate/commission.server.ts` — cálculo respeitando regras + confirmação de pagamento.
 
-### RLS
+## 3. Rotas públicas (webhooks)
 
-- Afiliado vê apenas suas próprias linhas em todas as tabelas (`affiliate_id = profile do auth.uid()`)
-- `affiliate_admin` vê tudo
-- `affiliate_clicks` e `affiliate_sessions` aceitam INSERT anônimo (rastreamento público) com políticas restritivas
-- `service_role` total em todas
+`src/routes/api/public/affiliate/webhooks/$provider.ts` — recebe eventos (compra aprovada, estorno, cancelamento, refund) de gateways externos. Valida assinatura HMAC, grava em `affiliate_webhook_events`, enfileira processamento.
 
-## Estrutura de código (Clean Architecture)
+`src/routes/api/public/affiliate/track/click.ts` e `.../conversion.ts` — endpoints públicos JSON para integração com checkouts externos (além do tracker já existente).
 
-```text
-src/modules/affiliate/
-  domain/
-    entities/        (Affiliate, Link, Click, Order, Commission, Withdraw…)
-    events/          (AffiliateApproved, ClickRegistered, ConversionRecorded…)
-  application/
-    services/        (AffiliateService, TrackingService, CommissionService, WithdrawService, NotificationService)
-    use-cases/       (RegisterAffiliate, ApproveAffiliate, RegisterClick, RegisterConversion, RequestWithdraw…)
-    events/          (event bus simples in-process; handlers registrados aqui)
-  infrastructure/
-    repositories/    (Repository Pattern sobre Supabase: AffiliateRepository, LinkRepository, ClickRepository, OrderRepository, CommissionRepository, WithdrawRepository, AuditRepository)
-    tracking/        (geo lookup via header CF-IPCountry, UA parser leve)
-    security/        (gera affiliate_code, api_key, token; hash com sha256)
-  interfaces/
-    http/
-      middleware/    (requireAffiliate, requireAffiliateAdmin, requireApiKey, auditMiddleware)
-      controllers/   (AuthController, AffiliateController, LinkController, TrackingController, CommissionController, WithdrawController, AdminController)
-      schemas/       (zod schemas para todos os inputs)
-  server-fns/        (createServerFn wrappers consumidos pelo painel)
-```
+## 4. UI Super Admin
 
-## API REST pública — `src/routes/api/public/affiliate/*`
+Nova área sob `src/routes/_authenticated/admin/affiliate/*`:
+- `admin.affiliate.tsx` — layout com sidebar dos 12 menus.
+- Páginas: `dashboard`, `affiliates`, `products`, `commissions`, `withdraws`, `messages`, `materials`, `campaigns`, `ranking`, `reports`, `settings`, `logs`.
+- Componentes reutilizáveis: `AdminAffiliateShell`, `KpiCard`, `DataTable` com filtros, `ExportMenu` (CSV/Excel/PDF).
+- Mapa mundial: react-simple-maps (leve) OU heatmap por país via Recharts. Optar por lista de países com barras para evitar nova dep pesada.
 
-Todas com Zod, rate-limit por IP, audit log:
+Integração no menu Super Admin existente (`src/routes/_authenticated.admin.tsx`): substituir o link atual "Affiliate Center" para apontar para `/admin/affiliate/dashboard`.
 
-- `POST /api/public/affiliate/register` — cadastro (Nome, Email, WhatsApp, CPF, Senha, Confirmação)
-- `POST /api/public/affiliate/track/click` — registra clique (slug do link + UTM + ctx)
-- `POST /api/public/affiliate/track/visit` — registra visita/sessão
-- `POST /api/public/affiliate/track/checkout` — checkout iniciado
-- `POST /api/public/affiliate/track/order` — compra concluída (autenticado via X-API-Key do parceiro)
-- `POST /api/public/affiliate/track/commission` — emissão manual de comissão (admin via API key admin)
-- `POST /api/public/affiliate/track/withdraw` — registro externo de saque
-- `GET  /api/public/affiliate/r/:slug` — short-redirect que registra clique e redireciona
+## 5. Exportação
 
-## Rotas internas (server functions + UI)
+`src/modules/affiliate/export.server.ts`: gera CSV/Excel (xlsx via lib já instalada) e PDF (pdf-lib já em uso). Endpoint via server function retornando base64 + download client-side.
 
-- `/_authenticated/affiliate/dashboard` — painel do afiliado (cliques, conversões, comissões, link)
-- `/_authenticated/affiliate/links`, `/wallet`, `/withdraws`, `/messages`
-- `/_authenticated/admin/affiliate` — painel super admin (aprovar, suspender, ver tudo, configurar)
+## 6. Antifraude
 
-Server functions sob `src/modules/affiliate/server-fns/` usando `requireSupabaseAuth` + verificação de role.
+Integrado no `commission.server.ts`:
+- Antes de aprovar comissão, roda checks conforme `affiliate_settings`.
+- Se detectar fraude, cria `affiliate_fraud_flags` e bloqueia comissão (`status='blocked'`).
 
-## Sistema de rastreamento
+## 7. Filas & cache
 
-`TrackingService.captureContext(request)` extrai: IP (`cf-connecting-ip`/`x-forwarded-for`), país/região/cidade (`cf-ipcountry`, `cf-iplongitude`/headers Cloudflare), UA parse (browser, OS, device), referrer, UTM da query, timestamp. Persiste em `affiliate_clicks` e abre/atualiza `affiliate_sessions` por cookie `aff_sid`.
+- Tabela `affiliate_processing_queue` processada por cron pg_cron a cada minuto chamando `/api/public/affiliate/queue/process`.
+- Cache leve em memória por request (dashboard stats agregados com queries otimizadas + índices).
 
-## Event-Driven
+## 8. Logs & auditoria
 
-Event bus simples in-process (`EventEmitter`) no `application/events`. Eventos: `affiliate.registered`, `affiliate.approved`, `click.registered`, `conversion.recorded`, `commission.created`, `withdraw.requested`. Handlers gravam notificações, audit logs e disparam comissões automaticamente.
+Reaproveita `affiliate_audit_logs` existente. Toda ação admin registra entry.
 
-## Segurança
+## 9. Revisão de consistência
 
-- Senhas via Supabase Auth (cria usuário no auth + perfil em `affiliate_profiles`)
-- `api_key` e `token` gerados com `crypto.randomBytes(32)`, armazenados como SHA-256 hash; valor cru mostrado **uma única vez** ao afiliado
-- CPF validado por algoritmo e armazenado com unique constraint
-- Todas as mutations passam por `auditMiddleware` → `affiliate_audit_logs`
+- Rodar build + typecheck.
+- Verificar RLS scan.
+- Confirmar que nada em `_authenticated` (usuário) foi alterado.
 
-## Toque mínimo no sistema atual
+## Escopo excluído nesta fase
 
-- Adicionar **um único item** ao menu do Super Admin em `src/routes/_authenticated.admin.tsx` apontando para `/_authenticated/admin/affiliate` (label "Affiliate Center", ícone Users)
-- Nenhum outro arquivo existente é alterado
-
-## Entregáveis FASE 1 (nesta ordem)
-
-1. Migração: enums, tabelas, GRANTs, RLS, policies, função `has_affiliate_role`, trigger de `updated_at`, settings default
-2. Camada de domínio + entidades + eventos
-3. Repositórios (infrastructure)
-4. Serviços + use cases + event bus
-5. Middlewares HTTP + schemas Zod
-6. Rotas API públicas de rastreamento e registro
-7. Server functions do painel
-8. UIs mínimas: cadastro público (`/affiliate/register`), dashboard afiliado, painel admin (lista + aprovação)
-9. Item de menu no admin
-
-Ao terminar todos os 9 passos, **parar e aguardar FASE 2** (relatórios, pagamentos automáticos, gamificação, etc.) conforme instruído.
-
-## Fora de escopo (FASE 2+)
-
-Integração de pagamento real para saque, cálculo automático de comissão a partir do checkout do sistema principal, e-mails de boas-vindas, dashboards avançados, gamificação, multi-nível.
+- Push real (VAPID) — mantém canal já registrado.
+- Integração real com gateway PIX de saque — apenas marca como pago.
+- Detecção VPN real — heurística por header/ASN placeholder configurável.
