@@ -19,7 +19,6 @@ import { Route as RTokenRouteImport } from './routes/r.$token'
 import { Route as PSlugRouteImport } from './routes/p.$slug'
 import { Route as ApiChatRouteImport } from './routes/api.chat'
 import { Route as AffiliateRegisterRouteImport } from './routes/affiliate.register'
-import { Route as AffiliateDashboardRouteImport } from './routes/affiliate.dashboard'
 import { Route as AuthenticatedTarotRouteImport } from './routes/_authenticated.tarot'
 import { Route as AuthenticatedRelatoriosRouteImport } from './routes/_authenticated.relatorios'
 import { Route as AuthenticatedPdfCssRouteImport } from './routes/_authenticated.pdf-css'
@@ -99,11 +98,6 @@ const ApiChatRoute = ApiChatRouteImport.update({
 const AffiliateRegisterRoute = AffiliateRegisterRouteImport.update({
   id: '/affiliate/register',
   path: '/affiliate/register',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AffiliateDashboardRoute = AffiliateDashboardRouteImport.update({
-  id: '/affiliate/dashboard',
-  path: '/affiliate/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedTarotRoute = AuthenticatedTarotRouteImport.update({
@@ -299,7 +293,6 @@ export interface FileRoutesByFullPath {
   '/pdf-css': typeof AuthenticatedPdfCssRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/tarot': typeof AuthenticatedTarotRoute
-  '/affiliate/dashboard': typeof AffiliateDashboardRoute
   '/affiliate/register': typeof AffiliateRegisterRoute
   '/api/chat': typeof ApiChatRoute
   '/p/$slug': typeof PSlugRoute
@@ -342,7 +335,6 @@ export interface FileRoutesByTo {
   '/pdf-css': typeof AuthenticatedPdfCssRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/tarot': typeof AuthenticatedTarotRoute
-  '/affiliate/dashboard': typeof AffiliateDashboardRoute
   '/affiliate/register': typeof AffiliateRegisterRoute
   '/api/chat': typeof ApiChatRoute
   '/p/$slug': typeof PSlugRoute
@@ -387,7 +379,6 @@ export interface FileRoutesById {
   '/_authenticated/pdf-css': typeof AuthenticatedPdfCssRoute
   '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
   '/_authenticated/tarot': typeof AuthenticatedTarotRoute
-  '/affiliate/dashboard': typeof AffiliateDashboardRoute
   '/affiliate/register': typeof AffiliateRegisterRoute
   '/api/chat': typeof ApiChatRoute
   '/p/$slug': typeof PSlugRoute
@@ -432,7 +423,6 @@ export interface FileRouteTypes {
     | '/pdf-css'
     | '/relatorios'
     | '/tarot'
-    | '/affiliate/dashboard'
     | '/affiliate/register'
     | '/api/chat'
     | '/p/$slug'
@@ -475,7 +465,6 @@ export interface FileRouteTypes {
     | '/pdf-css'
     | '/relatorios'
     | '/tarot'
-    | '/affiliate/dashboard'
     | '/affiliate/register'
     | '/api/chat'
     | '/p/$slug'
@@ -519,7 +508,6 @@ export interface FileRouteTypes {
     | '/_authenticated/pdf-css'
     | '/_authenticated/relatorios'
     | '/_authenticated/tarot'
-    | '/affiliate/dashboard'
     | '/affiliate/register'
     | '/api/chat'
     | '/p/$slug'
@@ -548,7 +536,6 @@ export interface RootRouteChildren {
   AtivacaoRoute: typeof AtivacaoRoute
   AuthRoute: typeof AuthRoute
   ProfissionaisRoute: typeof ProfissionaisRoute
-  AffiliateDashboardRoute: typeof AffiliateDashboardRoute
   AffiliateRegisterRoute: typeof AffiliateRegisterRoute
   ApiChatRoute: typeof ApiChatRoute
   PSlugRoute: typeof PSlugRoute
@@ -639,13 +626,6 @@ declare module '@tanstack/react-router' {
       path: '/affiliate/register'
       fullPath: '/affiliate/register'
       preLoaderRoute: typeof AffiliateRegisterRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/affiliate/dashboard': {
-      id: '/affiliate/dashboard'
-      path: '/affiliate/dashboard'
-      fullPath: '/affiliate/dashboard'
-      preLoaderRoute: typeof AffiliateDashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/tarot': {
@@ -930,7 +910,6 @@ const rootRouteChildren: RootRouteChildren = {
   AtivacaoRoute: AtivacaoRoute,
   AuthRoute: AuthRoute,
   ProfissionaisRoute: ProfissionaisRoute,
-  AffiliateDashboardRoute: AffiliateDashboardRoute,
   AffiliateRegisterRoute: AffiliateRegisterRoute,
   ApiChatRoute: ApiChatRoute,
   PSlugRoute: PSlugRoute,
