@@ -179,6 +179,14 @@ export async function evaluateBadges(supabase: Db, affiliateId: string) {
         await awardPoints(supabase, affiliateId, b.points_reward, `badge:${b.slug}`, b.id);
       }
       awarded.push(b.slug);
+      try {
+        const { dispatchEvent } = await import("./notifications.server");
+        await dispatchEvent(supabase, {
+          event_key: "badge.awarded",
+          affiliate_id: affiliateId,
+          variables: { badge_slug: b.slug, badge_name: b.name, points_reward: b.points_reward ?? 0, metric, value },
+        });
+      } catch (e) { console.error("[gamification] badge.awarded dispatchEvent failed", e); }
     }
   }
   return { awarded };
