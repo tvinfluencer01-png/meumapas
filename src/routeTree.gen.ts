@@ -21,6 +21,7 @@ import { Route as ApiChatRouteImport } from './routes/api.chat'
 import { Route as AffiliateRegisterRouteImport } from './routes/affiliate.register'
 import { Route as AffiliateMaterialsRouteImport } from './routes/affiliate.materials'
 import { Route as AffiliateLinkRouteImport } from './routes/affiliate.link'
+import { Route as AffiliateFinancialRouteImport } from './routes/affiliate.financial'
 import { Route as AffiliateDashboardRouteImport } from './routes/affiliate.dashboard'
 import { Route as AuthenticatedTarotRouteImport } from './routes/_authenticated.tarot'
 import { Route as AuthenticatedRelatoriosRouteImport } from './routes/_authenticated.relatorios'
@@ -111,6 +112,11 @@ const AffiliateMaterialsRoute = AffiliateMaterialsRouteImport.update({
 const AffiliateLinkRoute = AffiliateLinkRouteImport.update({
   id: '/affiliate/link',
   path: '/affiliate/link',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AffiliateFinancialRoute = AffiliateFinancialRouteImport.update({
+  id: '/affiliate/financial',
+  path: '/affiliate/financial',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AffiliateDashboardRoute = AffiliateDashboardRouteImport.update({
@@ -312,6 +318,7 @@ export interface FileRoutesByFullPath {
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/tarot': typeof AuthenticatedTarotRoute
   '/affiliate/dashboard': typeof AffiliateDashboardRoute
+  '/affiliate/financial': typeof AffiliateFinancialRoute
   '/affiliate/link': typeof AffiliateLinkRoute
   '/affiliate/materials': typeof AffiliateMaterialsRoute
   '/affiliate/register': typeof AffiliateRegisterRoute
@@ -357,6 +364,7 @@ export interface FileRoutesByTo {
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/tarot': typeof AuthenticatedTarotRoute
   '/affiliate/dashboard': typeof AffiliateDashboardRoute
+  '/affiliate/financial': typeof AffiliateFinancialRoute
   '/affiliate/link': typeof AffiliateLinkRoute
   '/affiliate/materials': typeof AffiliateMaterialsRoute
   '/affiliate/register': typeof AffiliateRegisterRoute
@@ -404,6 +412,7 @@ export interface FileRoutesById {
   '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
   '/_authenticated/tarot': typeof AuthenticatedTarotRoute
   '/affiliate/dashboard': typeof AffiliateDashboardRoute
+  '/affiliate/financial': typeof AffiliateFinancialRoute
   '/affiliate/link': typeof AffiliateLinkRoute
   '/affiliate/materials': typeof AffiliateMaterialsRoute
   '/affiliate/register': typeof AffiliateRegisterRoute
@@ -451,6 +460,7 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/tarot'
     | '/affiliate/dashboard'
+    | '/affiliate/financial'
     | '/affiliate/link'
     | '/affiliate/materials'
     | '/affiliate/register'
@@ -496,6 +506,7 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/tarot'
     | '/affiliate/dashboard'
+    | '/affiliate/financial'
     | '/affiliate/link'
     | '/affiliate/materials'
     | '/affiliate/register'
@@ -542,6 +553,7 @@ export interface FileRouteTypes {
     | '/_authenticated/relatorios'
     | '/_authenticated/tarot'
     | '/affiliate/dashboard'
+    | '/affiliate/financial'
     | '/affiliate/link'
     | '/affiliate/materials'
     | '/affiliate/register'
@@ -573,6 +585,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ProfissionaisRoute: typeof ProfissionaisRoute
   AffiliateDashboardRoute: typeof AffiliateDashboardRoute
+  AffiliateFinancialRoute: typeof AffiliateFinancialRoute
   AffiliateLinkRoute: typeof AffiliateLinkRoute
   AffiliateMaterialsRoute: typeof AffiliateMaterialsRoute
   AffiliateRegisterRoute: typeof AffiliateRegisterRoute
@@ -679,6 +692,13 @@ declare module '@tanstack/react-router' {
       path: '/affiliate/link'
       fullPath: '/affiliate/link'
       preLoaderRoute: typeof AffiliateLinkRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/affiliate/financial': {
+      id: '/affiliate/financial'
+      path: '/affiliate/financial'
+      fullPath: '/affiliate/financial'
+      preLoaderRoute: typeof AffiliateFinancialRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/affiliate/dashboard': {
@@ -971,6 +991,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ProfissionaisRoute: ProfissionaisRoute,
   AffiliateDashboardRoute: AffiliateDashboardRoute,
+  AffiliateFinancialRoute: AffiliateFinancialRoute,
   AffiliateLinkRoute: AffiliateLinkRoute,
   AffiliateMaterialsRoute: AffiliateMaterialsRoute,
   AffiliateRegisterRoute: AffiliateRegisterRoute,
