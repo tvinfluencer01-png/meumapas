@@ -133,6 +133,48 @@ export type Database = {
           },
         ]
       }
+      affiliate_campaigns: {
+        Row: {
+          active: boolean
+          bonus_cents: number | null
+          created_at: string
+          description: string | null
+          ends_at: string | null
+          goal_cents: number | null
+          id: string
+          metadata: Json
+          name: string
+          starts_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          bonus_cents?: number | null
+          created_at?: string
+          description?: string | null
+          ends_at?: string | null
+          goal_cents?: number | null
+          id?: string
+          metadata?: Json
+          name: string
+          starts_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          bonus_cents?: number | null
+          created_at?: string
+          description?: string | null
+          ends_at?: string | null
+          goal_cents?: number | null
+          id?: string
+          metadata?: Json
+          name?: string
+          starts_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       affiliate_clicks: {
         Row: {
           affiliate_id: string
@@ -213,6 +255,62 @@ export type Database = {
             columns: ["link_id"]
             isOneToOne: false
             referencedRelation: "affiliate_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_commission_rules: {
+        Row: {
+          active: boolean
+          affiliate_id: string | null
+          created_at: string
+          id: string
+          kind: string
+          metadata: Json
+          model: string
+          name: string
+          priority: number
+          scope: string
+          scope_ref: string | null
+          updated_at: string
+          value: number
+        }
+        Insert: {
+          active?: boolean
+          affiliate_id?: string | null
+          created_at?: string
+          id?: string
+          kind: string
+          metadata?: Json
+          model?: string
+          name: string
+          priority?: number
+          scope: string
+          scope_ref?: string | null
+          updated_at?: string
+          value: number
+        }
+        Update: {
+          active?: boolean
+          affiliate_id?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          metadata?: Json
+          model?: string
+          name?: string
+          priority?: number
+          scope?: string
+          scope_ref?: string | null
+          updated_at?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_commission_rules_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -315,6 +413,126 @@ export type Database = {
             columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "affiliate_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_coupons: {
+        Row: {
+          active: boolean
+          affiliate_id: string | null
+          code: string
+          created_at: string
+          discount_cents: number | null
+          discount_percent: number | null
+          expires_at: string | null
+          id: string
+          max_uses: number | null
+          metadata: Json
+          updated_at: string
+          uses: number
+        }
+        Insert: {
+          active?: boolean
+          affiliate_id?: string | null
+          code: string
+          created_at?: string
+          discount_cents?: number | null
+          discount_percent?: number | null
+          expires_at?: string | null
+          id?: string
+          max_uses?: number | null
+          metadata?: Json
+          updated_at?: string
+          uses?: number
+        }
+        Update: {
+          active?: boolean
+          affiliate_id?: string | null
+          code?: string
+          created_at?: string
+          discount_cents?: number | null
+          discount_percent?: number | null
+          expires_at?: string | null
+          id?: string
+          max_uses?: number | null
+          metadata?: Json
+          updated_at?: string
+          uses?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_coupons_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_fraud_flags: {
+        Row: {
+          affiliate_id: string | null
+          commission_id: string | null
+          created_at: string
+          evidence: Json
+          id: string
+          order_id: string | null
+          reason: string
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          affiliate_id?: string | null
+          commission_id?: string | null
+          created_at?: string
+          evidence?: Json
+          id?: string
+          order_id?: string | null
+          reason: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          affiliate_id?: string | null
+          commission_id?: string | null
+          created_at?: string
+          evidence?: Json
+          id?: string
+          order_id?: string | null
+          reason?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_fraud_flags_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_fraud_flags_commission_id_fkey"
+            columns: ["commission_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_commissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_fraud_flags_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_orders"
             referencedColumns: ["id"]
           },
         ]
@@ -695,6 +913,87 @@ export type Database = {
           },
         ]
       }
+      affiliate_processing_queue: {
+        Row: {
+          attempts: number
+          created_at: string
+          id: string
+          job: string
+          last_error: string | null
+          payload: Json
+          run_at: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          id?: string
+          job: string
+          last_error?: string | null
+          payload?: Json
+          run_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          id?: string
+          job?: string
+          last_error?: string | null
+          payload?: Json
+          run_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      affiliate_products: {
+        Row: {
+          active: boolean
+          category: string | null
+          commission_fixed_cents: number | null
+          commission_rate: number | null
+          created_at: string
+          description: string | null
+          id: string
+          metadata: Json
+          name: string
+          price_cents: number
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          category?: string | null
+          commission_fixed_cents?: number | null
+          commission_rate?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          metadata?: Json
+          name: string
+          price_cents?: number
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          category?: string | null
+          commission_fixed_cents?: number | null
+          commission_rate?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          metadata?: Json
+          name?: string
+          price_cents?: number
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       affiliate_profiles: {
         Row: {
           affiliate_code: string
@@ -709,12 +1008,14 @@ export type Database = {
           email: string
           full_name: string
           id: string
+          last_login_ip: string | null
           metadata: Json
           notify_email: boolean
           notify_push: boolean
           notify_toast: boolean
           push_subscription: Json | null
           rejection_reason: string | null
+          signup_ip: string | null
           status: Database["public"]["Enums"]["affiliate_status"]
           theme: string
           token_hash: string | null
@@ -735,12 +1036,14 @@ export type Database = {
           email: string
           full_name: string
           id?: string
+          last_login_ip?: string | null
           metadata?: Json
           notify_email?: boolean
           notify_push?: boolean
           notify_toast?: boolean
           push_subscription?: Json | null
           rejection_reason?: string | null
+          signup_ip?: string | null
           status?: Database["public"]["Enums"]["affiliate_status"]
           theme?: string
           token_hash?: string | null
@@ -761,12 +1064,14 @@ export type Database = {
           email?: string
           full_name?: string
           id?: string
+          last_login_ip?: string | null
           metadata?: Json
           notify_email?: boolean
           notify_push?: boolean
           notify_toast?: boolean
           push_subscription?: Json | null
           rejection_reason?: string | null
+          signup_ip?: string | null
           status?: Database["public"]["Enums"]["affiliate_status"]
           theme?: string
           token_hash?: string | null
@@ -826,27 +1131,57 @@ export type Database = {
       }
       affiliate_settings: {
         Row: {
+          antifraud_block_self: boolean
+          antifraud_block_vpn: boolean
+          antifraud_same_card: boolean
+          antifraud_same_cpf: boolean
+          antifraud_same_ip: boolean
           auto_approve: boolean
+          auto_notify_email: boolean
+          auto_notify_push: boolean
+          auto_notify_whatsapp: boolean
+          commission_model: string
           cookie_window_days: number
           default_commission_rate: number
+          hold_days: number
           id: string
           metadata: Json
           min_withdraw_cents: number
           updated_at: string
         }
         Insert: {
+          antifraud_block_self?: boolean
+          antifraud_block_vpn?: boolean
+          antifraud_same_card?: boolean
+          antifraud_same_cpf?: boolean
+          antifraud_same_ip?: boolean
           auto_approve?: boolean
+          auto_notify_email?: boolean
+          auto_notify_push?: boolean
+          auto_notify_whatsapp?: boolean
+          commission_model?: string
           cookie_window_days?: number
           default_commission_rate?: number
+          hold_days?: number
           id?: string
           metadata?: Json
           min_withdraw_cents?: number
           updated_at?: string
         }
         Update: {
+          antifraud_block_self?: boolean
+          antifraud_block_vpn?: boolean
+          antifraud_same_card?: boolean
+          antifraud_same_cpf?: boolean
+          antifraud_same_ip?: boolean
           auto_approve?: boolean
+          auto_notify_email?: boolean
+          auto_notify_push?: boolean
+          auto_notify_whatsapp?: boolean
+          commission_model?: string
           cookie_window_days?: number
           default_commission_rate?: number
+          hold_days?: number
           id?: string
           metadata?: Json
           min_withdraw_cents?: number
@@ -872,6 +1207,45 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["affiliate_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      affiliate_webhook_events: {
+        Row: {
+          created_at: string
+          error: string | null
+          event_type: string
+          external_id: string | null
+          id: string
+          payload: Json
+          processed_at: string | null
+          provider: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          event_type: string
+          external_id?: string | null
+          id?: string
+          payload?: Json
+          processed_at?: string | null
+          provider: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          event_type?: string
+          external_id?: string | null
+          id?: string
+          payload?: Json
+          processed_at?: string | null
+          provider?: string
+          status?: string
+          updated_at?: string
         }
         Relationships: []
       }
