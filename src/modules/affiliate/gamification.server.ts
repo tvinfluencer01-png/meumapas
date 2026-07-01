@@ -279,7 +279,7 @@ export async function buildLeaderboard(
   const { data: profiles } = ids.length
     ? await supabase
         .from("affiliate_profiles")
-        .select("id, display_name, avatar_url, code")
+        .select("id, full_name, affiliate_code")
         .in("id", ids)
     : { data: [] };
 
@@ -288,9 +288,9 @@ export async function buildLeaderboard(
       const p = (profiles ?? []).find((x: any) => x.id === id);
       return {
         affiliate_id: id,
-        code: p?.code ?? null,
-        display_name: p?.display_name ?? "Afiliado",
-        avatar_url: p?.avatar_url ?? null,
+        code: p?.affiliate_code ?? null,
+        display_name: p?.full_name ?? "Afiliado",
+        
         value: map.get(id) ?? 0,
       };
     })
