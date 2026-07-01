@@ -50,7 +50,7 @@ const SDK = `(function(){
   };
 })();`;
 
-export const Route = createFileRoute("/api/public/affiliate/sdk.js")({
+export const Route = createFileRoute("/api/public/affiliate/sdk/js")({
   server: {
     handlers: {
       GET: async () =>
