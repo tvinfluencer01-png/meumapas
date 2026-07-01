@@ -744,6 +744,39 @@ export type Database = {
           },
         ]
       }
+      affiliate_cookie_consents: {
+        Row: {
+          created_at: string
+          id: string
+          ip_hash: string | null
+          policy_version: string | null
+          preferences: Json
+          session_id: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip_hash?: string | null
+          policy_version?: string | null
+          preferences?: Json
+          session_id: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip_hash?: string | null
+          policy_version?: string | null
+          preferences?: Json
+          session_id?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       affiliate_coupons: {
         Row: {
           active: boolean
@@ -914,6 +947,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      affiliate_fraud_scores: {
+        Row: {
+          action_taken: string | null
+          affiliate_id: string | null
+          ai_reasoning: string | null
+          click_id: string | null
+          created_at: string
+          id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          risk_level: string
+          score: number
+          session_id: string | null
+          signals: Json
+        }
+        Insert: {
+          action_taken?: string | null
+          affiliate_id?: string | null
+          ai_reasoning?: string | null
+          click_id?: string | null
+          created_at?: string
+          id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          risk_level?: string
+          score?: number
+          session_id?: string | null
+          signals?: Json
+        }
+        Update: {
+          action_taken?: string | null
+          affiliate_id?: string | null
+          ai_reasoning?: string | null
+          click_id?: string | null
+          created_at?: string
+          id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          risk_level?: string
+          score?: number
+          session_id?: string | null
+          signals?: Json
+        }
+        Relationships: []
       }
       affiliate_goals: {
         Row: {
@@ -1462,6 +1540,51 @@ export type Database = {
           },
         ]
       }
+      affiliate_pixels: {
+        Row: {
+          access_token: string | null
+          active: boolean
+          api_secret: string | null
+          created_at: string
+          event_map: Json
+          id: string
+          label: string | null
+          measurement_id: string | null
+          pixel_id: string
+          provider: string
+          test_mode: boolean
+          updated_at: string
+        }
+        Insert: {
+          access_token?: string | null
+          active?: boolean
+          api_secret?: string | null
+          created_at?: string
+          event_map?: Json
+          id?: string
+          label?: string | null
+          measurement_id?: string | null
+          pixel_id: string
+          provider: string
+          test_mode?: boolean
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string | null
+          active?: boolean
+          api_secret?: string | null
+          created_at?: string
+          event_map?: Json
+          id?: string
+          label?: string | null
+          measurement_id?: string | null
+          pixel_id?: string
+          provider?: string
+          test_mode?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       affiliate_processing_queue: {
         Row: {
           attempts: number
@@ -1651,6 +1774,57 @@ export type Database = {
           id?: string
           request_count?: number
           window_start?: string
+        }
+        Relationships: []
+      }
+      affiliate_roi_snapshots: {
+        Row: {
+          ad_spend_cents: number
+          affiliate_id: string | null
+          clicks: number
+          commission_cents: number
+          conversions: number
+          created_at: string
+          cvr: number
+          epc_cents: number
+          id: string
+          period_end: string
+          period_start: string
+          product_id: string | null
+          revenue_cents: number
+          roas: number
+        }
+        Insert: {
+          ad_spend_cents?: number
+          affiliate_id?: string | null
+          clicks?: number
+          commission_cents?: number
+          conversions?: number
+          created_at?: string
+          cvr?: number
+          epc_cents?: number
+          id?: string
+          period_end: string
+          period_start: string
+          product_id?: string | null
+          revenue_cents?: number
+          roas?: number
+        }
+        Update: {
+          ad_spend_cents?: number
+          affiliate_id?: string | null
+          clicks?: number
+          commission_cents?: number
+          conversions?: number
+          created_at?: string
+          cvr?: number
+          epc_cents?: number
+          id?: string
+          period_end?: string
+          period_start?: string
+          product_id?: string | null
+          revenue_cents?: number
+          roas?: number
         }
         Relationships: []
       }
