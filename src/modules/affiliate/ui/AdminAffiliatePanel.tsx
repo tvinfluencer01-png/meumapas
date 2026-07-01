@@ -94,7 +94,12 @@ export function AdminAffiliatePanel() {
         {section === "affiliates" && <AffiliatesSection />}
         {section === "products" && <ProductsSection />}
         {section === "commissions" && <CommissionsSection />}
+        {section === "overrides" && <CommissionOverridesSection />}
+        {section === "tiers" && <CommissionTiersSection />}
+        {section === "checkouts" && <CheckoutProvidersSection />}
         {section === "withdraws" && <WithdrawsSection />}
+        {section === "batches" && <PayoutBatchesSection />}
+        {section === "ledger" && <LedgerSection />}
         {section === "messages" && <MessagesSection />}
         {section === "materials" && <MaterialsSection />}
         {section === "campaigns" && <CampaignsSection />}
