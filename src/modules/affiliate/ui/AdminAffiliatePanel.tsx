@@ -108,6 +108,10 @@ export function AdminAffiliatePanel() {
         {section === "withdraws" && <WithdrawsSection />}
         {section === "batches" && <PayoutBatchesSection />}
         {section === "ledger" && <LedgerSection />}
+        {section === "pixels" && <PixelsSection />}
+        {section === "fraud_ai" && <FraudAiSection />}
+        {section === "roi" && <RoiSection />}
+        {section === "consents" && <CookieConsentsSection />}
         {section === "messages" && <MessagesSection />}
         {section === "materials" && <MaterialsSection />}
         {section === "campaigns" && <CampaignsSection />}
