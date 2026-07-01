@@ -135,6 +135,10 @@ export function AdminAffiliatePanel() {
         {section === "missions" && <MissionsSection />}
         {section === "leaderboard" && <LeaderboardSection />}
         {section === "ranking" && <RankingSection />}
+        {section === "notif_templates" && <NotificationTemplatesSection />}
+        {section === "notif_rules" && <NotificationRulesSection />}
+        {section === "outbound_hooks" && <OutboundWebhooksSection />}
+        {section === "notif_dispatches" && <NotificationDispatchesSection />}
         {section === "reports" && <ReportsSection />}
         {section === "settings" && <SettingsSection />}
         {section === "logs" && <LogsSection />}
