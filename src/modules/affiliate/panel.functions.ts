@@ -151,7 +151,7 @@ export const requestWithdraw = createServerFn({ method: "POST" })
     const available = (commissions ?? []).filter((c: any) => c.status === "pending" && (!c.available_at || c.available_at <= nowIso)).reduce((s: number, c: any) => s + (c.amount_cents ?? 0), 0);
     if (data.amountCents > available) throw new Error("Saldo disponível insuficiente.");
 
-    const { error } = await context.supabase.from("affiliate_withdraws" as any).insert({
+    const { data: inserted, error } = await context.supabase.from("affiliate_withdraws" as any).insert({
       affiliate_id: affiliateId,
       amount_cents: data.amountCents,
       method: data.method,
@@ -159,8 +159,21 @@ export const requestWithdraw = createServerFn({ method: "POST" })
       bank_account_id: data.bankAccountId ?? null,
       notes: data.notes ?? null,
       status: "requested",
-    });
+    }).select("id").maybeSingle();
     if (error) throw new Error(error.message);
+    try {
+      const { dispatchEvent } = await import("./notifications.server");
+      await dispatchEvent(context.supabase, {
+        event_key: "withdraw.requested",
+        affiliate_id: affiliateId,
+        variables: {
+          withdraw_id: (inserted as any)?.id,
+          amount_cents: data.amountCents,
+          amount_brl: (data.amountCents / 100).toFixed(2),
+          method: data.method,
+        },
+      });
+    } catch (e) { console.error("[withdraw] dispatchEvent failed", e); }
     return { ok: true };
   });
 
