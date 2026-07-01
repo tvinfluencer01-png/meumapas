@@ -1124,10 +1124,11 @@ function Footer() {
         <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
           © 2026 Código Cósmico · Todas as estrelas alinhadas
         </p>
-        <div className="flex gap-6 text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+        <div className="flex flex-wrap justify-center gap-6 text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
           <a href="#" className="transition-colors hover:text-gold">Privacidade</a>
           <a href="#" className="transition-colors hover:text-gold">Termos</a>
           <a href="#" className="transition-colors hover:text-gold">Manifesto</a>
+          <a href="/programa-afiliados" className="transition-colors hover:text-gold">Programa de Afiliados</a>
         </div>
       </div>
     </footer>
