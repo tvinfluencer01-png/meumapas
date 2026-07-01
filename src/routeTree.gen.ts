@@ -18,8 +18,18 @@ import { Route as SSlugRouteImport } from './routes/s.$slug'
 import { Route as RTokenRouteImport } from './routes/r.$token'
 import { Route as PSlugRouteImport } from './routes/p.$slug'
 import { Route as ApiChatRouteImport } from './routes/api.chat'
+import { Route as AffiliateWithdrawRouteImport } from './routes/affiliate.withdraw'
+import { Route as AffiliateSettingsRouteImport } from './routes/affiliate.settings'
 import { Route as AffiliateRegisterRouteImport } from './routes/affiliate.register'
+import { Route as AffiliateRankingRouteImport } from './routes/affiliate.ranking'
+import { Route as AffiliateNotificationsRouteImport } from './routes/affiliate.notifications'
+import { Route as AffiliateMessagesRouteImport } from './routes/affiliate.messages'
+import { Route as AffiliateMaterialsRouteImport } from './routes/affiliate.materials'
+import { Route as AffiliateLinkRouteImport } from './routes/affiliate.link'
+import { Route as AffiliateHistoryRouteImport } from './routes/affiliate.history'
+import { Route as AffiliateFinancialRouteImport } from './routes/affiliate.financial'
 import { Route as AffiliateDashboardRouteImport } from './routes/affiliate.dashboard'
+import { Route as AffiliateAccountRouteImport } from './routes/affiliate.account'
 import { Route as AuthenticatedTarotRouteImport } from './routes/_authenticated.tarot'
 import { Route as AuthenticatedRelatoriosRouteImport } from './routes/_authenticated.relatorios'
 import { Route as AuthenticatedPdfCssRouteImport } from './routes/_authenticated.pdf-css'
@@ -96,14 +106,64 @@ const ApiChatRoute = ApiChatRouteImport.update({
   path: '/api/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AffiliateWithdrawRoute = AffiliateWithdrawRouteImport.update({
+  id: '/affiliate/withdraw',
+  path: '/affiliate/withdraw',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AffiliateSettingsRoute = AffiliateSettingsRouteImport.update({
+  id: '/affiliate/settings',
+  path: '/affiliate/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AffiliateRegisterRoute = AffiliateRegisterRouteImport.update({
   id: '/affiliate/register',
   path: '/affiliate/register',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AffiliateRankingRoute = AffiliateRankingRouteImport.update({
+  id: '/affiliate/ranking',
+  path: '/affiliate/ranking',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AffiliateNotificationsRoute = AffiliateNotificationsRouteImport.update({
+  id: '/affiliate/notifications',
+  path: '/affiliate/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AffiliateMessagesRoute = AffiliateMessagesRouteImport.update({
+  id: '/affiliate/messages',
+  path: '/affiliate/messages',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AffiliateMaterialsRoute = AffiliateMaterialsRouteImport.update({
+  id: '/affiliate/materials',
+  path: '/affiliate/materials',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AffiliateLinkRoute = AffiliateLinkRouteImport.update({
+  id: '/affiliate/link',
+  path: '/affiliate/link',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AffiliateHistoryRoute = AffiliateHistoryRouteImport.update({
+  id: '/affiliate/history',
+  path: '/affiliate/history',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AffiliateFinancialRoute = AffiliateFinancialRouteImport.update({
+  id: '/affiliate/financial',
+  path: '/affiliate/financial',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AffiliateDashboardRoute = AffiliateDashboardRouteImport.update({
   id: '/affiliate/dashboard',
   path: '/affiliate/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AffiliateAccountRoute = AffiliateAccountRouteImport.update({
+  id: '/affiliate/account',
+  path: '/affiliate/account',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedTarotRoute = AuthenticatedTarotRouteImport.update({
@@ -299,8 +359,18 @@ export interface FileRoutesByFullPath {
   '/pdf-css': typeof AuthenticatedPdfCssRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/tarot': typeof AuthenticatedTarotRoute
+  '/affiliate/account': typeof AffiliateAccountRoute
   '/affiliate/dashboard': typeof AffiliateDashboardRoute
+  '/affiliate/financial': typeof AffiliateFinancialRoute
+  '/affiliate/history': typeof AffiliateHistoryRoute
+  '/affiliate/link': typeof AffiliateLinkRoute
+  '/affiliate/materials': typeof AffiliateMaterialsRoute
+  '/affiliate/messages': typeof AffiliateMessagesRoute
+  '/affiliate/notifications': typeof AffiliateNotificationsRoute
+  '/affiliate/ranking': typeof AffiliateRankingRoute
   '/affiliate/register': typeof AffiliateRegisterRoute
+  '/affiliate/settings': typeof AffiliateSettingsRoute
+  '/affiliate/withdraw': typeof AffiliateWithdrawRoute
   '/api/chat': typeof ApiChatRoute
   '/p/$slug': typeof PSlugRoute
   '/r/$token': typeof RTokenRoute
@@ -342,8 +412,18 @@ export interface FileRoutesByTo {
   '/pdf-css': typeof AuthenticatedPdfCssRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/tarot': typeof AuthenticatedTarotRoute
+  '/affiliate/account': typeof AffiliateAccountRoute
   '/affiliate/dashboard': typeof AffiliateDashboardRoute
+  '/affiliate/financial': typeof AffiliateFinancialRoute
+  '/affiliate/history': typeof AffiliateHistoryRoute
+  '/affiliate/link': typeof AffiliateLinkRoute
+  '/affiliate/materials': typeof AffiliateMaterialsRoute
+  '/affiliate/messages': typeof AffiliateMessagesRoute
+  '/affiliate/notifications': typeof AffiliateNotificationsRoute
+  '/affiliate/ranking': typeof AffiliateRankingRoute
   '/affiliate/register': typeof AffiliateRegisterRoute
+  '/affiliate/settings': typeof AffiliateSettingsRoute
+  '/affiliate/withdraw': typeof AffiliateWithdrawRoute
   '/api/chat': typeof ApiChatRoute
   '/p/$slug': typeof PSlugRoute
   '/r/$token': typeof RTokenRoute
@@ -387,8 +467,18 @@ export interface FileRoutesById {
   '/_authenticated/pdf-css': typeof AuthenticatedPdfCssRoute
   '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
   '/_authenticated/tarot': typeof AuthenticatedTarotRoute
+  '/affiliate/account': typeof AffiliateAccountRoute
   '/affiliate/dashboard': typeof AffiliateDashboardRoute
+  '/affiliate/financial': typeof AffiliateFinancialRoute
+  '/affiliate/history': typeof AffiliateHistoryRoute
+  '/affiliate/link': typeof AffiliateLinkRoute
+  '/affiliate/materials': typeof AffiliateMaterialsRoute
+  '/affiliate/messages': typeof AffiliateMessagesRoute
+  '/affiliate/notifications': typeof AffiliateNotificationsRoute
+  '/affiliate/ranking': typeof AffiliateRankingRoute
   '/affiliate/register': typeof AffiliateRegisterRoute
+  '/affiliate/settings': typeof AffiliateSettingsRoute
+  '/affiliate/withdraw': typeof AffiliateWithdrawRoute
   '/api/chat': typeof ApiChatRoute
   '/p/$slug': typeof PSlugRoute
   '/r/$token': typeof RTokenRoute
@@ -432,8 +522,18 @@ export interface FileRouteTypes {
     | '/pdf-css'
     | '/relatorios'
     | '/tarot'
+    | '/affiliate/account'
     | '/affiliate/dashboard'
+    | '/affiliate/financial'
+    | '/affiliate/history'
+    | '/affiliate/link'
+    | '/affiliate/materials'
+    | '/affiliate/messages'
+    | '/affiliate/notifications'
+    | '/affiliate/ranking'
     | '/affiliate/register'
+    | '/affiliate/settings'
+    | '/affiliate/withdraw'
     | '/api/chat'
     | '/p/$slug'
     | '/r/$token'
@@ -475,8 +575,18 @@ export interface FileRouteTypes {
     | '/pdf-css'
     | '/relatorios'
     | '/tarot'
+    | '/affiliate/account'
     | '/affiliate/dashboard'
+    | '/affiliate/financial'
+    | '/affiliate/history'
+    | '/affiliate/link'
+    | '/affiliate/materials'
+    | '/affiliate/messages'
+    | '/affiliate/notifications'
+    | '/affiliate/ranking'
     | '/affiliate/register'
+    | '/affiliate/settings'
+    | '/affiliate/withdraw'
     | '/api/chat'
     | '/p/$slug'
     | '/r/$token'
@@ -519,8 +629,18 @@ export interface FileRouteTypes {
     | '/_authenticated/pdf-css'
     | '/_authenticated/relatorios'
     | '/_authenticated/tarot'
+    | '/affiliate/account'
     | '/affiliate/dashboard'
+    | '/affiliate/financial'
+    | '/affiliate/history'
+    | '/affiliate/link'
+    | '/affiliate/materials'
+    | '/affiliate/messages'
+    | '/affiliate/notifications'
+    | '/affiliate/ranking'
     | '/affiliate/register'
+    | '/affiliate/settings'
+    | '/affiliate/withdraw'
     | '/api/chat'
     | '/p/$slug'
     | '/r/$token'
@@ -548,8 +668,18 @@ export interface RootRouteChildren {
   AtivacaoRoute: typeof AtivacaoRoute
   AuthRoute: typeof AuthRoute
   ProfissionaisRoute: typeof ProfissionaisRoute
+  AffiliateAccountRoute: typeof AffiliateAccountRoute
   AffiliateDashboardRoute: typeof AffiliateDashboardRoute
+  AffiliateFinancialRoute: typeof AffiliateFinancialRoute
+  AffiliateHistoryRoute: typeof AffiliateHistoryRoute
+  AffiliateLinkRoute: typeof AffiliateLinkRoute
+  AffiliateMaterialsRoute: typeof AffiliateMaterialsRoute
+  AffiliateMessagesRoute: typeof AffiliateMessagesRoute
+  AffiliateNotificationsRoute: typeof AffiliateNotificationsRoute
+  AffiliateRankingRoute: typeof AffiliateRankingRoute
   AffiliateRegisterRoute: typeof AffiliateRegisterRoute
+  AffiliateSettingsRoute: typeof AffiliateSettingsRoute
+  AffiliateWithdrawRoute: typeof AffiliateWithdrawRoute
   ApiChatRoute: typeof ApiChatRoute
   PSlugRoute: typeof PSlugRoute
   RTokenRoute: typeof RTokenRoute
@@ -634,6 +764,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiChatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/affiliate/withdraw': {
+      id: '/affiliate/withdraw'
+      path: '/affiliate/withdraw'
+      fullPath: '/affiliate/withdraw'
+      preLoaderRoute: typeof AffiliateWithdrawRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/affiliate/settings': {
+      id: '/affiliate/settings'
+      path: '/affiliate/settings'
+      fullPath: '/affiliate/settings'
+      preLoaderRoute: typeof AffiliateSettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/affiliate/register': {
       id: '/affiliate/register'
       path: '/affiliate/register'
@@ -641,11 +785,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AffiliateRegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/affiliate/ranking': {
+      id: '/affiliate/ranking'
+      path: '/affiliate/ranking'
+      fullPath: '/affiliate/ranking'
+      preLoaderRoute: typeof AffiliateRankingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/affiliate/notifications': {
+      id: '/affiliate/notifications'
+      path: '/affiliate/notifications'
+      fullPath: '/affiliate/notifications'
+      preLoaderRoute: typeof AffiliateNotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/affiliate/messages': {
+      id: '/affiliate/messages'
+      path: '/affiliate/messages'
+      fullPath: '/affiliate/messages'
+      preLoaderRoute: typeof AffiliateMessagesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/affiliate/materials': {
+      id: '/affiliate/materials'
+      path: '/affiliate/materials'
+      fullPath: '/affiliate/materials'
+      preLoaderRoute: typeof AffiliateMaterialsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/affiliate/link': {
+      id: '/affiliate/link'
+      path: '/affiliate/link'
+      fullPath: '/affiliate/link'
+      preLoaderRoute: typeof AffiliateLinkRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/affiliate/history': {
+      id: '/affiliate/history'
+      path: '/affiliate/history'
+      fullPath: '/affiliate/history'
+      preLoaderRoute: typeof AffiliateHistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/affiliate/financial': {
+      id: '/affiliate/financial'
+      path: '/affiliate/financial'
+      fullPath: '/affiliate/financial'
+      preLoaderRoute: typeof AffiliateFinancialRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/affiliate/dashboard': {
       id: '/affiliate/dashboard'
       path: '/affiliate/dashboard'
       fullPath: '/affiliate/dashboard'
       preLoaderRoute: typeof AffiliateDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/affiliate/account': {
+      id: '/affiliate/account'
+      path: '/affiliate/account'
+      fullPath: '/affiliate/account'
+      preLoaderRoute: typeof AffiliateAccountRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/tarot': {
@@ -930,8 +1130,18 @@ const rootRouteChildren: RootRouteChildren = {
   AtivacaoRoute: AtivacaoRoute,
   AuthRoute: AuthRoute,
   ProfissionaisRoute: ProfissionaisRoute,
+  AffiliateAccountRoute: AffiliateAccountRoute,
   AffiliateDashboardRoute: AffiliateDashboardRoute,
+  AffiliateFinancialRoute: AffiliateFinancialRoute,
+  AffiliateHistoryRoute: AffiliateHistoryRoute,
+  AffiliateLinkRoute: AffiliateLinkRoute,
+  AffiliateMaterialsRoute: AffiliateMaterialsRoute,
+  AffiliateMessagesRoute: AffiliateMessagesRoute,
+  AffiliateNotificationsRoute: AffiliateNotificationsRoute,
+  AffiliateRankingRoute: AffiliateRankingRoute,
   AffiliateRegisterRoute: AffiliateRegisterRoute,
+  AffiliateSettingsRoute: AffiliateSettingsRoute,
+  AffiliateWithdrawRoute: AffiliateWithdrawRoute,
   ApiChatRoute: ApiChatRoute,
   PSlugRoute: PSlugRoute,
   RTokenRoute: RTokenRoute,
