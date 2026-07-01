@@ -401,9 +401,30 @@ export const adminUpdateCommissionStatus = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await ensureAdmin(context);
+    const { data: prev } = await context.supabase.from("affiliate_commissions" as any).select("affiliate_id, amount_cents, order_id").eq("id", data.id).maybeSingle();
     const { error } = await context.supabase.from("affiliate_commissions" as any).update({ status: data.status }).eq("id", data.id);
     if (error) throw new Error(error.message);
     await writeLog(context, "admin.commission.status", { entity: "affiliate_commission", entityId: data.id, diff: { status: data.status } });
+    try {
+      const { dispatchEvent } = await import("./notifications.server");
+      const eventKey = data.status === "approved" ? "commission.approved"
+        : data.status === "paid" ? "commission.paid"
+        : data.status === "reversed" ? "commission.reversed"
+        : data.status === "blocked" ? "commission.blocked" : null;
+      if (eventKey && prev) {
+        await dispatchEvent(context.supabase, {
+          event_key: eventKey,
+          affiliate_id: (prev as any).affiliate_id,
+          variables: {
+            commission_id: data.id,
+            amount_cents: (prev as any).amount_cents,
+            amount_brl: (((prev as any).amount_cents ?? 0) / 100).toFixed(2),
+            order_id: (prev as any).order_id,
+            status: data.status,
+          },
+        });
+      }
+    } catch (e) { console.error("[admin commission] dispatchEvent failed", e); }
     return { ok: true };
   });
 
@@ -435,9 +456,30 @@ export const adminUpdateWithdraw = createServerFn({ method: "POST" })
       patch.processed_by = context.userId;
       patch.processed_at = new Date().toISOString();
     }
+    const { data: prev } = await context.supabase.from("affiliate_withdraws" as any).select("affiliate_id, amount_cents, method").eq("id", data.id).maybeSingle();
     const { error } = await context.supabase.from("affiliate_withdraws" as any).update(patch).eq("id", data.id);
     if (error) throw new Error(error.message);
     await writeLog(context, "admin.withdraw.status", { entity: "affiliate_withdraw", entityId: data.id, diff: { status: data.status } });
+    try {
+      const { dispatchEvent } = await import("./notifications.server");
+      const eventKey = data.status === "paid" ? "withdraw.paid"
+        : data.status === "approved" ? "withdraw.approved"
+        : data.status === "rejected" ? "withdraw.rejected" : null;
+      if (eventKey && prev) {
+        await dispatchEvent(context.supabase, {
+          event_key: eventKey,
+          affiliate_id: (prev as any).affiliate_id,
+          variables: {
+            withdraw_id: data.id,
+            amount_cents: (prev as any).amount_cents,
+            amount_brl: (((prev as any).amount_cents ?? 0) / 100).toFixed(2),
+            method: (prev as any).method,
+            status: data.status,
+            notes: data.notes ?? "",
+          },
+        });
+      }
+    } catch (e) { console.error("[admin withdraw] dispatchEvent failed", e); }
     return { ok: true };
   });
 
