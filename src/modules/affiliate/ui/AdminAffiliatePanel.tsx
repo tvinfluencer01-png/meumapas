@@ -36,12 +36,16 @@ import {
   Megaphone, Trophy, FileBarChart, Settings as SettingsIcon, ScrollText, Download,
   Shield, Plus, Trash2, Pencil, Send, Loader2,
   CreditCard, Layers, Banknote, BookOpen,
+  Radio, ShieldAlert, BarChart3, Cookie,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
   CheckoutProvidersSection, CommissionOverridesSection, CommissionTiersSection,
   PayoutBatchesSection, LedgerSection,
 } from "./AdminMonetizationSections";
+import {
+  PixelsSection, FraudAiSection, RoiSection, CookieConsentsSection,
+} from "./AdminIntelligenceSections";
 
 const SECTIONS = [
   { id: "dashboard", label: "Dashboard Geral", icon: LayoutDashboard },
