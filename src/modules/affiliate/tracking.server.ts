@@ -193,7 +193,7 @@ export async function recordEvent(e: TrackedEvent): Promise<void> {
     patch.time_on_site_seconds =
       (data?.time_on_site_seconds ?? 0) + Math.max(0, Math.floor(e.properties.seconds as number));
   }
-  await supabaseAdmin.from("affiliate_tracking_sessions").update(patch).eq("id", e.sessionId);
+  await supabaseAdmin.from("affiliate_tracking_sessions").update(patch as never).eq("id", e.sessionId);
 }
 
 /**
