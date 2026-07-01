@@ -19,6 +19,7 @@ import { Route as RTokenRouteImport } from './routes/r.$token'
 import { Route as PSlugRouteImport } from './routes/p.$slug'
 import { Route as ApiChatRouteImport } from './routes/api.chat'
 import { Route as AffiliateWithdrawRouteImport } from './routes/affiliate.withdraw'
+import { Route as AffiliateSettingsRouteImport } from './routes/affiliate.settings'
 import { Route as AffiliateRegisterRouteImport } from './routes/affiliate.register'
 import { Route as AffiliateNotificationsRouteImport } from './routes/affiliate.notifications'
 import { Route as AffiliateMessagesRouteImport } from './routes/affiliate.messages'
@@ -107,6 +108,11 @@ const ApiChatRoute = ApiChatRouteImport.update({
 const AffiliateWithdrawRoute = AffiliateWithdrawRouteImport.update({
   id: '/affiliate/withdraw',
   path: '/affiliate/withdraw',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AffiliateSettingsRoute = AffiliateSettingsRouteImport.update({
+  id: '/affiliate/settings',
+  path: '/affiliate/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AffiliateRegisterRoute = AffiliateRegisterRouteImport.update({
@@ -356,6 +362,7 @@ export interface FileRoutesByFullPath {
   '/affiliate/messages': typeof AffiliateMessagesRoute
   '/affiliate/notifications': typeof AffiliateNotificationsRoute
   '/affiliate/register': typeof AffiliateRegisterRoute
+  '/affiliate/settings': typeof AffiliateSettingsRoute
   '/affiliate/withdraw': typeof AffiliateWithdrawRoute
   '/api/chat': typeof ApiChatRoute
   '/p/$slug': typeof PSlugRoute
@@ -407,6 +414,7 @@ export interface FileRoutesByTo {
   '/affiliate/messages': typeof AffiliateMessagesRoute
   '/affiliate/notifications': typeof AffiliateNotificationsRoute
   '/affiliate/register': typeof AffiliateRegisterRoute
+  '/affiliate/settings': typeof AffiliateSettingsRoute
   '/affiliate/withdraw': typeof AffiliateWithdrawRoute
   '/api/chat': typeof ApiChatRoute
   '/p/$slug': typeof PSlugRoute
@@ -460,6 +468,7 @@ export interface FileRoutesById {
   '/affiliate/messages': typeof AffiliateMessagesRoute
   '/affiliate/notifications': typeof AffiliateNotificationsRoute
   '/affiliate/register': typeof AffiliateRegisterRoute
+  '/affiliate/settings': typeof AffiliateSettingsRoute
   '/affiliate/withdraw': typeof AffiliateWithdrawRoute
   '/api/chat': typeof ApiChatRoute
   '/p/$slug': typeof PSlugRoute
@@ -513,6 +522,7 @@ export interface FileRouteTypes {
     | '/affiliate/messages'
     | '/affiliate/notifications'
     | '/affiliate/register'
+    | '/affiliate/settings'
     | '/affiliate/withdraw'
     | '/api/chat'
     | '/p/$slug'
@@ -564,6 +574,7 @@ export interface FileRouteTypes {
     | '/affiliate/messages'
     | '/affiliate/notifications'
     | '/affiliate/register'
+    | '/affiliate/settings'
     | '/affiliate/withdraw'
     | '/api/chat'
     | '/p/$slug'
@@ -616,6 +627,7 @@ export interface FileRouteTypes {
     | '/affiliate/messages'
     | '/affiliate/notifications'
     | '/affiliate/register'
+    | '/affiliate/settings'
     | '/affiliate/withdraw'
     | '/api/chat'
     | '/p/$slug'
@@ -653,6 +665,7 @@ export interface RootRouteChildren {
   AffiliateMessagesRoute: typeof AffiliateMessagesRoute
   AffiliateNotificationsRoute: typeof AffiliateNotificationsRoute
   AffiliateRegisterRoute: typeof AffiliateRegisterRoute
+  AffiliateSettingsRoute: typeof AffiliateSettingsRoute
   AffiliateWithdrawRoute: typeof AffiliateWithdrawRoute
   ApiChatRoute: typeof ApiChatRoute
   PSlugRoute: typeof PSlugRoute
@@ -743,6 +756,13 @@ declare module '@tanstack/react-router' {
       path: '/affiliate/withdraw'
       fullPath: '/affiliate/withdraw'
       preLoaderRoute: typeof AffiliateWithdrawRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/affiliate/settings': {
+      id: '/affiliate/settings'
+      path: '/affiliate/settings'
+      fullPath: '/affiliate/settings'
+      preLoaderRoute: typeof AffiliateSettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/affiliate/register': {
@@ -1099,6 +1119,7 @@ const rootRouteChildren: RootRouteChildren = {
   AffiliateMessagesRoute: AffiliateMessagesRoute,
   AffiliateNotificationsRoute: AffiliateNotificationsRoute,
   AffiliateRegisterRoute: AffiliateRegisterRoute,
+  AffiliateSettingsRoute: AffiliateSettingsRoute,
   AffiliateWithdrawRoute: AffiliateWithdrawRoute,
   ApiChatRoute: ApiChatRoute,
   PSlugRoute: PSlugRoute,
