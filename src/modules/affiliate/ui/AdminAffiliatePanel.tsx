@@ -36,7 +36,7 @@ import {
   Megaphone, Trophy, FileBarChart, Settings as SettingsIcon, ScrollText, Download,
   Shield, Plus, Trash2, Pencil, Send, Loader2,
   CreditCard, Layers, Banknote, BookOpen,
-  Radio, ShieldAlert, BarChart3, Cookie,
+  Radio, ShieldAlert, BarChart3, Cookie, Bell, Webhook, History,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -49,6 +49,10 @@ import {
 import {
   LevelsSection, BadgesSection, MissionsSection, LeaderboardSection,
 } from "./AdminGamificationSections";
+import {
+  NotificationTemplatesSection, NotificationRulesSection,
+  OutboundWebhooksSection, NotificationDispatchesSection,
+} from "./AdminIntegrationsSections";
 
 const SECTIONS = [
   { id: "dashboard", label: "Dashboard Geral", icon: LayoutDashboard },
@@ -73,6 +77,10 @@ const SECTIONS = [
   { id: "missions", label: "Missões", icon: Trophy },
   { id: "leaderboard", label: "Leaderboard", icon: Trophy },
   { id: "ranking", label: "Ranking (legado)", icon: Trophy },
+  { id: "notif_templates", label: "Notif. Templates", icon: Bell },
+  { id: "notif_rules", label: "Notif. Regras", icon: Radio },
+  { id: "outbound_hooks", label: "Webhooks Saída", icon: Webhook },
+  { id: "notif_dispatches", label: "Notif. Histórico", icon: History },
   { id: "reports", label: "Relatórios", icon: FileBarChart },
   { id: "settings", label: "Configurações", icon: SettingsIcon },
   { id: "logs", label: "Logs & Antifraude", icon: ScrollText },
@@ -127,6 +135,10 @@ export function AdminAffiliatePanel() {
         {section === "missions" && <MissionsSection />}
         {section === "leaderboard" && <LeaderboardSection />}
         {section === "ranking" && <RankingSection />}
+        {section === "notif_templates" && <NotificationTemplatesSection />}
+        {section === "notif_rules" && <NotificationRulesSection />}
+        {section === "outbound_hooks" && <OutboundWebhooksSection />}
+        {section === "notif_dispatches" && <NotificationDispatchesSection />}
         {section === "reports" && <ReportsSection />}
         {section === "settings" && <SettingsSection />}
         {section === "logs" && <LogsSection />}

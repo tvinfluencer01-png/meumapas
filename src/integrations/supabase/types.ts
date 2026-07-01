@@ -1561,6 +1561,149 @@ export type Database = {
           },
         ]
       }
+      affiliate_notification_dispatches: {
+        Row: {
+          affiliate_id: string | null
+          channel: string
+          created_at: string
+          error: string | null
+          event_key: string
+          id: string
+          payload: Json
+          response: Json | null
+          sent_at: string | null
+          status: string
+          template_id: string | null
+        }
+        Insert: {
+          affiliate_id?: string | null
+          channel: string
+          created_at?: string
+          error?: string | null
+          event_key: string
+          id?: string
+          payload?: Json
+          response?: Json | null
+          sent_at?: string | null
+          status?: string
+          template_id?: string | null
+        }
+        Update: {
+          affiliate_id?: string | null
+          channel?: string
+          created_at?: string
+          error?: string | null
+          event_key?: string
+          id?: string
+          payload?: Json
+          response?: Json | null
+          sent_at?: string | null
+          status?: string
+          template_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_notification_dispatches_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_notification_dispatches_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_notification_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_notification_rules: {
+        Row: {
+          cooldown_seconds: number
+          created_at: string
+          enabled: boolean
+          event_key: string
+          filters: Json
+          id: string
+          template_id: string
+          updated_at: string
+        }
+        Insert: {
+          cooldown_seconds?: number
+          created_at?: string
+          enabled?: boolean
+          event_key: string
+          filters?: Json
+          id?: string
+          template_id: string
+          updated_at?: string
+        }
+        Update: {
+          cooldown_seconds?: number
+          created_at?: string
+          enabled?: boolean
+          event_key?: string
+          filters?: Json
+          id?: string
+          template_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_notification_rules_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_notification_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_notification_templates: {
+        Row: {
+          action_url: string | null
+          body: string
+          channel: string
+          created_at: string
+          enabled: boolean
+          icon_url: string | null
+          id: string
+          name: string
+          slug: string
+          subject: string | null
+          updated_at: string
+          variables: Json
+        }
+        Insert: {
+          action_url?: string | null
+          body: string
+          channel: string
+          created_at?: string
+          enabled?: boolean
+          icon_url?: string | null
+          id?: string
+          name: string
+          slug: string
+          subject?: string | null
+          updated_at?: string
+          variables?: Json
+        }
+        Update: {
+          action_url?: string | null
+          body?: string
+          channel?: string
+          created_at?: string
+          enabled?: boolean
+          icon_url?: string | null
+          id?: string
+          name?: string
+          slug?: string
+          subject?: string | null
+          updated_at?: string
+          variables?: Json
+        }
+        Relationships: []
+      }
       affiliate_notifications: {
         Row: {
           affiliate_id: string | null
@@ -1658,6 +1801,92 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      affiliate_outbound_webhook_deliveries: {
+        Row: {
+          attempt: number
+          created_at: string
+          error: string | null
+          event_key: string
+          id: string
+          payload: Json
+          response_body: string | null
+          status_code: number | null
+          webhook_id: string
+        }
+        Insert: {
+          attempt?: number
+          created_at?: string
+          error?: string | null
+          event_key: string
+          id?: string
+          payload: Json
+          response_body?: string | null
+          status_code?: number | null
+          webhook_id: string
+        }
+        Update: {
+          attempt?: number
+          created_at?: string
+          error?: string | null
+          event_key?: string
+          id?: string
+          payload?: Json
+          response_body?: string | null
+          status_code?: number | null
+          webhook_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_outbound_webhook_deliveries_webhook_id_fkey"
+            columns: ["webhook_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_outbound_webhooks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_outbound_webhooks: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          events: string[]
+          headers: Json
+          id: string
+          last_error: string | null
+          last_success_at: string | null
+          name: string
+          secret: string
+          target_url: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          events?: string[]
+          headers?: Json
+          id?: string
+          last_error?: string | null
+          last_success_at?: string | null
+          name: string
+          secret: string
+          target_url: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          events?: string[]
+          headers?: Json
+          id?: string
+          last_error?: string | null
+          last_success_at?: string | null
+          name?: string
+          secret?: string
+          target_url?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       affiliate_payout_batch_items: {
         Row: {
@@ -2101,6 +2330,56 @@ export type Database = {
           whatsapp?: string
         }
         Relationships: []
+      }
+      affiliate_push_subscriptions: {
+        Row: {
+          affiliate_id: string
+          auth: string
+          created_at: string
+          enabled: boolean
+          endpoint: string
+          id: string
+          last_error: string | null
+          last_success_at: string | null
+          p256dh: string
+          updated_at: string
+          user_agent: string | null
+        }
+        Insert: {
+          affiliate_id: string
+          auth: string
+          created_at?: string
+          enabled?: boolean
+          endpoint: string
+          id?: string
+          last_error?: string | null
+          last_success_at?: string | null
+          p256dh: string
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Update: {
+          affiliate_id?: string
+          auth?: string
+          created_at?: string
+          enabled?: boolean
+          endpoint?: string
+          id?: string
+          last_error?: string | null
+          last_success_at?: string | null
+          p256dh?: string
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_push_subscriptions_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       affiliate_rate_limits: {
         Row: {
