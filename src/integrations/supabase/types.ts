@@ -133,6 +133,27 @@ export type Database = {
           },
         ]
       }
+      affiliate_cache: {
+        Row: {
+          cache_key: string
+          created_at: string
+          expires_at: string
+          value: Json
+        }
+        Insert: {
+          cache_key: string
+          created_at?: string
+          expires_at: string
+          value: Json
+        }
+        Update: {
+          cache_key?: string
+          created_at?: string
+          expires_at?: string
+          value?: Json
+        }
+        Relationships: []
+      }
       affiliate_campaigns: {
         Row: {
           active: boolean
@@ -469,6 +490,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      affiliate_event_queue: {
+        Row: {
+          attempts: number
+          correlation_id: string | null
+          created_at: string
+          event_type: string
+          id: string
+          last_error: string | null
+          max_attempts: number
+          payload: Json
+          priority: number
+          processed_at: string | null
+          scheduled_for: string
+          source: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          correlation_id?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          last_error?: string | null
+          max_attempts?: number
+          payload?: Json
+          priority?: number
+          processed_at?: string | null
+          scheduled_for?: string
+          source?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          correlation_id?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          last_error?: string | null
+          max_attempts?: number
+          payload?: Json
+          priority?: number
+          processed_at?: string | null
+          scheduled_for?: string
+          source?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       affiliate_fraud_flags: {
         Row: {
@@ -1081,6 +1153,30 @@ export type Database = {
         }
         Relationships: []
       }
+      affiliate_rate_limits: {
+        Row: {
+          bucket_key: string
+          created_at: string
+          id: string
+          request_count: number
+          window_start: string
+        }
+        Insert: {
+          bucket_key: string
+          created_at?: string
+          id?: string
+          request_count?: number
+          window_start?: string
+        }
+        Update: {
+          bucket_key?: string
+          created_at?: string
+          id?: string
+          request_count?: number
+          window_start?: string
+        }
+        Relationships: []
+      }
       affiliate_sessions: {
         Row: {
           affiliate_id: string
@@ -1136,11 +1232,15 @@ export type Database = {
           antifraud_same_card: boolean
           antifraud_same_cpf: boolean
           antifraud_same_ip: boolean
+          attribution_custom_weights: Json | null
+          attribution_model: string
           auto_approve: boolean
           auto_notify_email: boolean
           auto_notify_push: boolean
           auto_notify_whatsapp: boolean
           commission_model: string
+          cookie_lifetime_days: number
+          cookie_lifetime_lifetime: boolean
           cookie_window_days: number
           default_commission_rate: number
           hold_days: number
@@ -1155,11 +1255,15 @@ export type Database = {
           antifraud_same_card?: boolean
           antifraud_same_cpf?: boolean
           antifraud_same_ip?: boolean
+          attribution_custom_weights?: Json | null
+          attribution_model?: string
           auto_approve?: boolean
           auto_notify_email?: boolean
           auto_notify_push?: boolean
           auto_notify_whatsapp?: boolean
           commission_model?: string
+          cookie_lifetime_days?: number
+          cookie_lifetime_lifetime?: boolean
           cookie_window_days?: number
           default_commission_rate?: number
           hold_days?: number
@@ -1174,11 +1278,15 @@ export type Database = {
           antifraud_same_card?: boolean
           antifraud_same_cpf?: boolean
           antifraud_same_ip?: boolean
+          attribution_custom_weights?: Json | null
+          attribution_model?: string
           auto_approve?: boolean
           auto_notify_email?: boolean
           auto_notify_push?: boolean
           auto_notify_whatsapp?: boolean
           commission_model?: string
+          cookie_lifetime_days?: number
+          cookie_lifetime_lifetime?: boolean
           cookie_window_days?: number
           default_commission_rate?: number
           hold_days?: number
@@ -1188,6 +1296,262 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      affiliate_touchpoints: {
+        Row: {
+          affiliate_id: string | null
+          affiliate_link_id: string | null
+          created_at: string
+          id: string
+          occurred_at: string
+          session_id: string | null
+          touch_type: string
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          visitor_id: string
+        }
+        Insert: {
+          affiliate_id?: string | null
+          affiliate_link_id?: string | null
+          created_at?: string
+          id?: string
+          occurred_at?: string
+          session_id?: string | null
+          touch_type?: string
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          visitor_id: string
+        }
+        Update: {
+          affiliate_id?: string | null
+          affiliate_link_id?: string | null
+          created_at?: string
+          id?: string
+          occurred_at?: string
+          session_id?: string | null
+          touch_type?: string
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          visitor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_touchpoints_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_touchpoints_affiliate_link_id_fkey"
+            columns: ["affiliate_link_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_links"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_touchpoints_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_tracking_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_tracking_events: {
+        Row: {
+          created_at: string
+          currency: string | null
+          event_category: string | null
+          event_name: string
+          id: string
+          occurred_at: string
+          page_title: string | null
+          page_url: string | null
+          properties: Json
+          session_id: string
+          value_cents: number | null
+        }
+        Insert: {
+          created_at?: string
+          currency?: string | null
+          event_category?: string | null
+          event_name: string
+          id?: string
+          occurred_at?: string
+          page_title?: string | null
+          page_url?: string | null
+          properties?: Json
+          session_id: string
+          value_cents?: number | null
+        }
+        Update: {
+          created_at?: string
+          currency?: string | null
+          event_category?: string | null
+          event_name?: string
+          id?: string
+          occurred_at?: string
+          page_title?: string | null
+          page_url?: string | null
+          properties?: Json
+          session_id?: string
+          value_cents?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_tracking_events_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_tracking_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_tracking_sessions: {
+        Row: {
+          affiliate_id: string | null
+          affiliate_link_id: string | null
+          browser: string | null
+          city: string | null
+          conversion_order_id: string | null
+          converted: boolean
+          country: string | null
+          created_at: string
+          device_type: string | null
+          epik: string | null
+          fbclid: string | null
+          first_seen_at: string
+          gclid: string | null
+          id: string
+          ip: string | null
+          landing_url: string | null
+          language: string | null
+          last_seen_at: string
+          li_fat_id: string | null
+          max_scroll_pct: number
+          msclkid: string | null
+          os: string | null
+          page_views: number
+          referrer: string | null
+          region: string | null
+          screen_resolution: string | null
+          session_key: string
+          time_on_site_seconds: number
+          ttclid: string | null
+          updated_at: string
+          user_agent: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
+          visitor_id: string
+        }
+        Insert: {
+          affiliate_id?: string | null
+          affiliate_link_id?: string | null
+          browser?: string | null
+          city?: string | null
+          conversion_order_id?: string | null
+          converted?: boolean
+          country?: string | null
+          created_at?: string
+          device_type?: string | null
+          epik?: string | null
+          fbclid?: string | null
+          first_seen_at?: string
+          gclid?: string | null
+          id?: string
+          ip?: string | null
+          landing_url?: string | null
+          language?: string | null
+          last_seen_at?: string
+          li_fat_id?: string | null
+          max_scroll_pct?: number
+          msclkid?: string | null
+          os?: string | null
+          page_views?: number
+          referrer?: string | null
+          region?: string | null
+          screen_resolution?: string | null
+          session_key: string
+          time_on_site_seconds?: number
+          ttclid?: string | null
+          updated_at?: string
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+          visitor_id: string
+        }
+        Update: {
+          affiliate_id?: string | null
+          affiliate_link_id?: string | null
+          browser?: string | null
+          city?: string | null
+          conversion_order_id?: string | null
+          converted?: boolean
+          country?: string | null
+          created_at?: string
+          device_type?: string | null
+          epik?: string | null
+          fbclid?: string | null
+          first_seen_at?: string
+          gclid?: string | null
+          id?: string
+          ip?: string | null
+          landing_url?: string | null
+          language?: string | null
+          last_seen_at?: string
+          li_fat_id?: string | null
+          max_scroll_pct?: number
+          msclkid?: string | null
+          os?: string | null
+          page_views?: number
+          referrer?: string | null
+          region?: string | null
+          screen_resolution?: string | null
+          session_key?: string
+          time_on_site_seconds?: number
+          ttclid?: string | null
+          updated_at?: string
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+          visitor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_tracking_sessions_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_tracking_sessions_affiliate_link_id_fkey"
+            columns: ["affiliate_link_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_links"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_tracking_sessions_conversion_order_id_fkey"
+            columns: ["conversion_order_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_orders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       affiliate_user_roles: {
         Row: {
@@ -3325,6 +3689,10 @@ export type Database = {
           p_schedule?: string
         }
         Returns: undefined
+      }
+      affiliate_check_rate_limit: {
+        Args: { _bucket: string; _limit: number; _window_seconds?: number }
+        Returns: boolean
       }
       consume_credits: {
         Args: {
