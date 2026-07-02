@@ -158,7 +158,7 @@ function AffiliateRegisterPage() {
             {mut.isPending ? "Enviando…" : "Cadastrar-me como Afiliado"}
           </Button>
           <p className="text-xs text-center text-muted-foreground">
-            Já é afiliado? <Link to="/auth" className="text-gold underline">Entrar</Link>
+            Já é afiliado? <Link to="/affiliate/login" className="text-gold underline">Entrar</Link>
           </p>
         </CardContent>
       </Card>
