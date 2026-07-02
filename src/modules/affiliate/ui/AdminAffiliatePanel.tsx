@@ -171,16 +171,7 @@ function money(cents: number) {
 }
 
 function Kpi({ title, value, icon: Icon, tone = "sky" }: { title: string; value: any; icon?: any; tone?: string }) {
-  const g = KPI_TONES[tone] || KPI_TONES.sky;
-  return (
-    <div className={`rounded-xl border bg-gradient-to-br p-4 shadow-sm transition-shadow hover:shadow-md ${g}`}>
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-xs text-muted-foreground">{title}</span>
-        {Icon && <Icon className="size-4 text-foreground/70" />}
-      </div>
-      <div className="text-2xl font-bold text-foreground">{value}</div>
-    </div>
-  );
+  return <GradientStatCard label={title} value={value} icon={Icon} tone={tone} />;
 }
 
 // ═══════════════════════════════════════════════════════
