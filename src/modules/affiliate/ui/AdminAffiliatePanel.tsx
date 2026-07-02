@@ -17,6 +17,7 @@ import {
   adminGetRanking,
   adminExport,
 } from "../admin.functions";
+import { adminGetAffiliateReports } from "../admin-reports.functions";
 import {
   adminListAffiliates, adminSetAffiliateStatus, adminGetSettings,
   adminUpdateAffiliate, adminSetAffiliatePassword, adminSendAffiliatePasswordReset,
@@ -997,11 +998,18 @@ function RankingSection() {
 // REPORTS + EXPORT
 // ═══════════════════════════════════════════════════════
 function ReportsSection() {
-  const fn = useServerFn(adminExport);
+  const exportFn = useServerFn(adminExport);
+  const reportsFn = useServerFn(adminGetAffiliateReports);
   const [entity, setEntity] = useState<any>("affiliates");
+  const [days, setDays] = useState<number>(30);
+  const { data, isLoading, refetch, isFetching } = useQuery({
+    queryKey: ["adm-aff-reports", days],
+    queryFn: () => reportsFn({ data: { days } }),
+  });
+
   const download = async (format: "csv" | "xls" | "pdf") => {
     try {
-      const res: any = await fn({ data: { entity, format } });
+      const res: any = await exportFn({ data: { entity, format } });
       const blob = res.encoding === "base64"
         ? new Blob([Uint8Array.from(atob(res.content), (c) => c.charCodeAt(0))], { type: res.mime })
         : new Blob(["\uFEFF" + res.content], { type: res.mime });
@@ -1012,28 +1020,222 @@ function ReportsSection() {
       toast.success("Exportado");
     } catch (e: any) { toast.error(e.message); }
   };
+
+  const downloadReportCSV = (title: string, rows: any[], headers: [string, string][]) => {
+    const escape = (v: any) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const csv = [
+      headers.map((h) => escape(h[1])).join(","),
+      ...rows.map((r) => headers.map(([k]) => escape(r[k])).join(",")),
+    ].join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `${title}-${days}d.csv`; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const t = data?.totals;
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between gap-3">
+          <div>
+            <CardTitle>Relatórios do Affiliate Center</CardTitle>
+            <CardDescription>Análise completa de tráfego, conversões e receita.</CardDescription>
+          </div>
+          <div className="flex items-center gap-2">
+            <Label className="text-xs">Período</Label>
+            <Select value={String(days)} onValueChange={(v) => setDays(Number(v))}>
+              <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="7">7 dias</SelectItem>
+                <SelectItem value="14">14 dias</SelectItem>
+                <SelectItem value="30">30 dias</SelectItem>
+                <SelectItem value="60">60 dias</SelectItem>
+                <SelectItem value="90">90 dias</SelectItem>
+                <SelectItem value="180">180 dias</SelectItem>
+                <SelectItem value="365">1 ano</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button size="sm" variant="outline" onClick={() => refetch()} disabled={isFetching}>
+              {isFetching ? <Loader2 className="size-4 animate-spin" /> : "Atualizar"}
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {isLoading || !t ? (
+            <div className="text-sm text-muted-foreground">Carregando…</div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+              <KPI label="Cliques" value={t.clicks.toLocaleString("pt-BR")} />
+              <KPI label="Visitantes únicos" value={t.uniqueVisitors.toLocaleString("pt-BR")} />
+              <KPI label="Cadastros" value={t.signups.toLocaleString("pt-BR")} />
+              <KPI label="Checkouts" value={t.checkouts.toLocaleString("pt-BR")} />
+              <KPI label="Vendas" value={t.sales.toLocaleString("pt-BR")} />
+              <KPI label="Receita" value={`R$ ${(t.revenueCents / 100).toFixed(2)}`} />
+              <KPI label="Taxa conv." value={`${t.conversionRate}%`} />
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {data && (
+        <>
+          <ReportTable
+            title="Por landing page (produto)"
+            description="Quais páginas geram mais tráfego e vendas."
+            rows={data.byLanding}
+            columns={[
+              ["key", "Landing"],
+              ["clicks", "Cliques"],
+              ["uniqueVisitors", "Visitantes"],
+              ["conversions", "Conversões"],
+              ["revenueCents", "Receita"],
+              ["conversionRate", "Conv. %"],
+            ]}
+            onExport={() => downloadReportCSV("landings", data.byLanding, [["key","Landing"],["clicks","Cliques"],["uniqueVisitors","Visitantes"],["conversions","Conversoes"],["revenueCents","Receita_centavos"],["conversionRate","Conv_pct"]])}
+          />
+          <ReportTable
+            title="Top afiliados por tráfego"
+            description="Quem mais traz cliques e visitantes."
+            rows={data.byAffiliateTraffic}
+            columns={[["key","Afiliado"],["clicks","Cliques"],["uniqueVisitors","Visitantes"],["conversions","Conversões"],["revenueCents","Receita"]]}
+            onExport={() => downloadReportCSV("afiliados-trafego", data.byAffiliateTraffic, [["key","Afiliado"],["clicks","Cliques"],["uniqueVisitors","Visitantes"],["conversions","Conversoes"],["revenueCents","Receita_centavos"]])}
+          />
+          <ReportTable
+            title="Top afiliados por receita"
+            description="Quem mais gera vendas."
+            rows={data.byAffiliateRevenue}
+            columns={[["key","Afiliado"],["clicks","Cliques"],["conversions","Conversões"],["revenueCents","Receita"]]}
+            onExport={() => downloadReportCSV("afiliados-receita", data.byAffiliateRevenue, [["key","Afiliado"],["clicks","Cliques"],["conversions","Conversoes"],["revenueCents","Receita_centavos"]])}
+          />
+          <ReportTable
+            title="De onde vem o tráfego (referrers)"
+            description="Sites/origens externas que enviaram visitantes."
+            rows={data.byReferrer}
+            columns={[["key","Origem"],["clicks","Cliques"],["uniqueVisitors","Visitantes"],["conversions","Conv."]]}
+            onExport={() => downloadReportCSV("referrers", data.byReferrer, [["key","Origem"],["clicks","Cliques"],["uniqueVisitors","Visitantes"],["conversions","Conversoes"]])}
+          />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <ReportTable title="UTM Source" rows={data.bySource} columns={[["key","Source"],["clicks","Cliques"],["conversions","Conv."]]} />
+            <ReportTable title="UTM Medium" rows={data.byMedium} columns={[["key","Medium"],["clicks","Cliques"],["conversions","Conv."]]} />
+            <ReportTable title="UTM Campaign" rows={data.byCampaign} columns={[["key","Campaign"],["clicks","Cliques"],["conversions","Conv."]]} />
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <ReportTable title="Países" rows={data.byCountry} columns={[["key","País"],["clicks","Cliques"],["uniqueVisitors","Visitantes"]]} />
+            <ReportTable title="Cidades" rows={data.byCity} columns={[["key","Cidade"],["clicks","Cliques"],["uniqueVisitors","Visitantes"]]} />
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <ReportTable title="Dispositivo" rows={data.byDevice} columns={[["key","Device"],["clicks","Cliques"]]} />
+            <ReportTable title="Navegador" rows={data.byBrowser} columns={[["key","Browser"],["clicks","Cliques"]]} />
+            <ReportTable title="Sistema" rows={data.byOs} columns={[["key","OS"],["clicks","Cliques"]]} />
+          </div>
+
+          <Card>
+            <CardHeader><CardTitle>Evolução diária</CardTitle><CardDescription>Cliques × conversões × receita.</CardDescription></CardHeader>
+            <CardContent>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={data.daily}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                    <XAxis dataKey="date" tick={{ fontSize: 10 }} />
+                    <YAxis tick={{ fontSize: 10 }} />
+                    <Tooltip />
+                    <Line type="monotone" dataKey="clicks" stroke="hsl(var(--primary))" strokeWidth={2} name="Cliques" />
+                    <Line type="monotone" dataKey="conversions" stroke="#10b981" strokeWidth={2} name="Conversões" />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </>
+      )}
+
+      <Card>
+        <CardHeader><CardTitle>Exportação bruta</CardTitle><CardDescription>Baixe dados brutos em CSV, Excel ou PDF.</CardDescription></CardHeader>
+        <CardContent className="space-y-4">
+          <div className="max-w-xs">
+            <Label>Entidade</Label>
+            <Select value={entity} onValueChange={setEntity}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="affiliates">Afiliados</SelectItem>
+                <SelectItem value="commissions">Comissões</SelectItem>
+                <SelectItem value="withdraws">Saques</SelectItem>
+                <SelectItem value="orders">Pedidos</SelectItem>
+                <SelectItem value="products">Produtos</SelectItem>
+                <SelectItem value="coupons">Cupons</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => download("csv")}><Download className="size-4 mr-2" />CSV</Button>
+            <Button variant="outline" onClick={() => download("xls")}><Download className="size-4 mr-2" />Excel</Button>
+            <Button variant="outline" onClick={() => download("pdf")}><Download className="size-4 mr-2" />PDF</Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function KPI({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border border-border bg-card/40 p-3">
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className="text-lg font-semibold text-foreground mt-1">{value}</div>
+    </div>
+  );
+}
+
+function ReportTable({
+  title, description, rows, columns, onExport,
+}: {
+  title: string; description?: string; rows: any[];
+  columns: [string, string][]; onExport?: () => void;
+}) {
+  const fmt = (col: string, v: any) => {
+    if (v == null) return "—";
+    if (col === "revenueCents") return `R$ ${(Number(v) / 100).toFixed(2)}`;
+    if (col === "conversionRate") return `${v}%`;
+    if (typeof v === "number") return v.toLocaleString("pt-BR");
+    return String(v);
+  };
   return (
     <Card>
-      <CardHeader><CardTitle>Relatórios & exportação</CardTitle><CardDescription>Exporte dados em CSV, Excel (xls) ou PDF.</CardDescription></CardHeader>
-      <CardContent className="space-y-4">
-        <div className="max-w-xs">
-          <Label>Entidade</Label>
-          <Select value={entity} onValueChange={setEntity}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="affiliates">Afiliados</SelectItem>
-              <SelectItem value="commissions">Comissões</SelectItem>
-              <SelectItem value="withdraws">Saques</SelectItem>
-              <SelectItem value="orders">Pedidos</SelectItem>
-              <SelectItem value="products">Produtos</SelectItem>
-              <SelectItem value="coupons">Cupons</SelectItem>
-            </SelectContent>
-          </Select>
+      <CardHeader className="flex flex-row items-center justify-between gap-2">
+        <div>
+          <CardTitle className="text-base">{title}</CardTitle>
+          {description && <CardDescription>{description}</CardDescription>}
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => download("csv")}><Download className="size-4 mr-2" />CSV</Button>
-          <Button variant="outline" onClick={() => download("xls")}><Download className="size-4 mr-2" />Excel</Button>
-          <Button variant="outline" onClick={() => download("pdf")}><Download className="size-4 mr-2" />PDF</Button>
+        {onExport && (
+          <Button size="sm" variant="outline" onClick={onExport}><Download className="size-3 mr-1" />CSV</Button>
+        )}
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="overflow-auto max-h-80">
+          <table className="w-full text-xs">
+            <thead className="sticky top-0 bg-card">
+              <tr className="border-b border-border">
+                {columns.map(([k, l]) => (
+                  <th key={k} className="text-left px-3 py-2 font-medium text-muted-foreground">{l}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.length === 0 && (
+                <tr><td colSpan={columns.length} className="px-3 py-4 text-center text-muted-foreground">Sem dados no período.</td></tr>
+              )}
+              {rows.map((r, i) => (
+                <tr key={i} className="border-b border-border/50 hover:bg-muted/30">
+                  {columns.map(([k]) => (
+                    <td key={k} className="px-3 py-1.5 truncate max-w-xs">{fmt(k, r[k])}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </CardContent>
     </Card>
