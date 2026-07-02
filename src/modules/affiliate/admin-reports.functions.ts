@@ -76,7 +76,7 @@ export const adminGetAffiliateReports = createServerFn({ method: "POST" })
         .gte("occurred_at", since)
         .limit(50000),
       sb.from("affiliate_profiles" as any)
-        .select("id,display_name,affiliate_code,email"),
+        .select("id,full_name,affiliate_code,email"),
     ]);
 
     const clicks = (clicksRes.data ?? []) as any[];
