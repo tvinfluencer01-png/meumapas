@@ -93,8 +93,8 @@ function Content() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {withdraws.map((w) => (
-                    <TableRow key={w.id}>
+                  {withdraws.map((w, i) => (
+                    <TableRow key={w.id} className={`border-l-[3px] ${toneRow(toneByIndex(i))}`}>
                       <TableCell className="text-xs">{new Date(w.created_at).toLocaleString("pt-BR")}</TableCell>
                       <TableCell className="font-mono">{brl(w.amount_cents)}</TableCell>
                       <TableCell className="uppercase text-xs">{w.method}</TableCell>
