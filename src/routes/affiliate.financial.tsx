@@ -112,14 +112,3 @@ function Content() {
     </div>
   );
 }
-
-function SummaryCard({ label, value, tone }: { label: string; value: string; tone: string }) {
-  return (
-    <Card>
-      <CardContent className="pt-5">
-        <div className="text-[11px] uppercase tracking-wider text-muted-foreground">{label}</div>
-        <div className={`text-2xl font-serif mt-1 ${tone}`}>{value}</div>
-      </CardContent>
-    </Card>
-  );
-}
