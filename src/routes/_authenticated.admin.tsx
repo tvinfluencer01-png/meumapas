@@ -290,11 +290,12 @@ function ServerClock() {
   }, [fn]);
   const display = new Date(now.getTime() + (offset ?? 0));
   return (
-    <span className="inline-flex items-center gap-1 text-xs text-muted-foreground font-mono" title="Horário do servidor (UTC)">
+    <span className="inline-flex items-center gap-1 text-xs text-muted-foreground font-mono" title="Horário do servidor (America/Sao_Paulo, UTC-3)">
       <Clock className="size-3" />
-      {display.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit", timeZone: "UTC" })}
-      <span className="opacity-60">UTC</span>
+      {display.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit", timeZone: "America/Sao_Paulo" })}
+      <span className="opacity-60">UTC-3</span>
     </span>
+
   );
 }
 
