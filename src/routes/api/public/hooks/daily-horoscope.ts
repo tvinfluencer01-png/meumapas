@@ -30,6 +30,15 @@ async function handler({ request }: { request: Request }) {
     return new Response("Unauthorized", { status: 401 });
   }
 
+  const url = new URL(request.url);
+  let force = url.searchParams.get("force") === "1";
+  if (!force && request.method === "POST") {
+    try {
+      const b = await request.clone().json().catch(() => null) as any;
+      if (b?.force) force = true;
+    } catch {}
+  }
+
   const now = new Date();
   const today = now.toISOString().slice(0, 10);
   const currentUtcHour = now.getUTCHours();
@@ -37,13 +46,14 @@ async function handler({ request }: { request: Request }) {
     .from("horoscope_subscriptions")
     .select("*")
     .eq("enabled", true)
-    .or(`last_sent_on.is.null,last_sent_on.lt.${today}`)
+    .or(force ? "id.not.is.null" : `last_sent_on.is.null,last_sent_on.lt.${today}`)
     .limit(2000);
   if (error) return new Response(error.message, { status: 500 });
 
   // BRT (-3). dia da semana local: 0=domingo..6=sábado
   const localDow = (new Date(now.getTime() - 3 * 3600 * 1000)).getUTCDay();
   const subs = (allSubs ?? []).filter((s: any) => {
+    if (force) return true;
     // Permite retry no mesmo dia: hora agendada já passou e ainda não foi enviado hoje
     const scheduledHour = s.send_hour_utc ?? 10;
     if (currentUtcHour < scheduledHour) return false;
@@ -144,12 +154,12 @@ async function handler({ request }: { request: Request }) {
           `\n\nÂngulos astrológicos obrigatórios de hoje: 1) ${themes[0]}; 2) ${themes[1]}. EVITE temas usados recentemente: ${(chartSummary.recentThemes ?? []).join("; ") || "—"}.\n\nIMPORTANTE: na seção "🎯 Número e cor da sorte", use EXATAMENTE: "Número: ${lucky.number} | Cor: ${lucky.color}". Não invente outros valores.`
         : buildHoroscopePrompt(s.sun_sign, today, lucky, chartSummary);
       // seed determinístico por (usuário, dia) garante unicidade sem perder reprodutibilidade
-      const seedNum = Array.from(`${s.user_id}|${today}`).reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 2166136261) >>> 0;
+      const seedNum = (Array.from(`${s.user_id}|${today}`).reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 2166136261) >>> 0) & 0x7fffffff;
       let lastErr: any = null;
       for (const modelName of modelCandidates) {
         try {
           const { text } = await generateText({
-            model: provider.chatModel(modelName), prompt, temperature: 1.0, topP: 0.95, seed: seedNum,
+            model: (provider as any)(modelName), prompt, temperature: 1.0, topP: 0.95, seed: seedNum,
           });
           body = text.trim();
           lastErr = null;
@@ -160,9 +170,15 @@ async function handler({ request }: { request: Request }) {
       }
       if (lastErr) throw lastErr;
     } catch (e: any) {
+      const detail = [
+        e?.message,
+        e?.cause?.message,
+        e?.responseBody,
+        e?.data ? JSON.stringify(e.data).slice(0, 200) : null,
+      ].filter(Boolean).join(" | ").slice(0, 500);
       await supabaseAdmin.from("horoscope_log").insert({
         user_id: s.user_id, date: today, channel: "ai", status: "error",
-        detail: String(e?.message ?? e).slice(0, 240), sign: s.sun_sign,
+        detail: detail || String(e), sign: s.sun_sign,
       });
       return;
     }
