@@ -112,6 +112,21 @@ function Content() {
             </SelectContent>
           </Select>
 
+          <div className="grid md:grid-cols-3 gap-2">
+            <div className="space-y-1">
+              <label className="text-xs text-muted-foreground">utm_source</label>
+              <Input placeholder="ex: instagram" value={utm.source} onChange={(e) => setUtm({ ...utm, source: e.target.value })} />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs text-muted-foreground">utm_medium</label>
+              <Input placeholder="ex: story" value={utm.medium} onChange={(e) => setUtm({ ...utm, medium: e.target.value })} />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs text-muted-foreground">utm_campaign</label>
+              <Input placeholder="ex: black-friday" value={utm.campaign} onChange={(e) => setUtm({ ...utm, campaign: e.target.value })} />
+            </div>
+          </div>
+
           {productUrl && (
             <div className="flex flex-col md:flex-row gap-2">
               <code className="flex-1 text-xs break-all border rounded-md p-3 bg-muted/40">{productUrl}</code>
