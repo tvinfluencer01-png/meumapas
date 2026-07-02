@@ -184,3 +184,70 @@ function Funnel({ steps }: { steps: { label: string; value: number }[] }) {
     </div>
   );
 }
+
+function LandingMetrics() {
+  const [days, setDays] = useState("30");
+  const fn = useServerFn(getPanelLandingMetrics);
+  const { data, isLoading } = useQuery({
+    queryKey: ["aff-landing-metrics", days],
+    queryFn: () => fn({ data: { days: Number(days) } }),
+  });
+  const rows: any[] = (data as any)?.rows ?? [];
+  return (
+    <Card>
+      <CardHeader className="flex-row items-center justify-between gap-2">
+        <div>
+          <CardTitle className="flex items-center gap-2"><BarChart3 className="size-4" /> Métricas por landing</CardTitle>
+          <CardDescription>Cliques, cadastros, checkouts e vendas por página</CardDescription>
+        </div>
+        <Select value={days} onValueChange={setDays}>
+          <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="7">7 dias</SelectItem>
+            <SelectItem value="30">30 dias</SelectItem>
+            <SelectItem value="90">90 dias</SelectItem>
+            <SelectItem value="365">1 ano</SelectItem>
+          </SelectContent>
+        </Select>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="text-sm text-muted-foreground py-4">Carregando…</div>
+        ) : rows.length === 0 ? (
+          <div className="text-sm text-muted-foreground py-6 text-center">Sem dados no período.</div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Landing</TableHead>
+                <TableHead className="text-right">Cliques</TableHead>
+                <TableHead className="text-right">Cadastros</TableHead>
+                <TableHead className="text-right">Checkouts</TableHead>
+                <TableHead className="text-right">Vendas</TableHead>
+                <TableHead className="text-right">Receita</TableHead>
+                <TableHead className="text-right">Conv.</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.map((r) => {
+                const conv = r.clicks > 0 ? ((r.sales / r.clicks) * 100).toFixed(2) : "0.00";
+                return (
+                  <TableRow key={r.landing}>
+                    <TableCell className="font-mono text-xs">{r.landing}</TableCell>
+                    <TableCell className="text-right">{r.clicks}</TableCell>
+                    <TableCell className="text-right">{r.signups}</TableCell>
+                    <TableCell className="text-right">{r.checkouts}</TableCell>
+                    <TableCell className="text-right">{r.sales}</TableCell>
+                    <TableCell className="text-right">{brl(r.revenueCents)}</TableCell>
+                    <TableCell className="text-right">{conv}%</TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
