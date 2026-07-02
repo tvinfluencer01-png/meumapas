@@ -93,10 +93,10 @@ function ProductLandingPage() {
   const mutation = useMutation({
     mutationFn: () => createFn({ data: { landing_id: landing!.id, customer_data: values } }),
     onSuccess: async (res: any) => {
-      // Fire signup + checkout conversions tied to this landing, then redirect.
+      // Vincula conversões de afiliado ao order_id para creditar comissão ao aprovar pagamento.
       await Promise.allSettled([
-        trackAffiliateSignup({ reference: landingRef }),
-        trackAffiliateCheckout({ value_cents: landing!.price_cents, reference: landingRef }),
+        trackAffiliateSignup({ reference: res?.order_id ?? landingRef }),
+        trackAffiliateCheckout({ value_cents: landing!.price_cents, reference: res?.order_id ?? landingRef }),
       ]);
       window.location.href = res.checkout_url;
     },
