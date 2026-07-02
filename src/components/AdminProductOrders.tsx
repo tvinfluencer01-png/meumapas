@@ -18,6 +18,7 @@ import {
   getDispatchSettings,
   saveDispatchSettings,
 } from "@/lib/product-orders.functions";
+import { adminBackfillProductOrderCommissions } from "@/modules/affiliate/admin.functions";
 
 const STATUS_LABEL: Record<string, { label: string; color: string }> = {
   pending_payment: { label: "Aguardando pagamento", color: "bg-amber-600/30 text-amber-300 border border-amber-500/40" },
@@ -36,6 +37,7 @@ export function AdminProductOrders() {
   const dispatchFn = useServerFn(dispatchProductOrder);
   const getSettingsFn = useServerFn(getDispatchSettings);
   const saveSettingsFn = useServerFn(saveDispatchSettings);
+  const backfillFn = useServerFn(adminBackfillProductOrderCommissions);
 
   const { data: orders, isLoading } = useQuery({
     queryKey: ["admin-product-orders"],
@@ -198,9 +200,26 @@ export function AdminProductOrders() {
       </Card>
 
       <Card className="border-gold/30">
-        <CardHeader>
-          <CardTitle className="font-serif shimmer-text">Pedidos de Produtos Avulsos</CardTitle>
-          <CardDescription>Pedidos das landing pages individuais (Mapa Astral, Numerologia, etc.)</CardDescription>
+        <CardHeader className="flex flex-row items-start justify-between gap-2">
+          <div>
+            <CardTitle className="font-serif shimmer-text">Pedidos de Produtos Avulsos</CardTitle>
+            <CardDescription>Pedidos das landing pages individuais (Mapa Astral, Numerologia, etc.)</CardDescription>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={async () => {
+              try {
+                const r = await backfillFn();
+                showFeedback({ title: "Backfill concluído", description: `Total: ${r.total} · Creditados: ${r.credited} · Ignorados: ${r.skipped}`, type: "success" });
+                qc.invalidateQueries({ queryKey: ["admin-product-orders"] });
+              } catch (e: any) {
+                showFeedback({ title: "Erro no backfill", description: e?.message ?? "Falha", type: "error" });
+              }
+            }}
+          >
+            Backfill comissões
+          </Button>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex flex-wrap gap-2">
