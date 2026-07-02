@@ -17,6 +17,7 @@ import {
   adminGetRanking,
   adminExport,
 } from "../admin.functions";
+import { adminGetAffiliateReports } from "../admin-reports.functions";
 import {
   adminListAffiliates, adminSetAffiliateStatus, adminGetSettings,
   adminUpdateAffiliate, adminSetAffiliatePassword, adminSendAffiliatePasswordReset,
