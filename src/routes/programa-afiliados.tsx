@@ -155,7 +155,7 @@ function ProgramaAfiliadosPage() {
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline">
-              <Link to="/auth">Entrar na minha conta</Link>
+              <Link to="/affiliate/login">Entrar na minha conta</Link>
             </Button>
           </div>
         </div>
