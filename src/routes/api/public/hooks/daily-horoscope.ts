@@ -159,7 +159,7 @@ async function handler({ request }: { request: Request }) {
       for (const modelName of modelCandidates) {
         try {
           const { text } = await generateText({
-            model: provider.chatModel(modelName), prompt, temperature: 1.0, topP: 0.95, seed: seedNum,
+            model: (provider as any)(modelName), prompt, temperature: 1.0, topP: 0.95, seed: seedNum,
           });
           body = text.trim();
           lastErr = null;
