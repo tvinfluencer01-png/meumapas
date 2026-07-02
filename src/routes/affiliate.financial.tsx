@@ -63,8 +63,8 @@ function Content() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {commissions.map((c) => (
-                    <TableRow key={c.id}>
+                  {commissions.map((c, i) => (
+                    <TableRow key={c.id} className={`border-l-[3px] ${toneRow(toneByIndex(i))}`}>
                       <TableCell className="text-xs">{new Date(c.created_at).toLocaleDateString("pt-BR")}</TableCell>
                       <TableCell className="font-mono">{brl(c.amount_cents)}</TableCell>
                       <TableCell>{c.rate ? `${(Number(c.rate) * 100).toFixed(1)}%` : "-"}</TableCell>
