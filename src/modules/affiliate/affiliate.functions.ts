@@ -270,6 +270,128 @@ export const adminSetAffiliateStatus = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+// ─────────────────────────────────────────────────────────────
+// Admin: edit affiliate profile
+// ─────────────────────────────────────────────────────────────
+const UpdateAffiliateSchema = z.object({
+  affiliateId: z.string().uuid(),
+  fullName: z.string().min(3).max(120).optional(),
+  email: z.string().email().optional(),
+  whatsapp: z.string().min(8).max(20).optional(),
+});
+
+export const adminUpdateAffiliate = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => UpdateAffiliateSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    await ensureAdmin(context);
+    const { getAdmin, writeAudit } = await import("./affiliate.server");
+    const admin = await getAdmin();
+
+    const { data: prof, error: profErr } = await admin
+      .from("affiliate_profiles" as any)
+      .select("user_id")
+      .eq("id", data.affiliateId)
+      .maybeSingle();
+    if (profErr || !prof) throw new Error("Afiliado não encontrado.");
+
+    const patch: Record<string, unknown> = {};
+    if (data.fullName) patch.full_name = data.fullName;
+    if (data.email) patch.email = data.email;
+    if (data.whatsapp) patch.whatsapp = data.whatsapp;
+    if (Object.keys(patch).length) {
+      const { error } = await admin
+        .from("affiliate_profiles" as any)
+        .update(patch)
+        .eq("id", data.affiliateId);
+      if (error) throw new Error(error.message);
+    }
+
+    if (data.email) {
+      const { error: uErr } = await admin.auth.admin.updateUserById((prof as any).user_id, {
+        email: data.email,
+      });
+      if (uErr) throw new Error(uErr.message);
+    }
+
+    await writeAudit({
+      actorId: context.userId,
+      action: "affiliate.update",
+      entity: "affiliate_profile",
+      entityId: data.affiliateId,
+      diff: patch,
+    });
+    return { ok: true };
+  });
+
+// ─────────────────────────────────────────────────────────────
+// Admin: set new password
+// ─────────────────────────────────────────────────────────────
+const SetPasswordSchema = z.object({
+  affiliateId: z.string().uuid(),
+  password: z.string().min(8).max(72),
+});
+
+export const adminSetAffiliatePassword = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => SetPasswordSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    await ensureAdmin(context);
+    const { getAdmin, writeAudit } = await import("./affiliate.server");
+    const admin = await getAdmin();
+    const { data: prof } = await admin
+      .from("affiliate_profiles" as any)
+      .select("user_id")
+      .eq("id", data.affiliateId)
+      .maybeSingle();
+    if (!prof) throw new Error("Afiliado não encontrado.");
+    const { error } = await admin.auth.admin.updateUserById((prof as any).user_id, {
+      password: data.password,
+    });
+    if (error) throw new Error(error.message);
+    await writeAudit({
+      actorId: context.userId,
+      action: "affiliate.password_set",
+      entity: "affiliate_profile",
+      entityId: data.affiliateId,
+    });
+    return { ok: true };
+  });
+
+// ─────────────────────────────────────────────────────────────
+// Admin: send password reset email
+// ─────────────────────────────────────────────────────────────
+const SendResetSchema = z.object({
+  affiliateId: z.string().uuid(),
+  redirectTo: z.string().url().optional(),
+});
+
+export const adminSendAffiliatePasswordReset = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => SendResetSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    await ensureAdmin(context);
+    const { getAdmin, writeAudit } = await import("./affiliate.server");
+    const admin = await getAdmin();
+    const { data: prof } = await admin
+      .from("affiliate_profiles" as any)
+      .select("email")
+      .eq("id", data.affiliateId)
+      .maybeSingle();
+    if (!prof || !(prof as any).email) throw new Error("Email do afiliado não encontrado.");
+    const { error } = await admin.auth.resetPasswordForEmail((prof as any).email, {
+      redirectTo: data.redirectTo,
+    });
+    if (error) throw new Error(error.message);
+    await writeAudit({
+      actorId: context.userId,
+      action: "affiliate.password_reset_sent",
+      entity: "affiliate_profile",
+      entityId: data.affiliateId,
+    });
+    return { ok: true, email: (prof as any).email };
+  });
+
 export const adminGetSettings = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
