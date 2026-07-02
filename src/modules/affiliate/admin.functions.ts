@@ -449,6 +449,33 @@ export const adminDeleteMaterial = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+const MaterialUploadSchema = z.object({
+  filename: z.string().min(1).max(200),
+  contentType: z.string().min(3).max(100),
+  dataBase64: z.string().min(10),
+});
+
+export const adminUploadMaterialImage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => MaterialUploadSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    await ensureAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const safeName = data.filename.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const path = `materials/${Date.now()}-${crypto.randomUUID()}-${safeName}`;
+    const bytes = Uint8Array.from(atob(data.dataBase64), (c) => c.charCodeAt(0));
+    const { error } = await supabaseAdmin.storage.from("affiliate").upload(path, bytes, {
+      contentType: data.contentType,
+      upsert: false,
+    });
+    if (error) throw new Error(error.message);
+    const { data: signed, error: sErr } = await supabaseAdmin.storage
+      .from("affiliate")
+      .createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
+    if (sErr) throw new Error(sErr.message);
+    return { url: signed.signedUrl, path };
+  });
+
 // ────────────────────────────────────────────────────────────
 // COMMISSIONS + WITHDRAWS
 // ────────────────────────────────────────────────────────────
