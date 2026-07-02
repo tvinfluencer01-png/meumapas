@@ -210,9 +210,10 @@ export function AdminProductOrders() {
             onClick={async () => {
               try {
                 const r = await backfillFn();
-                showFeedback({ title: "Backfill concluído", description: `Total: ${r.total} · Creditados: ${r.credited} · Ignorados: ${r.skipped}`, variant: "success" });
+                showFeedback({ title: "Backfill concluído", description: `Total: ${r.total} · Creditados: ${r.credited} · Ignorados: ${r.skipped}`, type: "success" });
+                qc.invalidateQueries({ queryKey: ["admin-product-orders"] });
               } catch (e: any) {
-                showFeedback({ title: "Erro no backfill", description: e?.message ?? "Falha", variant: "error" });
+                showFeedback({ title: "Erro no backfill", description: e?.message ?? "Falha", type: "error" });
               }
             }}
           >
