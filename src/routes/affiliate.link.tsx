@@ -3,10 +3,12 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { AffiliateShell } from "@/modules/affiliate/ui/AffiliateShell";
 import { getMyAffiliate } from "@/modules/affiliate/affiliate.functions";
+import { listPublicLandings } from "@/lib/product-landings.functions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Copy, ExternalLink, Share2, QrCode } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Copy, ExternalLink, Share2, QrCode, Package } from "lucide-react";
 import { toast } from "sonner";
 import { useMemo, useState } from "react";
 
