@@ -37,6 +37,7 @@ export function AdminProductOrders() {
   const dispatchFn = useServerFn(dispatchProductOrder);
   const getSettingsFn = useServerFn(getDispatchSettings);
   const saveSettingsFn = useServerFn(saveDispatchSettings);
+  const backfillFn = useServerFn(adminBackfillProductOrderCommissions);
 
   const { data: orders, isLoading } = useQuery({
     queryKey: ["admin-product-orders"],
