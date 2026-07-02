@@ -168,17 +168,16 @@ function money(cents: number) {
   return (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
-function Kpi({ title, value, icon: Icon, tone = "" }: any) {
+function Kpi({ title, value, icon: Icon, tone = "sky" }: { title: string; value: any; icon?: any; tone?: string }) {
+  const g = KPI_TONES[tone] || KPI_TONES.sky;
   return (
-    <Card>
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs text-muted-foreground">{title}</span>
-          {Icon && <Icon className={`size-4 ${tone}`} />}
-        </div>
-        <div className="text-2xl font-bold">{value}</div>
-      </CardContent>
-    </Card>
+    <div className={`rounded-xl border bg-gradient-to-br p-4 shadow-sm transition-shadow hover:shadow-md ${g}`}>
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-xs text-muted-foreground">{title}</span>
+        {Icon && <Icon className="size-4 text-foreground/70" />}
+      </div>
+      <div className="text-2xl font-bold text-foreground">{value}</div>
+    </div>
   );
 }
 
@@ -199,14 +198,14 @@ function DashboardSection() {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Kpi title="Total afiliados" value={k.totalAffiliates} icon={Users} />
-        <Kpi title="Ativos" value={k.activeAffiliates} icon={Users} />
-        <Kpi title="Pendentes" value={k.pendingAffiliates} icon={Users} />
-        <Kpi title="Cliques hoje" value={k.clicksToday} icon={LayoutDashboard} />
-        <Kpi title="Cliques total" value={k.clicksTotal} icon={LayoutDashboard} />
-        <Kpi title="Conversão" value={`${k.conversion.toFixed(2)}%`} icon={Percent} />
-        <Kpi title="Receita 30d" value={money(k.revenueCents)} icon={HandCoins} />
-        <Kpi title="Comissões" value={money(k.commissionsCents)} icon={Percent} />
+        <Kpi title="Total afiliados" value={k.totalAffiliates} icon={Users} tone="indigo" />
+        <Kpi title="Ativos" value={k.activeAffiliates} icon={Users} tone="emerald" />
+        <Kpi title="Pendentes" value={k.pendingAffiliates} icon={Users} tone="amber" />
+        <Kpi title="Cliques hoje" value={k.clicksToday} icon={LayoutDashboard} tone="sky" />
+        <Kpi title="Cliques total" value={k.clicksTotal} icon={LayoutDashboard} tone="teal" />
+        <Kpi title="Conversão" value={`${k.conversion.toFixed(2)}%`} icon={Percent} tone="violet" />
+        <Kpi title="Receita 30d" value={money(k.revenueCents)} icon={HandCoins} tone="rose" />
+        <Kpi title="Comissões" value={money(k.commissionsCents)} icon={Percent} tone="emerald" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
