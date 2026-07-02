@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff, Sparkles, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
+import { isValidCpf, normalizeCpf } from "@/modules/affiliate/lib/cpf";
 
 export const Route = createFileRoute("/affiliate/register")({
   component: AffiliateRegisterPage,
