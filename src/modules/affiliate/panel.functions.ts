@@ -401,3 +401,59 @@ export const getGoalsAndMedals = createServerFn({ method: "GET" })
     ]);
     return { goals: goals ?? [], medals: medals ?? [], awarded: awarded ?? [] };
   });
+
+// ─────────────────────────────────────────────────────────────
+// Landing-level metrics: clicks, signups, conversions, sales
+// ─────────────────────────────────────────────────────────────
+export const getPanelLandingMetrics = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ days: z.number().int().min(1).max(365).default(30) }).parse(i))
+  .handler(async ({ data, context }) => {
+    const affiliateId = await getAffiliateId(context);
+    if (!affiliateId) return { rows: [], period: data.days };
+
+    const since = new Date(Date.now() - data.days * 86400000).toISOString();
+    const sb = context.supabase;
+
+    const [{ data: clicks }, { data: convs }, { data: orders }] = await Promise.all([
+      sb.from("affiliate_clicks" as any).select("landing_url, landed_at").eq("affiliate_id", affiliateId).gte("landed_at", since),
+      sb.from("affiliate_conversions" as any).select("type, reference, metadata, occurred_at").eq("affiliate_id", affiliateId).gte("occurred_at", since),
+      sb.from("affiliate_orders" as any).select("amount_cents, status, metadata, occurred_at").eq("affiliate_id", affiliateId).gte("occurred_at", since),
+    ]);
+
+    // Extract landing slug from URL path like /p/{slug} (fallback to path or "geral")
+    const slugFromUrl = (u?: string | null): string => {
+      if (!u) return "geral";
+      try {
+        const url = new URL(u, "https://x");
+        const m = url.pathname.match(/\/p\/([^/?#]+)/);
+        return m ? m[1] : url.pathname.replace(/^\/+|\/+$/g, "") || "geral";
+      } catch { return "geral"; }
+    };
+
+    type Row = { landing: string; clicks: number; signups: number; checkouts: number; sales: number; revenueCents: number };
+    const map = new Map<string, Row>();
+    const bump = (key: string): Row => {
+      let r = map.get(key);
+      if (!r) { r = { landing: key, clicks: 0, signups: 0, checkouts: 0, sales: 0, revenueCents: 0 }; map.set(key, r); }
+      return r;
+    };
+
+    (clicks ?? []).forEach((c: any) => { bump(slugFromUrl(c.landing_url)).clicks++; });
+    (convs ?? []).forEach((c: any) => {
+      const key = slugFromUrl(c.metadata?.landing_url || c.reference || null);
+      const row = bump(key);
+      if (c.type === "signup" || c.type === "registration") row.signups++;
+      else if (c.type === "checkout") row.checkouts++;
+    });
+    (orders ?? []).forEach((o: any) => {
+      if (o.status !== "paid") return;
+      const key = slugFromUrl(o.metadata?.landing_url || o.metadata?.slug || null);
+      const row = bump(key);
+      row.sales++;
+      row.revenueCents += o.amount_cents ?? 0;
+    });
+
+    const rows = [...map.values()].sort((a, b) => b.clicks - a.clicks);
+    return { rows, period: data.days };
+  });
