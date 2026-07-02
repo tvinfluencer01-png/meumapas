@@ -145,10 +145,20 @@ async function handler({ request }: { request: Request }) {
         : buildHoroscopePrompt(s.sun_sign, today, lucky, chartSummary);
       // seed determinístico por (usuário, dia) garante unicidade sem perder reprodutibilidade
       const seedNum = Array.from(`${s.user_id}|${today}`).reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 2166136261) >>> 0;
-      const { text } = await generateText({
-        model, prompt, temperature: 1.0, topP: 0.95, seed: seedNum,
-      });
-      body = text.trim();
+      let lastErr: any = null;
+      for (const modelName of modelCandidates) {
+        try {
+          const { text } = await generateText({
+            model: provider.chatModel(modelName), prompt, temperature: 1.0, topP: 0.95, seed: seedNum,
+          });
+          body = text.trim();
+          lastErr = null;
+          break;
+        } catch (e) {
+          lastErr = e;
+        }
+      }
+      if (lastErr) throw lastErr;
     } catch (e: any) {
       await supabaseAdmin.from("horoscope_log").insert({
         user_id: s.user_id, date: today, channel: "ai", status: "error",
