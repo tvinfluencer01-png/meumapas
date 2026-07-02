@@ -18,6 +18,7 @@ import {
   getDispatchSettings,
   saveDispatchSettings,
 } from "@/lib/product-orders.functions";
+import { adminBackfillProductOrderCommissions } from "@/modules/affiliate/admin.functions";
 
 const STATUS_LABEL: Record<string, { label: string; color: string }> = {
   pending_payment: { label: "Aguardando pagamento", color: "bg-amber-600/30 text-amber-300 border border-amber-500/40" },
