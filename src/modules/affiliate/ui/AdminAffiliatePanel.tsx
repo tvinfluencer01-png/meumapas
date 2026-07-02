@@ -19,6 +19,7 @@ import {
 } from "../admin.functions";
 import {
   adminListAffiliates, adminSetAffiliateStatus, adminGetSettings,
+  adminUpdateAffiliate, adminSetAffiliatePassword, adminSendAffiliatePasswordReset,
 } from "../affiliate.functions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -295,13 +296,39 @@ function AffiliatesSection() {
   const qc = useQueryClient();
   const listFn = useServerFn(adminListAffiliates);
   const statusFn = useServerFn(adminSetAffiliateStatus);
+  const updateFn = useServerFn(adminUpdateAffiliate);
+  const pwdFn = useServerFn(adminSetAffiliatePassword);
+  const resetFn = useServerFn(adminSendAffiliatePasswordReset);
   const [q, setQ] = useState(""); const [status, setStatus] = useState("");
   const { data: rows } = useQuery({ queryKey: ["adm-aff", q, status], queryFn: () => listFn({ data: { q: q || undefined, status: status || undefined } }) });
+  const invalidate = () => qc.invalidateQueries({ queryKey: ["adm-aff"] });
   const mut = useMutation({
     mutationFn: (v: any) => statusFn({ data: v }),
-    onSuccess: () => { toast.success("Status atualizado"); qc.invalidateQueries({ queryKey: ["adm-aff"] }); },
+    onSuccess: () => { toast.success("Status atualizado"); invalidate(); },
     onError: (e: any) => toast.error(e.message),
   });
+
+  const [editing, setEditing] = useState<any | null>(null);
+  const [pwdTarget, setPwdTarget] = useState<any | null>(null);
+  const [editForm, setEditForm] = useState({ fullName: "", email: "", whatsapp: "" });
+  const [newPwd, setNewPwd] = useState("");
+
+  const saveEdit = useMutation({
+    mutationFn: () => updateFn({ data: { affiliateId: editing.id, ...editForm } }),
+    onSuccess: () => { toast.success("Afiliado atualizado"); setEditing(null); invalidate(); },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const savePwd = useMutation({
+    mutationFn: () => pwdFn({ data: { affiliateId: pwdTarget.id, password: newPwd } }),
+    onSuccess: () => { toast.success("Senha atualizada"); setPwdTarget(null); setNewPwd(""); },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const sendReset = useMutation({
+    mutationFn: (id: string) => resetFn({ data: { affiliateId: id, redirectTo: `${window.location.origin}/reset-password` } }),
+    onSuccess: (r: any) => toast.success(`Email de redefinição enviado para ${r.email}`),
+    onError: (e: any) => toast.error(e.message),
+  });
+
   return (
     <Card>
       <CardHeader>
@@ -333,8 +360,17 @@ function AffiliatesSection() {
                   <td className="text-center"><Badge variant="secondary">{r.status}</Badge></td>
                   <td className="text-center">
                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild><Button size="sm" variant="ghost">Mudar</Button></DropdownMenuTrigger>
+                      <DropdownMenuTrigger asChild><Button size="sm" variant="ghost">Ações</Button></DropdownMenuTrigger>
                       <DropdownMenuContent>
+                        <DropdownMenuItem onClick={() => { setEditing(r); setEditForm({ fullName: r.full_name ?? "", email: r.email ?? "", whatsapp: r.whatsapp ?? "" }); }}>
+                          <Pencil className="size-3 mr-2" /> Editar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => { setPwdTarget(r); setNewPwd(""); }}>
+                          Mudar senha
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => sendReset.mutate(r.id)}>
+                          <Send className="size-3 mr-2" /> Enviar senha por email
+                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => mut.mutate({ affiliateId: r.id, status: "approved" })}>Aprovar</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => mut.mutate({ affiliateId: r.id, status: "suspended" })}>Suspender</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => mut.mutate({ affiliateId: r.id, status: "rejected" })}>Rejeitar</DropdownMenuItem>
@@ -346,6 +382,35 @@ function AffiliatesSection() {
             </tbody>
           </table>
         </div>
+
+        <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+          <DialogContent>
+            <DialogHeader><DialogTitle>Editar afiliado</DialogTitle></DialogHeader>
+            <div className="space-y-3">
+              <div><Label>Nome</Label><Input value={editForm.fullName} onChange={(e) => setEditForm({ ...editForm, fullName: e.target.value })} /></div>
+              <div><Label>Email</Label><Input type="email" value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} /></div>
+              <div><Label>WhatsApp</Label><Input value={editForm.whatsapp} onChange={(e) => setEditForm({ ...editForm, whatsapp: e.target.value })} /></div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditing(null)}>Cancelar</Button>
+              <Button onClick={() => saveEdit.mutate()} disabled={saveEdit.isPending}>Salvar</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={!!pwdTarget} onOpenChange={(o) => !o && setPwdTarget(null)}>
+          <DialogContent>
+            <DialogHeader><DialogTitle>Mudar senha — {pwdTarget?.full_name}</DialogTitle></DialogHeader>
+            <div>
+              <Label>Nova senha (mín. 8)</Label>
+              <Input type="text" value={newPwd} onChange={(e) => setNewPwd(e.target.value)} />
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setPwdTarget(null)}>Cancelar</Button>
+              <Button onClick={() => savePwd.mutate()} disabled={savePwd.isPending || newPwd.length < 8}>Salvar senha</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   );
