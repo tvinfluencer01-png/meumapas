@@ -23,28 +23,42 @@ function Page() {
 
 function Content() {
   const fn = useServerFn(getMyAffiliate);
+  const listFn = useServerFn(listPublicLandings);
   const { data } = useQuery({ queryKey: ["my-affiliate"], queryFn: () => fn() });
+  const { data: landings } = useQuery({ queryKey: ["public-landings"], queryFn: () => listFn() });
   const [utm, setUtm] = useState({ source: "", medium: "", campaign: "" });
+  const [productSlug, setProductSlug] = useState<string>("");
 
   const code = (data as any)?.profile?.affiliate_code;
   const base = typeof window !== "undefined" ? window.location.origin : "";
+
+  const buildWithUtm = (u: URL) => {
+    if (utm.source) u.searchParams.set("utm_source", utm.source);
+    if (utm.medium) u.searchParams.set("utm_medium", utm.medium);
+    if (utm.campaign) u.searchParams.set("utm_campaign", utm.campaign);
+    return u.toString();
+  };
+
   const refUrl = useMemo(() => {
     if (!code) return "";
-    const url = new URL(`${base}/api/public/affiliate/r/${String(code).toLowerCase()}`);
-    if (utm.source) url.searchParams.set("utm_source", utm.source);
-    if (utm.medium) url.searchParams.set("utm_medium", utm.medium);
-    if (utm.campaign) url.searchParams.set("utm_campaign", utm.campaign);
-    return url.toString();
+    return buildWithUtm(new URL(`${base}/api/public/affiliate/r/${String(code).toLowerCase()}`));
   }, [code, base, utm]);
+
+  const productUrl = useMemo(() => {
+    if (!code || !productSlug) return "";
+    const u = new URL(`${base}/p/${productSlug}`);
+    u.searchParams.set("ref", String(code));
+    return buildWithUtm(u);
+  }, [code, base, productSlug, utm]);
 
   if (!code) return <div>Cadastro em análise…</div>;
 
-  const copy = () => { navigator.clipboard.writeText(refUrl); toast.success("Link copiado!"); };
-  const share = async () => {
-    if (navigator.share) await navigator.share({ url: refUrl, title: "Confira!", text: "Descubra seu mapa astral." });
-    else copy();
+  const copy = (val: string) => { navigator.clipboard.writeText(val); toast.success("Link copiado!"); };
+  const share = async (val: string) => {
+    if (navigator.share) await navigator.share({ url: val, title: "Confira!", text: "Descubra seu mapa astral." });
+    else copy(val);
   };
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(refUrl)}`;
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(productUrl || refUrl)}`;
 
   return (
     <div className="space-y-6">
@@ -55,15 +69,15 @@ function Content() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Link de divulgação</CardTitle>
+          <CardTitle>Link de divulgação (geral)</CardTitle>
           <CardDescription>Código: <span className="font-mono">{code}</span></CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex flex-col md:flex-row gap-2">
             <code className="flex-1 text-xs break-all border rounded-md p-3 bg-muted/40">{refUrl}</code>
             <div className="flex gap-2">
-              <Button onClick={copy} variant="outline"><Copy className="size-4 mr-2" />Copiar</Button>
-              <Button onClick={share}><Share2 className="size-4 mr-2" />Compartilhar</Button>
+              <Button onClick={() => copy(refUrl)} variant="outline"><Copy className="size-4 mr-2" />Copiar</Button>
+              <Button onClick={() => share(refUrl)}><Share2 className="size-4 mr-2" />Compartilhar</Button>
               <Button asChild variant="outline"><a href={refUrl} target="_blank" rel="noreferrer"><ExternalLink className="size-4" /></a></Button>
             </div>
           </div>
@@ -78,8 +92,43 @@ function Content() {
 
       <Card>
         <CardHeader>
+          <CardTitle className="flex items-center gap-2"><Package className="size-4" /> Gerador de link por produto</CardTitle>
+          <CardDescription>Escolha uma landing page de produto e gere seu link de afiliado.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Select value={productSlug} onValueChange={setProductSlug}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione um produto…" />
+            </SelectTrigger>
+            <SelectContent>
+              {(landings ?? []).map((l: any) => (
+                <SelectItem key={l.slug} value={l.slug}>
+                  {l.title} — R$ {(l.price_cents / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                </SelectItem>
+              ))}
+              {(!landings || landings.length === 0) && (
+                <div className="px-3 py-2 text-xs text-muted-foreground">Nenhum produto disponível.</div>
+              )}
+            </SelectContent>
+          </Select>
+
+          {productUrl && (
+            <div className="flex flex-col md:flex-row gap-2">
+              <code className="flex-1 text-xs break-all border rounded-md p-3 bg-muted/40">{productUrl}</code>
+              <div className="flex gap-2">
+                <Button onClick={() => copy(productUrl)} variant="outline"><Copy className="size-4 mr-2" />Copiar</Button>
+                <Button onClick={() => share(productUrl)}><Share2 className="size-4 mr-2" />Compartilhar</Button>
+                <Button asChild variant="outline"><a href={productUrl} target="_blank" rel="noreferrer"><ExternalLink className="size-4" /></a></Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle className="flex items-center gap-2"><QrCode className="size-4" /> QR Code</CardTitle>
-          <CardDescription>Perfeito para materiais impressos e stories.</CardDescription>
+          <CardDescription>{productUrl ? "Do link do produto selecionado." : "Do link geral."}</CardDescription>
         </CardHeader>
         <CardContent>
           <img src={qrUrl} alt="QR Code" className="rounded-md border" width={240} height={240} />
