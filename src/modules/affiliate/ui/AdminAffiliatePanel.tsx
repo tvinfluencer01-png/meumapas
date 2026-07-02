@@ -1215,7 +1215,10 @@ function ReportTable({
                 <tr><td colSpan={columns.length} className="px-3 py-4 text-center text-muted-foreground">Sem dados no período.</td></tr>
               )}
               {rows.map((r, i) => (
-                <tr key={i} className="border-b border-border/50 hover:bg-muted/30">
+                <tr
+                  key={i}
+                  className={`border-b border-border/50 border-l-[3px] hover:bg-muted/40 transition-colors ${toneRow(toneByIndex(i))}`}
+                >
                   {columns.map(([k]) => (
                     <td key={k} className="px-3 py-1.5 truncate max-w-xs">{fmt(k, r[k])}</td>
                   ))}
