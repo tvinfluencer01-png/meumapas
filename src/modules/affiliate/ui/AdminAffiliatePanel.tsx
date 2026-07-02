@@ -154,6 +154,11 @@ export function AdminAffiliatePanel() {
                   >
                     <GIcon className="size-4 shrink-0" />
                     <span className="flex-1 text-left">{g.label}</span>
+                    {groupCount(g.items) > 0 && !isOpen && (
+                      <span className="min-w-5 h-5 px-1.5 rounded-full text-[10px] font-semibold inline-flex items-center justify-center bg-rose-500/20 text-rose-300 border border-rose-500/40">
+                        {groupCount(g.items) > 99 ? "99+" : groupCount(g.items)}
+                      </span>
+                    )}
                     <ChevronDown className={`size-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
                   </button>
                   {isOpen && (
@@ -163,6 +168,7 @@ export function AdminAffiliatePanel() {
                         if (!s) return null;
                         const Icon = s.icon;
                         const active = section === s.id;
+                        const count = getCount(s.id);
                         return (
                           <button
                             key={s.id}
@@ -177,7 +183,12 @@ export function AdminAffiliatePanel() {
                           >
                             <Icon className={`size-3.5 shrink-0 ${active ? "text-gold" : ""}`} />
                             <span className="flex-1">{s.label}</span>
-                            {active && <span className="size-1.5 rounded-full bg-gold shadow-[0_0_6px_rgba(212,175,55,0.8)]" />}
+                            {count > 0 && (
+                              <span className={`min-w-5 h-5 px-1.5 rounded-full text-[10px] font-semibold inline-flex items-center justify-center border ${badgeTone[s.id] ?? "bg-gold/15 text-gold border-gold/40"}`}>
+                                {count > 99 ? "99+" : count}
+                              </span>
+                            )}
+                            {active && count === 0 && <span className="size-1.5 rounded-full bg-gold shadow-[0_0_6px_rgba(212,175,55,0.8)]" />}
                           </button>
                         );
                       })}
