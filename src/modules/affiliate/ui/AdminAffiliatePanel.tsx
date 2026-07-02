@@ -19,6 +19,7 @@ import {
 } from "../admin.functions";
 import {
   adminListAffiliates, adminSetAffiliateStatus, adminGetSettings,
+  adminUpdateAffiliate, adminSetAffiliatePassword, adminSendAffiliatePasswordReset,
 } from "../affiliate.functions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
