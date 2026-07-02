@@ -16,6 +16,7 @@ import {
   adminListLogs, adminListWebhookEvents,
   adminGetRanking,
   adminExport,
+  adminGetMenuCounters,
 } from "../admin.functions";
 import { adminGetAffiliateReports } from "../admin-reports.functions";
 import {
