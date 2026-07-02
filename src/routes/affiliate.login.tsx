@@ -128,8 +128,8 @@ function AffiliateLoginPage() {
               </Link>
             </div>
             <p className="text-[11px] text-center text-muted-foreground pt-2">
-              Este login é exclusivo do Programa de Afiliados. Para acessar o app principal, use{" "}
-              <Link to="/auth" className="underline">/auth</Link>.
+              Ainda não é afiliado?{" "}
+              <Link to="/affiliate/register" className="text-gold underline">Criar conta de afiliado</Link>.
             </p>
           </form>
         </CardContent>
