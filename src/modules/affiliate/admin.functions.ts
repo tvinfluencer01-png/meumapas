@@ -845,3 +845,35 @@ export const adminExport = createServerFn({ method: "POST" })
     const b64 = await toPDF(`Affiliate • ${data.entity}`, rows, cols);
     return { mime: "application/pdf", filename: `${data.entity}.pdf`, content: b64, encoding: "base64" };
   });
+
+// ────────────────────────────────────────────────────────────
+// MENU BADGES / COUNTERS
+// ────────────────────────────────────────────────────────────
+export const adminGetMenuCounters = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await ensureAdmin(context);
+    const sb = context.supabase;
+    const head = { count: "exact" as const, head: true };
+    const results = await Promise.all([
+      sb.from("affiliate_profiles" as any).select("*", head).eq("status", "pending"),
+      sb.from("affiliate_commissions" as any).select("*", head).eq("status", "pending"),
+      sb.from("affiliate_withdraws" as any).select("*", head).eq("status", "requested"),
+      sb.from("affiliate_payout_batches" as any).select("*", head).in("status", ["draft", "processing"]),
+      sb.from("affiliate_fraud_flags" as any).select("*", head).eq("status", "open"),
+      sb.from("affiliate_outbound_webhook_deliveries" as any).select("*", head).eq("status", "failed"),
+      sb.from("affiliate_notification_dispatches" as any).select("*", head).eq("status", "failed"),
+      sb.from("affiliate_audit_logs" as any).select("*", head).gte("created_at", new Date(Date.now() - 86400_000).toISOString()),
+    ]);
+    const n = (r: any) => (r?.count ?? 0) as number;
+    return {
+      affiliates: n(results[0]),
+      commissions: n(results[1]),
+      withdraws: n(results[2]),
+      batches: n(results[3]),
+      fraud_ai: n(results[4]),
+      outbound_hooks: n(results[5]),
+      notif_dispatches: n(results[6]),
+      logs: n(results[7]),
+    } as Record<string, number>;
+  });
