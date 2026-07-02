@@ -90,26 +90,41 @@ type SectionId = typeof SECTIONS[number]["id"];
 
 export function AdminAffiliatePanel() {
   const [section, setSection] = useState<SectionId>("dashboard");
+  const activeLabel = SECTIONS.find((s) => s.id === section)?.label ?? "";
   return (
-    <div className="flex flex-col lg:flex-row gap-4">
-      <aside className="lg:w-56 shrink-0">
-        <div className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0">
-          {SECTIONS.map((s) => {
-            const Icon = s.icon;
-            const active = section === s.id;
-            return (
-              <button
-                key={s.id}
-                onClick={() => setSection(s.id)}
-                className={`flex items-center gap-2 px-3 py-2 rounded text-sm text-left whitespace-nowrap transition-colors ${
-                  active ? "bg-primary text-primary-foreground" : "hover:bg-muted"
-                }`}
-              >
-                <Icon className="size-4" />
-                <span>{s.label}</span>
-              </button>
-            );
-          })}
+    <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
+      <aside className="lg:w-64 shrink-0 lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-2rem)]">
+        <div className="rounded-lg border border-border bg-card/40 backdrop-blur">
+          <div className="px-3 py-3 border-b border-border">
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Affiliate Center</div>
+            <div className="font-serif text-sm text-gold">{activeLabel}</div>
+          </div>
+          <nav className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-y-auto lg:max-h-[calc(100vh-8rem)] p-2 scrollbar-gold">
+            {SECTIONS.map((s) => {
+              const Icon = s.icon;
+              const active = section === s.id;
+              return (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => setSection(s.id)}
+                  aria-current={active ? "page" : undefined}
+                  ref={(el) => {
+                    if (active && el) el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+                  }}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm text-left whitespace-nowrap transition-colors ${
+                    active
+                      ? "bg-gold/15 text-gold border border-gold/40 shadow-[0_0_10px_rgba(212,175,55,0.15)] font-medium"
+                      : "text-muted-foreground hover:text-gold hover:bg-secondary/40 border border-transparent"
+                  }`}
+                >
+                  <Icon className={`size-4 shrink-0 ${active ? "text-gold" : ""}`} />
+                  <span className="flex-1">{s.label}</span>
+                  {active && <span className="size-1.5 rounded-full bg-gold shadow-[0_0_6px_rgba(212,175,55,0.8)]" />}
+                </button>
+              );
+            })}
+          </nav>
         </div>
       </aside>
       <div className="flex-1 min-w-0">
