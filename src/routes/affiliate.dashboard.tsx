@@ -223,10 +223,10 @@ function LandingMetrics() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rows.map((r) => {
+              {rows.map((r, i) => {
                 const conv = r.clicks > 0 ? ((r.sales / r.clicks) * 100).toFixed(2) : "0.00";
                 return (
-                  <TableRow key={r.landing}>
+                  <TableRow key={r.landing} className={`border-l-[3px] ${toneRow(toneByIndex(i))}`}>
                     <TableCell className="font-mono text-xs">{r.landing}</TableCell>
                     <TableCell className="text-right">{r.clicks}</TableCell>
                     <TableCell className="text-right">{r.signups}</TableCell>
