@@ -1,79 +1,43 @@
-# Affiliate Center — FASE 3
+## Objetivo
 
-Painel administrativo completo do módulo Affiliate integrado ao Super Admin existente, sem alterar funcionalidades atuais.
+Estender o padrão de degradês suaves (já aprovado no Affiliate Center) para todos os cards de KPI/estatística do sistema e diferenciar cada linha das tabelas de relatório por cor.
 
-## 1. Banco de dados (nova migration)
+## O que será feito
 
-Novas tabelas em `public`:
-- `affiliate_products` — catálogo de produtos afiliáveis (nome, slug, preço, categoria, ativo, comissão override).
-- `affiliate_coupons` — cupons vinculados a afiliados (código, desconto, uso, validade).
-- `affiliate_campaigns` — campanhas de marketing (nome, período, meta, bônus).
-- `affiliate_commission_rules` — regras de comissão configuráveis: escopo (produto/categoria/afiliado/global), tipo (fixa/percentual), modelo (primeira/recorrente/vitalícia), valor.
-- `affiliate_fraud_flags` — flags antifraude (motivo, evidência, ação: bloqueado/liberado, meta json).
-- `affiliate_webhook_events` — eventos brutos recebidos de gateways externos (payload, provider, status).
-- `affiliate_processing_queue` — fila de processamento assíncrono (job, payload, status, tentativas).
-- Extensões em `affiliate_settings`: min_withdraw, hold_days, cookie_days, auto_approve, antifraud flags (same_cpf/ip/card/vpn/self_purchase).
-- Extensões em `affiliate_profiles`: cpf, ip_signup para detecção de fraude.
+### 1. Token global de paleta
+- Criar `src/lib/kpi-tones.ts` exportando `KPI_TONES` (sky, indigo, violet, amber, emerald, rose, teal, fuchsia) + helper `toneByIndex(i)` que rotaciona a paleta.
+- Criar componente compartilhado `src/components/ui/gradient-stat-card.tsx` (borda tonal, `bg-gradient-to-br`, sombra suave, hover). Substitui os `Kpi/KPI` duplicados.
 
-Todas com GRANTs + RLS (admin via `has_role('admin')` ou `has_affiliate_role('affiliate_admin')`).
+### 2. Aplicação nos painéis com KPIs
+Trocar os cards "número + label" pelos novos `GradientStatCard`:
+- `src/routes/_authenticated.dashboard.tsx` (KPIs do topo)
+- `src/routes/_authenticated.admin.tsx` (stats do admin)
+- `src/components/AdminCrm.tsx` (contadores por status)
+- `src/components/AdminHoroscopeStatus.tsx` (entregues/pendentes/erro)
+- `src/components/AdminCronStatus.tsx`
+- `src/components/AdminProductOrders.tsx` (totais)
+- `src/components/AdminCreditsManager.tsx`
+- `src/modules/affiliate/ui/AdminAffiliatePanel.tsx` (já feito — migra para o compartilhado)
+- `src/routes/affiliate.dashboard.tsx`, `affiliate.financial.tsx`, `affiliate.gamification.tsx`
 
-## 2. Server functions
+### 3. Linhas coloridas nos relatórios
+No `ReportTable` de `AdminAffiliatePanel.tsx` e no `LandingMetrics` de `affiliate.dashboard.tsx`:
+- Cada linha ganha uma faixa lateral esquerda de 3px com a cor rotacionada por índice.
+- Fundo da linha recebe versão super leve do gradiente (opacidade ~6%) para diferenciar sem prejudicar leitura.
+- Manter hover atual.
 
-`src/modules/affiliate/admin.functions.ts`:
-- `adminDashboardStats` — KPIs, séries temporais, geo, top produtos/afiliados.
-- CRUD: `adminListAffiliates/updateStatus`, `adminListProducts/upsert`, `adminListCoupons/upsert`, `adminListCampaigns/upsert`, `adminListMaterials/upsert`, `adminListCommissionRules/upsert`.
-- Comissões/saques: `adminListCommissions`, `adminApproveCommission`, `adminListWithdraws`, `adminPayWithdraw`.
-- Mensagens broadcast: `adminSendMessage`, `adminSendNotification`.
-- Antifraude: `adminListFraudFlags`, `adminResolveFraudFlag`.
-- Exportação: `adminExport({ entity, format: csv|excel|pdf })`.
-- Logs/auditoria: `adminListAuditLogs`.
+### 4. Sem alterações
+- Não muda lógica, dados, rotas ou tokens da marca (`--gold`, `--nebula`).
+- Não muda botões, formulários ou tipografia.
+- Modo escuro continua funcionando (as classes `*-500/15` já se comportam bem em ambos).
 
-`src/modules/affiliate/fraud.server.ts` — detector centralizado (CPF/IP/cartão/VPN/auto-compra).
-`src/modules/affiliate/commission.server.ts` — cálculo respeitando regras + confirmação de pagamento.
+## Detalhes técnicos
 
-## 3. Rotas públicas (webhooks)
+- Paleta usa opacidade Tailwind (`from-{cor}-500/15 via-{cor}-400/10 to-transparent border-{cor}-500/20`) para se manter suave em light/dark.
+- `GradientStatCard` aceita `label`, `value`, `icon?`, `tone?`, `hint?` — API compatível com os dois componentes antigos.
+- Faixa lateral das linhas via `border-l-[3px] border-l-{tone}` aplicada no `<tr>`.
 
-`src/routes/api/public/affiliate/webhooks/$provider.ts` — recebe eventos (compra aprovada, estorno, cancelamento, refund) de gateways externos. Valida assinatura HMAC, grava em `affiliate_webhook_events`, enfileira processamento.
+## Fora de escopo
 
-`src/routes/api/public/affiliate/track/click.ts` e `.../conversion.ts` — endpoints públicos JSON para integração com checkouts externos (além do tracker já existente).
-
-## 4. UI Super Admin
-
-Nova área sob `src/routes/_authenticated/admin/affiliate/*`:
-- `admin.affiliate.tsx` — layout com sidebar dos 12 menus.
-- Páginas: `dashboard`, `affiliates`, `products`, `commissions`, `withdraws`, `messages`, `materials`, `campaigns`, `ranking`, `reports`, `settings`, `logs`.
-- Componentes reutilizáveis: `AdminAffiliateShell`, `KpiCard`, `DataTable` com filtros, `ExportMenu` (CSV/Excel/PDF).
-- Mapa mundial: react-simple-maps (leve) OU heatmap por país via Recharts. Optar por lista de países com barras para evitar nova dep pesada.
-
-Integração no menu Super Admin existente (`src/routes/_authenticated.admin.tsx`): substituir o link atual "Affiliate Center" para apontar para `/admin/affiliate/dashboard`.
-
-## 5. Exportação
-
-`src/modules/affiliate/export.server.ts`: gera CSV/Excel (xlsx via lib já instalada) e PDF (pdf-lib já em uso). Endpoint via server function retornando base64 + download client-side.
-
-## 6. Antifraude
-
-Integrado no `commission.server.ts`:
-- Antes de aprovar comissão, roda checks conforme `affiliate_settings`.
-- Se detectar fraude, cria `affiliate_fraud_flags` e bloqueia comissão (`status='blocked'`).
-
-## 7. Filas & cache
-
-- Tabela `affiliate_processing_queue` processada por cron pg_cron a cada minuto chamando `/api/public/affiliate/queue/process`.
-- Cache leve em memória por request (dashboard stats agregados com queries otimizadas + índices).
-
-## 8. Logs & auditoria
-
-Reaproveita `affiliate_audit_logs` existente. Toda ação admin registra entry.
-
-## 9. Revisão de consistência
-
-- Rodar build + typecheck.
-- Verificar RLS scan.
-- Confirmar que nada em `_authenticated` (usuário) foi alterado.
-
-## Escopo excluído nesta fase
-
-- Push real (VAPID) — mantém canal já registrado.
-- Integração real com gateway PIX de saque — apenas marca como pago.
-- Detecção VPN real — heurística por header/ASN placeholder configurável.
+- Redesign de páginas públicas (landing pages de produto, home).
+- Alteração de gráficos Recharts (mantêm cores atuais).

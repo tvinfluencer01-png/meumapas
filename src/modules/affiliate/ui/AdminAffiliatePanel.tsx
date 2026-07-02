@@ -23,6 +23,8 @@ import {
   adminUpdateAffiliate, adminSetAffiliatePassword, adminSendAffiliatePasswordReset,
 } from "../affiliate.functions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { GradientStatCard } from "@/components/ui/gradient-stat-card";
+import { toneByIndex, toneRow } from "@/lib/kpi-tones";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -169,16 +171,7 @@ function money(cents: number) {
 }
 
 function Kpi({ title, value, icon: Icon, tone = "sky" }: { title: string; value: any; icon?: any; tone?: string }) {
-  const g = KPI_TONES[tone] || KPI_TONES.sky;
-  return (
-    <div className={`rounded-xl border bg-gradient-to-br p-4 shadow-sm transition-shadow hover:shadow-md ${g}`}>
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-xs text-muted-foreground">{title}</span>
-        {Icon && <Icon className="size-4 text-foreground/70" />}
-      </div>
-      <div className="text-2xl font-bold text-foreground">{value}</div>
-    </div>
-  );
+  return <GradientStatCard label={title} value={value} icon={Icon} tone={tone} />;
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1179,23 +1172,8 @@ function ReportsSection() {
   );
 }
 
-const KPI_TONES: Record<string, string> = {
-  sky: "from-sky-500/15 via-sky-400/10 to-transparent border-sky-500/20",
-  indigo: "from-indigo-500/15 via-indigo-400/10 to-transparent border-indigo-500/20",
-  violet: "from-violet-500/15 via-violet-400/10 to-transparent border-violet-500/20",
-  amber: "from-amber-500/15 via-amber-400/10 to-transparent border-amber-500/20",
-  emerald: "from-emerald-500/15 via-emerald-400/10 to-transparent border-emerald-500/20",
-  rose: "from-rose-500/15 via-rose-400/10 to-transparent border-rose-500/20",
-  teal: "from-teal-500/15 via-teal-400/10 to-transparent border-teal-500/20",
-};
-function KPI({ label, value, tone }: { label: string; value: string; tone?: keyof typeof KPI_TONES | string }) {
-  const g = (tone && KPI_TONES[tone as string]) || "from-muted/40 to-transparent border-border";
-  return (
-    <div className={`rounded-lg border bg-gradient-to-br p-3 shadow-sm transition-shadow hover:shadow-md ${g}`}>
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
-      <div className="text-lg font-semibold text-foreground mt-1">{value}</div>
-    </div>
-  );
+function KPI({ label, value, tone }: { label: string; value: string; tone?: string }) {
+  return <GradientStatCard label={label} value={value} tone={tone} size="sm" />;
 }
 
 function ReportTable({
@@ -1237,7 +1215,10 @@ function ReportTable({
                 <tr><td colSpan={columns.length} className="px-3 py-4 text-center text-muted-foreground">Sem dados no período.</td></tr>
               )}
               {rows.map((r, i) => (
-                <tr key={i} className="border-b border-border/50 hover:bg-muted/30">
+                <tr
+                  key={i}
+                  className={`border-b border-border/50 border-l-[3px] hover:bg-muted/40 transition-colors ${toneRow(toneByIndex(i))}`}
+                >
                   {columns.map(([k]) => (
                     <td key={k} className="px-3 py-1.5 truncate max-w-xs">{fmt(k, r[k])}</td>
                   ))}

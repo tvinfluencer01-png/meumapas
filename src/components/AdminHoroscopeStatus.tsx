@@ -2,6 +2,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { CheckCircle2, AlertTriangle, Clock, RefreshCw, Send, Sparkles } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { GradientStatCard } from "@/components/ui/gradient-stat-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getHoroscopeStatus } from "@/lib/horoscope-status.functions";
@@ -134,17 +135,6 @@ export function AdminHoroscopeStatus() {
 }
 
 function StatCard({ label, value, tone, icon }: { label: string; value: number; tone?: "emerald" | "amber" | "destructive"; icon?: React.ReactNode }) {
-  const color =
-    tone === "emerald" ? "text-emerald-300" :
-    tone === "amber" ? "text-amber-300" :
-    tone === "destructive" ? "text-destructive" : "text-foreground";
-  return (
-    <div className="rounded-lg border border-border bg-card/30 p-4">
-      <div className="flex items-center justify-between">
-        <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
-        {icon}
-      </div>
-      <div className={`text-2xl font-serif mt-1 ${color}`}>{value}</div>
-    </div>
-  );
+  const t = tone === "destructive" ? "rose" : tone === "amber" ? "amber" : tone === "emerald" ? "emerald" : "sky";
+  return <GradientStatCard label={label} value={value} tone={t} icon={icon ? () => <>{icon}</> : undefined} />;
 }

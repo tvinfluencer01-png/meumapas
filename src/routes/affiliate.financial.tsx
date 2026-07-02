@@ -4,6 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import { AffiliateShell } from "@/modules/affiliate/ui/AffiliateShell";
 import { getPanelFinancial } from "@/modules/affiliate/panel.functions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { GradientStatCard } from "@/components/ui/gradient-stat-card";
+import { toneByIndex, toneRow } from "@/lib/kpi-tones";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -36,9 +38,9 @@ function Content() {
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <SummaryCard label="Disponível" value={brl(available)} tone="text-gold" />
-        <SummaryCard label="Bloqueado" value={brl(blocked)} tone="text-orange-500" />
-        <SummaryCard label="Recebido" value={brl(paid)} tone="text-green-500" />
+        <GradientStatCard label="Disponível" value={brl(available)} tone="emerald" />
+        <GradientStatCard label="Bloqueado" value={brl(blocked)} tone="amber" />
+        <GradientStatCard label="Recebido" value={brl(paid)} tone="indigo" />
       </div>
 
       <Tabs defaultValue="commissions">
@@ -61,8 +63,8 @@ function Content() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {commissions.map((c) => (
-                    <TableRow key={c.id}>
+                  {commissions.map((c, i) => (
+                    <TableRow key={c.id} className={`border-l-[3px] ${toneRow(toneByIndex(i))}`}>
                       <TableCell className="text-xs">{new Date(c.created_at).toLocaleDateString("pt-BR")}</TableCell>
                       <TableCell className="font-mono">{brl(c.amount_cents)}</TableCell>
                       <TableCell>{c.rate ? `${(Number(c.rate) * 100).toFixed(1)}%` : "-"}</TableCell>
@@ -91,8 +93,8 @@ function Content() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {withdraws.map((w) => (
-                    <TableRow key={w.id}>
+                  {withdraws.map((w, i) => (
+                    <TableRow key={w.id} className={`border-l-[3px] ${toneRow(toneByIndex(i))}`}>
                       <TableCell className="text-xs">{new Date(w.created_at).toLocaleString("pt-BR")}</TableCell>
                       <TableCell className="font-mono">{brl(w.amount_cents)}</TableCell>
                       <TableCell className="uppercase text-xs">{w.method}</TableCell>
@@ -108,16 +110,5 @@ function Content() {
         </TabsContent>
       </Tabs>
     </div>
-  );
-}
-
-function SummaryCard({ label, value, tone }: { label: string; value: string; tone: string }) {
-  return (
-    <Card>
-      <CardContent className="pt-5">
-        <div className="text-[11px] uppercase tracking-wider text-muted-foreground">{label}</div>
-        <div className={`text-2xl font-serif mt-1 ${tone}`}>{value}</div>
-      </CardContent>
-    </Card>
   );
 }
