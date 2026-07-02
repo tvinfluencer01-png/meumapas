@@ -43,6 +43,17 @@ export const getPublicLanding = createServerFn({ method: "GET" })
     return row;
   });
 
+export const listPublicLandings = createServerFn({ method: "GET" }).handler(async () => {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await supabaseAdmin
+    .from("product_landings")
+    .select("slug, title, price_cents, report_type")
+    .eq("active", true)
+    .order("title", { ascending: true });
+  if (error) throw new Error(error.message);
+  return data ?? [];
+});
+
 export const listAdminLandings = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
