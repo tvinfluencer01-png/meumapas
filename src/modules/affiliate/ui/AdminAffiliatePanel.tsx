@@ -23,6 +23,8 @@ import {
   adminUpdateAffiliate, adminSetAffiliatePassword, adminSendAffiliatePasswordReset,
 } from "../affiliate.functions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { GradientStatCard } from "@/components/ui/gradient-stat-card";
+import { toneByIndex, toneRow } from "@/lib/kpi-tones";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
