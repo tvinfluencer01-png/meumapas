@@ -16,6 +16,7 @@ import {
   adminListLogs, adminListWebhookEvents,
   adminGetRanking,
   adminExport,
+  adminGetMenuCounters,
 } from "../admin.functions";
 import { adminGetAffiliateReports } from "../admin-reports.functions";
 import {
@@ -109,6 +110,26 @@ export function AdminAffiliatePanel() {
   const activeGroupId = SECTION_GROUPS.find((g) => g.items.includes(section))?.id ?? "overview";
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({ [activeGroupId]: true });
   const toggleGroup = (id: string) => setOpenGroups((s) => ({ ...s, [id]: !s[id] }));
+  const countersFn = useServerFn(adminGetMenuCounters);
+  const { data: counters } = useQuery({
+    queryKey: ["aff-menu-counters"],
+    queryFn: () => countersFn(),
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  });
+  const badgeTone: Record<string, string> = {
+    affiliates: "bg-amber-500/20 text-amber-300 border-amber-500/40",
+    commissions: "bg-sky-500/20 text-sky-300 border-sky-500/40",
+    withdraws: "bg-emerald-500/20 text-emerald-300 border-emerald-500/40",
+    batches: "bg-indigo-500/20 text-indigo-300 border-indigo-500/40",
+    fraud_ai: "bg-rose-500/20 text-rose-300 border-rose-500/40",
+    outbound_hooks: "bg-rose-500/20 text-rose-300 border-rose-500/40",
+    notif_dispatches: "bg-rose-500/20 text-rose-300 border-rose-500/40",
+    logs: "bg-violet-500/20 text-violet-300 border-violet-500/40",
+  };
+  const getCount = (id: string) => (counters as any)?.[id] ?? 0;
+  const groupCount = (items: readonly string[]) =>
+    items.reduce((s, id) => s + (getCount(id) || 0), 0);
   return (
     <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
       <aside className="lg:w-64 shrink-0 lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-2rem)]">
@@ -133,6 +154,11 @@ export function AdminAffiliatePanel() {
                   >
                     <GIcon className="size-4 shrink-0" />
                     <span className="flex-1 text-left">{g.label}</span>
+                    {groupCount(g.items) > 0 && !isOpen && (
+                      <span className="min-w-5 h-5 px-1.5 rounded-full text-[10px] font-semibold inline-flex items-center justify-center bg-rose-500/20 text-rose-300 border border-rose-500/40">
+                        {groupCount(g.items) > 99 ? "99+" : groupCount(g.items)}
+                      </span>
+                    )}
                     <ChevronDown className={`size-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
                   </button>
                   {isOpen && (
@@ -142,6 +168,7 @@ export function AdminAffiliatePanel() {
                         if (!s) return null;
                         const Icon = s.icon;
                         const active = section === s.id;
+                        const count = getCount(s.id);
                         return (
                           <button
                             key={s.id}
@@ -156,7 +183,12 @@ export function AdminAffiliatePanel() {
                           >
                             <Icon className={`size-3.5 shrink-0 ${active ? "text-gold" : ""}`} />
                             <span className="flex-1">{s.label}</span>
-                            {active && <span className="size-1.5 rounded-full bg-gold shadow-[0_0_6px_rgba(212,175,55,0.8)]" />}
+                            {count > 0 && (
+                              <span className={`min-w-5 h-5 px-1.5 rounded-full text-[10px] font-semibold inline-flex items-center justify-center border ${badgeTone[s.id] ?? "bg-gold/15 text-gold border-gold/40"}`}>
+                                {count > 99 ? "99+" : count}
+                              </span>
+                            )}
+                            {active && count === 0 && <span className="size-1.5 rounded-full bg-gold shadow-[0_0_6px_rgba(212,175,55,0.8)]" />}
                           </button>
                         );
                       })}
