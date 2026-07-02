@@ -44,7 +44,7 @@ export const getPanelDashboard = createServerFn({ method: "GET" })
       sb.from("affiliate_orders" as any).select("amount_cents, status, occurred_at").eq("affiliate_id", affiliateId).gte("occurred_at", start30),
       sb.from("affiliate_commissions" as any).select("amount_cents, status, available_at, created_at").eq("affiliate_id", affiliateId),
       sb.from("affiliate_clicks" as any).select("landed_at").eq("affiliate_id", affiliateId).gte("landed_at", start30),
-      sb.from("affiliate_orders" as any).select("id, order_ref, amount_cents, status, occurred_at").eq("affiliate_id", affiliateId).order("occurred_at", { ascending: false }).limit(8),
+      sb.from("affiliate_orders" as any).select("id, order_ref, amount_cents, status, occurred_at, metadata").eq("affiliate_id", affiliateId).order("occurred_at", { ascending: false }).limit(8),
       sb.from("affiliate_conversions" as any).select("*", { count: "exact", head: true }).eq("affiliate_id", affiliateId).eq("type", "landing_view"),
       sb.from("affiliate_conversions" as any).select("*", { count: "exact", head: true }).eq("affiliate_id", affiliateId).eq("type", "checkout"),
     ]);
@@ -86,6 +86,25 @@ export const getPanelDashboard = createServerFn({ method: "GET" })
     const totalClicksN = totalClicks ?? 0;
     const conversionRate = totalClicksN > 0 ? (salesCount / totalClicksN) * 100 : 0;
 
+    // Enrich recentSales with product + customer names
+    const orderIds = (recentSales ?? []).map((o: any) => o.order_ref).filter(Boolean);
+    let enrichedSales: any[] = recentSales ?? [];
+    if (orderIds.length) {
+      const { data: pos } = await sb
+        .from("product_orders" as any)
+        .select("id, customer_data, landing:landing_id(title, slug)")
+        .in("id", orderIds);
+      const map = new Map<string, any>((pos ?? []).map((p: any) => [p.id, p]));
+      enrichedSales = (recentSales ?? []).map((o: any) => {
+        const po = map.get(o.order_ref);
+        return {
+          ...o,
+          product_title: po?.landing?.title ?? o.metadata?.product_title ?? null,
+          customer_name: po?.customer_data?.full_name ?? po?.customer_data?.name ?? o.metadata?.customer_name ?? null,
+        };
+      });
+    }
+
     return {
       summary: {
         clicksToday: clicksToday ?? 0,
@@ -104,9 +123,10 @@ export const getPanelDashboard = createServerFn({ method: "GET" })
         purchases: salesCount,
       },
       series,
-      recentSales: recentSales ?? [],
+      recentSales: enrichedSales,
     };
   });
+
 
 // ─────────────────────────────────────────────────────────────
 // Financial detail
