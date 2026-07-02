@@ -40,8 +40,18 @@ async function handler({ request }: { request: Request }) {
   }
 
   const now = new Date();
-  const today = now.toISOString().slice(0, 10);
-  const currentUtcHour = now.getUTCHours();
+  // Fonte de verdade: America/Sao_Paulo (mesmo fuso exibido no Super Admin).
+  const spParts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", second: "2-digit",
+    hour12: false, weekday: "short",
+  }).formatToParts(now).reduce<Record<string, string>>((a, p) => (a[p.type] = p.value, a), {});
+  const today = `${spParts.year}-${spParts.month}-${spParts.day}`;
+  const currentLocalHour = Number(spParts.hour) % 24;
+  const dowMap: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+  const localDow = dowMap[spParts.weekday] ?? 0;
+
   const { data: allSubs, error } = await supabaseAdmin
     .from("horoscope_subscriptions")
     .select("*")
@@ -50,19 +60,18 @@ async function handler({ request }: { request: Request }) {
     .limit(2000);
   if (error) return new Response(error.message, { status: 500 });
 
-  // BRT (-3). dia da semana local: 0=domingo..6=sábado
-  const localDow = (new Date(now.getTime() - 3 * 3600 * 1000)).getUTCDay();
   const subs = (allSubs ?? []).filter((s: any) => {
     if (force) return true;
-    // Hora agendada: UI salva `send_local_hour` (BRT). Fallback: send_hour_utc, senão 7 BRT.
-    const scheduledHourUtc = s.send_local_hour != null
-      ? (Number(s.send_local_hour) + 3) % 24
-      : (s.send_hour_utc ?? 10);
-    if (currentUtcHour < scheduledHourUtc) return false;
+    // Compara em horário local de São Paulo. Fallback: send_hour_utc convertido (-3), senão 7h local.
+    const scheduledLocalHour = s.send_local_hour != null
+      ? Number(s.send_local_hour)
+      : (s.send_hour_utc != null ? (Number(s.send_hour_utc) - 3 + 24) % 24 : 7);
+    if (currentLocalHour < scheduledLocalHour) return false;
     const freq = s.frequency ?? "daily";
     if (freq === "weekly") {
       return s.send_weekday != null && s.send_weekday === localDow;
     }
+
 
     if (freq === "alternate") {
       if (!s.last_sent_on) return true;
