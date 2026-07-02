@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Sparkles, Check, Loader2, Star, ShieldCheck, Zap, Clock, Lock, CreditCard } from "lucide-react";
@@ -15,6 +15,11 @@ import { Starfield } from "@/components/Starfield";
 import { getPublicLanding } from "@/lib/product-landings.functions";
 import { createGuestProductOrder } from "@/lib/product-orders.functions";
 import { showFeedback } from "@/components/system-feedback";
+import {
+  captureAffiliateFromUrl,
+  trackAffiliateCheckout,
+  trackAffiliateSignup,
+} from "@/modules/affiliate/lib/client-tracking";
 
 export const Route = createFileRoute("/p/$slug")({
   loader: async ({ params }) => {
@@ -77,10 +82,21 @@ function ProductLandingPage() {
   const [open, setOpen] = useState(false);
   const [values, setValues] = useState<Record<string, string>>({});
   const createFn = useServerFn(createGuestProductOrder);
+  const landingRef = landing ? `/p/${landing.slug}` : undefined;
+
+  useEffect(() => {
+    if (!landing) return;
+    void captureAffiliateFromUrl(`${window.location.origin}/p/${landing.slug}`);
+  }, [landing?.slug]);
 
   const mutation = useMutation({
     mutationFn: () => createFn({ data: { landing_id: landing!.id, customer_data: values } }),
-    onSuccess: (res: any) => {
+    onSuccess: async (res: any) => {
+      // Fire signup + checkout conversions tied to this landing, then redirect.
+      await Promise.allSettled([
+        trackAffiliateSignup({ reference: landingRef }),
+        trackAffiliateCheckout({ value_cents: landing!.price_cents, reference: landingRef }),
+      ]);
       window.location.href = res.checkout_url;
     },
     onError: (e: Error) => {

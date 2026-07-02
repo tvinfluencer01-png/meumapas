@@ -6,6 +6,7 @@ const Body = z.object({
   sessionToken: z.string().optional(),
   value_cents: z.number().int().min(0).default(0),
   reference: z.string().optional(),
+  type: z.enum(["checkout", "signup", "registration"]).default("checkout"),
 });
 
 export const Route = createFileRoute("/api/public/affiliate/track/checkout")({
@@ -46,7 +47,7 @@ export const Route = createFileRoute("/api/public/affiliate/track/checkout")({
             .insert({
               affiliate_id: affiliateId,
               session_id: sessionId,
-              type: "checkout",
+              type: payload.type,
               value_cents: payload.value_cents,
               reference: payload.reference ?? null,
             })
@@ -55,7 +56,7 @@ export const Route = createFileRoute("/api/public/affiliate/track/checkout")({
           await emit("conversion.recorded", {
             affiliateId,
             conversionId: (conv as any)?.id,
-            type: "checkout",
+            type: payload.type,
           });
           return Response.json({ ok: true, conversionId: (conv as any)?.id ?? null });
         } catch (e: any) {
