@@ -133,6 +133,7 @@ function ProductLandingPage() {
 
       {/* HERO */}
       <main className="relative z-10 max-w-6xl mx-auto px-6 py-10 lg:py-16">
+        <AffiliateDebugPanel landingUrl={`${typeof window !== "undefined" ? window.location.origin : ""}/p/${landing.slug}`} />
         <div className="grid lg:grid-cols-[1.1fr_1fr] gap-10 lg:gap-16 items-center">
           <div>
             <div className="flex flex-wrap items-center gap-2 mb-5">
