@@ -131,7 +131,7 @@ export const adminGetAffiliateReports = createServerFn({ method: "POST" })
     for (const cv of conversions) {
       const value = Number(cv.value_cents ?? 0);
       const aff = affMap.get(cv.affiliate_id);
-      const affKey = aff ? (aff.full_name || aff.affiliate_code || aff.email || cv.affiliate_id) : cv.affiliate_id;
+      const affKey = aff ? ((aff.full_name && aff.full_name.trim()) || aff.email || aff.affiliate_code || cv.affiliate_id) : cv.affiliate_id;
       const landingKey = extractPath(cv.reference);
       const dayKey = new Date(cv.occurred_at).toISOString().slice(0, 10);
 
