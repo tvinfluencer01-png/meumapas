@@ -44,7 +44,7 @@ export const getPanelDashboard = createServerFn({ method: "GET" })
       sb.from("affiliate_orders" as any).select("amount_cents, status, occurred_at").eq("affiliate_id", affiliateId).gte("occurred_at", start30),
       sb.from("affiliate_commissions" as any).select("amount_cents, status, available_at, created_at").eq("affiliate_id", affiliateId),
       sb.from("affiliate_clicks" as any).select("landed_at").eq("affiliate_id", affiliateId).gte("landed_at", start30),
-      sb.from("affiliate_orders" as any).select("id, order_ref, amount_cents, status, occurred_at").eq("affiliate_id", affiliateId).order("occurred_at", { ascending: false }).limit(8),
+      sb.from("affiliate_orders" as any).select("id, order_ref, amount_cents, status, occurred_at, metadata").eq("affiliate_id", affiliateId).order("occurred_at", { ascending: false }).limit(8),
       sb.from("affiliate_conversions" as any).select("*", { count: "exact", head: true }).eq("affiliate_id", affiliateId).eq("type", "landing_view"),
       sb.from("affiliate_conversions" as any).select("*", { count: "exact", head: true }).eq("affiliate_id", affiliateId).eq("type", "checkout"),
     ]);
