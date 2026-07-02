@@ -20,6 +20,7 @@ import { AdminProductOrders } from "@/components/AdminProductOrders";
 import { AdminCrm } from "@/components/AdminCrm";
 import { AdminHoroscopeStatus } from "@/components/AdminHoroscopeStatus";
 import { AdminAffiliatePanel } from "@/modules/affiliate/ui/AdminAffiliatePanel";
+import { getServerTime } from "@/lib/server-time.functions";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -246,15 +247,19 @@ function AdminDashboard() {
         <div className="p-4 lg:p-8 max-w-7xl mx-auto space-y-6">
           <header className="flex items-center gap-3">
             <Shield className="size-6 text-gold" />
-            <div>
-              <h1 className="text-2xl font-serif shimmer-text">
-                {ADMIN_MENU.find((m) => m.value === tab)?.label ?? "Painel do Super Admin"}
-              </h1>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-2xl font-serif shimmer-text">
+                  {ADMIN_MENU.find((m) => m.value === tab)?.label ?? "Painel do Super Admin"}
+                </h1>
+                <ServerClock />
+              </div>
               <p className="text-sm text-muted-foreground">
                 Configurações sensíveis, integrações e gestão do sistema.
               </p>
             </div>
           </header>
+
 
           <AdminTabContent tab={tab} />
         </div>
@@ -262,6 +267,37 @@ function AdminDashboard() {
     </div>
   );
 }
+
+function ServerClock() {
+  const fn = useServerFn(getServerTime);
+  const [offset, setOffset] = useState<number | null>(null);
+  const [now, setNow] = useState<Date>(new Date());
+  useEffect(() => {
+    let alive = true;
+    const sync = async () => {
+      try {
+        const t0 = Date.now();
+        const { now: iso } = await fn();
+        const t1 = Date.now();
+        const server = new Date(iso).getTime();
+        if (alive) setOffset(server - (t0 + t1) / 2);
+      } catch {}
+    };
+    sync();
+    const s = setInterval(sync, 60_000);
+    const t = setInterval(() => setNow(new Date()), 1000);
+    return () => { alive = false; clearInterval(s); clearInterval(t); };
+  }, [fn]);
+  const display = new Date(now.getTime() + (offset ?? 0));
+  return (
+    <span className="inline-flex items-center gap-1 text-xs text-muted-foreground font-mono" title="Horário do servidor">
+      <Clock className="size-3" />
+      {display.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+      <span className="opacity-60">UTC{-display.getTimezoneOffset() / 60 >= 0 ? "+" : ""}{-display.getTimezoneOffset() / 60}</span>
+    </span>
+  );
+}
+
 
 function AdminTabContent({ tab }: { tab: string }) {
   switch (tab) {
