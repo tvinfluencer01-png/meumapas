@@ -110,7 +110,7 @@ export const adminGetAffiliateReports = createServerFn({ method: "POST" })
       const brwKey = c.browser || "(desconhecido)";
       const osKey = c.os || "(desconhecido)";
       const aff = affMap.get(c.affiliate_id);
-      const affKey = aff ? (aff.full_name || aff.affiliate_code || aff.email || c.affiliate_id) : c.affiliate_id;
+      const affKey = aff ? ((aff.full_name && aff.full_name.trim()) || aff.email || aff.affiliate_code || c.affiliate_id) : c.affiliate_id;
       const dayKey = new Date(c.landed_at).toISOString().slice(0, 10);
 
       const tok = c.session_token || `${c.affiliate_id}-${c.landed_at}`;
