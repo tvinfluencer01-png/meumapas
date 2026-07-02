@@ -170,9 +170,15 @@ async function handler({ request }: { request: Request }) {
       }
       if (lastErr) throw lastErr;
     } catch (e: any) {
+      const detail = [
+        e?.message,
+        e?.cause?.message,
+        e?.responseBody,
+        e?.data ? JSON.stringify(e.data).slice(0, 200) : null,
+      ].filter(Boolean).join(" | ").slice(0, 500);
       await supabaseAdmin.from("horoscope_log").insert({
         user_id: s.user_id, date: today, channel: "ai", status: "error",
-        detail: String(e?.message ?? e).slice(0, 240), sign: s.sun_sign,
+        detail: detail || String(e), sign: s.sun_sign,
       });
       return;
     }
