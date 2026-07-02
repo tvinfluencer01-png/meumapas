@@ -82,10 +82,21 @@ function ProductLandingPage() {
   const [open, setOpen] = useState(false);
   const [values, setValues] = useState<Record<string, string>>({});
   const createFn = useServerFn(createGuestProductOrder);
+  const landingRef = landing ? `/p/${landing.slug}` : undefined;
+
+  useEffect(() => {
+    if (!landing) return;
+    void captureAffiliateFromUrl(`${window.location.origin}/p/${landing.slug}`);
+  }, [landing?.slug]);
 
   const mutation = useMutation({
     mutationFn: () => createFn({ data: { landing_id: landing!.id, customer_data: values } }),
-    onSuccess: (res: any) => {
+    onSuccess: async (res: any) => {
+      // Fire signup + checkout conversions tied to this landing, then redirect.
+      await Promise.allSettled([
+        trackAffiliateSignup({ reference: landingRef }),
+        trackAffiliateCheckout({ value_cents: landing!.price_cents, reference: landingRef }),
+      ]);
       window.location.href = res.checkout_url;
     },
     onError: (e: Error) => {
