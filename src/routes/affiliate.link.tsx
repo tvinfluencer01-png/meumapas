@@ -155,3 +155,32 @@ function Content() {
     </div>
   );
 }
+
+function HighlightedUrl({ url }: { url: string }) {
+  try {
+    const u = new URL(url);
+    const utmKeys = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content"];
+    const params = Array.from(u.searchParams.entries());
+    const base = `${u.origin}${u.pathname}`;
+    return (
+      <span>
+        <span className="text-foreground">{base}</span>
+        {params.length > 0 && <span className="text-muted-foreground">?</span>}
+        {params.map(([k, v], i) => {
+          const isUtm = utmKeys.includes(k);
+          const isRef = k === "ref";
+          return (
+            <span key={i}>
+              {i > 0 && <span className="text-muted-foreground">&</span>}
+              <span className={isUtm ? "bg-primary/20 text-primary px-1 rounded" : isRef ? "bg-amber-500/20 text-amber-600 dark:text-amber-400 px-1 rounded" : "text-muted-foreground"}>
+                {k}={v}
+              </span>
+            </span>
+          );
+        })}
+      </span>
+    );
+  } catch {
+    return <span>{url}</span>;
+  }
+}
