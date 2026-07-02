@@ -7,7 +7,7 @@ import {
   adminListCommissionRules, adminUpsertCommissionRule, adminDeleteCommissionRule,
   adminListCoupons, adminUpsertCoupon, adminDeleteCoupon,
   adminListCampaigns, adminUpsertCampaign,
-  adminListMaterials, adminUpsertMaterial, adminDeleteMaterial,
+  adminListMaterials, adminUpsertMaterial, adminDeleteMaterial, adminUploadMaterialImage,
   adminListCommissions, adminUpdateCommissionStatus,
   adminListWithdraws, adminUpdateWithdraw,
   adminBroadcastMessage,
@@ -673,27 +673,66 @@ function MessagesSection() {
 // ═══════════════════════════════════════════════════════
 // MATERIALS
 // ═══════════════════════════════════════════════════════
+const MATERIAL_DIMENSIONS: Record<string, { w: number; h: number; label: string }> = {
+  banner: { w: 1200, h: 628, label: "1200×628 (banner web / Facebook / LinkedIn)" },
+  reel: { w: 1080, h: 1920, label: "1080×1920 (Reels / TikTok / Shorts 9:16)" },
+  story: { w: 1080, h: 1920, label: "1080×1920 (Stories Instagram/Facebook 9:16)" },
+  carousel: { w: 1080, h: 1080, label: "1080×1080 (post quadrado Instagram 1:1)" },
+  logo: { w: 512, h: 512, label: "512×512 (logo PNG transparente)" },
+  video: { w: 1920, h: 1080, label: "1920×1080 (vídeo horizontal 16:9)" },
+  pdf: { w: 1240, h: 1754, label: "1240×1754 (A4 300dpi)" },
+  training: { w: 1280, h: 720, label: "1280×720 (thumbnail treinamento)" },
+  copy: { w: 0, h: 0, label: "Texto — imagem opcional" },
+};
+
 function MaterialsSection() {
   const qc = useQueryClient();
   const listFn = useServerFn(adminListMaterials);
   const upFn = useServerFn(adminUpsertMaterial);
   const delFn = useServerFn(adminDeleteMaterial);
+  const uploadFn = useServerFn(adminUploadMaterialImage);
   const { data: rows } = useQuery({ queryKey: ["adm-materials"], queryFn: () => listFn() });
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<any>({ kind: "banner", title: "", tags: [], active: true });
+  const [uploading, setUploading] = useState(false);
   const save = useMutation({
     mutationFn: (v: any) => upFn({ data: v }),
     onSuccess: () => { toast.success("Salvo"); setOpen(false); qc.invalidateQueries({ queryKey: ["adm-materials"] }); },
     onError: (e: any) => toast.error(e.message),
   });
   const del = useMutation({ mutationFn: (id: string) => delFn({ data: { id } }), onSuccess: () => qc.invalidateQueries({ queryKey: ["adm-materials"] }) });
+
+  const handleUpload = async (file: File) => {
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error("Arquivo maior que 5MB"); return; }
+    setUploading(true);
+    try {
+      const dataBase64 = await new Promise<string>((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => {
+          const s = String(r.result || "");
+          resolve(s.includes(",") ? s.split(",")[1] : s);
+        };
+        r.onerror = () => reject(r.error);
+        r.readAsDataURL(file);
+      });
+      const res = await uploadFn({ data: { filename: file.name, contentType: file.type || "image/png", dataBase64 } });
+      setForm((f: any) => ({ ...f, url: res.url, thumb_url: res.url }));
+      toast.success("Imagem enviada");
+    } catch (e: any) {
+      toast.error(e.message || "Falha no upload");
+    } finally { setUploading(false); }
+  };
+
+  const dim = MATERIAL_DIMENSIONS[form.kind] ?? MATERIAL_DIMENSIONS.banner;
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Materiais de marketing</CardTitle>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild><Button size="sm" onClick={() => setForm({ kind: "banner", title: "", tags: [], active: true })}><Plus className="size-4 mr-1" />Novo</Button></DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-h-[90vh] overflow-y-auto">
             <DialogHeader><DialogTitle>Material</DialogTitle></DialogHeader>
             <div className="space-y-3">
               <div><Label>Tipo</Label>
@@ -703,15 +742,28 @@ function MaterialsSection() {
                     {["video","banner","reel","story","carousel","logo","copy","pdf","training"].map(k => <SelectItem key={k} value={k}>{k}</SelectItem>)}
                   </SelectContent>
                 </Select>
+                <p className="text-xs text-muted-foreground mt-1">Dimensão recomendada: {dim.label}</p>
               </div>
               <div><Label>Título</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
               <div><Label>Descrição</Label><Textarea value={form.description ?? ""} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
-              <div><Label>URL</Label><Input value={form.url ?? ""} onChange={(e) => setForm({ ...form, url: e.target.value })} /></div>
+              <div>
+                <Label>Imagem do material</Label>
+                <div className="flex items-center gap-2 mt-1">
+                  <Input type="file" accept="image/*" disabled={uploading} onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUpload(f); }} />
+                  {uploading && <Loader2 className="size-4 animate-spin" />}
+                </div>
+                {form.url && (
+                  <div className="mt-2 border rounded p-2 bg-muted/30">
+                    <img src={form.url} alt="preview" className="max-h-40 rounded object-contain mx-auto" />
+                  </div>
+                )}
+              </div>
+              <div><Label>URL (imagem/arquivo)</Label><Input value={form.url ?? ""} onChange={(e) => setForm({ ...form, url: e.target.value })} placeholder="Preenchido automaticamente ao enviar" /></div>
               <div><Label>Miniatura URL</Label><Input value={form.thumb_url ?? ""} onChange={(e) => setForm({ ...form, thumb_url: e.target.value })} /></div>
               <div><Label>Texto (copy)</Label><Textarea value={form.content ?? ""} onChange={(e) => setForm({ ...form, content: e.target.value })} /></div>
               <div className="flex items-center gap-2"><Switch checked={form.active} onCheckedChange={(v) => setForm({ ...form, active: v })} /><Label>Ativo</Label></div>
             </div>
-            <DialogFooter><Button onClick={() => save.mutate(form)}>Salvar</Button></DialogFooter>
+            <DialogFooter><Button onClick={() => save.mutate(form)} disabled={save.isPending}>Salvar</Button></DialogFooter>
           </DialogContent>
         </Dialog>
       </CardHeader>
@@ -726,8 +778,11 @@ function MaterialsSection() {
                   <Button size="icon" variant="ghost" onClick={() => del.mutate(m.id)}><Trash2 className="size-4" /></Button>
                 </div>
               </div>
+              {(m.thumb_url || m.url) && (
+                <img src={m.thumb_url || m.url} alt={m.title} className="w-full h-32 object-cover rounded mb-2" loading="lazy" />
+              )}
               <div className="font-medium text-sm">{m.title}</div>
-              {m.description && <div className="text-xs text-muted-foreground mt-1">{m.description}</div>}
+              {m.description && <div className="text-xs text-muted-foreground mt-1 line-clamp-2">{m.description}</div>}
             </div>
           ))}
         </div>
