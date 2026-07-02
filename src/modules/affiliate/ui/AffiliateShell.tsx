@@ -86,7 +86,7 @@ export function AffiliateShell({ children }: { children: React.ReactNode }) {
 
   const doLogout = async () => {
     await supabase.auth.signOut();
-    navigate({ to: "/auth", replace: true });
+    navigate({ to: "/affiliate/login", replace: true });
   };
 
   if (authed === null) {
