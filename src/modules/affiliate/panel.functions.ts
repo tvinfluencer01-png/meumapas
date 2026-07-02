@@ -86,24 +86,41 @@ export const getPanelDashboard = createServerFn({ method: "GET" })
     const totalClicksN = totalClicks ?? 0;
     const conversionRate = totalClicksN > 0 ? (salesCount / totalClicksN) * 100 : 0;
 
-    // Enrich recentSales with product + customer names
-    const orderIds = (recentSales ?? []).map((o: any) => o.order_ref).filter(Boolean);
+    // Enrich recentSales with product + customer names + commission credit status
+    const orderIds = (recentSales ?? []).map((o: any) => o.id).filter(Boolean);
+    const orderRefs = (recentSales ?? []).map((o: any) => o.order_ref).filter(Boolean);
     let enrichedSales: any[] = recentSales ?? [];
     if (orderIds.length) {
-      const { data: pos } = await sb
-        .from("product_orders" as any)
-        .select("id, customer_data, landing:landing_id(title, slug)")
-        .in("id", orderIds);
-      const map = new Map<string, any>((pos ?? []).map((p: any) => [p.id, p]));
+      const [{ data: pos }, { data: comms }] = await Promise.all([
+        orderRefs.length
+          ? sb.from("product_orders" as any).select("id, customer_data, landing:landing_id(title, slug)").in("id", orderRefs)
+          : Promise.resolve({ data: [] as any[] }),
+        sb.from("affiliate_commissions" as any).select("order_id, amount_cents, status, available_at").in("order_id", orderIds),
+      ]);
+      const poMap = new Map<string, any>((pos ?? []).map((p: any) => [p.id, p]));
+      const commMap = new Map<string, any>((comms ?? []).map((c: any) => [c.order_id, c]));
+      const nowIso2 = new Date().toISOString();
       enrichedSales = (recentSales ?? []).map((o: any) => {
-        const po = map.get(o.order_ref);
+        const po = poMap.get(o.order_ref);
+        const c = commMap.get(o.id);
+        let commission_status: "creditado" | "pendente" | "bloqueado" | "sem_comissao" = "sem_comissao";
+        if (c) {
+          if (c.status === "paid") commission_status = "creditado";
+          else if (c.status === "pending" && (!c.available_at || c.available_at <= nowIso2)) commission_status = "creditado";
+          else if (c.status === "pending") commission_status = "bloqueado";
+          else commission_status = "pendente";
+        }
         return {
           ...o,
           product_title: po?.landing?.title ?? o.metadata?.product_title ?? null,
           customer_name: po?.customer_data?.full_name ?? po?.customer_data?.name ?? o.metadata?.customer_name ?? null,
+          commission_status,
+          commission_cents: c?.amount_cents ?? 0,
+          commission_available_at: c?.available_at ?? null,
         };
       });
     }
+
 
     return {
       summary: {
