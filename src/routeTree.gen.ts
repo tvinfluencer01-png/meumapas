@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ProgramaAfiliadosRouteImport } from './routes/programa-afiliados'
 import { Route as ProfissionaisRouteImport } from './routes/profissionais'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -72,6 +73,11 @@ import { Route as ApiPublicAffiliateRSlugRouteImport } from './routes/api/public
 import { Route as ApiPublicAffiliateCheckoutCreateRouteImport } from './routes/api/public/affiliate/checkout.create'
 import { Route as ApiPublicAffiliateCheckoutWebhookProviderRouteImport } from './routes/api/public/affiliate/checkout.webhook.$provider'
 
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProgramaAfiliadosRoute = ProgramaAfiliadosRouteImport.update({
   id: '/programa-afiliados',
   path: '/programa-afiliados',
@@ -410,6 +416,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/profissionais': typeof ProfissionaisRoute
   '/programa-afiliados': typeof ProgramaAfiliadosRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/addons': typeof AuthenticatedAddonsRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/clientes': typeof AuthenticatedClientesRoute
@@ -473,6 +480,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/profissionais': typeof ProfissionaisRoute
   '/programa-afiliados': typeof ProgramaAfiliadosRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/addons': typeof AuthenticatedAddonsRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/clientes': typeof AuthenticatedClientesRoute
@@ -538,6 +546,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/profissionais': typeof ProfissionaisRoute
   '/programa-afiliados': typeof ProgramaAfiliadosRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/addons': typeof AuthenticatedAddonsRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/clientes': typeof AuthenticatedClientesRoute
@@ -603,6 +612,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/profissionais'
     | '/programa-afiliados'
+    | '/reset-password'
     | '/addons'
     | '/admin'
     | '/clientes'
@@ -666,6 +676,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/profissionais'
     | '/programa-afiliados'
+    | '/reset-password'
     | '/addons'
     | '/admin'
     | '/clientes'
@@ -730,6 +741,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/profissionais'
     | '/programa-afiliados'
+    | '/reset-password'
     | '/_authenticated/addons'
     | '/_authenticated/admin'
     | '/_authenticated/clientes'
@@ -795,6 +807,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ProfissionaisRoute: typeof ProfissionaisRoute
   ProgramaAfiliadosRoute: typeof ProgramaAfiliadosRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   AffiliateAccountRoute: typeof AffiliateAccountRoute
   AffiliateDashboardRoute: typeof AffiliateDashboardRoute
   AffiliateFinancialRoute: typeof AffiliateFinancialRoute
@@ -837,6 +850,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/programa-afiliados': {
       id: '/programa-afiliados'
       path: '/programa-afiliados'
@@ -1337,6 +1357,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ProfissionaisRoute: ProfissionaisRoute,
   ProgramaAfiliadosRoute: ProgramaAfiliadosRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   AffiliateAccountRoute: AffiliateAccountRoute,
   AffiliateDashboardRoute: AffiliateDashboardRoute,
   AffiliateFinancialRoute: AffiliateFinancialRoute,
