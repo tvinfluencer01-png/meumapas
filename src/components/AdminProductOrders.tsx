@@ -199,9 +199,25 @@ export function AdminProductOrders() {
       </Card>
 
       <Card className="border-gold/30">
-        <CardHeader>
-          <CardTitle className="font-serif shimmer-text">Pedidos de Produtos Avulsos</CardTitle>
-          <CardDescription>Pedidos das landing pages individuais (Mapa Astral, Numerologia, etc.)</CardDescription>
+        <CardHeader className="flex flex-row items-start justify-between gap-2">
+          <div>
+            <CardTitle className="font-serif shimmer-text">Pedidos de Produtos Avulsos</CardTitle>
+            <CardDescription>Pedidos das landing pages individuais (Mapa Astral, Numerologia, etc.)</CardDescription>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={async () => {
+              try {
+                const r = await backfillFn();
+                showFeedback({ title: "Backfill concluído", description: `Total: ${r.total} · Creditados: ${r.credited} · Ignorados: ${r.skipped}`, variant: "success" });
+              } catch (e: any) {
+                showFeedback({ title: "Erro no backfill", description: e?.message ?? "Falha", variant: "error" });
+              }
+            }}
+          >
+            Backfill comissões
+          </Button>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex flex-wrap gap-2">
