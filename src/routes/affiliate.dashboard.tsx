@@ -125,6 +125,10 @@ function Content() {
         </CardContent>
       </Card>
 
+      <LandingMetrics />
+
+
+
       <Card>
         <CardHeader className="flex-row items-center justify-between">
           <div>
