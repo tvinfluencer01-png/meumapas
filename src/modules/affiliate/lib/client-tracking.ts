@@ -112,15 +112,11 @@ export async function trackAffiliateCheckout(opts: {
 export async function trackAffiliateSignup(opts: { reference?: string }): Promise<void> {
   const { affiliateCode, sessionToken } = getAffiliateContext();
   if (!affiliateCode && !sessionToken) return;
-  // Reuse the checkout endpoint style via track/visit? No — signups map to
-  // conversions type=signup. Post directly via a dedicated conversion body
-  // to the checkout endpoint with reference tagged. Since we don't have a
-  // separate route, we insert through checkout with 0 value and a
-  // "signup:" reference prefix so the panel query buckets it as signup.
   await post("/api/public/affiliate/track/checkout", {
     affiliateCode: affiliateCode ?? undefined,
     sessionToken: sessionToken ?? undefined,
     value_cents: 0,
-    reference: `signup:${opts.reference ?? ""}`,
+    reference: opts.reference,
+    type: "signup",
   });
 }
