@@ -6,6 +6,7 @@ const Body = z.object({
   sessionToken: z.string().optional(),
   value_cents: z.number().int().min(0).default(0),
   reference: z.string().optional(),
+  type: z.enum(["checkout", "signup", "registration"]).default("checkout"),
 });
 
 export const Route = createFileRoute("/api/public/affiliate/track/checkout")({
