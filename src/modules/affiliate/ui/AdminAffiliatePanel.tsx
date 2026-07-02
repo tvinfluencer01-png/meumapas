@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   adminGetDashboard,
-  adminListProducts, adminUpsertProduct, adminDeleteProduct,
+  adminListProducts, adminUpsertProduct, adminDeleteProduct, adminToggleProductActive, adminSyncCatalogProducts,
   adminListCommissionRules, adminUpsertCommissionRule, adminDeleteCommissionRule,
   adminListCoupons, adminUpsertCoupon, adminDeleteCoupon,
   adminListCampaigns, adminUpsertCampaign,
@@ -359,54 +359,99 @@ function ProductsSection() {
   const listFn = useServerFn(adminListProducts);
   const upsertFn = useServerFn(adminUpsertProduct);
   const delFn = useServerFn(adminDeleteProduct);
+  const toggleFn = useServerFn(adminToggleProductActive);
+  const syncFn = useServerFn(adminSyncCatalogProducts);
   const { data: rows } = useQuery({ queryKey: ["adm-products"], queryFn: () => listFn() });
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<any>({ slug: "", name: "", price_cents: 0, active: true });
+  const invalidate = () => qc.invalidateQueries({ queryKey: ["adm-products"] });
   const save = useMutation({
     mutationFn: (v: any) => upsertFn({ data: v }),
-    onSuccess: () => { toast.success("Salvo"); setOpen(false); qc.invalidateQueries({ queryKey: ["adm-products"] }); },
+    onSuccess: () => { toast.success("Salvo"); setOpen(false); invalidate(); },
     onError: (e: any) => toast.error(e.message),
   });
   const del = useMutation({
     mutationFn: (id: string) => delFn({ data: { id } }),
-    onSuccess: () => { toast.success("Removido"); qc.invalidateQueries({ queryKey: ["adm-products"] }); },
+    onSuccess: () => { toast.success("Removido"); invalidate(); },
+  });
+  const toggle = useMutation({
+    mutationFn: (v: { id: string; active: boolean }) => toggleFn({ data: v }),
+    onSuccess: invalidate,
+    onError: (e: any) => toast.error(e.message),
+  });
+  const sync = useMutation({
+    mutationFn: () => syncFn(),
+    onSuccess: (r: any) => { toast.success(`Sincronizado: ${r.inserted} novo(s) produto(s) adicionado(s)`); invalidate(); },
+    onError: (e: any) => toast.error(e.message),
   });
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div><CardTitle>Produtos afiliáveis</CardTitle></div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button size="sm" onClick={() => setForm({ slug: "", name: "", price_cents: 0, active: true })}><Plus className="size-4 mr-1" />Novo</Button></DialogTrigger>
-          <DialogContent>
-            <DialogHeader><DialogTitle>{form.id ? "Editar" : "Novo"} produto</DialogTitle></DialogHeader>
-            <div className="space-y-3">
-              <div><Label>Slug</Label><Input value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} /></div>
-              <div><Label>Nome</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
-              <div><Label>Categoria</Label><Input value={form.category ?? ""} onChange={(e) => setForm({ ...form, category: e.target.value })} /></div>
-              <div><Label>Preço (centavos)</Label><Input type="number" value={form.price_cents} onChange={(e) => setForm({ ...form, price_cents: Number(e.target.value) })} /></div>
-              <div><Label>Comissão % (opcional)</Label><Input type="number" value={form.commission_rate ?? ""} onChange={(e) => setForm({ ...form, commission_rate: e.target.value ? Number(e.target.value) : null })} /></div>
-              <div className="flex items-center gap-2"><Switch checked={form.active} onCheckedChange={(v) => setForm({ ...form, active: v })} /><Label>Ativo</Label></div>
-            </div>
-            <DialogFooter><Button onClick={() => save.mutate(form)} disabled={save.isPending}>Salvar</Button></DialogFooter>
-          </DialogContent>
-        </Dialog>
+      <CardHeader className="flex flex-row items-center justify-between gap-2">
+        <div>
+          <CardTitle>Produtos afiliáveis</CardTitle>
+          <CardDescription>Ative/desative cada produto para exibi-lo ao afiliado. Use "Sincronizar catálogo" para importar planos, créditos e relatórios do sistema.</CardDescription>
+        </div>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={() => sync.mutate()} disabled={sync.isPending}>
+            {sync.isPending ? "Sincronizando..." : "Sincronizar catálogo"}
+          </Button>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild><Button size="sm" onClick={() => setForm({ slug: "", name: "", price_cents: 0, active: true, commission_rate: 20 })}><Plus className="size-4 mr-1" />Novo</Button></DialogTrigger>
+            <DialogContent>
+              <DialogHeader><DialogTitle>{form.id ? "Editar" : "Novo"} produto</DialogTitle></DialogHeader>
+              <div className="space-y-3">
+                <div><Label>Slug</Label><Input value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} /></div>
+                <div><Label>Nome</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
+                <div><Label>Descrição</Label><Textarea rows={2} value={form.description ?? ""} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div><Label>Categoria</Label>
+                    <Select value={form.category ?? ""} onValueChange={(v) => setForm({ ...form, category: v })}>
+                      <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="plano">Plano (assinatura)</SelectItem>
+                        <SelectItem value="creditos">Créditos avulsos</SelectItem>
+                        <SelectItem value="relatorio">Relatório avulso</SelectItem>
+                        <SelectItem value="outro">Outro</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div><Label>Preço (centavos)</Label><Input type="number" value={form.price_cents} onChange={(e) => setForm({ ...form, price_cents: Number(e.target.value) })} /></div>
+                  <div><Label>Comissão %</Label><Input type="number" value={form.commission_rate ?? ""} onChange={(e) => setForm({ ...form, commission_rate: e.target.value ? Number(e.target.value) : null })} /></div>
+                  <div><Label>Comissão fixa (centavos)</Label><Input type="number" value={form.commission_fixed_cents ?? ""} onChange={(e) => setForm({ ...form, commission_fixed_cents: e.target.value ? Number(e.target.value) : null })} /></div>
+                </div>
+                <div className="flex items-center gap-2"><Switch checked={form.active} onCheckedChange={(v) => setForm({ ...form, active: v })} /><Label>Visível para afiliados</Label></div>
+              </div>
+              <DialogFooter><Button onClick={() => save.mutate(form)} disabled={save.isPending}>Salvar</Button></DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead><tr className="border-b"><th className="text-left p-2">Slug</th><th>Nome</th><th>Preço</th><th>Comissão</th><th>Ativo</th><th></th></tr></thead>
+            <thead><tr className="border-b"><th className="text-left p-2">Produto</th><th>Categoria</th><th>Preço</th><th>Comissão</th><th>Visível</th><th></th></tr></thead>
             <tbody>
               {(rows ?? []).map((r: any) => (
                 <tr key={r.id} className="border-b">
-                  <td className="p-2">{r.slug}</td><td>{r.name}</td><td className="text-center">{money(r.price_cents)}</td>
-                  <td className="text-center">{r.commission_rate ?? "-"}%</td>
-                  <td className="text-center">{r.active ? "✓" : "—"}</td>
+                  <td className="p-2">
+                    <div className="font-medium">{r.name}</div>
+                    <div className="text-xs text-muted-foreground">{r.slug}</div>
+                  </td>
+                  <td className="text-center">{r.category ? <Badge variant="outline">{r.category}</Badge> : "—"}</td>
+                  <td className="text-center">{money(r.price_cents)}</td>
+                  <td className="text-center">{r.commission_rate != null ? `${r.commission_rate}%` : r.commission_fixed_cents != null ? money(r.commission_fixed_cents) : "—"}</td>
+                  <td className="text-center">
+                    <Switch checked={!!r.active} onCheckedChange={(v) => toggle.mutate({ id: r.id, active: v })} />
+                  </td>
                   <td className="text-right">
                     <Button size="icon" variant="ghost" onClick={() => { setForm(r); setOpen(true); }}><Pencil className="size-4" /></Button>
                     <Button size="icon" variant="ghost" onClick={() => del.mutate(r.id)}><Trash2 className="size-4" /></Button>
                   </td>
                 </tr>
               ))}
+              {(rows ?? []).length === 0 && (
+                <tr><td colSpan={6} className="p-6 text-center text-muted-foreground">Nenhum produto cadastrado. Clique em <b>Sincronizar catálogo</b> para importar automaticamente.</td></tr>
+              )}
             </tbody>
           </table>
         </div>

@@ -191,6 +191,79 @@ export const adminDeleteProduct = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const adminToggleProductActive = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ id: z.string().uuid(), active: z.boolean() }).parse(input))
+  .handler(async ({ data, context }) => {
+    await ensureAdmin(context);
+    const { error } = await context.supabase.from("affiliate_products" as any).update({ active: data.active }).eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/**
+ * Sincroniza (upsert por slug) todos os produtos do catálogo do sistema
+ * (planos, pacotes de créditos e produtos avulsos) dentro de affiliate_products.
+ * Não sobrescreve o campo `active` de itens já existentes.
+ */
+export const adminSyncCatalogProducts = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await ensureAdmin(context);
+    const sb = context.supabase as any;
+
+    const [{ data: plans }, { data: credits }, { data: landings }, { data: existing }] = await Promise.all([
+      sb.from("landing_packages").select("slug,name,price_cents,credits_per_month").eq("enabled", true),
+      sb.from("credit_packages").select("name,credits,price_cents").eq("active", true),
+      sb.from("product_landings").select("slug,title,description,price_cents").eq("active", true),
+      sb.from("affiliate_products").select("slug"),
+    ]);
+
+    const existingSlugs = new Set<string>((existing ?? []).map((r: any) => r.slug));
+    const toInsert: any[] = [];
+
+    (plans ?? []).forEach((p: any) => {
+      const slug = `plan-${p.slug}`;
+      if (existingSlugs.has(slug)) return;
+      toInsert.push({
+        slug, name: `Plano ${p.name}`, category: "plano",
+        description: `Assinatura mensal — ${p.credits_per_month ?? 0} créditos/mês`,
+        price_cents: p.price_cents, commission_rate: 20, active: true,
+        metadata: { source: "landing_packages", source_slug: p.slug },
+      });
+    });
+
+    (credits ?? []).forEach((c: any) => {
+      const slug = `credits-${String(c.name).toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+      if (existingSlugs.has(slug)) return;
+      toInsert.push({
+        slug, name: c.name, category: "creditos",
+        description: `${c.credits} créditos avulsos`,
+        price_cents: c.price_cents, commission_rate: 15, active: true,
+        metadata: { source: "credit_packages", credits: c.credits },
+      });
+    });
+
+    (landings ?? []).forEach((l: any) => {
+      const slug = `report-${l.slug}`;
+      if (existingSlugs.has(slug)) return;
+      toInsert.push({
+        slug, name: l.title, category: "relatorio",
+        description: l.description ?? null,
+        price_cents: l.price_cents, commission_rate: 30, active: true,
+        metadata: { source: "product_landings", source_slug: l.slug },
+      });
+    });
+
+    if (toInsert.length > 0) {
+      const { error } = await sb.from("affiliate_products").insert(toInsert);
+      if (error) throw new Error(error.message);
+    }
+
+    await writeLog(context, "admin.product.sync", { inserted: toInsert.length });
+    return { inserted: toInsert.length, total: (existing?.length ?? 0) + toInsert.length };
+  });
+
 // ────────────────────────────────────────────────────────────
 // COMMISSION RULES
 // ────────────────────────────────────────────────────────────
