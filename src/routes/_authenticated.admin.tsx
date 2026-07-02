@@ -246,15 +246,19 @@ function AdminDashboard() {
         <div className="p-4 lg:p-8 max-w-7xl mx-auto space-y-6">
           <header className="flex items-center gap-3">
             <Shield className="size-6 text-gold" />
-            <div>
-              <h1 className="text-2xl font-serif shimmer-text">
-                {ADMIN_MENU.find((m) => m.value === tab)?.label ?? "Painel do Super Admin"}
-              </h1>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-2xl font-serif shimmer-text">
+                  {ADMIN_MENU.find((m) => m.value === tab)?.label ?? "Painel do Super Admin"}
+                </h1>
+                <ServerClock />
+              </div>
               <p className="text-sm text-muted-foreground">
                 Configurações sensíveis, integrações e gestão do sistema.
               </p>
             </div>
           </header>
+
 
           <AdminTabContent tab={tab} />
         </div>
