@@ -143,6 +143,32 @@ function AdminDashboard() {
     }
   }
 
+  if (tab === "affiliate") {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="p-4 lg:p-8 max-w-[1400px] mx-auto space-y-4">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-3">
+              <Users className="size-6 text-gold" />
+              <div>
+                <h1 className="text-2xl font-serif shimmer-text">Affiliate Center</h1>
+                <p className="text-sm text-muted-foreground">Painel completo do programa de afiliados.</p>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => selectTab("settings")}
+              className="gap-2 border-gold/30 text-gold hover:bg-gold hover:text-white"
+            >
+              <ArrowLeft className="size-4" /> Voltar para o Admin
+            </Button>
+          </div>
+          <AdminAffiliatePanel />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex bg-background">
       {/* Mobile top bar */}
