@@ -110,6 +110,26 @@ export function AdminAffiliatePanel() {
   const activeGroupId = SECTION_GROUPS.find((g) => g.items.includes(section))?.id ?? "overview";
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({ [activeGroupId]: true });
   const toggleGroup = (id: string) => setOpenGroups((s) => ({ ...s, [id]: !s[id] }));
+  const countersFn = useServerFn(adminGetMenuCounters);
+  const { data: counters } = useQuery({
+    queryKey: ["aff-menu-counters"],
+    queryFn: () => countersFn(),
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  });
+  const badgeTone: Record<string, string> = {
+    affiliates: "bg-amber-500/20 text-amber-300 border-amber-500/40",
+    commissions: "bg-sky-500/20 text-sky-300 border-sky-500/40",
+    withdraws: "bg-emerald-500/20 text-emerald-300 border-emerald-500/40",
+    batches: "bg-indigo-500/20 text-indigo-300 border-indigo-500/40",
+    fraud_ai: "bg-rose-500/20 text-rose-300 border-rose-500/40",
+    outbound_hooks: "bg-rose-500/20 text-rose-300 border-rose-500/40",
+    notif_dispatches: "bg-rose-500/20 text-rose-300 border-rose-500/40",
+    logs: "bg-violet-500/20 text-violet-300 border-violet-500/40",
+  };
+  const getCount = (id: string) => (counters as any)?.[id] ?? 0;
+  const groupCount = (items: readonly string[]) =>
+    items.reduce((s, id) => s + (getCount(id) || 0), 0);
   return (
     <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
       <aside className="lg:w-64 shrink-0 lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-2rem)]">
