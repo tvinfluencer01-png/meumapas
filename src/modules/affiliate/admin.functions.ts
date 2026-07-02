@@ -877,3 +877,56 @@ export const adminGetMenuCounters = createServerFn({ method: "GET" })
       logs: n(results[7]),
     } as Record<string, number>;
   });
+
+// ────────────────────────────────────────────────────────────
+// BACKFILL: credit affiliates for previously paid product_orders
+// ────────────────────────────────────────────────────────────
+export const adminBackfillProductOrderCommissions = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await ensureAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { creditAffiliateForProductOrder } = await import("./product-order-credit.server");
+
+    const { data: orders, error } = await supabaseAdmin
+      .from("product_orders")
+      .select("id, created_at")
+      .in("status", ["paid", "processing", "delivered"])
+      .order("created_at", { ascending: false })
+      .limit(500);
+    if (error) throw new Error(error.message);
+
+    const results: Array<{ orderId: string; ok: boolean; reason?: string; affiliateId?: string }> = [];
+    let credited = 0;
+    let skipped = 0;
+    for (const o of (orders as any[]) ?? []) {
+      // Force status=paid consideration by loading; helper checks status itself.
+      // But processing/delivered are effectively paid — temporarily override read:
+      const { data: row } = await supabaseAdmin
+        .from("product_orders")
+        .select("status")
+        .eq("id", o.id)
+        .maybeSingle();
+      const st = (row as any)?.status;
+      let effectiveOk = false;
+      if (st === "paid") {
+        const r = await creditAffiliateForProductOrder(o.id);
+        results.push({ orderId: o.id, ...r });
+        effectiveOk = r.ok;
+      } else {
+        // temporarily flip to paid for the helper (they've already been fulfilled)
+        await supabaseAdmin.from("product_orders").update({ status: "paid" }).eq("id", o.id);
+        const r = await creditAffiliateForProductOrder(o.id);
+        await supabaseAdmin.from("product_orders").update({ status: st }).eq("id", o.id);
+        results.push({ orderId: o.id, ...r });
+        effectiveOk = r.ok;
+      }
+      if (effectiveOk) credited++;
+      else skipped++;
+    }
+    await writeLog(context, "backfill_product_order_commissions", {
+      entity: "product_orders",
+      diff: { total: results.length, credited, skipped },
+    });
+    return { total: results.length, credited, skipped, results };
+  });
