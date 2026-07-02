@@ -267,6 +267,37 @@ function AdminDashboard() {
   );
 }
 
+function ServerClock() {
+  const fn = useServerFn(getServerTime);
+  const [offset, setOffset] = useState<number | null>(null);
+  const [now, setNow] = useState<Date>(new Date());
+  useEffect(() => {
+    let alive = true;
+    const sync = async () => {
+      try {
+        const t0 = Date.now();
+        const { now: iso } = await fn();
+        const t1 = Date.now();
+        const server = new Date(iso).getTime();
+        if (alive) setOffset(server - (t0 + t1) / 2);
+      } catch {}
+    };
+    sync();
+    const s = setInterval(sync, 60_000);
+    const t = setInterval(() => setNow(new Date()), 1000);
+    return () => { alive = false; clearInterval(s); clearInterval(t); };
+  }, [fn]);
+  const display = new Date(now.getTime() + (offset ?? 0));
+  return (
+    <span className="inline-flex items-center gap-1 text-xs text-muted-foreground font-mono" title="Horário do servidor">
+      <Clock className="size-3" />
+      {display.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+      <span className="opacity-60">UTC{-display.getTimezoneOffset() / 60 >= 0 ? "+" : ""}{-display.getTimezoneOffset() / 60}</span>
+    </span>
+  );
+}
+
+
 function AdminTabContent({ tab }: { tab: string }) {
   switch (tab) {
     case "settings": return <SettingsForm />;
