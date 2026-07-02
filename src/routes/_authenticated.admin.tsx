@@ -18,6 +18,7 @@ import { AdminPwa } from "@/components/AdminPwa";
 import { AdminProductLandings } from "@/components/AdminProductLandings";
 import { AdminProductOrders } from "@/components/AdminProductOrders";
 import { AdminCrm } from "@/components/AdminCrm";
+import { AdminHoroscopeStatus } from "@/components/AdminHoroscopeStatus";
 import { AdminAffiliatePanel } from "@/modules/affiliate/ui/AdminAffiliatePanel";
 
 import { Button } from "@/components/ui/button";
@@ -84,6 +85,7 @@ const ADMIN_MENU: { value: string; label: string; icon: typeof SettingsIcon }[] 
   { value: "addons", label: "Add-ons", icon: Package },
   { value: "migration", label: "Migração", icon: ArrowRightLeft },
   { value: "cron", label: "Cron Jobs", icon: Clock },
+  { value: "horoscope-status", label: "Horóscopo Status", icon: Sparkles },
   { value: "backup", label: "Backup", icon: Database },
   { value: "global", label: "Landing Page", icon: Phone },
   { value: "marketing", label: "Marketing", icon: Megaphone },
@@ -254,6 +256,7 @@ function AdminTabContent({ tab }: { tab: string }) {
     case "addons": return <AdminAddons />;
     case "migration": return <AdminPlanMigration />;
     case "cron": return <AdminCronStatus />;
+    case "horoscope-status": return <AdminHoroscopeStatus />;
     case "backup": return <BackupAdmin />;
     case "global": return <AdminGlobalSettings />;
     case "marketing": return <AdminMarketing />;
