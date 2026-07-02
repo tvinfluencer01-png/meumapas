@@ -1068,13 +1068,13 @@ function ReportsSection() {
             <div className="text-sm text-muted-foreground">Carregando…</div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
-              <KPI label="Cliques" value={t.clicks.toLocaleString("pt-BR")} />
-              <KPI label="Visitantes únicos" value={t.uniqueVisitors.toLocaleString("pt-BR")} />
-              <KPI label="Cadastros" value={t.signups.toLocaleString("pt-BR")} />
-              <KPI label="Checkouts" value={t.checkouts.toLocaleString("pt-BR")} />
-              <KPI label="Vendas" value={t.sales.toLocaleString("pt-BR")} />
-              <KPI label="Receita" value={`R$ ${(t.revenueCents / 100).toFixed(2)}`} />
-              <KPI label="Taxa conv." value={`${t.conversionRate}%`} />
+              <KPI label="Cliques" value={t.clicks.toLocaleString("pt-BR")} tone="sky" />
+              <KPI label="Visitantes únicos" value={t.uniqueVisitors.toLocaleString("pt-BR")} tone="indigo" />
+              <KPI label="Cadastros" value={t.signups.toLocaleString("pt-BR")} tone="violet" />
+              <KPI label="Checkouts" value={t.checkouts.toLocaleString("pt-BR")} tone="amber" />
+              <KPI label="Vendas" value={t.sales.toLocaleString("pt-BR")} tone="emerald" />
+              <KPI label="Receita" value={`R$ ${(t.revenueCents / 100).toFixed(2)}`} tone="rose" />
+              <KPI label="Taxa conv." value={`${t.conversionRate}%`} tone="teal" />
             </div>
           )}
         </CardContent>
