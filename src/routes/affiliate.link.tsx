@@ -128,9 +128,12 @@ function Content() {
           </div>
 
           {productUrl && (
-            <div className="flex flex-col md:flex-row gap-2">
-              <code className="flex-1 text-xs break-all border rounded-md p-3 bg-muted/40">{productUrl}</code>
-              <div className="flex gap-2">
+            <div className="space-y-2">
+              <div className="text-xs text-muted-foreground">Preview da URL (UTMs destacados):</div>
+              <div className="text-xs break-all border rounded-md p-3 bg-muted/40 font-mono">
+                <HighlightedUrl url={productUrl} />
+              </div>
+              <div className="flex gap-2 flex-wrap">
                 <Button onClick={() => copy(productUrl)} variant="outline"><Copy className="size-4 mr-2" />Copiar</Button>
                 <Button onClick={() => share(productUrl)}><Share2 className="size-4 mr-2" />Compartilhar</Button>
                 <Button asChild variant="outline"><a href={productUrl} target="_blank" rel="noreferrer"><ExternalLink className="size-4" /></a></Button>
@@ -151,4 +154,33 @@ function Content() {
       </Card>
     </div>
   );
+}
+
+function HighlightedUrl({ url }: { url: string }) {
+  try {
+    const u = new URL(url);
+    const utmKeys = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content"];
+    const params = Array.from(u.searchParams.entries());
+    const base = `${u.origin}${u.pathname}`;
+    return (
+      <span>
+        <span className="text-foreground">{base}</span>
+        {params.length > 0 && <span className="text-muted-foreground">?</span>}
+        {params.map(([k, v], i) => {
+          const isUtm = utmKeys.includes(k);
+          const isRef = k === "ref";
+          return (
+            <span key={i}>
+              {i > 0 && <span className="text-muted-foreground">&</span>}
+              <span className={isUtm ? "bg-primary/20 text-primary px-1 rounded" : isRef ? "bg-amber-500/20 text-amber-600 dark:text-amber-400 px-1 rounded" : "text-muted-foreground"}>
+                {k}={v}
+              </span>
+            </span>
+          );
+        })}
+      </span>
+    );
+  } catch {
+    return <span>{url}</span>;
+  }
 }
