@@ -7,7 +7,7 @@ import {
   adminListCommissionRules, adminUpsertCommissionRule, adminDeleteCommissionRule,
   adminListCoupons, adminUpsertCoupon, adminDeleteCoupon,
   adminListCampaigns, adminUpsertCampaign,
-  adminListMaterials, adminUpsertMaterial, adminDeleteMaterial,
+  adminListMaterials, adminUpsertMaterial, adminDeleteMaterial, adminUploadMaterialImage,
   adminListCommissions, adminUpdateCommissionStatus,
   adminListWithdraws, adminUpdateWithdraw,
   adminBroadcastMessage,
