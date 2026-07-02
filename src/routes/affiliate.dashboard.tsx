@@ -136,21 +136,36 @@ function Content() {
             <div className="text-sm text-muted-foreground py-6 text-center">Nenhuma venda ainda.</div>
           ) : (
             <div className="divide-y">
-              {data.recentSales.map((o: any) => (
-                <div key={o.id} className="py-2 flex items-center justify-between gap-2 text-sm">
-                  <div className="min-w-0">
-                    <div className="truncate font-medium">{o.product_title ?? "Produto"}</div>
-                    <div className="text-xs text-muted-foreground truncate">
-                      {o.customer_name ?? "Cliente"} · {new Date(o.occurred_at).toLocaleString("pt-BR")}
+              {data.recentSales.map((o: any) => {
+                const commLabel: Record<string, { label: string; cls: string }> = {
+                  creditado: { label: "Creditado", cls: "bg-emerald-500/15 text-emerald-500 border-emerald-500/30" },
+                  bloqueado: { label: "Aguardando liberação", cls: "bg-amber-500/15 text-amber-500 border-amber-500/30" },
+                  pendente: { label: "Pendente", cls: "bg-blue-500/15 text-blue-500 border-blue-500/30" },
+                  sem_comissao: { label: "Sem comissão", cls: "bg-muted text-muted-foreground border-border" },
+                };
+                const cs = commLabel[o.commission_status ?? "sem_comissao"];
+                return (
+                  <div key={o.id} className="py-2 flex items-center justify-between gap-2 text-sm">
+                    <div className="min-w-0">
+                      <div className="truncate font-medium">{o.product_title ?? "Produto"}</div>
+                      <div className="text-xs text-muted-foreground truncate">
+                        {o.customer_name ?? "Cliente"} · {new Date(o.occurred_at).toLocaleString("pt-BR")}
+                      </div>
+                      <div className="mt-1 flex items-center gap-2 flex-wrap">
+                        <span className={`text-[10px] px-2 py-0.5 rounded border ${cs.cls}`}>{cs.label}</span>
+                        {o.commission_cents > 0 && (
+                          <span className="text-[10px] text-muted-foreground">Comissão: {brl(o.commission_cents)}</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Badge variant={o.status === "paid" ? "default" : "outline"}>{o.status}</Badge>
+                      <div className="font-serif">{brl(o.amount_cents ?? 0)}</div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <Badge variant={o.status === "paid" ? "default" : "outline"}>{o.status}</Badge>
-                    <div className="font-serif">{brl(o.amount_cents ?? 0)}</div>
-                  </div>
-                </div>
+                );
+              })}
 
-              ))}
             </div>
           )}
         </CardContent>
