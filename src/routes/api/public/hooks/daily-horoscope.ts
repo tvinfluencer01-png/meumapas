@@ -54,13 +54,16 @@ async function handler({ request }: { request: Request }) {
   const localDow = (new Date(now.getTime() - 3 * 3600 * 1000)).getUTCDay();
   const subs = (allSubs ?? []).filter((s: any) => {
     if (force) return true;
-    // Permite retry no mesmo dia: hora agendada já passou e ainda não foi enviado hoje
-    const scheduledHour = s.send_hour_utc ?? 10;
-    if (currentUtcHour < scheduledHour) return false;
+    // Hora agendada: UI salva `send_local_hour` (BRT). Fallback: send_hour_utc, senão 7 BRT.
+    const scheduledHourUtc = s.send_local_hour != null
+      ? (Number(s.send_local_hour) + 3) % 24
+      : (s.send_hour_utc ?? 10);
+    if (currentUtcHour < scheduledHourUtc) return false;
     const freq = s.frequency ?? "daily";
     if (freq === "weekly") {
       return s.send_weekday != null && s.send_weekday === localDow;
     }
+
     if (freq === "alternate") {
       if (!s.last_sent_on) return true;
       const last = new Date(s.last_sent_on + "T00:00:00Z").getTime();
