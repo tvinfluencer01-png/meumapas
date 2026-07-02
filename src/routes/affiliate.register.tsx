@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff, Sparkles, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
+import { isValidCpf, normalizeCpf } from "@/modules/affiliate/lib/cpf";
 
 export const Route = createFileRoute("/affiliate/register")({
   component: AffiliateRegisterPage,
@@ -41,8 +42,29 @@ function AffiliateRegisterPage() {
   }>(null);
   const [copied, setCopied] = useState<string | null>(null);
 
+  function validate(): string | null {
+    if (form.fullName.trim().length < 3) return "Informe seu nome completo.";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) return "Email inválido.";
+    const wa = form.whatsapp.replace(/\D/g, "");
+    if (wa.length < 10 || wa.length > 13) return "WhatsApp inválido (com DDD).";
+    if (!isValidCpf(form.cpf)) return "CPF inválido.";
+    if (form.password.length < 8) return "A senha deve ter ao menos 8 caracteres.";
+    if (form.password !== form.passwordConfirm) return "As senhas não conferem.";
+    return null;
+  }
+
   const mut = useMutation({
-    mutationFn: () => registerFn({ data: form }),
+    mutationFn: () => {
+      const err = validate();
+      if (err) return Promise.reject(new Error(err));
+      return registerFn({
+        data: {
+          ...form,
+          cpf: normalizeCpf(form.cpf),
+          whatsapp: form.whatsapp.replace(/\D/g, ""),
+        },
+      });
+    },
     onSuccess: (res: any) => {
       setCreated({
         affiliateCode: res.affiliateCode,
