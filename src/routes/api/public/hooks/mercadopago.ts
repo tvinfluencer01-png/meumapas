@@ -155,6 +155,16 @@ async function handler({ request }: { request: Request }) {
       }).eq("id", leadId);
     }
 
+    // Credita comissão do afiliado (idempotente).
+    try {
+      const { creditAffiliateForProductOrder } = await import(
+        "@/modules/affiliate/product-order-credit.server"
+      );
+      await creditAffiliateForProductOrder(prodOrder.id);
+    } catch (e) {
+      console.error("[mp webhook] affiliate credit failed", e);
+    }
+
     return Response.json({ ok: true, kind: "product_order", user_id: resolvedUserId });
   }
 
