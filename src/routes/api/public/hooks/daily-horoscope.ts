@@ -30,6 +30,15 @@ async function handler({ request }: { request: Request }) {
     return new Response("Unauthorized", { status: 401 });
   }
 
+  const url = new URL(request.url);
+  let force = url.searchParams.get("force") === "1";
+  if (!force && request.method === "POST") {
+    try {
+      const b = await request.clone().json().catch(() => null) as any;
+      if (b?.force) force = true;
+    } catch {}
+  }
+
   const now = new Date();
   const today = now.toISOString().slice(0, 10);
   const currentUtcHour = now.getUTCHours();
@@ -37,13 +46,14 @@ async function handler({ request }: { request: Request }) {
     .from("horoscope_subscriptions")
     .select("*")
     .eq("enabled", true)
-    .or(`last_sent_on.is.null,last_sent_on.lt.${today}`)
+    .or(force ? "id.not.is.null" : `last_sent_on.is.null,last_sent_on.lt.${today}`)
     .limit(2000);
   if (error) return new Response(error.message, { status: 500 });
 
   // BRT (-3). dia da semana local: 0=domingo..6=sábado
   const localDow = (new Date(now.getTime() - 3 * 3600 * 1000)).getUTCDay();
   const subs = (allSubs ?? []).filter((s: any) => {
+    if (force) return true;
     // Permite retry no mesmo dia: hora agendada já passou e ainda não foi enviado hoje
     const scheduledHour = s.send_hour_utc ?? 10;
     if (currentUtcHour < scheduledHour) return false;
