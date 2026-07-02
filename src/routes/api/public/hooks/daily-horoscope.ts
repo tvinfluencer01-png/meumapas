@@ -154,7 +154,9 @@ async function handler({ request }: { request: Request }) {
           `\n\nÂngulos astrológicos obrigatórios de hoje: 1) ${themes[0]}; 2) ${themes[1]}. EVITE temas usados recentemente: ${(chartSummary.recentThemes ?? []).join("; ") || "—"}.\n\nIMPORTANTE: na seção "🎯 Número e cor da sorte", use EXATAMENTE: "Número: ${lucky.number} | Cor: ${lucky.color}". Não invente outros valores.`
         : buildHoroscopePrompt(s.sun_sign, today, lucky, chartSummary);
       // seed determinístico por (usuário, dia) garante unicidade sem perder reprodutibilidade
-      const seedNum = (Array.from(`${s.user_id}|${today}`).reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 2166136261) >>> 0) & 0x7fffffff;
+      // Seed determinístico por (usuário, dia). Google exige INT32 positivo (< 2^31-1).
+      const seedHash = Array.from(`${s.user_id}|${today}`).reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 2166136261) >>> 0;
+      const seedNum = seedHash % 2147483647;
       let lastErr: any = null;
       for (const modelName of modelCandidates) {
         try {
