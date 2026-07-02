@@ -39,14 +39,14 @@ function Content() {
   const f = data.funnel;
 
   const cards = [
-    { label: "Cliques Hoje", value: String(s.clicksToday), icon: MousePointerClick, color: "text-blue-500" },
-    { label: "Cliques Mês", value: String(s.clicksMonth), icon: MousePointerClick, color: "text-cyan-500" },
-    { label: "Conversão", value: `${s.conversionRate.toFixed(2)}%`, icon: TrendingUp, color: "text-emerald-500" },
-    { label: "Vendas", value: String(s.salesCount), icon: ShoppingCart, color: "text-violet-500" },
-    { label: "Ticket Médio", value: brl(s.avgTicketCents), icon: Ticket, color: "text-amber-500" },
-    { label: "Comissão Disponível", value: brl(s.availableCents), icon: Wallet, color: "text-gold" },
-    { label: "Comissão Bloqueada", value: brl(s.blockedCents), icon: Lock, color: "text-orange-500" },
-    { label: "Comissão Recebida", value: brl(s.paidCents), icon: CheckCircle2, color: "text-green-500" },
+    { label: "Cliques Hoje", value: String(s.clicksToday), icon: MousePointerClick, tone: "sky" as const },
+    { label: "Cliques Mês", value: String(s.clicksMonth), icon: MousePointerClick, tone: "teal" as const },
+    { label: "Conversão", value: `${s.conversionRate.toFixed(2)}%`, icon: TrendingUp, tone: "emerald" as const },
+    { label: "Vendas", value: String(s.salesCount), icon: ShoppingCart, tone: "violet" as const },
+    { label: "Ticket Médio", value: brl(s.avgTicketCents), icon: Ticket, tone: "amber" as const },
+    { label: "Comissão Disponível", value: brl(s.availableCents), icon: Wallet, tone: "fuchsia" as const },
+    { label: "Comissão Bloqueada", value: brl(s.blockedCents), icon: Lock, tone: "rose" as const },
+    { label: "Comissão Recebida", value: brl(s.paidCents), icon: CheckCircle2, tone: "indigo" as const },
   ];
 
   return (
@@ -58,19 +58,11 @@ function Content() {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {cards.map((c) => (
-          <Card key={c.label} className="hover:border-gold/50 transition-colors">
-            <CardContent className="pt-5">
-              <div className="flex items-center justify-between">
-                <div className="min-w-0">
-                  <div className="text-[11px] uppercase tracking-wider text-muted-foreground truncate">{c.label}</div>
-                  <div className="text-xl md:text-2xl font-serif mt-1 truncate">{c.value}</div>
-                </div>
-                <c.icon className={`size-6 ${c.color} shrink-0`} />
-              </div>
-            </CardContent>
-          </Card>
+          <GradientStatCard key={c.label} label={c.label} value={c.value} icon={c.icon} tone={c.tone} />
         ))}
       </div>
+
+
 
       <div className="grid lg:grid-cols-2 gap-4">
         <Card>
