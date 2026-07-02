@@ -38,9 +38,9 @@ function Content() {
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <SummaryCard label="Disponível" value={brl(available)} tone="text-gold" />
-        <SummaryCard label="Bloqueado" value={brl(blocked)} tone="text-orange-500" />
-        <SummaryCard label="Recebido" value={brl(paid)} tone="text-green-500" />
+        <GradientStatCard label="Disponível" value={brl(available)} tone="emerald" />
+        <GradientStatCard label="Bloqueado" value={brl(blocked)} tone="amber" />
+        <GradientStatCard label="Recebido" value={brl(paid)} tone="indigo" />
       </div>
 
       <Tabs defaultValue="commissions">
