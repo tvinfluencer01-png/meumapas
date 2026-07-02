@@ -78,7 +78,7 @@ async function handler({ request }: { request: Request }) {
   const apiKey = process.env.LOVABLE_API_KEY;
   if (!apiKey) return new Response("LOVABLE_API_KEY missing", { status: 500 });
   const provider = createLovableAiGatewayProvider(apiKey);
-  const model = provider.chatModel("google/gemini-2.5-flash");
+  const modelCandidates = ["google/gemini-3-flash-preview", "google/gemini-2.5-flash"];
 
   const { getAddonPromptOverride } = await import("@/lib/addon-settings.functions");
   const promptOverride = await getAddonPromptOverride("sub_daily_horoscope");
