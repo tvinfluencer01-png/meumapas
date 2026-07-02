@@ -76,7 +76,7 @@ export const adminGetAffiliateReports = createServerFn({ method: "POST" })
         .gte("occurred_at", since)
         .limit(50000),
       sb.from("affiliate_profiles" as any)
-        .select("id,display_name,affiliate_code,email"),
+        .select("id,full_name,affiliate_code,email"),
     ]);
 
     const clicks = (clicksRes.data ?? []) as any[];
@@ -110,7 +110,7 @@ export const adminGetAffiliateReports = createServerFn({ method: "POST" })
       const brwKey = c.browser || "(desconhecido)";
       const osKey = c.os || "(desconhecido)";
       const aff = affMap.get(c.affiliate_id);
-      const affKey = aff ? (aff.display_name || aff.affiliate_code || aff.email || c.affiliate_id) : c.affiliate_id;
+      const affKey = aff ? (aff.full_name || aff.affiliate_code || aff.email || c.affiliate_id) : c.affiliate_id;
       const dayKey = new Date(c.landed_at).toISOString().slice(0, 10);
 
       const tok = c.session_token || `${c.affiliate_id}-${c.landed_at}`;
@@ -131,7 +131,7 @@ export const adminGetAffiliateReports = createServerFn({ method: "POST" })
     for (const cv of conversions) {
       const value = Number(cv.value_cents ?? 0);
       const aff = affMap.get(cv.affiliate_id);
-      const affKey = aff ? (aff.display_name || aff.affiliate_code || aff.email || cv.affiliate_id) : cv.affiliate_id;
+      const affKey = aff ? (aff.full_name || aff.affiliate_code || aff.email || cv.affiliate_id) : cv.affiliate_id;
       const landingKey = extractPath(cv.reference);
       const dayKey = new Date(cv.occurred_at).toISOString().slice(0, 10);
 
