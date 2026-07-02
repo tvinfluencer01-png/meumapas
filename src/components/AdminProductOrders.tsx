@@ -200,29 +200,12 @@ export function AdminProductOrders() {
       </Card>
 
       <Card className="border-gold/30">
-        <CardHeader className="flex flex-row items-start justify-between gap-2">
-          <div>
-            <CardTitle className="font-serif shimmer-text">Pedidos de Produtos Avulsos</CardTitle>
-            <CardDescription>Pedidos das landing pages individuais (Mapa Astral, Numerologia, etc.)</CardDescription>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={async () => {
-              try {
-                const r = await backfillFn();
-                showFeedback({ title: "Backfill concluído", description: `Total: ${r.total} · Creditados: ${r.credited} · Ignorados: ${r.skipped}`, type: "success" });
-                qc.invalidateQueries({ queryKey: ["admin-product-orders"] });
-              } catch (e: any) {
-                showFeedback({ title: "Erro no backfill", description: e?.message ?? "Falha", type: "error" });
-              }
-            }}
-          >
-            Backfill comissões
-          </Button>
+        <CardHeader>
+          <CardTitle className="font-serif shimmer-text">Pedidos de Produtos Avulsos</CardTitle>
+          <CardDescription>Pedidos das landing pages individuais (Mapa Astral, Numerologia, etc.)</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Input
               placeholder="Buscar por cliente ou produto..."
               value={search}
@@ -238,7 +221,23 @@ export function AdminProductOrders() {
                 ))}
               </SelectContent>
             </Select>
+            <Button
+              className="ml-auto bg-gold text-black hover:bg-gold/90"
+              size="sm"
+              onClick={async () => {
+                try {
+                  const r = await backfillFn();
+                  showFeedback({ title: "Backfill concluído", description: `Total: ${r.total} · Creditados: ${r.credited} · Ignorados: ${r.skipped}`, type: "success" });
+                  qc.invalidateQueries({ queryKey: ["admin-product-orders"] });
+                } catch (e: any) {
+                  showFeedback({ title: "Erro no backfill", description: e?.message ?? "Falha", type: "error" });
+                }
+              }}
+            >
+              ⚡ Backfill comissões
+            </Button>
           </div>
+
 
           {isLoading ? (
             <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="size-4 animate-spin" /> Carregando…</div>
