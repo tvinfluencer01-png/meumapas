@@ -1068,13 +1068,13 @@ function ReportsSection() {
             <div className="text-sm text-muted-foreground">Carregando…</div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
-              <KPI label="Cliques" value={t.clicks.toLocaleString("pt-BR")} />
-              <KPI label="Visitantes únicos" value={t.uniqueVisitors.toLocaleString("pt-BR")} />
-              <KPI label="Cadastros" value={t.signups.toLocaleString("pt-BR")} />
-              <KPI label="Checkouts" value={t.checkouts.toLocaleString("pt-BR")} />
-              <KPI label="Vendas" value={t.sales.toLocaleString("pt-BR")} />
-              <KPI label="Receita" value={`R$ ${(t.revenueCents / 100).toFixed(2)}`} />
-              <KPI label="Taxa conv." value={`${t.conversionRate}%`} />
+              <KPI label="Cliques" value={t.clicks.toLocaleString("pt-BR")} tone="sky" />
+              <KPI label="Visitantes únicos" value={t.uniqueVisitors.toLocaleString("pt-BR")} tone="indigo" />
+              <KPI label="Cadastros" value={t.signups.toLocaleString("pt-BR")} tone="violet" />
+              <KPI label="Checkouts" value={t.checkouts.toLocaleString("pt-BR")} tone="amber" />
+              <KPI label="Vendas" value={t.sales.toLocaleString("pt-BR")} tone="emerald" />
+              <KPI label="Receita" value={`R$ ${(t.revenueCents / 100).toFixed(2)}`} tone="rose" />
+              <KPI label="Taxa conv." value={`${t.conversionRate}%`} tone="teal" />
             </div>
           )}
         </CardContent>
@@ -1180,9 +1180,19 @@ function ReportsSection() {
   );
 }
 
-function KPI({ label, value }: { label: string; value: string }) {
+const KPI_TONES: Record<string, string> = {
+  sky: "from-sky-500/15 via-sky-400/10 to-transparent border-sky-500/20",
+  indigo: "from-indigo-500/15 via-indigo-400/10 to-transparent border-indigo-500/20",
+  violet: "from-violet-500/15 via-violet-400/10 to-transparent border-violet-500/20",
+  amber: "from-amber-500/15 via-amber-400/10 to-transparent border-amber-500/20",
+  emerald: "from-emerald-500/15 via-emerald-400/10 to-transparent border-emerald-500/20",
+  rose: "from-rose-500/15 via-rose-400/10 to-transparent border-rose-500/20",
+  teal: "from-teal-500/15 via-teal-400/10 to-transparent border-teal-500/20",
+};
+function KPI({ label, value, tone }: { label: string; value: string; tone?: keyof typeof KPI_TONES | string }) {
+  const g = (tone && KPI_TONES[tone as string]) || "from-muted/40 to-transparent border-border";
   return (
-    <div className="rounded-lg border border-border bg-card/40 p-3">
+    <div className={`rounded-lg border bg-gradient-to-br p-3 shadow-sm transition-shadow hover:shadow-md ${g}`}>
       <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
       <div className="text-lg font-semibold text-foreground mt-1">{value}</div>
     </div>
