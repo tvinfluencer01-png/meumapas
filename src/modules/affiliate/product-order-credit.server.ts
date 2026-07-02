@@ -64,6 +64,22 @@ export async function creditAffiliateForProductOrder(orderId: string): Promise<{
       }
     }
 
+    // 3) fallback last-click: procura o clique mais recente antes do pedido (janela 30 dias)
+    if (!affiliateId) {
+      const createdAt = new Date((order as any).created_at ?? Date.now());
+      const windowStart = new Date(createdAt.getTime() - 30 * 24 * 3600 * 1000).toISOString();
+      const windowEnd = new Date(createdAt.getTime() + 10 * 60 * 1000).toISOString();
+      const { data: byClick } = await supabaseAdmin
+        .from("affiliate_clicks" as any)
+        .select("affiliate_id, session_token, landed_at")
+        .gte("landed_at", windowStart)
+        .lte("landed_at", windowEnd)
+        .order("landed_at", { ascending: false })
+        .limit(1);
+      affiliateId = (byClick as any)?.[0]?.affiliate_id ?? null;
+      sessionId = (byClick as any)?.[0]?.session_token ?? null;
+    }
+
     if (!affiliateId) return { ok: false, reason: "no_affiliate" };
 
     // Upsert affiliate_orders (unique: affiliate_id + order_ref)
