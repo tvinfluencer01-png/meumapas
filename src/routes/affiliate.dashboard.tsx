@@ -4,6 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import { AffiliateShell } from "@/modules/affiliate/ui/AffiliateShell";
 import { getPanelDashboard, getPanelLandingMetrics } from "@/modules/affiliate/panel.functions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { GradientStatCard } from "@/components/ui/gradient-stat-card";
+import { toneByIndex, toneRow } from "@/lib/kpi-tones";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
