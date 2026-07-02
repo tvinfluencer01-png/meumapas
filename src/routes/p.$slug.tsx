@@ -15,6 +15,11 @@ import { Starfield } from "@/components/Starfield";
 import { getPublicLanding } from "@/lib/product-landings.functions";
 import { createGuestProductOrder } from "@/lib/product-orders.functions";
 import { showFeedback } from "@/components/system-feedback";
+import {
+  captureAffiliateFromUrl,
+  trackAffiliateCheckout,
+  trackAffiliateSignup,
+} from "@/modules/affiliate/lib/client-tracking";
 
 export const Route = createFileRoute("/p/$slug")({
   loader: async ({ params }) => {
