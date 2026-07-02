@@ -139,14 +139,17 @@ function Content() {
               {data.recentSales.map((o: any) => (
                 <div key={o.id} className="py-2 flex items-center justify-between gap-2 text-sm">
                   <div className="min-w-0">
-                    <div className="truncate font-mono text-xs">{o.order_ref}</div>
-                    <div className="text-xs text-muted-foreground">{new Date(o.occurred_at).toLocaleString("pt-BR")}</div>
+                    <div className="truncate font-medium">{o.product_title ?? "Produto"}</div>
+                    <div className="text-xs text-muted-foreground truncate">
+                      {o.customer_name ?? "Cliente"} · {new Date(o.occurred_at).toLocaleString("pt-BR")}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 shrink-0">
                     <Badge variant={o.status === "paid" ? "default" : "outline"}>{o.status}</Badge>
                     <div className="font-serif">{brl(o.amount_cents ?? 0)}</div>
                   </div>
                 </div>
+
               ))}
             </div>
           )}
