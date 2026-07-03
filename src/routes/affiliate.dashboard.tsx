@@ -58,7 +58,9 @@ function Content() {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {cards.map((c) => (
-          <GradientStatCard key={c.label} label={c.label} value={c.value} icon={c.icon} tone={c.tone} />
+          <Link key={c.label} to={c.to} className="block rounded-xl focus:outline-none focus:ring-2 focus:ring-ring">
+            <GradientStatCard label={c.label} value={c.value} icon={c.icon} tone={c.tone} hint={c.hint} className="cursor-pointer hover:-translate-y-0.5 transition-transform" />
+          </Link>
         ))}
       </div>
 
