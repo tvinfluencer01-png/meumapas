@@ -63,20 +63,7 @@ function NotFound() {
   );
 }
 
-const FIELD_LABELS: Record<string, { label: string; type?: string; placeholder?: string }> = {
-  full_name: { label: "Nome completo", placeholder: "Seu nome" },
-  email: { label: "E-mail", type: "email", placeholder: "voce@exemplo.com" },
-  phone: { label: "WhatsApp", placeholder: "(11) 99999-9999" },
-  birth_date: { label: "Data de nascimento", type: "date" },
-  birth_time: { label: "Hora de nascimento", type: "time" },
-  birth_city: { label: "Cidade de nascimento" },
-  birth_country: { label: "País de nascimento" },
-  partner_name: { label: "Nome do parceiro(a)" },
-  partner_birth_date: { label: "Data nasc. parceiro(a)", type: "date" },
-  company_name: { label: "Nome da empresa" },
-  company_founded_at: { label: "Data de fundação da empresa", type: "date" },
-  question: { label: "Sua pergunta" },
-};
+
 
 function ProductLandingPage() {
   const { landing } = Route.useLoaderData();
