@@ -212,7 +212,19 @@ const AiOutput = z.object({
 export const generateReport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) =>
-    z.object({ kind: KIND, scope: z.enum(["self", "client"]).optional() }).parse(d),
+    z
+      .object({
+        kind: KIND,
+        scope: z.enum(["self", "client"]).optional(),
+        partner: z
+          .object({
+            full_name: z.string().min(2).max(120),
+            birth_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+          })
+          .optional(),
+        year: z.number().int().min(1900).max(2100).optional(),
+      })
+      .parse(d),
   )
   .handler(async function* ({ data, context }) {
     const { supabase, userId } = context;
