@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, ExternalLink, Eye, CheckCircle2, AlertTriangle, FileText, Send, KeyRound, BadgeCheck, MessageCircle, Pencil } from "lucide-react";
+import { Loader2, ExternalLink, Eye, CheckCircle2, AlertTriangle, FileText, Send, KeyRound, BadgeCheck, MessageCircle, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +19,7 @@ import {
   dispatchProductOrder,
   getDispatchSettings,
   saveDispatchSettings,
+  deleteProductOrder,
 } from "@/lib/product-orders.functions";
 import { adminBackfillProductOrderCommissions } from "@/modules/affiliate/admin.functions";
 
@@ -40,6 +41,16 @@ export function AdminProductOrders() {
   const getSettingsFn = useServerFn(getDispatchSettings);
   const saveSettingsFn = useServerFn(saveDispatchSettings);
   const backfillFn = useServerFn(adminBackfillProductOrderCommissions);
+  const deleteFn = useServerFn(deleteProductOrder);
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteFn({ data: { id } }),
+    onSuccess: () => {
+      showFeedback({ title: "Pedido excluído", type: "success" });
+      qc.invalidateQueries({ queryKey: ["admin-product-orders"] });
+    },
+    onError: (e: Error) => showFeedback({ title: "Erro ao excluir", description: e.message, type: "error" }),
+  });
 
   const { data: orders, isLoading } = useQuery({
     queryKey: ["admin-product-orders"],
@@ -410,7 +421,21 @@ export function AdminProductOrders() {
                       <Button size="sm" variant="ghost" onClick={() => setSelected(o)}>
                         <Eye className="size-4 mr-1" /> Ver
                       </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        title="Excluir pedido"
+                        disabled={deleteMutation.isPending}
+                        onClick={() => {
+                          if (confirm(`Excluir definitivamente o pedido de ${o.user_name ?? o.user_email ?? "cliente"} (R$ ${(o.amount_cents / 100).toFixed(2)})? Esta ação não pode ser desfeita.`)) {
+                            deleteMutation.mutate(o.id);
+                          }
+                        }}
+                      >
+                        {deleteMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4 text-red-400" />}
+                      </Button>
                     </div>
+
                   </div>
                 );
               })}
