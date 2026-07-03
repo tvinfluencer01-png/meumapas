@@ -286,8 +286,15 @@ function RelatoriosPage() {
     }
   }
 
+  type GenPayload = {
+    kind: Kind;
+    partner?: { full_name: string; birth_date: string };
+    year?: number;
+  };
+
   const genMutation = useMutation({
-    mutationFn: async (kind: Kind) => {
+    mutationFn: async (payload: GenPayload) => {
+      const { kind, partner, year } = payload;
       setLoadingKind(kind);
       const title = CARDS.find((c) => c.kind === kind)?.title ?? "Relatorio";
       showLoader({
@@ -300,7 +307,9 @@ function RelatoriosPage() {
         progress: 0,
         step: "Iniciando a leitura cósmica...",
       });
-      const stream = await generate({ data: { kind, scope: effectiveScope } });
+      const stream = await generate({
+        data: { kind, scope: effectiveScope, partner, year },
+      });
       let result: { signedUrl: string | null; title: string; id: string | null } | null = null;
       for await (const evt of stream) {
         if (evt.type === "progress") {
@@ -313,12 +322,12 @@ function RelatoriosPage() {
       if (!result) throw new Error("Geração interrompida.");
       return result;
     },
-    onSuccess: async (res, kind) => {
+    onSuccess: async (res, payload) => {
       qc.invalidateQueries({ queryKey: ["reports", user?.id] });
       if (res.signedUrl) {
         try {
           updateLoader({ step: "Preparando download do PDF...", progress: 100 });
-          await downloadFromUrl(res.signedUrl, `${res.title || kind}.pdf`);
+          await downloadFromUrl(res.signedUrl, `${res.title || payload.kind}.pdf`);
           showFeedback({ title: "Relatório pronto", description: "Download iniciado com sucesso.", type: "success" });
         } catch {
           showFeedback({ title: "Erro no download", description: "PDF gerado, mas o download falhou. Tente novamente em 'Seus relatórios'.", type: "error" });
