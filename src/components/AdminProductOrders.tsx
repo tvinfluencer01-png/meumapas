@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, ExternalLink, Eye, CheckCircle2, AlertTriangle, FileText, Send, KeyRound, BadgeCheck, MessageCircle } from "lucide-react";
+import { Loader2, ExternalLink, Eye, CheckCircle2, AlertTriangle, FileText, Send, KeyRound, BadgeCheck, MessageCircle, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,11 +9,13 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { LandingFieldsForm } from "@/components/LandingFieldsForm";
 import { showFeedback } from "@/components/system-feedback";
 import {
   listAdminOrders,
   markOrdersViewed,
   updateOrderStatus,
+  updateOrderCustomerData,
   dispatchProductOrder,
   getDispatchSettings,
   saveDispatchSettings,
@@ -85,7 +87,21 @@ export function AdminProductOrders() {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<any | null>(null);
+  const [editing, setEditing] = useState<any | null>(null);
+  const [editForm, setEditForm] = useState<Record<string, string>>({});
   const [dispatchingId, setDispatchingId] = useState<string | null>(null);
+  const updateCustomerFn = useServerFn(updateOrderCustomerData);
+
+  const editMutation = useMutation({
+    mutationFn: (vars: { id: string; customer_data: Record<string, string> }) =>
+      updateCustomerFn({ data: vars }),
+    onSuccess: () => {
+      showFeedback({ title: "Dados do cliente atualizados", type: "success" });
+      qc.invalidateQueries({ queryKey: ["admin-product-orders"] });
+      setEditing(null);
+    },
+    onError: (e: Error) => showFeedback({ title: "Erro", description: e.message, type: "error" }),
+  });
 
   const updateMutation = useMutation({
     mutationFn: (vars: { id: string; status: any; pdf_url?: string | null }) =>
@@ -377,6 +393,20 @@ export function AdminProductOrders() {
                           <BadgeCheck className="size-4 text-emerald-400" />
                         </Button>
                       )}
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        title="Editar dados do cliente"
+                        onClick={() => {
+                          const current = (o.customer_data ?? {}) as Record<string, any>;
+                          const init: Record<string, string> = {};
+                          Object.keys(current).forEach((k) => { init[k] = current[k] == null ? "" : String(current[k]); });
+                          setEditForm(init);
+                          setEditing(o);
+                        }}
+                      >
+                        <Pencil className="size-4" />
+                      </Button>
                       <Button size="sm" variant="ghost" onClick={() => setSelected(o)}>
                         <Eye className="size-4 mr-1" /> Ver
                       </Button>
@@ -437,6 +467,43 @@ export function AdminProductOrders() {
           )}
           <DialogFooter>
             <Button variant="ghost" onClick={() => setSelected(null)}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto border-gold/30">
+          <DialogHeader>
+            <DialogTitle className="font-serif shimmer-text">Editar dados do cliente</DialogTitle>
+            <DialogDescription>
+              Ajuste ou insira campos antes de reprocessar o pedido. Todos os campos são obrigatórios.
+            </DialogDescription>
+          </DialogHeader>
+          {editing && (() => {
+            const required: string[] = Array.isArray(editing.landing?.required_fields)
+              ? (editing.landing.required_fields as string[])
+              : [];
+            const extras = Object.keys(editForm).filter((k) => !required.includes(k));
+            const fields = Array.from(new Set([...required, ...extras]));
+            return (
+              <div className="space-y-3">
+                <LandingFieldsForm
+                  fields={fields}
+                  values={editForm}
+                  onChange={setEditForm}
+                  idPrefix={`edit-${editing.id}`}
+                />
+              </div>
+            );
+          })()}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setEditing(null)}>Cancelar</Button>
+            <Button
+              disabled={editMutation.isPending}
+              onClick={() => editMutation.mutate({ id: editing.id, customer_data: editForm })}
+            >
+              {editMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : "Salvar"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
