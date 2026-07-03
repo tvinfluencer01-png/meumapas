@@ -733,7 +733,16 @@ function RelatoriosPage() {
                 if (!existingPrompt) return;
                 const kind = existingPrompt.kind;
                 setExistingPrompt(null);
-                genMutation.mutate(kind);
+                if (KINDS_NEED_PARTNER.has(kind) || KINDS_NEED_YEAR.has(kind)) {
+                  setExtraPrompt({
+                    kind,
+                    partnerName: "",
+                    partnerDate: "",
+                    year: String(new Date().getFullYear()),
+                  });
+                } else {
+                  genMutation.mutate({ kind });
+                }
               }}
               className="px-4 py-2 rounded-lg bg-gradient-to-r from-gold/80 to-gold-glow text-night font-medium hover:opacity-90 transition text-sm inline-flex items-center gap-2"
             >
