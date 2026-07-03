@@ -751,6 +751,118 @@ function RelatoriosPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Extra inputs dialog: partner or year */}
+      <Dialog open={!!extraPrompt} onOpenChange={(o) => !o && setExtraPrompt(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-serif text-2xl text-stardust">
+              {extraPrompt && KINDS_NEED_PARTNER.has(extraPrompt.kind)
+                ? "Dados do(a) parceiro(a)"
+                : "Ano-alvo da previsão"}
+            </DialogTitle>
+            <DialogDescription>
+              {extraPrompt && KINDS_NEED_PARTNER.has(extraPrompt.kind)
+                ? "Precisamos do nome completo e da data de nascimento para calcular a análise do casal."
+                : "Escolha o ano que deseja prever. Padrão: ano atual."}
+            </DialogDescription>
+          </DialogHeader>
+          {extraPrompt && KINDS_NEED_PARTNER.has(extraPrompt.kind) && (
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs uppercase tracking-widest text-muted-foreground">
+                  Nome completo do(a) parceiro(a)
+                </label>
+                <input
+                  type="text"
+                  value={extraPrompt.partnerName}
+                  onChange={(e) =>
+                    setExtraPrompt((p) => (p ? { ...p, partnerName: e.target.value } : p))
+                  }
+                  className="mt-1 w-full bg-secondary/40 border border-border focus:border-gold/50 rounded-lg px-3 py-2 text-sm outline-none"
+                  placeholder="Ex: Maria Silva Costa"
+                />
+              </div>
+              <div>
+                <label className="text-xs uppercase tracking-widest text-muted-foreground">
+                  Data de nascimento
+                </label>
+                <input
+                  type="date"
+                  value={extraPrompt.partnerDate}
+                  onChange={(e) =>
+                    setExtraPrompt((p) => (p ? { ...p, partnerDate: e.target.value } : p))
+                  }
+                  className="mt-1 w-full bg-secondary/40 border border-border focus:border-gold/50 rounded-lg px-3 py-2 text-sm outline-none"
+                />
+              </div>
+            </div>
+          )}
+          {extraPrompt && KINDS_NEED_YEAR.has(extraPrompt.kind) && (
+            <div>
+              <label className="text-xs uppercase tracking-widest text-muted-foreground">
+                Ano (entre 1900 e 2100)
+              </label>
+              <input
+                type="number"
+                min={1900}
+                max={2100}
+                value={extraPrompt.year}
+                onChange={(e) =>
+                  setExtraPrompt((p) => (p ? { ...p, year: e.target.value } : p))
+                }
+                className="mt-1 w-full bg-secondary/40 border border-border focus:border-gold/50 rounded-lg px-3 py-2 text-sm outline-none"
+              />
+            </div>
+          )}
+          <DialogFooter className="gap-2">
+            <button
+              type="button"
+              onClick={() => setExtraPrompt(null)}
+              className="px-4 py-2 rounded-lg border border-border text-sm text-muted-foreground hover:text-stardust transition"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (!extraPrompt) return;
+                const { kind, partnerName, partnerDate, year } = extraPrompt;
+                if (KINDS_NEED_PARTNER.has(kind)) {
+                  if (partnerName.trim().length < 2 || !/^\d{4}-\d{2}-\d{2}$/.test(partnerDate)) {
+                    showFeedback({
+                      title: "Dados incompletos",
+                      description: "Informe nome completo e data de nascimento válidos.",
+                      type: "warning",
+                    });
+                    return;
+                  }
+                  setExtraPrompt(null);
+                  genMutation.mutate({
+                    kind,
+                    partner: { full_name: partnerName.trim(), birth_date: partnerDate },
+                  });
+                } else {
+                  const y = Number(year);
+                  if (!Number.isFinite(y) || y < 1900 || y > 2100) {
+                    showFeedback({
+                      title: "Ano inválido",
+                      description: "Escolha um ano entre 1900 e 2100.",
+                      type: "warning",
+                    });
+                    return;
+                  }
+                  setExtraPrompt(null);
+                  genMutation.mutate({ kind, year: y });
+                }
+              }}
+              className="px-4 py-2 rounded-lg bg-gradient-to-r from-gold/80 to-gold-glow text-night font-medium hover:opacity-90 transition text-sm inline-flex items-center gap-2"
+            >
+              <Sparkles className="size-4" /> Gerar relatório
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
