@@ -22,7 +22,8 @@ function Content() {
 
   const events: Array<{ date: string; type: string; description: string; amount?: number; status?: string }> = [];
   (data?.commissions ?? []).forEach((c: any) => {
-    events.push({ date: c.created_at, type: "Comissão", description: `Comissão gerada`, amount: c.amount_cents, status: c.status });
+    const product = c.affiliate_orders?.metadata?.product_title;
+    events.push({ date: c.created_at, type: "Comissão", description: product ? `Comissão: ${product}` : "Comissão gerada", amount: c.amount_cents, status: c.status });
   });
   (data?.withdraws ?? []).forEach((w: any) => {
     events.push({ date: w.created_at, type: "Saque", description: `Solicitação via ${w.method}`, amount: w.amount_cents, status: w.status });
