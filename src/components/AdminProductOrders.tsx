@@ -41,6 +41,16 @@ export function AdminProductOrders() {
   const getSettingsFn = useServerFn(getDispatchSettings);
   const saveSettingsFn = useServerFn(saveDispatchSettings);
   const backfillFn = useServerFn(adminBackfillProductOrderCommissions);
+  const deleteFn = useServerFn(deleteProductOrder);
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteFn({ data: { id } }),
+    onSuccess: () => {
+      showFeedback({ title: "Pedido excluído", type: "success" });
+      qc.invalidateQueries({ queryKey: ["admin-product-orders"] });
+    },
+    onError: (e: Error) => showFeedback({ title: "Erro ao excluir", description: e.message, type: "error" }),
+  });
 
   const { data: orders, isLoading } = useQuery({
     queryKey: ["admin-product-orders"],
