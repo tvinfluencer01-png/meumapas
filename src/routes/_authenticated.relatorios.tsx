@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import {
   FileText, Download, Sparkles, Heart, Briefcase, Flame, Loader2, Trash2, ScrollText,
-  Coins, Home, HeartPulse, Users, Search, CalendarDays, X,
+  Coins, Home, HeartPulse, Users, Search, CalendarDays, X, Users2, TrendingUp, TreePine,
 } from "lucide-react";
 import { SectionLamp } from "@/components/SectionLamp";
 import { CreditCostBadge } from "@/components/CreditCostBadge";
@@ -23,7 +23,13 @@ export const Route = createFileRoute("/_authenticated/relatorios")({
   head: () => ({ meta: [{ title: "Relatorios Premium — Código Cósmico" }] }),
 });
 
-type Kind = "personality" | "love" | "career" | "spiritual" | "finance" | "family" | "health" | "friendships";
+type Kind =
+  | "personality" | "love" | "career" | "spiritual"
+  | "finance" | "family" | "health" | "friendships"
+  | "synastry" | "couple_numerology" | "annual_forecast" | "personal_kabbalah";
+
+const KINDS_NEED_PARTNER = new Set<Kind>(["synastry", "couple_numerology"]);
+const KINDS_NEED_YEAR = new Set<Kind>(["annual_forecast"]);
 
 const CARDS: { kind: Kind; title: string; desc: string; icon: typeof Sparkles; gradient: string }[] = [
   {
@@ -82,6 +88,34 @@ const CARDS: { kind: Kind; title: string; desc: string; icon: typeof Sparkles; g
     icon: Users,
     gradient: "from-sky-500/30 via-cyan-400/10 to-transparent",
   },
+  {
+    kind: "synastry",
+    title: "Sinastria Amorosa",
+    desc: "Compatibilidade entre dois mapas: atrações, tensões e caminhos concretos de harmonização do casal.",
+    icon: Users2,
+    gradient: "from-pink-500/30 via-rose-400/10 to-transparent",
+  },
+  {
+    kind: "couple_numerology",
+    title: "Numerologia do Casal",
+    desc: "A vibração numérica que une (e desafia) esta parceria — missão conjunta e ciclos comuns.",
+    icon: Heart,
+    gradient: "from-fuchsia-500/30 via-pink-400/10 to-transparent",
+  },
+  {
+    kind: "annual_forecast",
+    title: "Previsão Anual",
+    desc: "Trânsitos, ano pessoal e ciclos numerológicos projetados para os próximos 12 meses.",
+    icon: TrendingUp,
+    gradient: "from-cyan-500/30 via-sky-400/10 to-transparent",
+  },
+  {
+    kind: "personal_kabbalah",
+    title: "Cabala Pessoal",
+    desc: "Sua Árvore da Vida individual — Sephirot, letras hebraicas e caminho iniciático inscrito no nome.",
+    icon: TreePine,
+    gradient: "from-purple-500/30 via-violet-400/10 to-transparent",
+  },
 ];
 
 function RelatoriosPage() {
@@ -112,6 +146,12 @@ function RelatoriosPage() {
     kind: Kind;
     report: { id: string; title: string; created_at: string };
   } | null>(null);
+  const [extraPrompt, setExtraPrompt] = useState<{
+    kind: Kind;
+    partnerName: string;
+    partnerDate: string;
+    year: string;
+  } | null>(null);
 
   // Search & period filters
   const [searchQuery, setSearchQuery] = useState("");
@@ -129,7 +169,16 @@ function RelatoriosPage() {
       setExistingPrompt({ kind, report: existing });
       return;
     }
-    genMutation.mutate(kind);
+    if (KINDS_NEED_PARTNER.has(kind) || KINDS_NEED_YEAR.has(kind)) {
+      setExtraPrompt({
+        kind,
+        partnerName: "",
+        partnerDate: "",
+        year: String(new Date().getFullYear()),
+      });
+      return;
+    }
+    genMutation.mutate({ kind });
   }
 
   const activeClientId = activeSubject?.client_profile_id ?? null;
@@ -237,8 +286,15 @@ function RelatoriosPage() {
     }
   }
 
+  type GenPayload = {
+    kind: Kind;
+    partner?: { full_name: string; birth_date: string };
+    year?: number;
+  };
+
   const genMutation = useMutation({
-    mutationFn: async (kind: Kind) => {
+    mutationFn: async (payload: GenPayload) => {
+      const { kind, partner, year } = payload;
       setLoadingKind(kind);
       const title = CARDS.find((c) => c.kind === kind)?.title ?? "Relatorio";
       showLoader({
@@ -251,7 +307,9 @@ function RelatoriosPage() {
         progress: 0,
         step: "Iniciando a leitura cósmica...",
       });
-      const stream = await generate({ data: { kind, scope: effectiveScope } });
+      const stream = await generate({
+        data: { kind, scope: effectiveScope, partner, year },
+      });
       let result: { signedUrl: string | null; title: string; id: string | null } | null = null;
       for await (const evt of stream) {
         if (evt.type === "progress") {
@@ -264,12 +322,12 @@ function RelatoriosPage() {
       if (!result) throw new Error("Geração interrompida.");
       return result;
     },
-    onSuccess: async (res, kind) => {
+    onSuccess: async (res, payload) => {
       qc.invalidateQueries({ queryKey: ["reports", user?.id] });
       if (res.signedUrl) {
         try {
           updateLoader({ step: "Preparando download do PDF...", progress: 100 });
-          await downloadFromUrl(res.signedUrl, `${res.title || kind}.pdf`);
+          await downloadFromUrl(res.signedUrl, `${res.title || payload.kind}.pdf`);
           showFeedback({ title: "Relatório pronto", description: "Download iniciado com sucesso.", type: "success" });
         } catch {
           showFeedback({ title: "Erro no download", description: "PDF gerado, mas o download falhou. Tente novamente em 'Seus relatórios'.", type: "error" });
@@ -675,11 +733,132 @@ function RelatoriosPage() {
                 if (!existingPrompt) return;
                 const kind = existingPrompt.kind;
                 setExistingPrompt(null);
-                genMutation.mutate(kind);
+                if (KINDS_NEED_PARTNER.has(kind) || KINDS_NEED_YEAR.has(kind)) {
+                  setExtraPrompt({
+                    kind,
+                    partnerName: "",
+                    partnerDate: "",
+                    year: String(new Date().getFullYear()),
+                  });
+                } else {
+                  genMutation.mutate({ kind });
+                }
               }}
               className="px-4 py-2 rounded-lg bg-gradient-to-r from-gold/80 to-gold-glow text-night font-medium hover:opacity-90 transition text-sm inline-flex items-center gap-2"
             >
               <Sparkles className="size-4" /> Gerar novo
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Extra inputs dialog: partner or year */}
+      <Dialog open={!!extraPrompt} onOpenChange={(o) => !o && setExtraPrompt(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-serif text-2xl text-stardust">
+              {extraPrompt && KINDS_NEED_PARTNER.has(extraPrompt.kind)
+                ? "Dados do(a) parceiro(a)"
+                : "Ano-alvo da previsão"}
+            </DialogTitle>
+            <DialogDescription>
+              {extraPrompt && KINDS_NEED_PARTNER.has(extraPrompt.kind)
+                ? "Precisamos do nome completo e da data de nascimento para calcular a análise do casal."
+                : "Escolha o ano que deseja prever. Padrão: ano atual."}
+            </DialogDescription>
+          </DialogHeader>
+          {extraPrompt && KINDS_NEED_PARTNER.has(extraPrompt.kind) && (
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs uppercase tracking-widest text-muted-foreground">
+                  Nome completo do(a) parceiro(a)
+                </label>
+                <input
+                  type="text"
+                  value={extraPrompt.partnerName}
+                  onChange={(e) =>
+                    setExtraPrompt((p) => (p ? { ...p, partnerName: e.target.value } : p))
+                  }
+                  className="mt-1 w-full bg-secondary/40 border border-border focus:border-gold/50 rounded-lg px-3 py-2 text-sm outline-none"
+                  placeholder="Ex: Maria Silva Costa"
+                />
+              </div>
+              <div>
+                <label className="text-xs uppercase tracking-widest text-muted-foreground">
+                  Data de nascimento
+                </label>
+                <input
+                  type="date"
+                  value={extraPrompt.partnerDate}
+                  onChange={(e) =>
+                    setExtraPrompt((p) => (p ? { ...p, partnerDate: e.target.value } : p))
+                  }
+                  className="mt-1 w-full bg-secondary/40 border border-border focus:border-gold/50 rounded-lg px-3 py-2 text-sm outline-none"
+                />
+              </div>
+            </div>
+          )}
+          {extraPrompt && KINDS_NEED_YEAR.has(extraPrompt.kind) && (
+            <div>
+              <label className="text-xs uppercase tracking-widest text-muted-foreground">
+                Ano (entre 1900 e 2100)
+              </label>
+              <input
+                type="number"
+                min={1900}
+                max={2100}
+                value={extraPrompt.year}
+                onChange={(e) =>
+                  setExtraPrompt((p) => (p ? { ...p, year: e.target.value } : p))
+                }
+                className="mt-1 w-full bg-secondary/40 border border-border focus:border-gold/50 rounded-lg px-3 py-2 text-sm outline-none"
+              />
+            </div>
+          )}
+          <DialogFooter className="gap-2">
+            <button
+              type="button"
+              onClick={() => setExtraPrompt(null)}
+              className="px-4 py-2 rounded-lg border border-border text-sm text-muted-foreground hover:text-stardust transition"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (!extraPrompt) return;
+                const { kind, partnerName, partnerDate, year } = extraPrompt;
+                if (KINDS_NEED_PARTNER.has(kind)) {
+                  if (partnerName.trim().length < 2 || !/^\d{4}-\d{2}-\d{2}$/.test(partnerDate)) {
+                    showFeedback({
+                      title: "Dados incompletos",
+                      description: "Informe nome completo e data de nascimento válidos.",
+                      type: "warning",
+                    });
+                    return;
+                  }
+                  setExtraPrompt(null);
+                  genMutation.mutate({
+                    kind,
+                    partner: { full_name: partnerName.trim(), birth_date: partnerDate },
+                  });
+                } else {
+                  const y = Number(year);
+                  if (!Number.isFinite(y) || y < 1900 || y > 2100) {
+                    showFeedback({
+                      title: "Ano inválido",
+                      description: "Escolha um ano entre 1900 e 2100.",
+                      type: "warning",
+                    });
+                    return;
+                  }
+                  setExtraPrompt(null);
+                  genMutation.mutate({ kind, year: y });
+                }
+              }}
+              className="px-4 py-2 rounded-lg bg-gradient-to-r from-gold/80 to-gold-glow text-night font-medium hover:opacity-90 transition text-sm inline-flex items-center gap-2"
+            >
+              <Sparkles className="size-4" /> Gerar relatório
             </button>
           </DialogFooter>
         </DialogContent>

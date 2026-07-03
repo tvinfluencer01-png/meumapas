@@ -24,6 +24,10 @@ const KIND = z.enum([
   "family",
   "health",
   "friendships",
+  "synastry",
+  "couple_numerology",
+  "annual_forecast",
+  "personal_kabbalah",
 ]);
 
 const REPORT_META: Record<
@@ -102,6 +106,42 @@ const REPORT_META: Record<
     suggestionGuide:
       "perfis de amigos que tendem a complementar/harmonizar (ex: 'Amigos com Lua em signo de fogo', 'Pessoas Caminho de Vida 7'), espacos sociais saudaveis, praticas de cultivo de vinculo e posturas em grupo (ex: 'Circulos de mulheres/homens', 'Encontros mensais de livro', 'Conversas de vulnerabilidade'). Cada sugestao precisa explicar POR QUE combina com o mapa e a numerologia dela.",
   },
+  synastry: {
+    title: "Sinastria Amorosa",
+    subtitle: "O encontro entre dois mapas: atrações, tensões e caminhos do casal",
+    focus:
+      "compatibilidade astrológica entre o consulente e o(a) parceiro(a): aspectos entre planetas dos dois mapas, dinâmica Sol/Lua/Vênus/Marte, pontos de atração, tensões inevitáveis, feridas espelhadas e caminhos concretos de harmonização do vínculo.",
+    suggestionHeading: "Práticas sugeridas para o casal",
+    suggestionGuide:
+      "práticas de casal, rituais compartilhados, conversas específicas, terapias e posturas que ajudam esta combinação de mapas a florescer (ex: 'Rituais semanais de check-in emocional', 'Terapia integrativa de casal', 'Práticas de contato consciente'). Cada sugestão precisa explicar POR QUE combina com os dois mapas envolvidos.",
+  },
+  couple_numerology: {
+    title: "Numerologia do Casal",
+    subtitle: "A vibração numérica que une (e desafia) esta parceria",
+    focus:
+      "compatibilidade numerológica entre os dois nomes e datas: Caminhos de Vida somados, Destino compartilhado, vibração do casal, número da união, ciclos comuns, missão conjunta e desafios kármicos partilhados.",
+    suggestionHeading: "Rituais e práticas numerológicas sugeridas ao casal",
+    suggestionGuide:
+      "práticas numerológicas para o casal (ex: 'Ritual mensal no dia da vibração 6', 'Escrita conjunta no ano pessoal comum', 'Meditações no número da união'). Cada sugestão precisa explicar POR QUE combina com a vibração numérica do casal.",
+  },
+  annual_forecast: {
+    title: "Previsão Anual",
+    subtitle: "Os trânsitos, ciclos e ano pessoal projetados para o próximo ciclo",
+    focus:
+      "previsão dos próximos 12 meses combinando ano pessoal numerológico, trânsitos planetários lentos sobre o mapa natal, ciclos de Júpiter e Saturno, temas dominantes de cada trimestre e janelas de decisão importantes.",
+    suggestionHeading: "Práticas e movimentos sugeridos para o ano",
+    suggestionGuide:
+      "práticas mensais, decisões estratégicas, momentos de recolhimento e expansão, e movimentos concretos alinhados ao ano pessoal e aos trânsitos (ex: 'Reserva emocional em julho', 'Lançamento profissional na janela de Júpiter em casa 10'). Cada sugestão precisa explicar POR QUE combina com o ano-alvo desta pessoa.",
+  },
+  personal_kabbalah: {
+    title: "Cabala Pessoal",
+    subtitle: "Sua Árvore da Vida individual e o caminho iniciático inscrito no nome",
+    focus:
+      "leitura cabalística individual a partir do nome e da data: Sephirot dominantes e ausentes, caminho na Árvore da Vida, arquétipos hebraicos ativos, letras vibratórias do nome e trilhas iniciáticas de evolução espiritual pessoal.",
+    suggestionHeading: "Práticas cabalísticas sugeridas",
+    suggestionGuide:
+      "meditações nas Sephirot pessoais, letras hebraicas para contemplação, salmos alinhados, rituais de purificação e estudos iniciáticos (ex: 'Meditação em Tiphareth às quartas', 'Contemplação da letra Aleph'). Cada sugestão precisa explicar POR QUE combina com a Árvore pessoal desta pessoa.",
+  },
 };
 
 const SIGNS_LABEL: Record<string, string> = {
@@ -172,7 +212,19 @@ const AiOutput = z.object({
 export const generateReport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) =>
-    z.object({ kind: KIND, scope: z.enum(["self", "client"]).optional() }).parse(d),
+    z
+      .object({
+        kind: KIND,
+        scope: z.enum(["self", "client"]).optional(),
+        partner: z
+          .object({
+            full_name: z.string().min(2).max(120),
+            birth_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+          })
+          .optional(),
+        year: z.number().int().min(1900).max(2100).optional(),
+      })
+      .parse(d),
   )
   .handler(async function* ({ data, context }) {
     const { supabase, userId } = context;
@@ -401,6 +453,51 @@ Escreva com profundidade, calor humano e linguagem simples.
 Sempre traduza termos tecnicos na mesma frase, entre parenteses, com no maximo 10 palavras.
 Frases curtas. Sem markdown. Sem emojis. Sem prometer eventos certos. Sem diagnostico clinico.`;
 
+    // Extra context for couple/annual/kabbalah reports
+    let extraContextBlock = "";
+    if (data.partner && (data.kind === "synastry" || data.kind === "couple_numerology")) {
+      const pnum = computeNumerology(data.partner.full_name, data.partner.birth_date);
+      const partnerNumBlock = [
+        `Caminho de Vida ${numLabel(pnum.life_path)} (${numTitle(pnum.life_path)})`,
+        `Destino ${numLabel(pnum.destiny)} (${numTitle(pnum.destiny)})`,
+        `Alma ${numLabel(pnum.soul_urge)} (${numTitle(pnum.soul_urge)})`,
+        `Personalidade ${numLabel(pnum.personality)} (${numTitle(pnum.personality)})`,
+      ].join(" | ");
+      const partnerSunSign = (() => {
+        const [, m, d] = data.partner.birth_date.split("-").map(Number);
+        const c: [number, number, string][] = [
+          [1,20,"Capricornio"],[2,19,"Aquario"],[3,21,"Peixes"],[4,20,"Aries"],
+          [5,21,"Touro"],[6,21,"Gemeos"],[7,23,"Cancer"],[8,23,"Leao"],
+          [9,23,"Virgem"],[10,23,"Libra"],[11,22,"Escorpiao"],[12,22,"Sagitario"],
+        ];
+        for (const [mm, dd, s] of c) if (m < mm || (m === mm && d <= dd)) return s;
+        return "Capricornio";
+      })();
+      extraContextBlock = `
+
+Parceiro(a) para análise conjunta:
+- Nome completo: ${data.partner.full_name}
+- Data de nascimento: ${data.partner.birth_date}
+- Sol solar (por data): ${partnerSunSign}
+
+Numerologia do(a) parceiro(a):
+${partnerNumBlock}`;
+    }
+    if (data.kind === "annual_forecast") {
+      const targetYear = data.year ?? new Date().getFullYear();
+      const personalYear = (() => {
+        const [, m, d] = birth.birth_date.split("-").map(Number);
+        const sum = String(targetYear + m + d).split("").reduce((a: number, b) => a + Number(b), 0);
+        let n = sum;
+        while (n > 9 && n !== 11 && n !== 22) n = String(n).split("").reduce((a, b) => a + Number(b), 0);
+        return n;
+      })();
+      extraContextBlock = `
+
+Ano-alvo da previsão: ${targetYear}
+Ano pessoal numerológico: ${personalYear} (${NUMBER_MEANINGS[personalYear]?.title ?? "—"})`;
+    }
+
     const reportContext = `Relatorio: ${meta.title}
 Foco: ${meta.focus}
 
@@ -414,7 +511,7 @@ Numerologia:
 ${numBlock}
 
 Mapa astral:
-${astroBlock}`;
+${astroBlock}${extraContextBlock}`;
 
     const getFallbackModels = () => {
       const candidates = (
@@ -979,6 +1076,10 @@ Regras:
       family: true,
       health: true,
       friendships: true,
+      synastry: true,
+      couple_numerology: true,
+      annual_forecast: true,
+      personal_kabbalah: true,
     };
     let brandingPayload: ReportData["branding"] = undefined;
     if (brandingAddonActive && brandRow?.enabled && kindEnabledMap[data.kind]) {

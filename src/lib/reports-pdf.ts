@@ -42,7 +42,7 @@ export type ReportBranding = {
   frameStyle?: "none" | "simple" | "double" | "ornamental" | null;
 };
 export type ReportData = {
-  kind: "personality" | "love" | "career" | "spiritual" | "finance" | "family" | "health" | "friendships" | "business";
+  kind: "personality" | "love" | "career" | "spiritual" | "finance" | "family" | "health" | "friendships" | "business" | "synastry" | "couple_numerology" | "annual_forecast" | "personal_kabbalah";
   title: string;
   subtitle: string;
   consultantName: string;
