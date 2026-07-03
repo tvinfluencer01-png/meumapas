@@ -24,6 +24,10 @@ const KIND = z.enum([
   "family",
   "health",
   "friendships",
+  "synastry",
+  "couple_numerology",
+  "annual_forecast",
+  "personal_kabbalah",
 ]);
 
 const REPORT_META: Record<
