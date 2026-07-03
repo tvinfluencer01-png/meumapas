@@ -486,7 +486,7 @@ export const adminListCommissions = createServerFn({ method: "GET" })
     await ensureAdmin(context);
     let q = context.supabase
       .from("affiliate_commissions" as any)
-      .select("*, affiliate_profiles!inner(full_name,affiliate_code), affiliate_orders(order_ref,amount_cents)")
+      .select("*, affiliate_profiles!inner(full_name,affiliate_code), affiliate_orders(order_ref,amount_cents,metadata)")
       .order("created_at", { ascending: false })
       .limit(500);
     if (data.status) q = q.eq("status", data.status);
