@@ -453,6 +453,51 @@ Escreva com profundidade, calor humano e linguagem simples.
 Sempre traduza termos tecnicos na mesma frase, entre parenteses, com no maximo 10 palavras.
 Frases curtas. Sem markdown. Sem emojis. Sem prometer eventos certos. Sem diagnostico clinico.`;
 
+    // Extra context for couple/annual/kabbalah reports
+    let extraContextBlock = "";
+    if (data.partner && (data.kind === "synastry" || data.kind === "couple_numerology")) {
+      const pnum = computeNumerology(data.partner.full_name, data.partner.birth_date);
+      const partnerNumBlock = [
+        `Caminho de Vida ${numLabel(pnum.life_path)} (${numTitle(pnum.life_path)})`,
+        `Destino ${numLabel(pnum.destiny)} (${numTitle(pnum.destiny)})`,
+        `Alma ${numLabel(pnum.soul_urge)} (${numTitle(pnum.soul_urge)})`,
+        `Personalidade ${numLabel(pnum.personality)} (${numTitle(pnum.personality)})`,
+      ].join(" | ");
+      const partnerSunSign = (() => {
+        const [, m, d] = data.partner.birth_date.split("-").map(Number);
+        const c: [number, number, string][] = [
+          [1,20,"Capricornio"],[2,19,"Aquario"],[3,21,"Peixes"],[4,20,"Aries"],
+          [5,21,"Touro"],[6,21,"Gemeos"],[7,23,"Cancer"],[8,23,"Leao"],
+          [9,23,"Virgem"],[10,23,"Libra"],[11,22,"Escorpiao"],[12,22,"Sagitario"],
+        ];
+        for (const [mm, dd, s] of c) if (m < mm || (m === mm && d <= dd)) return s;
+        return "Capricornio";
+      })();
+      extraContextBlock = `
+
+Parceiro(a) para análise conjunta:
+- Nome completo: ${data.partner.full_name}
+- Data de nascimento: ${data.partner.birth_date}
+- Sol solar (por data): ${partnerSunSign}
+
+Numerologia do(a) parceiro(a):
+${partnerNumBlock}`;
+    }
+    if (data.kind === "annual_forecast") {
+      const targetYear = data.year ?? new Date().getFullYear();
+      const personalYear = (() => {
+        const [, m, d] = birth.birth_date.split("-").map(Number);
+        const sum = String(targetYear + m + d).split("").reduce((a: number, b) => a + Number(b), 0);
+        let n = sum;
+        while (n > 9 && n !== 11 && n !== 22) n = String(n).split("").reduce((a, b) => a + Number(b), 0);
+        return n;
+      })();
+      extraContextBlock = `
+
+Ano-alvo da previsão: ${targetYear}
+Ano pessoal numerológico: ${personalYear} (${NUMBER_MEANINGS[personalYear]?.title ?? "—"})`;
+    }
+
     const reportContext = `Relatorio: ${meta.title}
 Foco: ${meta.focus}
 
@@ -466,7 +511,7 @@ Numerologia:
 ${numBlock}
 
 Mapa astral:
-${astroBlock}`;
+${astroBlock}${extraContextBlock}`;
 
     const getFallbackModels = () => {
       const candidates = (
