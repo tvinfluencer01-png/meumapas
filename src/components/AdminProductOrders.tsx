@@ -470,6 +470,43 @@ export function AdminProductOrders() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto border-gold/30">
+          <DialogHeader>
+            <DialogTitle className="font-serif shimmer-text">Editar dados do cliente</DialogTitle>
+            <DialogDescription>
+              Ajuste ou insira campos antes de reprocessar o pedido. Todos os campos são obrigatórios.
+            </DialogDescription>
+          </DialogHeader>
+          {editing && (() => {
+            const required: string[] = Array.isArray(editing.landing?.required_fields)
+              ? (editing.landing.required_fields as string[])
+              : [];
+            const extras = Object.keys(editForm).filter((k) => !required.includes(k));
+            const fields = Array.from(new Set([...required, ...extras]));
+            return (
+              <div className="space-y-3">
+                <LandingFieldsForm
+                  fields={fields}
+                  values={editForm}
+                  onChange={setEditForm}
+                  idPrefix={`edit-${editing.id}`}
+                />
+              </div>
+            );
+          })()}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setEditing(null)}>Cancelar</Button>
+            <Button
+              disabled={editMutation.isPending}
+              onClick={() => editMutation.mutate({ id: editing.id, customer_data: editForm })}
+            >
+              {editMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : "Salvar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
 
   );
