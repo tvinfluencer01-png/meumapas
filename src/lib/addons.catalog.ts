@@ -190,6 +190,55 @@ export const SUBSCRIPTION_ADDONS: SubscriptionAddon[] = [
     ],
   },
   {
+    id: "sub_unlimited_synastry",
+    name: "Sinastria Ilimitada",
+    price_cents: 3990,
+    description: "Compare mapas astrais de casais quantas vezes quiser, sem consumir créditos.",
+    features: [
+      "Comparação completa entre dois mapas natais",
+      "Análise de aspectos, casas e compatibilidade",
+      "Relatórios ilimitados por mês",
+      "Exportação em PDF",
+    ],
+  },
+  {
+    id: "sub_unlimited_couple_numerology",
+    name: "Numerologia do Casal Ilimitada",
+    price_cents: 2990,
+    description: "Análises numerológicas de casais ilimitadas.",
+    features: [
+      "Vibrações combinadas do casal",
+      "Desafios e caminhos comuns",
+      "Relatórios ilimitados por mês",
+      "Exportação em PDF",
+    ],
+  },
+  {
+    id: "sub_unlimited_annual_forecast",
+    name: "Previsão Anual Ilimitada",
+    price_cents: 3990,
+    description: "Gere previsões anuais completas sempre que precisar.",
+    features: [
+      "Trânsitos planetários do ano",
+      "Revolução solar e ano pessoal",
+      "Relatórios ilimitados por mês",
+      "Exportação em PDF",
+    ],
+  },
+  {
+    id: "sub_unlimited_personal_kabbalah",
+    name: "Cabala Pessoal Ilimitada",
+    price_cents: 3490,
+    description: "Estudos cabalísticos pessoais ilimitados.",
+    features: [
+      "Árvore da Vida personalizada",
+      "Sephirot e caminho de alma",
+      "Relatórios ilimitados por mês",
+      "Exportação em PDF",
+    ],
+  },
+  {
+
     id: "sub_daily_horoscope",
     name: "Horóscopo Diário",
     price_cents: 1990,
