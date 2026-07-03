@@ -106,6 +106,42 @@ const REPORT_META: Record<
     suggestionGuide:
       "perfis de amigos que tendem a complementar/harmonizar (ex: 'Amigos com Lua em signo de fogo', 'Pessoas Caminho de Vida 7'), espacos sociais saudaveis, praticas de cultivo de vinculo e posturas em grupo (ex: 'Circulos de mulheres/homens', 'Encontros mensais de livro', 'Conversas de vulnerabilidade'). Cada sugestao precisa explicar POR QUE combina com o mapa e a numerologia dela.",
   },
+  synastry: {
+    title: "Sinastria Amorosa",
+    subtitle: "O encontro entre dois mapas: atrações, tensões e caminhos do casal",
+    focus:
+      "compatibilidade astrológica entre o consulente e o(a) parceiro(a): aspectos entre planetas dos dois mapas, dinâmica Sol/Lua/Vênus/Marte, pontos de atração, tensões inevitáveis, feridas espelhadas e caminhos concretos de harmonização do vínculo.",
+    suggestionHeading: "Práticas sugeridas para o casal",
+    suggestionGuide:
+      "práticas de casal, rituais compartilhados, conversas específicas, terapias e posturas que ajudam esta combinação de mapas a florescer (ex: 'Rituais semanais de check-in emocional', 'Terapia integrativa de casal', 'Práticas de contato consciente'). Cada sugestão precisa explicar POR QUE combina com os dois mapas envolvidos.",
+  },
+  couple_numerology: {
+    title: "Numerologia do Casal",
+    subtitle: "A vibração numérica que une (e desafia) esta parceria",
+    focus:
+      "compatibilidade numerológica entre os dois nomes e datas: Caminhos de Vida somados, Destino compartilhado, vibração do casal, número da união, ciclos comuns, missão conjunta e desafios kármicos partilhados.",
+    suggestionHeading: "Rituais e práticas numerológicas sugeridas ao casal",
+    suggestionGuide:
+      "práticas numerológicas para o casal (ex: 'Ritual mensal no dia da vibração 6', 'Escrita conjunta no ano pessoal comum', 'Meditações no número da união'). Cada sugestão precisa explicar POR QUE combina com a vibração numérica do casal.",
+  },
+  annual_forecast: {
+    title: "Previsão Anual",
+    subtitle: "Os trânsitos, ciclos e ano pessoal projetados para o próximo ciclo",
+    focus:
+      "previsão dos próximos 12 meses combinando ano pessoal numerológico, trânsitos planetários lentos sobre o mapa natal, ciclos de Júpiter e Saturno, temas dominantes de cada trimestre e janelas de decisão importantes.",
+    suggestionHeading: "Práticas e movimentos sugeridos para o ano",
+    suggestionGuide:
+      "práticas mensais, decisões estratégicas, momentos de recolhimento e expansão, e movimentos concretos alinhados ao ano pessoal e aos trânsitos (ex: 'Reserva emocional em julho', 'Lançamento profissional na janela de Júpiter em casa 10'). Cada sugestão precisa explicar POR QUE combina com o ano-alvo desta pessoa.",
+  },
+  personal_kabbalah: {
+    title: "Cabala Pessoal",
+    subtitle: "Sua Árvore da Vida individual e o caminho iniciático inscrito no nome",
+    focus:
+      "leitura cabalística individual a partir do nome e da data: Sephirot dominantes e ausentes, caminho na Árvore da Vida, arquétipos hebraicos ativos, letras vibratórias do nome e trilhas iniciáticas de evolução espiritual pessoal.",
+    suggestionHeading: "Práticas cabalísticas sugeridas",
+    suggestionGuide:
+      "meditações nas Sephirot pessoais, letras hebraicas para contemplação, salmos alinhados, rituais de purificação e estudos iniciáticos (ex: 'Meditação em Tiphareth às quartas', 'Contemplação da letra Aleph'). Cada sugestão precisa explicar POR QUE combina com a Árvore pessoal desta pessoa.",
+  },
 };
 
 const SIGNS_LABEL: Record<string, string> = {
