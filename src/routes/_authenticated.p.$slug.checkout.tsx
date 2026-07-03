@@ -67,14 +67,29 @@ function CheckoutPage() {
           {fields.map((key) => {
             const meta = AVAILABLE_FIELDS.find((f) => f.key === key);
             const label = meta?.label ?? key;
-            const type = key === "email" ? "email" : key.includes("date") ? "date" : key === "birth_time" ? "time" : "text";
+            const isPhone = key === "phone";
+            const type = isPhone
+              ? "tel"
+              : key === "email"
+                ? "email"
+                : key.includes("date")
+                  ? "date"
+                  : key === "birth_time"
+                    ? "time"
+                    : "text";
             return (
               <div key={key}>
                 <Label>{label} *</Label>
                 <Input
                   type={type}
+                  inputMode={isPhone ? "numeric" : undefined}
+                  placeholder={isPhone ? "(11) 99999-9999" : undefined}
+                  maxLength={isPhone ? 15 : undefined}
                   value={form[key] ?? ""}
-                  onChange={(e) => setForm({ ...form, [key]: e.target.value })}
+                  onChange={(e) => {
+                    const val = isPhone ? maskPhoneBR(e.target.value) : e.target.value;
+                    setForm({ ...form, [key]: val });
+                  }}
                   required
                 />
               </div>
