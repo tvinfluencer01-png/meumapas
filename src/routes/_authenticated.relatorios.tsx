@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import {
   FileText, Download, Sparkles, Heart, Briefcase, Flame, Loader2, Trash2, ScrollText,
-  Coins, Home, HeartPulse, Users, Search, CalendarDays, X,
+  Coins, Home, HeartPulse, Users, Search, CalendarDays, X, Users2, TrendingUp, TreePine,
 } from "lucide-react";
 import { SectionLamp } from "@/components/SectionLamp";
 import { CreditCostBadge } from "@/components/CreditCostBadge";
