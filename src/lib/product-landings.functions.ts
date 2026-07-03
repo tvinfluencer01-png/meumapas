@@ -213,7 +213,7 @@ export const uploadLandingHeroImage = createServerFn({ method: "POST" })
 export const generateLandingHeroImage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) =>
-    z.object({ prompt: z.string().min(3).max(1000) }).parse(d),
+    z.object({ prompt: z.string().min(3).max(8000) }).parse(d),
   )
   .handler(async ({ data, context }) => {
     await ensureAdmin(context);
