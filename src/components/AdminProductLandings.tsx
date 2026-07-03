@@ -457,7 +457,7 @@ function LandingForm({
             rows={2}
             value={aiPrompt}
             onChange={(e) => setAiPrompt(e.target.value)}
-            placeholder="Descreva a imagem para a IA gerar (ex: mandala dourada com céu estrelado, estilo místico)"
+            placeholder="Opcional: descreva a imagem. Em branco, usaremos Título + Subtítulo + Descrição."
             className="flex-1"
           />
           <Button type="button" variant="outline" size="sm" disabled={generating} onClick={handleGenerate}>
