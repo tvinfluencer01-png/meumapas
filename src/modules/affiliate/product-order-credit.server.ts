@@ -20,7 +20,7 @@ export async function creditAffiliateForProductOrder(orderId: string): Promise<{
   try {
     const { data: order } = await supabaseAdmin
       .from("product_orders")
-      .select("id, amount_cents, landing_id, status, user_id, created_at")
+      .select("id, amount_cents, landing_id, status, user_id, created_at, customer_data")
       .eq("id", orderId)
       .maybeSingle();
     if (!order) return { ok: false, reason: "order_not_found" };
