@@ -91,9 +91,12 @@ export const getPanelDashboard = createServerFn({ method: "GET" })
     const orderRefs = (recentSales ?? []).map((o: any) => o.order_ref).filter(Boolean);
     let enrichedSales: any[] = recentSales ?? [];
     if (orderIds.length) {
+      // Use admin client: affiliate cannot read other users' product_orders (RLS scopes to owner).
+      // We've already scoped by affiliate_id above, so it's safe to enrich with landing + customer name.
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       const [{ data: pos }, { data: comms }] = await Promise.all([
         orderRefs.length
-          ? sb.from("product_orders" as any).select("id, customer_data, landing:landing_id(title, slug)").in("id", orderRefs)
+          ? supabaseAdmin.from("product_orders" as any).select("id, customer_data, landing:landing_id(title, slug)").in("id", orderRefs)
           : Promise.resolve({ data: [] as any[] }),
         sb.from("affiliate_commissions" as any).select("order_id, amount_cents, status, available_at").in("order_id", orderIds),
       ]);
@@ -113,6 +116,7 @@ export const getPanelDashboard = createServerFn({ method: "GET" })
         return {
           ...o,
           product_title: po?.landing?.title ?? o.metadata?.product_title ?? null,
+          landing_slug: po?.landing?.slug ?? o.metadata?.landing_slug ?? null,
           customer_name: po?.customer_data?.full_name ?? po?.customer_data?.name ?? o.metadata?.customer_name ?? null,
           commission_status,
           commission_cents: c?.amount_cents ?? 0,
