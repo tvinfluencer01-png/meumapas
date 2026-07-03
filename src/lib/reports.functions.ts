@@ -1019,6 +1019,10 @@ Regras:
       family: true,
       health: true,
       friendships: true,
+      synastry: true,
+      couple_numerology: true,
+      annual_forecast: true,
+      personal_kabbalah: true,
     };
     let brandingPayload: ReportData["branding"] = undefined;
     if (brandingAddonActive && brandRow?.enabled && kindEnabledMap[data.kind]) {
