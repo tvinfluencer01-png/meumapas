@@ -15,6 +15,14 @@ export const Route = createFileRoute("/_authenticated/p/$slug/checkout")({
   component: CheckoutPage,
 });
 
+function maskPhoneBR(v: string) {
+  const d = v.replace(/\D/g, "").slice(0, 11);
+  if (d.length <= 2) return d.length ? `(${d}` : "";
+  if (d.length <= 6) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+  if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+  return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+}
+
 function CheckoutPage() {
   const { slug } = Route.useParams();
   const navigate = useNavigate();
@@ -67,14 +75,29 @@ function CheckoutPage() {
           {fields.map((key) => {
             const meta = AVAILABLE_FIELDS.find((f) => f.key === key);
             const label = meta?.label ?? key;
-            const type = key === "email" ? "email" : key.includes("date") ? "date" : key === "birth_time" ? "time" : "text";
+            const isPhone = key === "phone";
+            const type = isPhone
+              ? "tel"
+              : key === "email"
+                ? "email"
+                : key.includes("date")
+                  ? "date"
+                  : key === "birth_time"
+                    ? "time"
+                    : "text";
             return (
               <div key={key}>
                 <Label>{label} *</Label>
                 <Input
                   type={type}
+                  inputMode={isPhone ? "numeric" : undefined}
+                  placeholder={isPhone ? "(11) 99999-9999" : undefined}
+                  maxLength={isPhone ? 15 : undefined}
                   value={form[key] ?? ""}
-                  onChange={(e) => setForm({ ...form, [key]: e.target.value })}
+                  onChange={(e) => {
+                    const val = isPhone ? maskPhoneBR(e.target.value) : e.target.value;
+                    setForm({ ...form, [key]: val });
+                  }}
                   required
                 />
               </div>
