@@ -393,6 +393,20 @@ export function AdminProductOrders() {
                           <BadgeCheck className="size-4 text-emerald-400" />
                         </Button>
                       )}
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        title="Editar dados do cliente"
+                        onClick={() => {
+                          const current = (o.customer_data ?? {}) as Record<string, any>;
+                          const init: Record<string, string> = {};
+                          Object.keys(current).forEach((k) => { init[k] = current[k] == null ? "" : String(current[k]); });
+                          setEditForm(init);
+                          setEditing(o);
+                        }}
+                      >
+                        <Pencil className="size-4" />
+                      </Button>
                       <Button size="sm" variant="ghost" onClick={() => setSelected(o)}>
                         <Eye className="size-4 mr-1" /> Ver
                       </Button>
