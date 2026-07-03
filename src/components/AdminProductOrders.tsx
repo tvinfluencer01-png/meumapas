@@ -421,7 +421,21 @@ export function AdminProductOrders() {
                       <Button size="sm" variant="ghost" onClick={() => setSelected(o)}>
                         <Eye className="size-4 mr-1" /> Ver
                       </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        title="Excluir pedido"
+                        disabled={deleteMutation.isPending}
+                        onClick={() => {
+                          if (confirm(`Excluir definitivamente o pedido de ${o.user_name ?? o.user_email ?? "cliente"} (R$ ${(o.amount_cents / 100).toFixed(2)})? Esta ação não pode ser desfeita.`)) {
+                            deleteMutation.mutate(o.id);
+                          }
+                        }}
+                      >
+                        {deleteMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4 text-red-400" />}
+                      </Button>
                     </div>
+
                   </div>
                 );
               })}
