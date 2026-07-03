@@ -685,12 +685,12 @@ function CommissionsSection() {
         <CardContent>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead><tr className="border-b"><th className="text-left p-2">Afiliado</th><th>Pedido</th><th>Valor</th><th>Rate</th><th>Status</th><th></th></tr></thead>
+              <thead><tr className="border-b"><th className="text-left p-2">Afiliado</th><th className="text-left p-2">Produto</th><th>Valor</th><th>Rate</th><th>Status</th><th></th></tr></thead>
               <tbody>
                 {(comms ?? []).map((c: any) => (
                   <tr key={c.id} className="border-b">
                     <td className="p-2">{c.affiliate_profiles?.full_name}</td>
-                    <td className="text-center">{c.affiliate_orders?.order_ref ?? "-"}</td>
+                    <td className="p-2 text-left">{c.affiliate_orders?.metadata?.product_title ?? "—"}</td>
                     <td className="text-center">{money(c.amount_cents)}</td>
                     <td className="text-center">{c.rate ?? "-"}%</td>
                     <td className="text-center"><Badge>{c.status}</Badge></td>
