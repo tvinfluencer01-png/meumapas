@@ -138,14 +138,16 @@ export async function creditAffiliateForProductOrder(orderId: string): Promise<{
       return { ok: true, affiliateId, commissionId: (existing as any)[0].id };
     }
 
-    // Resolve product_id (affiliate_products) reusing already-fetched landing slug
+    // Resolve product_id (affiliate_products) reusing already-fetched landing slug.
+    // affiliate_products slugs use the `report-<slug>` convention for report products,
+    // while product_landings slugs are the bare slug (e.g. "previsao-anual").
     let productId: string | null = null;
     if (landingSlug) {
       try {
         const { data: prod } = await supabaseAdmin
           .from("affiliate_products" as any)
           .select("id")
-          .eq("slug", landingSlug)
+          .in("slug", [landingSlug, `report-${landingSlug}`])
           .maybeSingle();
         productId = (prod as any)?.id ?? null;
       } catch { /* noop */ }
