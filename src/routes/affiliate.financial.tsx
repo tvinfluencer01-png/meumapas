@@ -56,6 +56,7 @@ function Content() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Data</TableHead>
+                    <TableHead>Produto</TableHead>
                     <TableHead>Valor</TableHead>
                     <TableHead>Taxa</TableHead>
                     <TableHead>Disponível em</TableHead>
@@ -66,13 +67,14 @@ function Content() {
                   {commissions.map((c, i) => (
                     <TableRow key={c.id} className={`border-l-[3px] ${toneRow(toneByIndex(i))}`}>
                       <TableCell className="text-xs">{new Date(c.created_at).toLocaleDateString("pt-BR")}</TableCell>
+                      <TableCell className="text-sm">{c.affiliate_orders?.metadata?.product_title ?? "—"}</TableCell>
                       <TableCell className="font-mono">{brl(c.amount_cents)}</TableCell>
                       <TableCell>{c.rate ? `${(Number(c.rate) * 100).toFixed(1)}%` : "-"}</TableCell>
                       <TableCell className="text-xs">{c.available_at ? new Date(c.available_at).toLocaleDateString("pt-BR") : "-"}</TableCell>
                       <TableCell><Badge variant={c.status === "paid" ? "default" : "outline"}>{c.status}</Badge></TableCell>
                     </TableRow>
                   ))}
-                  {commissions.length === 0 && <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-6">Sem comissões</TableCell></TableRow>}
+                  {commissions.length === 0 && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-6">Sem comissões</TableCell></TableRow>}
                 </TableBody>
               </Table>
             </CardContent>

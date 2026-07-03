@@ -158,7 +158,7 @@ export const getPanelFinancial = createServerFn({ method: "GET" })
     const affiliateId = await getAffiliateId(context);
     if (!affiliateId) return { commissions: [], withdraws: [] };
     const [{ data: commissions }, { data: withdraws }] = await Promise.all([
-      context.supabase.from("affiliate_commissions" as any).select("*").eq("affiliate_id", affiliateId).order("created_at", { ascending: false }).limit(100),
+      context.supabase.from("affiliate_commissions" as any).select("*, affiliate_orders(order_ref, metadata)").eq("affiliate_id", affiliateId).order("created_at", { ascending: false }).limit(100),
       context.supabase.from("affiliate_withdraws" as any).select("*").eq("affiliate_id", affiliateId).order("created_at", { ascending: false }).limit(50),
     ]);
     return { commissions: commissions ?? [], withdraws: withdraws ?? [] };
