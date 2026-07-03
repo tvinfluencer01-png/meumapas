@@ -135,7 +135,7 @@ export const listAdminOrders = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: orders, error } = await supabaseAdmin
       .from("product_orders")
-      .select("*, landing:product_landings(slug,title,report_type)")
+      .select("*, landing:product_landings(slug,title,report_type,required_fields)")
       .order("created_at", { ascending: false })
       .limit(500);
     if (error) throw new Error(error.message);
