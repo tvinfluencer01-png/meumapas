@@ -10,6 +10,10 @@ export const REPORT_TYPES = [
   { value: "mapa_empresarial", label: "Mapa Empresarial" },
   { value: "leitura_semanal", label: "Leitura Semanal" },
   { value: "horoscopo", label: "Horóscopo Personalizado" },
+  { value: "synastry", label: "Sinastria Amorosa (casal)" },
+  { value: "couple_numerology", label: "Numerologia do Casal" },
+  { value: "annual_forecast", label: "Previsão Anual" },
+  { value: "personal_kabbalah", label: "Cabala Pessoal" },
   { value: "custom", label: "Personalizado (manual)" },
 ] as const;
 
