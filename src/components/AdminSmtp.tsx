@@ -84,7 +84,7 @@ export function AdminSmtp() {
           username: form.username,
           password: form.password,
           from_email: form.from_email,
-          from_name: form.from_name,
+          from_name: form.from_name?.trim() || form.from_email,
           reply_to: form.reply_to || null,
           enabled: form.enabled,
         },
