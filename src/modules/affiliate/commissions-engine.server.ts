@@ -141,7 +141,7 @@ async function defaultRate(affiliateId: string): Promise<number> {
     .select("default_commission_rate")
     .eq("id", "global")
     .maybeSingle();
-  return Number((s as any)?.default_commission_rate ?? 20);
+  return Number((s as any)?.default_commission_rate ?? 30);
 }
 
 export async function resolveCommission(input: ResolveInput): Promise<ResolveResult> {
