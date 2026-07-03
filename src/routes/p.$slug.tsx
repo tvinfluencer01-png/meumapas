@@ -268,22 +268,8 @@ function ProductLandingPage() {
             onSubmit={(e) => { e.preventDefault(); mutation.mutate(); }}
             className="space-y-3"
           >
-            {required.map((k) => {
-              const meta = FIELD_LABELS[k] ?? { label: k };
-              return (
-                <div key={k} className="space-y-1">
-                  <Label htmlFor={`f-${k}`}>{meta.label} *</Label>
-                  <Input
-                    id={`f-${k}`}
-                    type={meta.type ?? "text"}
-                    placeholder={meta.placeholder}
-                    value={values[k] ?? ""}
-                    onChange={(e) => setValues((v) => ({ ...v, [k]: e.target.value }))}
-                    required
-                  />
-                </div>
-              );
-            })}
+            <LandingFieldsForm fields={required} values={values} onChange={setValues} idPrefix="f" />
+
             <DialogFooter className="pt-2">
               <Button type="submit" disabled={mutation.isPending} className="w-full">
                 {mutation.isPending ? <Loader2 className="size-4 animate-spin" /> : "Ir para pagamento"}
