@@ -23,7 +23,13 @@ export const Route = createFileRoute("/_authenticated/relatorios")({
   head: () => ({ meta: [{ title: "Relatorios Premium — Código Cósmico" }] }),
 });
 
-type Kind = "personality" | "love" | "career" | "spiritual" | "finance" | "family" | "health" | "friendships";
+type Kind =
+  | "personality" | "love" | "career" | "spiritual"
+  | "finance" | "family" | "health" | "friendships"
+  | "synastry" | "couple_numerology" | "annual_forecast" | "personal_kabbalah";
+
+const KINDS_NEED_PARTNER = new Set<Kind>(["synastry", "couple_numerology"]);
+const KINDS_NEED_YEAR = new Set<Kind>(["annual_forecast"]);
 
 const CARDS: { kind: Kind; title: string; desc: string; icon: typeof Sparkles; gradient: string }[] = [
   {
@@ -81,6 +87,34 @@ const CARDS: { kind: Kind; title: string; desc: string; icon: typeof Sparkles; g
     desc: "Padrões sociais, perfis de amigos que te complementam e como cultivar círculos verdadeiros.",
     icon: Users,
     gradient: "from-sky-500/30 via-cyan-400/10 to-transparent",
+  },
+  {
+    kind: "synastry",
+    title: "Sinastria Amorosa",
+    desc: "Compatibilidade entre dois mapas: atrações, tensões e caminhos concretos de harmonização do casal.",
+    icon: Users2,
+    gradient: "from-pink-500/30 via-rose-400/10 to-transparent",
+  },
+  {
+    kind: "couple_numerology",
+    title: "Numerologia do Casal",
+    desc: "A vibração numérica que une (e desafia) esta parceria — missão conjunta e ciclos comuns.",
+    icon: Heart,
+    gradient: "from-fuchsia-500/30 via-pink-400/10 to-transparent",
+  },
+  {
+    kind: "annual_forecast",
+    title: "Previsão Anual",
+    desc: "Trânsitos, ano pessoal e ciclos numerológicos projetados para os próximos 12 meses.",
+    icon: TrendingUp,
+    gradient: "from-cyan-500/30 via-sky-400/10 to-transparent",
+  },
+  {
+    kind: "personal_kabbalah",
+    title: "Cabala Pessoal",
+    desc: "Sua Árvore da Vida individual — Sephirot, letras hebraicas e caminho iniciático inscrito no nome.",
+    icon: TreePine,
+    gradient: "from-purple-500/30 via-violet-400/10 to-transparent",
   },
 ];
 
