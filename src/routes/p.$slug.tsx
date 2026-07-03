@@ -4,17 +4,17 @@ import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Sparkles, Check, Loader2, Star, ShieldCheck, Zap, Clock, Lock, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
 import { Logo } from "@/components/Logo";
 import { Starfield } from "@/components/Starfield";
+import { LandingFieldsForm } from "@/components/LandingFieldsForm";
 import { getPublicLanding } from "@/lib/product-landings.functions";
 import { createGuestProductOrder } from "@/lib/product-orders.functions";
 import { showFeedback } from "@/components/system-feedback";
+
 import {
   captureAffiliateFromUrl,
   trackAffiliateCheckout,
@@ -63,20 +63,7 @@ function NotFound() {
   );
 }
 
-const FIELD_LABELS: Record<string, { label: string; type?: string; placeholder?: string }> = {
-  full_name: { label: "Nome completo", placeholder: "Seu nome" },
-  email: { label: "E-mail", type: "email", placeholder: "voce@exemplo.com" },
-  phone: { label: "WhatsApp", placeholder: "(11) 99999-9999" },
-  birth_date: { label: "Data de nascimento", type: "date" },
-  birth_time: { label: "Hora de nascimento", type: "time" },
-  birth_city: { label: "Cidade de nascimento" },
-  birth_country: { label: "País de nascimento" },
-  partner_name: { label: "Nome do parceiro(a)" },
-  partner_birth_date: { label: "Data nasc. parceiro(a)", type: "date" },
-  company_name: { label: "Nome da empresa" },
-  company_founded_at: { label: "Data de fundação da empresa", type: "date" },
-  question: { label: "Sua pergunta" },
-};
+
 
 function ProductLandingPage() {
   const { landing } = Route.useLoaderData();
@@ -281,22 +268,8 @@ function ProductLandingPage() {
             onSubmit={(e) => { e.preventDefault(); mutation.mutate(); }}
             className="space-y-3"
           >
-            {required.map((k) => {
-              const meta = FIELD_LABELS[k] ?? { label: k };
-              return (
-                <div key={k} className="space-y-1">
-                  <Label htmlFor={`f-${k}`}>{meta.label} *</Label>
-                  <Input
-                    id={`f-${k}`}
-                    type={meta.type ?? "text"}
-                    placeholder={meta.placeholder}
-                    value={values[k] ?? ""}
-                    onChange={(e) => setValues((v) => ({ ...v, [k]: e.target.value }))}
-                    required
-                  />
-                </div>
-              );
-            })}
+            <LandingFieldsForm fields={required} values={values} onChange={setValues} idPrefix="f" />
+
             <DialogFooter className="pt-2">
               <Button type="submit" disabled={mutation.isPending} className="w-full">
                 {mutation.isPending ? <Loader2 className="size-4 animate-spin" /> : "Ir para pagamento"}

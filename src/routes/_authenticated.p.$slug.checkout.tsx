@@ -4,24 +4,16 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Loader2, ArrowLeft, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { getPublicLanding, AVAILABLE_FIELDS } from "@/lib/product-landings.functions";
+import { getPublicLanding } from "@/lib/product-landings.functions";
 import { createProductOrder } from "@/lib/product-orders.functions";
 import { showFeedback } from "@/components/system-feedback";
+import { LandingFieldsForm } from "@/components/LandingFieldsForm";
 
 export const Route = createFileRoute("/_authenticated/p/$slug/checkout")({
   component: CheckoutPage,
 });
 
-function maskPhoneBR(v: string) {
-  const d = v.replace(/\D/g, "").slice(0, 11);
-  if (d.length <= 2) return d.length ? `(${d}` : "";
-  if (d.length <= 6) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
-  if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
-  return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
-}
 
 function CheckoutPage() {
   const { slug } = Route.useParams();
@@ -72,37 +64,8 @@ function CheckoutPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {fields.map((key) => {
-            const meta = AVAILABLE_FIELDS.find((f) => f.key === key);
-            const label = meta?.label ?? key;
-            const isPhone = key === "phone";
-            const type = isPhone
-              ? "tel"
-              : key === "email"
-                ? "email"
-                : key.includes("date")
-                  ? "date"
-                  : key === "birth_time"
-                    ? "time"
-                    : "text";
-            return (
-              <div key={key}>
-                <Label>{label} *</Label>
-                <Input
-                  type={type}
-                  inputMode={isPhone ? "numeric" : undefined}
-                  placeholder={isPhone ? "(11) 99999-9999" : undefined}
-                  maxLength={isPhone ? 15 : undefined}
-                  value={form[key] ?? ""}
-                  onChange={(e) => {
-                    const val = isPhone ? maskPhoneBR(e.target.value) : e.target.value;
-                    setForm({ ...form, [key]: val });
-                  }}
-                  required
-                />
-              </div>
-            );
-          })}
+          <LandingFieldsForm fields={fields} values={form} onChange={setForm} idPrefix="chk" />
+
 
           <div className="rounded-lg border border-gold/30 bg-secondary/30 p-4 flex items-center justify-between">
             <div>
