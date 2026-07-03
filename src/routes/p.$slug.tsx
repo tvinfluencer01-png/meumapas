@@ -4,17 +4,17 @@ import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Sparkles, Check, Loader2, Star, ShieldCheck, Zap, Clock, Lock, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
 import { Logo } from "@/components/Logo";
 import { Starfield } from "@/components/Starfield";
+import { LandingFieldsForm } from "@/components/LandingFieldsForm";
 import { getPublicLanding } from "@/lib/product-landings.functions";
 import { createGuestProductOrder } from "@/lib/product-orders.functions";
 import { showFeedback } from "@/components/system-feedback";
+
 import {
   captureAffiliateFromUrl,
   trackAffiliateCheckout,
