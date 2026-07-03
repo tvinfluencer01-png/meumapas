@@ -39,14 +39,14 @@ function Content() {
   const f = data.funnel;
 
   const cards = [
-    { label: "Cliques Hoje", value: String(s.clicksToday), icon: MousePointerClick, tone: "sky" as const },
-    { label: "Cliques Mês", value: String(s.clicksMonth), icon: MousePointerClick, tone: "teal" as const },
-    { label: "Conversão", value: `${s.conversionRate.toFixed(2)}%`, icon: TrendingUp, tone: "emerald" as const },
-    { label: "Vendas", value: String(s.salesCount), icon: ShoppingCart, tone: "violet" as const },
-    { label: "Ticket Médio", value: brl(s.avgTicketCents), icon: Ticket, tone: "amber" as const },
-    { label: "Comissão Disponível", value: brl(s.availableCents), icon: Wallet, tone: "fuchsia" as const },
-    { label: "Comissão Bloqueada", value: brl(s.blockedCents), icon: Lock, tone: "rose" as const },
-    { label: "Comissão Recebida", value: brl(s.paidCents), icon: CheckCircle2, tone: "indigo" as const },
+    { label: "Cliques Hoje", value: String(s.clicksToday), icon: MousePointerClick, tone: "sky" as const, to: "/affiliate/history" as const, hint: "Ver histórico" },
+    { label: "Cliques Mês", value: String(s.clicksMonth), icon: MousePointerClick, tone: "teal" as const, to: "/affiliate/history" as const, hint: "Ver histórico" },
+    { label: "Conversão", value: `${s.conversionRate.toFixed(2)}%`, icon: TrendingUp, tone: "emerald" as const, to: "/affiliate/history" as const, hint: "Ver histórico" },
+    { label: "Vendas", value: String(s.salesCount), icon: ShoppingCart, tone: "violet" as const, to: "/affiliate/financial" as const, hint: "Ver vendas" },
+    { label: "Ticket Médio", value: brl(s.avgTicketCents), icon: Ticket, tone: "amber" as const, to: "/affiliate/financial" as const, hint: "Ver vendas" },
+    { label: "Comissão Disponível", value: brl(s.availableCents), icon: Wallet, tone: "fuchsia" as const, to: "/affiliate/withdraw" as const, hint: "Solicitar saque" },
+    { label: "Comissão Bloqueada", value: brl(s.blockedCents), icon: Lock, tone: "rose" as const, to: "/affiliate/financial" as const, hint: "Ver comissões" },
+    { label: "Comissão Recebida", value: brl(s.paidCents), icon: CheckCircle2, tone: "indigo" as const, to: "/affiliate/financial" as const, hint: "Ver comissões" },
   ];
 
   return (
@@ -58,7 +58,9 @@ function Content() {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {cards.map((c) => (
-          <GradientStatCard key={c.label} label={c.label} value={c.value} icon={c.icon} tone={c.tone} />
+          <Link key={c.label} to={c.to} className="block rounded-xl focus:outline-none focus:ring-2 focus:ring-ring">
+            <GradientStatCard label={c.label} value={c.value} icon={c.icon} tone={c.tone} hint={c.hint} className="cursor-pointer hover:-translate-y-0.5 transition-transform" />
+          </Link>
         ))}
       </div>
 
