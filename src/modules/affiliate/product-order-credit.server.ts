@@ -138,23 +138,18 @@ export async function creditAffiliateForProductOrder(orderId: string): Promise<{
       return { ok: true, affiliateId, commissionId: (existing as any)[0].id };
     }
 
-    // Tenta resolver product_id a partir da landing slug
+    // Resolve product_id (affiliate_products) reusing already-fetched landing slug
     let productId: string | null = null;
-    try {
-      const { data: landing } = await supabaseAdmin
-        .from("product_landings")
-        .select("slug")
-        .eq("id", (order as any).landing_id)
-        .maybeSingle();
-      if (landing) {
+    if (landingSlug) {
+      try {
         const { data: prod } = await supabaseAdmin
           .from("affiliate_products" as any)
           .select("id")
-          .eq("slug", (landing as any).slug)
+          .eq("slug", landingSlug)
           .maybeSingle();
         productId = (prod as any)?.id ?? null;
-      }
-    } catch { /* noop */ }
+      } catch { /* noop */ }
+    }
 
     const result = await recordCommissionAndLedger({
       input: {
