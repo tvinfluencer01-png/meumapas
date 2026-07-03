@@ -273,13 +273,31 @@ function LandingForm({
   };
 
   const handleGenerate = async () => {
-    if (!aiPrompt.trim()) {
-      showFeedback({ title: "Descreva a imagem", description: "Escreva o prompt para gerar.", type: "error" });
-      return;
+    let prompt = aiPrompt.trim();
+    if (!prompt) {
+      const parts = [
+        landing.title?.trim(),
+        landing.subtitle?.trim(),
+        landing.description?.trim(),
+      ].filter(Boolean);
+      if (!parts.length) {
+        showFeedback({
+          title: "Sem conteúdo",
+          description: "Preencha Título, Subtítulo ou Descrição, ou escreva um prompt manual.",
+          type: "error",
+        });
+        return;
+      }
+      prompt =
+        `Imagem de capa mística e elegante para landing page.\n` +
+        `Título: ${landing.title || ""}\n` +
+        (landing.subtitle ? `Subtítulo: ${landing.subtitle}\n` : "") +
+        (landing.description ? `Descrição: ${landing.description}\n` : "") +
+        `Estilo: arte digital sofisticada, tons dourados e cósmicos, sem texto na imagem.`;
     }
     setGenerating(true);
     try {
-      const { url } = await genFn({ data: { prompt: aiPrompt.trim() } });
+      const { url } = await genFn({ data: { prompt } });
       upd({ hero_image_url: url });
       showFeedback({ title: "Imagem gerada", type: "success" });
     } catch (e: any) {
