@@ -87,7 +87,21 @@ export function AdminProductOrders() {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<any | null>(null);
+  const [editing, setEditing] = useState<any | null>(null);
+  const [editForm, setEditForm] = useState<Record<string, string>>({});
   const [dispatchingId, setDispatchingId] = useState<string | null>(null);
+  const updateCustomerFn = useServerFn(updateOrderCustomerData);
+
+  const editMutation = useMutation({
+    mutationFn: (vars: { id: string; customer_data: Record<string, string> }) =>
+      updateCustomerFn({ data: vars }),
+    onSuccess: () => {
+      showFeedback({ title: "Dados do cliente atualizados", type: "success" });
+      qc.invalidateQueries({ queryKey: ["admin-product-orders"] });
+      setEditing(null);
+    },
+    onError: (e: Error) => showFeedback({ title: "Erro", description: e.message, type: "error" }),
+  });
 
   const updateMutation = useMutation({
     mutationFn: (vars: { id: string; status: any; pdf_url?: string | null }) =>
