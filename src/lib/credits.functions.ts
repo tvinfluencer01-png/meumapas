@@ -75,6 +75,26 @@ export const CREDIT_COST_CATALOG = {
     label: "Relatório PDF — Amizades",
     description: "Padrões sociais, vínculos de amizade e como cultivar círculos verdadeiros.",
   },
+  report_synastry: {
+    amount: 7,
+    label: "Relatório PDF — Sinastria Amorosa",
+    description: "Análise astrológica da compatibilidade entre dois mapas — dinâmica afetiva, atrações, tensões e caminhos de harmonização do casal.",
+  },
+  report_couple_numerology: {
+    amount: 6,
+    label: "Relatório PDF — Numerologia do Casal",
+    description: "Compatibilidade numerológica entre dois nomes e datas — vibração do casal, missão conjunta e ciclos comuns.",
+  },
+  report_annual_forecast: {
+    amount: 7,
+    label: "Relatório PDF — Previsão Anual",
+    description: "Trânsitos, ano pessoal e ciclos numerológicos projetados para os próximos 12 meses.",
+  },
+  report_personal_kabbalah: {
+    amount: 6,
+    label: "Relatório PDF — Cabala Pessoal",
+    description: "Leitura cabalística individual — Árvore da Vida, Sephirot pessoais e caminhos de evolução espiritual.",
+  },
   report_business: {
     amount: 8,
     label: "Relatório PDF — Mapa Empresarial",
