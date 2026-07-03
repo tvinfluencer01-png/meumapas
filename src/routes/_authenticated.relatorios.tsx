@@ -146,6 +146,12 @@ function RelatoriosPage() {
     kind: Kind;
     report: { id: string; title: string; created_at: string };
   } | null>(null);
+  const [extraPrompt, setExtraPrompt] = useState<{
+    kind: Kind;
+    partnerName: string;
+    partnerDate: string;
+    year: string;
+  } | null>(null);
 
   // Search & period filters
   const [searchQuery, setSearchQuery] = useState("");
@@ -163,7 +169,16 @@ function RelatoriosPage() {
       setExistingPrompt({ kind, report: existing });
       return;
     }
-    genMutation.mutate(kind);
+    if (KINDS_NEED_PARTNER.has(kind) || KINDS_NEED_YEAR.has(kind)) {
+      setExtraPrompt({
+        kind,
+        partnerName: "",
+        partnerDate: "",
+        year: String(new Date().getFullYear()),
+      });
+      return;
+    }
+    genMutation.mutate({ kind });
   }
 
   const activeClientId = activeSubject?.client_profile_id ?? null;
