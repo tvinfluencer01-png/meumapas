@@ -64,37 +64,8 @@ function CheckoutPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {fields.map((key) => {
-            const meta = AVAILABLE_FIELDS.find((f) => f.key === key);
-            const label = meta?.label ?? key;
-            const isPhone = key === "phone";
-            const type = isPhone
-              ? "tel"
-              : key === "email"
-                ? "email"
-                : key.includes("date")
-                  ? "date"
-                  : key === "birth_time"
-                    ? "time"
-                    : "text";
-            return (
-              <div key={key}>
-                <Label>{label} *</Label>
-                <Input
-                  type={type}
-                  inputMode={isPhone ? "numeric" : undefined}
-                  placeholder={isPhone ? "(11) 99999-9999" : undefined}
-                  maxLength={isPhone ? 15 : undefined}
-                  value={form[key] ?? ""}
-                  onChange={(e) => {
-                    const val = isPhone ? maskPhoneBR(e.target.value) : e.target.value;
-                    setForm({ ...form, [key]: val });
-                  }}
-                  required
-                />
-              </div>
-            );
-          })}
+          <LandingFieldsForm fields={fields} values={form} onChange={setForm} idPrefix="chk" />
+
 
           <div className="rounded-lg border border-gold/30 bg-secondary/30 p-4 flex items-center justify-between">
             <div>
