@@ -130,7 +130,7 @@ export function AdminHoroscopeStatus() {
                     {data.users.length === 0 && (
                       <tr><td colSpan={8} className="px-3 py-6 text-center text-muted-foreground">Sem assinantes.</td></tr>
                     )}
-                    {data.users.map((u) => (
+                    {pagedUsers.map((u) => (
                       <tr key={u.user_id} className="border-t border-border">
                         <td className="px-3 py-2">
                           <div className="font-medium">{u.full_name || "—"}</div>
