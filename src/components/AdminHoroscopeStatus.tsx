@@ -1,5 +1,6 @@
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
+import { useMemo, useState, useEffect } from "react";
 import { CheckCircle2, AlertTriangle, Clock, RefreshCw, Send, Sparkles, ShieldAlert, ShieldCheck } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { GradientStatCard } from "@/components/ui/gradient-stat-card";
@@ -20,6 +21,16 @@ export function AdminHoroscopeStatus() {
     queryFn: () => fn(),
     refetchInterval: 60_000,
   });
+
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+  const totalUsers = data?.users.length ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalUsers / pageSize));
+  useEffect(() => { if (page > totalPages) setPage(1); }, [page, totalPages]);
+  const pagedUsers = useMemo(
+    () => (data?.users ?? []).slice((page - 1) * pageSize, page * pageSize),
+    [data, page]
+  );
 
   return (
     <div className="space-y-6">
@@ -119,7 +130,7 @@ export function AdminHoroscopeStatus() {
                     {data.users.length === 0 && (
                       <tr><td colSpan={8} className="px-3 py-6 text-center text-muted-foreground">Sem assinantes.</td></tr>
                     )}
-                    {data.users.map((u) => (
+                    {pagedUsers.map((u) => (
                       <tr key={u.user_id} className="border-t border-border">
                         <td className="px-3 py-2">
                           <div className="font-medium">{u.full_name || "—"}</div>
@@ -163,6 +174,23 @@ export function AdminHoroscopeStatus() {
                   </tbody>
                 </table>
               </div>
+              {totalUsers > pageSize && (
+                <div className="flex items-center justify-between text-xs text-muted-foreground pt-2">
+                  <div>
+                    Mostrando {(page - 1) * pageSize + 1}
+                    –{Math.min(page * pageSize, totalUsers)} de {totalUsers}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>
+                      Anterior
+                    </Button>
+                    <span>Página {page} de {totalPages}</span>
+                    <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>
+                      Próxima
+                    </Button>
+                  </div>
+                </div>
+              )}
             </>
           )}
         </CardContent>
