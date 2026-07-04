@@ -570,7 +570,23 @@ async function generatePdfForOrder(order: any, landing: any): Promise<Uint8Array
   });
 }
 
-async function sendOrderEmail(order: any, landing: any, pdfUrl: string | null) {
+async function fetchOrderPdfBytes(orderId: string): Promise<Uint8Array | null> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const path = `product-orders/${orderId}.pdf`;
+  const { data, error } = await supabaseAdmin.storage.from("reports").download(path);
+  if (error || !data) return null;
+  const buf = await data.arrayBuffer();
+  return new Uint8Array(buf);
+}
+
+function fillTemplate(tpl: string, vars: Record<string, string>): string {
+  return tpl.replace(/\{\{\s*([a-zA-Z0-9_\-]+)\s*\}\}/g, (_m, key: string) => {
+    const k = key.toLowerCase();
+    return vars[k] ?? "";
+  });
+}
+
+async function sendOrderEmail(order: any, landing: any, pdfUrl: string | null, pdfBytes: Uint8Array | null) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data: smtp } = await supabaseAdmin
     .from("smtp_settings" as any)
@@ -583,20 +599,35 @@ async function sendOrderEmail(order: any, landing: any, pdfUrl: string | null) {
     throw new Error("SMTP não configurado.");
   }
   const cd = (order.customer_data ?? {}) as Record<string, any>;
-  const to = cd.email;
+  const to = cd.email ?? (order as any).guest_email;
   if (!to) throw new Error("E-mail do cliente não encontrado nos dados do pedido.");
 
+  const nome = String(cd.full_name ?? cd.name ?? cd.nome ?? "cliente");
+  const firstName = nome.split(/\s+/)[0] || nome;
+  const partnerName = String(cd.partner_name ?? cd.parceiro_nome ?? "");
   const subject = landing.delivery_email_subject || `Seu ${landing.title} está pronto`;
   const tpl =
     landing.delivery_email_template ||
-    `<p>Olá {{name}},</p><p>Seu relatório <strong>{{title}}</strong> está pronto.</p>{{download}}<p>Obrigado!</p>`;
+    `Olá {{nome}},\n\nSeu relatório {{title}} está pronto — segue anexo em PDF.\n\nCom carinho,\nEquipe Código Cósmico`;
+
   const downloadHtml = pdfUrl
     ? `<p><a href="${pdfUrl}" style="background:#d4af37;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;display:inline-block">Baixar PDF</a></p>`
     : "";
-  const html = tpl
-    .replace(/\{\{name\}\}/g, String(cd.full_name ?? cd.name ?? "cliente"))
-    .replace(/\{\{title\}\}/g, landing.title)
-    .replace(/\{\{download\}\}/g, downloadHtml);
+  const vars: Record<string, string> = {
+    name: nome, nome, full_name: nome, cliente: nome, first_name: firstName, primeiro_nome: firstName,
+    title: landing.title, produto: landing.title, product: landing.title,
+    link: pdfUrl ?? "", access_link: pdfUrl ?? "", download: downloadHtml, download_link: pdfUrl ?? "", pdf_url: pdfUrl ?? "",
+    partner_name: partnerName, parceiro_nome: partnerName,
+  };
+  const raw = fillTemplate(tpl, vars);
+  // Convert plain-text templates to HTML with basic <br/> so newlines render
+  const looksHtml = /<[a-z][\s\S]*>/i.test(raw);
+  const html = looksHtml ? raw : raw.replace(/\r?\n/g, "<br/>");
+
+  const filename = `${String(landing.title || "relatorio").replace(/[^a-z0-9\-\_]+/gi, "-").toLowerCase()}.pdf`;
+  const attachments = pdfBytes
+    ? [{ filename, content: Buffer.from(pdfBytes), contentType: "application/pdf" }]
+    : undefined;
 
   const nodemailer = (await import("nodemailer")).default;
   const transporter = nodemailer.createTransport({
@@ -611,6 +642,7 @@ async function sendOrderEmail(order: any, landing: any, pdfUrl: string | null) {
     replyTo: s.reply_to || undefined,
     subject,
     html,
+    attachments,
   });
 }
 
