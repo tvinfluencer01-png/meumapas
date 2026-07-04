@@ -95,15 +95,24 @@ export const listReportIllustrations = createServerFn({ method: "GET" })
 export const getIllustrationImage = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
-  .handler(async ({ data, context }) => {
-    const { data: row, error } = await context.supabase
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: row, error } = await supabaseAdmin
       .from("report_illustrations")
-      .select("image_data, mime")
+      .select("storage_path, mime")
       .eq("id", data.id)
       .maybeSingle();
     if (error) throw new Error(error.message);
     if (!row) throw new Error("Ilustração não encontrada");
-    return { dataUrl: `data:${row.mime};base64,${row.image_data}` };
+    if (!row.storage_path) {
+      // legacy row without storage_path — cannot serve reliably
+      return { dataUrl: "" };
+    }
+    const { data: signed, error: sErr } = await supabaseAdmin.storage
+      .from("report-illustrations")
+      .createSignedUrl(row.storage_path, 60 * 60);
+    if (sErr) throw new Error(sErr.message);
+    return { dataUrl: signed.signedUrl };
   });
 
 /* ------------------------- GENERATE (admin) ------------------------- */
