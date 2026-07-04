@@ -176,7 +176,7 @@ const SuggestionsSchema = z.object({
 
 const SectionBodyOutput = z.object({
   title: z.string().min(2),
-  body: z.string().min(1400),
+  body: z.string().min(2200),
 });
 
 const SectionPlanOutput = z.object({
@@ -185,29 +185,75 @@ const SectionPlanOutput = z.object({
 
 const SectionOutput = z.object({
   title: z.string().min(2),
-  body: z.string().min(1400),
+  body: z.string().min(2200),
   plan: SectionPlanSchema,
 });
 
 const BaseAiOutput = z.object({
-  intro: z.string().min(1600),
-  sectionBlueprints: z.array(z.object({ title: z.string().min(2), focus: z.string().min(30) })).length(3),
-  closing: z.string().min(400),
+  intro: z.string().min(2200),
+  sectionBlueprints: z
+    .array(z.object({ title: z.string().min(2), focus: z.string().min(60) }))
+    .min(3)
+    .max(6),
+  closing: z.string().min(700),
   swot: SwotSchema,
   recommendations: RecommendationsSchema,
   suggestions: SuggestionsSchema,
-  summary: z.string().min(500),
+  summary: z.string().min(900),
 });
 
 const AiOutput = z.object({
-  intro: z.string().min(1600),
-  sections: z.array(SectionBodyOutput).length(3),
-  closing: z.string().min(400),
+  intro: z.string().min(2200),
+  sections: z.array(SectionBodyOutput).min(3).max(6),
+  closing: z.string().min(700),
   swot: SwotSchema,
   recommendations: RecommendationsSchema,
   suggestions: SuggestionsSchema,
-  summary: z.string().min(500),
+  summary: z.string().min(900),
 });
+
+/**
+ * Perfil de tamanho por tipo de relatório.
+ * Controla quantos capítulos são pedidos à IA e o mínimo de caracteres
+ * por bloco, permitindo que cada tipo alcance a faixa de páginas alvo:
+ *   - Grandes (25–40 pág): personality, spiritual, personal_kabbalah,
+ *     annual_forecast, synastry — 5 capítulos, corpo denso.
+ *   - Médios (22–32 pág): love, career, finance, family, health,
+ *     friendships, couple_numerology — 4 capítulos.
+ */
+const REPORT_SIZE_PROFILE: Record<
+  z.infer<typeof KIND>,
+  { sections: number; introMin: number; sectionMin: number; closingMin: number; summaryMin: number; targetPagesLabel: string }
+> = {
+  personality:        { sections: 5, introMin: 3200, sectionMin: 3600, closingMin: 1000, summaryMin: 1400, targetPagesLabel: "30 a 40 páginas" },
+  love:               { sections: 4, introMin: 2800, sectionMin: 3200, closingMin:  900, summaryMin: 1200, targetPagesLabel: "24 a 32 páginas" },
+  career:             { sections: 4, introMin: 2800, sectionMin: 3200, closingMin:  900, summaryMin: 1200, targetPagesLabel: "24 a 32 páginas" },
+  spiritual:          { sections: 5, introMin: 3200, sectionMin: 3400, closingMin: 1000, summaryMin: 1400, targetPagesLabel: "28 a 38 páginas" },
+  finance:            { sections: 4, introMin: 2800, sectionMin: 3200, closingMin:  900, summaryMin: 1200, targetPagesLabel: "24 a 32 páginas" },
+  family:             { sections: 4, introMin: 2800, sectionMin: 3200, closingMin:  900, summaryMin: 1200, targetPagesLabel: "24 a 32 páginas" },
+  health:             { sections: 4, introMin: 2800, sectionMin: 3000, closingMin:  900, summaryMin: 1200, targetPagesLabel: "22 a 30 páginas" },
+  friendships:        { sections: 4, introMin: 2600, sectionMin: 3000, closingMin:  800, summaryMin: 1100, targetPagesLabel: "22 a 30 páginas" },
+  synastry:           { sections: 5, introMin: 3200, sectionMin: 3400, closingMin: 1000, summaryMin: 1400, targetPagesLabel: "28 a 38 páginas" },
+  couple_numerology:  { sections: 4, introMin: 2800, sectionMin: 3200, closingMin:  900, summaryMin: 1200, targetPagesLabel: "24 a 32 páginas" },
+  annual_forecast:    { sections: 5, introMin: 3200, sectionMin: 3400, closingMin: 1000, summaryMin: 1400, targetPagesLabel: "28 a 38 páginas" },
+  personal_kabbalah:  { sections: 5, introMin: 3200, sectionMin: 3400, closingMin: 1000, summaryMin: 1400, targetPagesLabel: "28 a 38 páginas" },
+};
+
+/**
+ * Ângulos obrigatórios por capítulo. Cada índice recebe um "foco
+ * narrativo" distinto para reduzir sobreposição temática entre capítulos.
+ * A ordem cobre 6 slots; usamos apenas os N primeiros conforme o perfil.
+ */
+const CHAPTER_ANGLES: string[] = [
+  "PANORAMA SIMBÓLICO — mapeie o cenário geral do tema no mapa astral e na numerologia, apresentando os arquétipos ativos e a energia dominante do ciclo, sem repetir a abertura.",
+  "PADRÕES E FERIDAS — investigue as tensões, repetições, sombras e feridas centrais que aparecem NESTA área específica, com aspectos e números concretos, sem repetir termos gerais já usados.",
+  "DONS LATENTES E RECURSOS — foque nas forças, talentos e recursos ainda pouco explorados que o mapa revela para este tema, oferecendo exemplos práticos.",
+  "MANIFESTAÇÃO NO COTIDIANO — mostre como esses símbolos aparecem no dia a dia (relacionamentos, rotina, corpo, decisões), com cenas concretas e observáveis.",
+  "TRAVESSIA E PRÓXIMO CICLO — desenhe o convite evolutivo, o rito de passagem e as decisões maduras que o próximo ciclo pede especificamente nesta área.",
+  "INTEGRAÇÃO FINAL — costure aprendizados de todos os capítulos anteriores em uma síntese viva que ainda entrega insights novos.",
+];
+
+
 
 export const generateReport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -377,12 +423,15 @@ export const generateReport = createServerFn({ method: "POST" })
       .map((a) => `${a.a} ${a.aspect} ${a.b}`)
       .join(", ");
     const numerologyAnchors = `Caminho de Vida ${numLabel(num.life_path)}, Destino ${numLabel(num.destiny)}, Alma ${numLabel(num.soul_urge)} e Personalidade ${numLabel(num.personality)}`;
+    const sizeProfile = REPORT_SIZE_PROFILE[data.kind];
     const CONTENT_MIN = {
-      intro: 1600,
-      section: 1400,
-      closing: 400,
-      summary: 500,
+      intro: sizeProfile.introMin,
+      section: sizeProfile.sectionMin,
+      closing: sizeProfile.closingMin,
+      summary: sizeProfile.summaryMin,
     } as const;
+    const chapterAngles = CHAPTER_ANGLES.slice(0, sizeProfile.sections);
+
 
     function ensureMinNarrativeLength(
       text: unknown,
@@ -694,20 +743,16 @@ ${astroBlock}${extraContextBlock}`;
     }
 
     function createFallbackBasePayload() {
-      const blueprintDefaults = [
-        {
-          title: `Panorama de ${meta.title}`,
-          focus: `Leitura geral sobre ${meta.focus}`,
-        },
-        {
-          title: "Padrões e bloqueios centrais",
-          focus: `Identificar sombras, travas e repetições dentro de ${meta.focus}`,
-        },
-        {
-          title: "Direções práticas para o próximo ciclo",
-          focus: `Traduzir ${meta.focus} em movimentos concretos, maduros e sustentáveis`,
-        },
+      const baseBlueprints = [
+        { title: `Panorama simbólico de ${meta.title}`, focus: `Leitura geral sobre ${meta.focus}, apresentando o cenário arquetípico dominante.` },
+        { title: "Padrões, feridas e bloqueios centrais", focus: `Investigar sombras, travas e repetições específicas dentro de ${meta.focus}.` },
+        { title: "Dons latentes e recursos disponíveis", focus: `Nomear talentos, forças e recursos ainda pouco explorados em ${meta.focus}.` },
+        { title: "Manifestação no cotidiano", focus: `Como esses símbolos aparecem no dia a dia dentro de ${meta.focus}, com cenas concretas.` },
+        { title: "Travessia e próximo ciclo", focus: `Traduzir ${meta.focus} em movimentos concretos, maduros e sustentáveis para o próximo ciclo.` },
+        { title: "Integração final", focus: `Costurar todos os aprendizados anteriores sobre ${meta.focus} em uma síntese viva.` },
       ];
+      const blueprintDefaults = baseBlueprints.slice(0, sizeProfile.sections);
+
 
       return {
         intro: ensureMinNarrativeLength(
@@ -766,7 +811,7 @@ ${astroBlock}${extraContextBlock}`;
 
       return {
         intro: ensureMinNarrativeLength(cleanInlineText(record.intro) || fallback.intro, CONTENT_MIN.intro, "intro", meta.focus),
-        sectionBlueprints: normalizeStringList(sectionBlueprints, 3, (index) => fallback.sectionBlueprints[index]?.title ?? `Capítulo ${index + 1}`).map((title, index) => {
+        sectionBlueprints: normalizeStringList(sectionBlueprints, sizeProfile.sections, (index) => fallback.sectionBlueprints[index]?.title ?? `Capítulo ${index + 1}`).map((title, index) => {
           const source = sectionBlueprints[index];
           if (source && typeof source === "object" && !Array.isArray(source)) {
             const sourceRecord = source as Record<string, unknown>;
@@ -778,6 +823,7 @@ ${astroBlock}${extraContextBlock}`;
 
           return fallback.sectionBlueprints[index] ?? { title, focus: fallback.sectionBlueprints[0].focus };
         }),
+
         closing: ensureMinNarrativeLength(cleanInlineText(record.closing) || fallback.closing, CONTENT_MIN.closing, "closing", meta.focus),
         swot: {
           strengths: normalizeStringList(swot.strengths, 3, (index) => fallback.swot.strengths[index]),
@@ -904,19 +950,28 @@ Nome para tratamento: ${firstName}
 Numerologia: ${numBlock}
 Assinatura astral: ${signLine || astroBlock}`;
 
+    const anglesList = chapterAngles
+      .map((a, i) => `  ${i + 1}. ${a}`)
+      .join("\n");
+    const nSections = sizeProfile.sections;
+    const introMin = sizeProfile.introMin;
+    const sectionMin = sizeProfile.sectionMin;
+    const closingMin = sizeProfile.closingMin;
+    const summaryMin = sizeProfile.summaryMin;
+
     const basePrompt = `${reportContext}
 
-Monte apenas a ESTRUTURA BASE do relatório com PROFUNDIDADE REAL e EXTENSÃO LONGA. Responda APENAS com JSON valido neste formato:
+Monte apenas a ESTRUTURA BASE deste relatório premium, com PROFUNDIDADE REAL, EXTENSÃO LONGA e ZERO REPETIÇÃO. Alvo de impressão: ${sizeProfile.targetPagesLabel} em A4.
+
+Responda APENAS com JSON válido neste formato exato:
 {
-  "intro": "ABERTURA cinematográfica de 6 a 8 parágrafos longos (MÍNIMO 1800 caracteres no total, idealmente entre 2000 e 2600). Comece nomeando ${firstName} pelo nome completo e situando o momento de vida com poesia sóbria. Cite EXPLICITAMENTE Sol, Lua, Mercúrio, Vênus, Marte (e Júpiter/Saturno quando relevantes) com seus signos e o que cada um significa entre parênteses em até 10 palavras. Cite os aspectos principais nominalmente (ex: 'Sol Quadratura Lua') traduzindo entre parênteses. Conecte o Caminho de Vida, Destino, Alma e Personalidade ao tema do relatório. Mostre a tensão central que ${firstName} vive nessa área, o convite simbólico do mapa e o tom da jornada. Linguagem humana, viva, sem clichês esotéricos genéricos. NUNCA entregue menos de 1800 caracteres.",
+  "intro": "ABERTURA cinematográfica com no mínimo ${introMin} caracteres (10 a 14 parágrafos densos). Comece nomeando ${firstName} pelo nome completo e situe o momento de vida com poesia sóbria. Cite EXPLICITAMENTE Sol, Lua, Mercúrio, Vênus, Marte, e — quando relevantes — Júpiter, Saturno, Urano, Netuno e Plutão, com seus signos e o significado entre parênteses em até 10 palavras. Cite ao menos 4 aspectos nominalmente (ex: 'Sol Quadratura Lua'), traduzindo entre parênteses. Amarra Caminho de Vida, Destino, Alma e Personalidade ao tema. Mostre a tensão central que ${firstName} vive nessa área, o convite simbólico do mapa, o tom da jornada e o que este relatório vai entregar capítulo a capítulo. Linguagem humana, viva, sem clichês esotéricos genéricos. NUNCA entregue menos de ${introMin} caracteres.",
   "sectionBlueprints": [
-    { "title": "Titulo 1", "focus": "Foco aprofundado e específico desta seção (mínimo 60 caracteres)" },
-    { "title": "Titulo 2", "focus": "Foco aprofundado e específico desta seção (mínimo 60 caracteres)" },
-    { "title": "Titulo 3", "focus": "Foco aprofundado e específico desta seção (mínimo 60 caracteres)" }
+${chapterAngles.map((_, i) => `    { "title": "Título do Capítulo ${i + 1}", "focus": "Foco específico e não sobreponível com os outros capítulos (mínimo 80 caracteres, mencionando ao menos 1 símbolo do mapa ou número da numerologia que será usado NESTE capítulo)" }`).join(",\n")}
   ],
-  "closing": "ENCERRAMENTO de 3 a 4 parágrafos densos (MÍNIMO 500 caracteres). Costure de volta o fio simbólico da abertura, reconheça a complexidade da jornada e entregue uma bênção concreta a ${firstName}.",
+  "closing": "ENCERRAMENTO com no mínimo ${closingMin} caracteres (5 a 7 parágrafos). Costure de volta o fio simbólico da abertura, reconheça a complexidade da jornada, entregue uma bênção concreta a ${firstName} e traga uma imagem simbólica final inédita (que não apareceu antes no texto).",
   "swot": {
-    "strengths": ["frase específica e ancorada no mapa", "...", "..."],
+    "strengths": ["frase específica ancorada em ${astroAnchors || "planeta ou aspecto"}", "...", "..."],
     "weaknesses": ["...", "...", "..."],
     "opportunities": ["...", "...", "..."],
     "threats": ["...", "...", "..."]
@@ -929,57 +984,77 @@ Monte apenas a ESTRUTURA BASE do relatório com PROFUNDIDADE REAL e EXTENSÃO LO
   "suggestions": {
     "intro": "1 frase curta para ${firstName}",
     "items": [
-      { "name": "Sugestao 1", "why": "Por que combina com o mapa e numerologia (mínimo 40 caracteres)" },
+      { "name": "Sugestao 1", "why": "Por que combina com o mapa e numerologia (mínimo 80 caracteres, citar 1 símbolo específico)" },
       { "name": "Sugestao 2", "why": "..." },
       { "name": "Sugestao 3", "why": "..." },
       { "name": "Sugestao 4", "why": "..." },
       { "name": "Sugestao 5", "why": "..." }
     ]
   },
-  "summary": "SÍNTESE final densa de 3 parágrafos (MÍNIMO 600 caracteres) que amarra os 3 capítulos, a SWOT e as recomendações em uma leitura única e memorável para ${firstName}."
+  "summary": "SÍNTESE final densa com no mínimo ${summaryMin} caracteres (5 a 7 parágrafos) que amarra os ${nSections} capítulos, a SWOT e as recomendações em uma leitura única. NÃO parafraseie a abertura nem os capítulos — traga uma perspectiva integrada e propositiva."
 }
 
-Regras:
-- sectionBlueprints precisa ter EXATAMENTE 3 itens, com temas diferentes e complementares, cada um digno de várias páginas.
+Regras rígidas de estrutura:
+- sectionBlueprints precisa ter EXATAMENTE ${nSections} itens.
+- Cada capítulo deve seguir um ÂNGULO OBRIGATÓRIO E DIFERENTE. Os ângulos, na ordem, são:
+${anglesList}
+  Para cada blueprint, o "title" deve refletir claramente o ângulo do capítulo correspondente, e o "focus" deve descrever, em linguagem própria, o que aquele capítulo (e SOMENTE ele) vai desenvolver.
+- Não repita entre capítulos os mesmos aspectos, planetas dominantes ou números como "assunto central". Distribua os símbolos: cada capítulo ancora-se em elementos diferentes do mapa.
 - SWOT e recommendations devem ter EXATAMENTE 3 itens por lista, frases específicas (não genéricas).
-- suggestions.items deve ter EXATAMENTE 5 itens.
-- Tema das sugestoes: ${meta.suggestionGuide}
-- Use o nome completo apenas 1x na intro. Depois, use apenas ${firstName}.
-- Nada de respostas curtas, superficiais ou repetitivas. Profundidade e EXTENSÃO são obrigatórias.
-- Se você entregar uma intro com menos de 1800 caracteres, o relatório será rejeitado.`;
+- suggestions.items deve ter EXATAMENTE 5 itens. Tema das sugestões: ${meta.suggestionGuide}
+- Use o nome completo apenas 1x na abertura. Depois, use apenas ${firstName}.
+
+Regras rígidas de anti-repetição:
+- É PROIBIDO reformular a mesma ideia com palavras diferentes ao longo do texto.
+- É PROIBIDO repetir metáforas, imagens simbólicas, cenas, aberturas de parágrafo, listas de virtudes ou frases-chave já usadas.
+- Cada parágrafo entrega informação, imagem ou orientação NOVA — se estiver dizendo o mesmo de outro jeito, corte.
+- Varie ativamente vocabulário, ritmo de frase e comprimento de parágrafo. Nada de "espelhos", "convite", "travessia", "essência", "verdade" repetidos como muleta.
+
+Se qualquer bloco vier abaixo do mínimo de caracteres, o relatório será rejeitado.`;
 
     const makeSectionBodyPrompt = (
       blueprint: z.infer<typeof BaseAiOutput>["sectionBlueprints"][number],
       index: number,
       blueprints: z.infer<typeof BaseAiOutput>["sectionBlueprints"],
-    ) => `${compactSectionContext}
+    ) => {
+      const angle = chapterAngles[index] ?? chapterAngles[chapterAngles.length - 1];
+      const otherChapters = blueprints
+        .map((b, i) => (i === index ? null : `${i + 1}. "${b.title}" — foco: ${b.focus}`))
+        .filter(Boolean)
+        .join("\n");
+      return `${compactSectionContext}
 
-Escreva apenas o TEXTO da secao ${index + 1} de 3 do relatório, com PROFUNDIDADE REAL.
-Titulo da secao: ${blueprint.title}
-Foco da secao: ${blueprint.focus}
-Outras secoes para evitar repeticao: ${blueprints
-      .filter((_, currentIndex) => currentIndex !== index)
-      .map((item) => item.title)
-      .join(", ")}
+Escreva apenas o TEXTO do CAPÍTULO ${index + 1} de ${nSections} do relatório, com PROFUNDIDADE REAL e ZERO REPETIÇÃO.
+Título do capítulo: ${blueprint.title}
+Foco declarado: ${blueprint.focus}
 
-Responda APENAS com JSON valido neste formato:
+ÂNGULO OBRIGATÓRIO DESTE CAPÍTULO (não invada os outros):
+${angle}
+
+Outros capítulos do mesmo relatório (NÃO INVADA os territórios abaixo — não repita títulos, ideias-chave nem exemplos deles):
+${otherChapters || "(nenhum)"}
+
+Responda APENAS com JSON válido neste formato:
 {
   "title": "${blueprint.title}",
-  "body": "7 a 9 parágrafos longos (MÍNIMO 1600 caracteres no total, ideal entre 1800 e 2400). Estruture assim: (1) abertura simbólica conectando o tema ao mapa e numerologia de ${firstName}, citando planetas, signos e números EXPLICITAMENTE; (2) análise dos padrões e tensões reais que aparecem, citando aspectos nominalmente; (3) sombra/ferida específica desta área com exemplo concreto; (4) força latente que pode ser ativada, com exemplo; (5) como esses elementos se manifestam no dia a dia; (6) direção prática e madura para o próximo ciclo. Use exemplos concretos, linguagem viva e cite nominalmente Sol, Lua, Vênus, Marte, Caminho de Vida, Destino, Alma quando relevantes."
+  "body": "10 a 14 parágrafos longos, MÍNIMO ${sectionMin} caracteres. Estruture assim: (1) abertura simbólica curta específica ao ÂNGULO obrigatório, citando ao menos 2 símbolos do mapa/numerologia que NÃO foram o foco de outros capítulos; (2) desenvolvimento aprofundado com pelo menos 3 exemplos concretos e observáveis do dia a dia; (3) uma micro-narrativa/cena breve (2 a 4 linhas) que ilustre o tema, inédita no relatório; (4) uma tensão ou paradoxo específico desta área com nome próprio; (5) uma direção prática, madura e mensurável; (6) uma pergunta reflexiva final para ${firstName}. Cite planetas, signos, aspectos e números EXPLICITAMENTE."
 }
 
-Regras:
-- O body precisa ser denso, específico ao tema e ancorado em planetas, signos ou números reais do mapa de ${firstName}, com MÍNIMO 1600 caracteres.
-- Nada de frases genéricas ou repetitivas. Cada parágrafo entrega algo novo.
-- Nao use o nome completo. Use apenas ${firstName}.
-- Se o body tiver menos de 1600 caracteres, será rejeitado.`;
+Regras rígidas:
+- O body precisa ter no mínimo ${sectionMin} caracteres, específico ao ÂNGULO deste capítulo.
+- Não repita frases, metáforas, exemplos, aberturas de parágrafo ou vocabulário-muleta já típicos ("espelho", "convite", "travessia", "verdade", "essência", "profunda") mais do que 1 vez cada.
+- Não reformule a mesma ideia com sinônimos: se o parágrafo não entrega algo novo, reescreva.
+- Não use o nome completo. Use apenas ${firstName}.
+- Se o body tiver menos de ${sectionMin} caracteres OU repetir ideias/frases de outros capítulos, será rejeitado.`;
+    };
+
 
     yield { type: "progress" as const, progress: 28, step: "Montando a estrutura do relatório..." };
     let base: z.infer<typeof BaseAiOutput>;
     try {
       const baseText = await callWithRetry({
         prompt: basePrompt,
-        timeoutMs: 45_000,
+        timeoutMs: 90_000,
         errorMessage: "A geração demorou além do limite. Tente novamente.",
       });
       base = parseJsonWithSchema(baseText, BaseAiOutput, "base", {
@@ -991,20 +1066,19 @@ Regras:
       base = normalizeBasePayload(null) as z.infer<typeof BaseAiOutput>;
     }
 
-    // Generate all 3 chapters in PARALLEL to avoid sequential wall-clock timeouts.
-    // Each call has its own 40s timeout; running in parallel keeps total time ~40s
-    // instead of ~120s, eliminating the "stuck at 60%" hang on the 2nd chapter.
+    // Generate all N chapters in PARALLEL. Each call has its own timeout;
+    // running in parallel keeps total wall-clock ~90s independente de N.
     yield {
       type: "progress" as const,
       progress: 50,
-      step: `Escrevendo os 3 capítulos em paralelo...`,
+      step: `Escrevendo os ${sizeProfile.sections} capítulos em paralelo...`,
     };
 
     const sectionPromises = base.sectionBlueprints.map(async (blueprint, index) => {
       try {
         const sectionBodyText = await callWithRetry({
           prompt: makeSectionBodyPrompt(blueprint, index, base.sectionBlueprints),
-          timeoutMs: 45_000,
+          timeoutMs: 90_000,
           errorMessage: "A geração demorou além do limite. Tente novamente.",
         });
         return parseJsonWithSchema(sectionBodyText, SectionBodyOutput, `section-body-${index + 1}`, {
@@ -1020,15 +1094,17 @@ Regras:
     yield {
       type: "progress" as const,
       progress: 60,
-      step: `Tecendo capítulo 1 de 3...`,
+      step: `Tecendo capítulo 1 de ${sizeProfile.sections}...`,
     };
+
     // Heartbeat yields so the client progress bar keeps moving while we await
     // the parallel chapter generations. These are cosmetic; the real work runs
     // concurrently in sectionPromises above.
     const heartbeatTimer = (async function* () {
       const steps = [
-        { progress: 63, step: "Tecendo capítulo 2 de 3..." },
-        { progress: 66, step: "Tecendo capítulo 3 de 3..." },
+        { progress: 63, step: `Tecendo capítulo 2 de ${sizeProfile.sections}...` },
+        { progress: 66, step: `Tecendo capítulo 3 de ${sizeProfile.sections}...` },
+
         { progress: 69, step: "Aguardando os últimos parágrafos..." },
       ];
       for (const s of steps) {
