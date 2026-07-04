@@ -42,6 +42,7 @@ import {
   toggleReportIllustration,
   deleteReportIllustration,
   getIllustrationImage,
+  seedIllustrationsForAllKinds,
 } from "@/lib/report-illustrations.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/ilustracoes")({
@@ -57,6 +58,7 @@ function IllustrationsPage() {
   const toggleFn = useServerFn(toggleReportIllustration);
   const delFn = useServerFn(deleteReportIllustration);
   const getImgFn = useServerFn(getIllustrationImage);
+  const seedFn = useServerFn(seedIllustrationsForAllKinds);
 
   const [theme, setTheme] = useState<string>(ILLUSTRATION_THEMES[0].value);
   const [reportKind, setReportKind] = useState<string>("");
@@ -116,6 +118,15 @@ function IllustrationsPage() {
     },
   });
 
+  const seedMut = useMutation({
+    mutationFn: () => seedFn({ data: { perKind: 3 } }),
+    onSuccess: (res) => {
+      toast.success(`Seed concluído: ${res.total} banners gerados`);
+      qc.invalidateQueries({ queryKey: ["report-illustrations"] });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Falha no seed"),
+  });
+
   if (roleLoading) return <div className="p-8 text-muted-foreground">Carregando…</div>;
 
   if (!role?.isAdmin) {
@@ -153,19 +164,37 @@ function IllustrationsPage() {
             rotaciona automaticamente entre as opções ativas do mesmo tema.
           </p>
         </div>
-        <Button
-          variant="outline"
-          onClick={() => listQuery.refetch()}
-          disabled={listQuery.isFetching}
-          className="border-gold/40 text-gold hover:bg-gold/10"
-        >
-          {listQuery.isFetching ? (
-            <Loader2 className="size-4 mr-2 animate-spin" />
-          ) : (
-            <RefreshCw className="size-4 mr-2" />
-          )}
-          Atualizar
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            onClick={() => {
+              if (confirm("Gerar 3 banners landscape para CADA tipo de relatório (12 produtos = 36 imagens)? Pode levar alguns minutos.")) {
+                seedMut.mutate();
+              }
+            }}
+            disabled={seedMut.isPending}
+            className="bg-gradient-to-r from-gold to-amber-500 text-black hover:opacity-90"
+          >
+            {seedMut.isPending ? (
+              <Loader2 className="size-4 mr-2 animate-spin" />
+            ) : (
+              <Sparkles className="size-4 mr-2" />
+            )}
+            Gerar 3 para cada produto
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => listQuery.refetch()}
+            disabled={listQuery.isFetching}
+            className="border-gold/40 text-gold hover:bg-gold/10"
+          >
+            {listQuery.isFetching ? (
+              <Loader2 className="size-4 mr-2 animate-spin" />
+            ) : (
+              <RefreshCw className="size-4 mr-2" />
+            )}
+            Atualizar
+          </Button>
+        </div>
       </header>
 
       <Card>
@@ -333,7 +362,7 @@ function IllustrationCard({
 
   return (
     <div className="rounded-lg border border-border/50 overflow-hidden bg-card/40">
-      <div className="aspect-square bg-muted/30 flex items-center justify-center">
+      <div className="aspect-[3/2] bg-muted/30 flex items-center justify-center">
         {img ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={img} alt={item.title ?? themeLabel} className="w-full h-full object-cover" />

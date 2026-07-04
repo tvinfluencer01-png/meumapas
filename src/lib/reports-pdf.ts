@@ -576,9 +576,9 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
         ill.mime === "image/png"
           ? await pdf.embedPng(ill.bytes)
           : await pdf.embedJpg(ill.bytes);
-      // target: half A4 height, keep aspect, centered
-      const maxW = CONTENT_W * 0.72;
-      const maxH = 240;
+      // banner landscape: full content width, max height ~200pt
+      const maxW = CONTENT_W;
+      const maxH = 200;
       const ratio = img.width / img.height;
       let dw = maxW;
       let dh = dw / ratio;
