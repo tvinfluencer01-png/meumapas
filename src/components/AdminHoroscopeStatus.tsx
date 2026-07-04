@@ -174,6 +174,23 @@ export function AdminHoroscopeStatus() {
                   </tbody>
                 </table>
               </div>
+              {totalUsers > pageSize && (
+                <div className="flex items-center justify-between text-xs text-muted-foreground pt-2">
+                  <div>
+                    Mostrando {(page - 1) * pageSize + 1}
+                    –{Math.min(page * pageSize, totalUsers)} de {totalUsers}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>
+                      Anterior
+                    </Button>
+                    <span>Página {page} de {totalPages}</span>
+                    <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>
+                      Próxima
+                    </Button>
+                  </div>
+                </div>
+              )}
             </>
           )}
         </CardContent>
