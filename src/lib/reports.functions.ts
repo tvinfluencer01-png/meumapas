@@ -950,19 +950,28 @@ Nome para tratamento: ${firstName}
 Numerologia: ${numBlock}
 Assinatura astral: ${signLine || astroBlock}`;
 
+    const anglesList = chapterAngles
+      .map((a, i) => `  ${i + 1}. ${a}`)
+      .join("\n");
+    const nSections = sizeProfile.sections;
+    const introMin = sizeProfile.introMin;
+    const sectionMin = sizeProfile.sectionMin;
+    const closingMin = sizeProfile.closingMin;
+    const summaryMin = sizeProfile.summaryMin;
+
     const basePrompt = `${reportContext}
 
-Monte apenas a ESTRUTURA BASE do relatório com PROFUNDIDADE REAL e EXTENSÃO LONGA. Responda APENAS com JSON valido neste formato:
+Monte apenas a ESTRUTURA BASE deste relatório premium, com PROFUNDIDADE REAL, EXTENSÃO LONGA e ZERO REPETIÇÃO. Alvo de impressão: ${sizeProfile.targetPagesLabel} em A4.
+
+Responda APENAS com JSON válido neste formato exato:
 {
-  "intro": "ABERTURA cinematográfica de 6 a 8 parágrafos longos (MÍNIMO 1800 caracteres no total, idealmente entre 2000 e 2600). Comece nomeando ${firstName} pelo nome completo e situando o momento de vida com poesia sóbria. Cite EXPLICITAMENTE Sol, Lua, Mercúrio, Vênus, Marte (e Júpiter/Saturno quando relevantes) com seus signos e o que cada um significa entre parênteses em até 10 palavras. Cite os aspectos principais nominalmente (ex: 'Sol Quadratura Lua') traduzindo entre parênteses. Conecte o Caminho de Vida, Destino, Alma e Personalidade ao tema do relatório. Mostre a tensão central que ${firstName} vive nessa área, o convite simbólico do mapa e o tom da jornada. Linguagem humana, viva, sem clichês esotéricos genéricos. NUNCA entregue menos de 1800 caracteres.",
+  "intro": "ABERTURA cinematográfica com no mínimo ${introMin} caracteres (10 a 14 parágrafos densos). Comece nomeando ${firstName} pelo nome completo e situe o momento de vida com poesia sóbria. Cite EXPLICITAMENTE Sol, Lua, Mercúrio, Vênus, Marte, e — quando relevantes — Júpiter, Saturno, Urano, Netuno e Plutão, com seus signos e o significado entre parênteses em até 10 palavras. Cite ao menos 4 aspectos nominalmente (ex: 'Sol Quadratura Lua'), traduzindo entre parênteses. Amarra Caminho de Vida, Destino, Alma e Personalidade ao tema. Mostre a tensão central que ${firstName} vive nessa área, o convite simbólico do mapa, o tom da jornada e o que este relatório vai entregar capítulo a capítulo. Linguagem humana, viva, sem clichês esotéricos genéricos. NUNCA entregue menos de ${introMin} caracteres.",
   "sectionBlueprints": [
-    { "title": "Titulo 1", "focus": "Foco aprofundado e específico desta seção (mínimo 60 caracteres)" },
-    { "title": "Titulo 2", "focus": "Foco aprofundado e específico desta seção (mínimo 60 caracteres)" },
-    { "title": "Titulo 3", "focus": "Foco aprofundado e específico desta seção (mínimo 60 caracteres)" }
+${chapterAngles.map((_, i) => `    { "title": "Título do Capítulo ${i + 1}", "focus": "Foco específico e não sobreponível com os outros capítulos (mínimo 80 caracteres, mencionando ao menos 1 símbolo do mapa ou número da numerologia que será usado NESTE capítulo)" }`).join(",\n")}
   ],
-  "closing": "ENCERRAMENTO de 3 a 4 parágrafos densos (MÍNIMO 500 caracteres). Costure de volta o fio simbólico da abertura, reconheça a complexidade da jornada e entregue uma bênção concreta a ${firstName}.",
+  "closing": "ENCERRAMENTO com no mínimo ${closingMin} caracteres (5 a 7 parágrafos). Costure de volta o fio simbólico da abertura, reconheça a complexidade da jornada, entregue uma bênção concreta a ${firstName} e traga uma imagem simbólica final inédita (que não apareceu antes no texto).",
   "swot": {
-    "strengths": ["frase específica e ancorada no mapa", "...", "..."],
+    "strengths": ["frase específica ancorada em ${astroAnchors || "planeta ou aspecto"}", "...", "..."],
     "weaknesses": ["...", "...", "..."],
     "opportunities": ["...", "...", "..."],
     "threats": ["...", "...", "..."]
@@ -975,50 +984,70 @@ Monte apenas a ESTRUTURA BASE do relatório com PROFUNDIDADE REAL e EXTENSÃO LO
   "suggestions": {
     "intro": "1 frase curta para ${firstName}",
     "items": [
-      { "name": "Sugestao 1", "why": "Por que combina com o mapa e numerologia (mínimo 40 caracteres)" },
+      { "name": "Sugestao 1", "why": "Por que combina com o mapa e numerologia (mínimo 80 caracteres, citar 1 símbolo específico)" },
       { "name": "Sugestao 2", "why": "..." },
       { "name": "Sugestao 3", "why": "..." },
       { "name": "Sugestao 4", "why": "..." },
       { "name": "Sugestao 5", "why": "..." }
     ]
   },
-  "summary": "SÍNTESE final densa de 3 parágrafos (MÍNIMO 600 caracteres) que amarra os 3 capítulos, a SWOT e as recomendações em uma leitura única e memorável para ${firstName}."
+  "summary": "SÍNTESE final densa com no mínimo ${summaryMin} caracteres (5 a 7 parágrafos) que amarra os ${nSections} capítulos, a SWOT e as recomendações em uma leitura única. NÃO parafraseie a abertura nem os capítulos — traga uma perspectiva integrada e propositiva."
 }
 
-Regras:
-- sectionBlueprints precisa ter EXATAMENTE 3 itens, com temas diferentes e complementares, cada um digno de várias páginas.
+Regras rígidas de estrutura:
+- sectionBlueprints precisa ter EXATAMENTE ${nSections} itens.
+- Cada capítulo deve seguir um ÂNGULO OBRIGATÓRIO E DIFERENTE. Os ângulos, na ordem, são:
+${anglesList}
+  Para cada blueprint, o "title" deve refletir claramente o ângulo do capítulo correspondente, e o "focus" deve descrever, em linguagem própria, o que aquele capítulo (e SOMENTE ele) vai desenvolver.
+- Não repita entre capítulos os mesmos aspectos, planetas dominantes ou números como "assunto central". Distribua os símbolos: cada capítulo ancora-se em elementos diferentes do mapa.
 - SWOT e recommendations devem ter EXATAMENTE 3 itens por lista, frases específicas (não genéricas).
-- suggestions.items deve ter EXATAMENTE 5 itens.
-- Tema das sugestoes: ${meta.suggestionGuide}
-- Use o nome completo apenas 1x na intro. Depois, use apenas ${firstName}.
-- Nada de respostas curtas, superficiais ou repetitivas. Profundidade e EXTENSÃO são obrigatórias.
-- Se você entregar uma intro com menos de 1800 caracteres, o relatório será rejeitado.`;
+- suggestions.items deve ter EXATAMENTE 5 itens. Tema das sugestões: ${meta.suggestionGuide}
+- Use o nome completo apenas 1x na abertura. Depois, use apenas ${firstName}.
+
+Regras rígidas de anti-repetição:
+- É PROIBIDO reformular a mesma ideia com palavras diferentes ao longo do texto.
+- É PROIBIDO repetir metáforas, imagens simbólicas, cenas, aberturas de parágrafo, listas de virtudes ou frases-chave já usadas.
+- Cada parágrafo entrega informação, imagem ou orientação NOVA — se estiver dizendo o mesmo de outro jeito, corte.
+- Varie ativamente vocabulário, ritmo de frase e comprimento de parágrafo. Nada de "espelhos", "convite", "travessia", "essência", "verdade" repetidos como muleta.
+
+Se qualquer bloco vier abaixo do mínimo de caracteres, o relatório será rejeitado.`;
 
     const makeSectionBodyPrompt = (
       blueprint: z.infer<typeof BaseAiOutput>["sectionBlueprints"][number],
       index: number,
       blueprints: z.infer<typeof BaseAiOutput>["sectionBlueprints"],
-    ) => `${compactSectionContext}
+    ) => {
+      const angle = chapterAngles[index] ?? chapterAngles[chapterAngles.length - 1];
+      const otherChapters = blueprints
+        .map((b, i) => (i === index ? null : `${i + 1}. "${b.title}" — foco: ${b.focus}`))
+        .filter(Boolean)
+        .join("\n");
+      return `${compactSectionContext}
 
-Escreva apenas o TEXTO da secao ${index + 1} de 3 do relatório, com PROFUNDIDADE REAL.
-Titulo da secao: ${blueprint.title}
-Foco da secao: ${blueprint.focus}
-Outras secoes para evitar repeticao: ${blueprints
-      .filter((_, currentIndex) => currentIndex !== index)
-      .map((item) => item.title)
-      .join(", ")}
+Escreva apenas o TEXTO do CAPÍTULO ${index + 1} de ${nSections} do relatório, com PROFUNDIDADE REAL e ZERO REPETIÇÃO.
+Título do capítulo: ${blueprint.title}
+Foco declarado: ${blueprint.focus}
 
-Responda APENAS com JSON valido neste formato:
+ÂNGULO OBRIGATÓRIO DESTE CAPÍTULO (não invada os outros):
+${angle}
+
+Outros capítulos do mesmo relatório (NÃO INVADA os territórios abaixo — não repita títulos, ideias-chave nem exemplos deles):
+${otherChapters || "(nenhum)"}
+
+Responda APENAS com JSON válido neste formato:
 {
   "title": "${blueprint.title}",
-  "body": "7 a 9 parágrafos longos (MÍNIMO 1600 caracteres no total, ideal entre 1800 e 2400). Estruture assim: (1) abertura simbólica conectando o tema ao mapa e numerologia de ${firstName}, citando planetas, signos e números EXPLICITAMENTE; (2) análise dos padrões e tensões reais que aparecem, citando aspectos nominalmente; (3) sombra/ferida específica desta área com exemplo concreto; (4) força latente que pode ser ativada, com exemplo; (5) como esses elementos se manifestam no dia a dia; (6) direção prática e madura para o próximo ciclo. Use exemplos concretos, linguagem viva e cite nominalmente Sol, Lua, Vênus, Marte, Caminho de Vida, Destino, Alma quando relevantes."
+  "body": "10 a 14 parágrafos longos, MÍNIMO ${sectionMin} caracteres. Estruture assim: (1) abertura simbólica curta específica ao ÂNGULO obrigatório, citando ao menos 2 símbolos do mapa/numerologia que NÃO foram o foco de outros capítulos; (2) desenvolvimento aprofundado com pelo menos 3 exemplos concretos e observáveis do dia a dia; (3) uma micro-narrativa/cena breve (2 a 4 linhas) que ilustre o tema, inédita no relatório; (4) uma tensão ou paradoxo específico desta área com nome próprio; (5) uma direção prática, madura e mensurável; (6) uma pergunta reflexiva final para ${firstName}. Cite planetas, signos, aspectos e números EXPLICITAMENTE."
 }
 
-Regras:
-- O body precisa ser denso, específico ao tema e ancorado em planetas, signos ou números reais do mapa de ${firstName}, com MÍNIMO 1600 caracteres.
-- Nada de frases genéricas ou repetitivas. Cada parágrafo entrega algo novo.
-- Nao use o nome completo. Use apenas ${firstName}.
-- Se o body tiver menos de 1600 caracteres, será rejeitado.`;
+Regras rígidas:
+- O body precisa ter no mínimo ${sectionMin} caracteres, específico ao ÂNGULO deste capítulo.
+- Não repita frases, metáforas, exemplos, aberturas de parágrafo ou vocabulário-muleta já típicos ("espelho", "convite", "travessia", "verdade", "essência", "profunda") mais do que 1 vez cada.
+- Não reformule a mesma ideia com sinônimos: se o parágrafo não entrega algo novo, reescreva.
+- Não use o nome completo. Use apenas ${firstName}.
+- Se o body tiver menos de ${sectionMin} caracteres OU repetir ideias/frases de outros capítulos, será rejeitado.`;
+    };
+
 
     yield { type: "progress" as const, progress: 28, step: "Montando a estrutura do relatório..." };
     let base: z.infer<typeof BaseAiOutput>;
