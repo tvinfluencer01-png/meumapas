@@ -51,11 +51,14 @@ function MeditacaoPage() {
   const exportFn = useServerFn(exportKabbalahPdf);
   const listFn = useServerFn(listKabbalahMeditations);
   const deleteFn = useServerFn(deleteKabbalahMeditation);
+  const { data: subject } = useActiveSubject();
+  const subjectKey = subject?.client_profile_id ?? "self";
 
   const history = useQuery({
-    queryKey: ["kab-meditations"],
+    queryKey: ["kab-meditations", subjectKey],
     queryFn: () => listFn(),
   });
+
 
   const genMut = useMutation({
     mutationFn: () =>
