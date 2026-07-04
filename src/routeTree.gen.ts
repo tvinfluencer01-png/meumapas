@@ -51,6 +51,7 @@ import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated.admin'
 import { Route as AuthenticatedAddonsRouteImport } from './routes/_authenticated.addons'
 import { Route as AuthenticatedAdminLogsRouteImport } from './routes/_authenticated.admin.logs'
+import { Route as AuthenticatedAdminIlustracoesRouteImport } from './routes/_authenticated.admin.ilustracoes'
 import { Route as ApiPublicManifestWebmanifestRouteImport } from './routes/api/public/manifest.webmanifest'
 import { Route as ApiPublicManifestIconRouteImport } from './routes/api/public/manifest.icon'
 import { Route as ApiPublicHooksMercadopagoRouteImport } from './routes/api/public/hooks/mercadopago'
@@ -286,6 +287,12 @@ const AuthenticatedAdminLogsRoute = AuthenticatedAdminLogsRouteImport.update({
   path: '/logs',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminIlustracoesRoute =
+  AuthenticatedAdminIlustracoesRouteImport.update({
+    id: '/ilustracoes',
+    path: '/ilustracoes',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const ApiPublicManifestWebmanifestRoute =
   ApiPublicManifestWebmanifestRouteImport.update({
     id: '/api/public/manifest/webmanifest',
@@ -451,6 +458,7 @@ export interface FileRoutesByFullPath {
   '/p/$slug': typeof PSlugRoute
   '/r/$token': typeof RTokenRoute
   '/s/$slug': typeof SSlugRoute
+  '/admin/ilustracoes': typeof AuthenticatedAdminIlustracoesRoute
   '/admin/logs': typeof AuthenticatedAdminLogsRoute
   '/p/$slug/checkout': typeof AuthenticatedPSlugCheckoutRoute
   '/api/public/affiliate/collect': typeof ApiPublicAffiliateCollectRoute
@@ -515,6 +523,7 @@ export interface FileRoutesByTo {
   '/p/$slug': typeof PSlugRoute
   '/r/$token': typeof RTokenRoute
   '/s/$slug': typeof SSlugRoute
+  '/admin/ilustracoes': typeof AuthenticatedAdminIlustracoesRoute
   '/admin/logs': typeof AuthenticatedAdminLogsRoute
   '/p/$slug/checkout': typeof AuthenticatedPSlugCheckoutRoute
   '/api/public/affiliate/collect': typeof ApiPublicAffiliateCollectRoute
@@ -581,6 +590,7 @@ export interface FileRoutesById {
   '/p/$slug': typeof PSlugRoute
   '/r/$token': typeof RTokenRoute
   '/s/$slug': typeof SSlugRoute
+  '/_authenticated/admin/ilustracoes': typeof AuthenticatedAdminIlustracoesRoute
   '/_authenticated/admin/logs': typeof AuthenticatedAdminLogsRoute
   '/_authenticated/p/$slug/checkout': typeof AuthenticatedPSlugCheckoutRoute
   '/api/public/affiliate/collect': typeof ApiPublicAffiliateCollectRoute
@@ -647,6 +657,7 @@ export interface FileRouteTypes {
     | '/p/$slug'
     | '/r/$token'
     | '/s/$slug'
+    | '/admin/ilustracoes'
     | '/admin/logs'
     | '/p/$slug/checkout'
     | '/api/public/affiliate/collect'
@@ -711,6 +722,7 @@ export interface FileRouteTypes {
     | '/p/$slug'
     | '/r/$token'
     | '/s/$slug'
+    | '/admin/ilustracoes'
     | '/admin/logs'
     | '/p/$slug/checkout'
     | '/api/public/affiliate/collect'
@@ -776,6 +788,7 @@ export interface FileRouteTypes {
     | '/p/$slug'
     | '/r/$token'
     | '/s/$slug'
+    | '/_authenticated/admin/ilustracoes'
     | '/_authenticated/admin/logs'
     | '/_authenticated/p/$slug/checkout'
     | '/api/public/affiliate/collect'
@@ -1144,6 +1157,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminLogsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/ilustracoes': {
+      id: '/_authenticated/admin/ilustracoes'
+      path: '/ilustracoes'
+      fullPath: '/admin/ilustracoes'
+      preLoaderRoute: typeof AuthenticatedAdminIlustracoesRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/api/public/manifest/webmanifest': {
       id: '/api/public/manifest/webmanifest'
       path: '/api/public/manifest/webmanifest'
@@ -1295,10 +1315,12 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminIlustracoesRoute: typeof AuthenticatedAdminIlustracoesRoute
   AuthenticatedAdminLogsRoute: typeof AuthenticatedAdminLogsRoute
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminIlustracoesRoute: AuthenticatedAdminIlustracoesRoute,
   AuthenticatedAdminLogsRoute: AuthenticatedAdminLogsRoute,
 }
 
