@@ -123,8 +123,19 @@ function AdminPage() {
     );
   }
 
+  return <AdminRouter />;
+}
+
+function AdminRouter() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  // Se estivermos em uma sub-rota do admin (ex: /admin/ilustracoes, /admin/logs),
+  // renderiza a página filha via Outlet em vez do dashboard.
+  if (pathname !== "/admin" && pathname !== "/admin/") {
+    return <Outlet />;
+  }
   return <AdminDashboard />;
 }
+
 
 function AdminDashboard() {
   const initialTab =
