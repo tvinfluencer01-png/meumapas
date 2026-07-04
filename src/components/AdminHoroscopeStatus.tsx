@@ -22,6 +22,16 @@ export function AdminHoroscopeStatus() {
     refetchInterval: 60_000,
   });
 
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+  const totalUsers = data?.users.length ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalUsers / pageSize));
+  useEffect(() => { if (page > totalPages) setPage(1); }, [page, totalPages]);
+  const pagedUsers = useMemo(
+    () => (data?.users ?? []).slice((page - 1) * pageSize, page * pageSize),
+    [data, page]
+  );
+
   return (
     <div className="space-y-6">
       <Card>
