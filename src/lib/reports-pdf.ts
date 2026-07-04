@@ -569,17 +569,43 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
     cursor.y -= size + 12;
   }
 
+  async function drawIllustration(ill: ReportIllustration | undefined | null) {
+    if (!ill || !ill.bytes || ill.bytes.length === 0) return;
+    try {
+      const img =
+        ill.mime === "image/png"
+          ? await pdf.embedPng(ill.bytes)
+          : await pdf.embedJpg(ill.bytes);
+      // target: half A4 height, keep aspect, centered
+      const maxW = CONTENT_W * 0.72;
+      const maxH = 240;
+      const ratio = img.width / img.height;
+      let dw = maxW;
+      let dh = dw / ratio;
+      if (dh > maxH) { dh = maxH; dw = dh * ratio; }
+      ensureSpace(dh + 20);
+      const x = MARGIN + (CONTENT_W - dw) / 2;
+      cursor.page.drawImage(img, { x, y: cursor.y - dh, width: dw, height: dh });
+      cursor.y -= dh + 14;
+    } catch (e) {
+      console.warn("[reports-pdf] failed to embed illustration", e);
+    }
+  }
+
   // Intro chapter
   setChapter("Abertura");
   drawHeading("Abertura", 30);
+  await drawIllustration(data.introIllustration);
   drawParagraph(data.intro, { italic: true, size: 14, color: rgb(0.25, 0.22, 0.18) });
 
   // Sections
   for (const section of data.sections) {
     setChapter(section.title);
     drawHeading(section.title, 22, { startOnNewPage: true });
+    await drawIllustration(section.illustration);
     drawParagraph(section.body);
   }
+
 
   // Closing
   setChapter("Selo final");
