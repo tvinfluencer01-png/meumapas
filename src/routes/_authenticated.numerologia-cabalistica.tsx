@@ -144,34 +144,12 @@ const CARDS = [
 ];
 
 function NumerologiaCabalisticaPage() {
-  const { user } = useAuth();
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["cab-name", user?.id],
-    enabled: !!user,
-    queryFn: async () => {
-      const primary = await supabase.from("birth_data")
-        .select("*").eq("user_id", user!.id).eq("is_primary", true).maybeSingle();
-      let birth = primary.data;
-      if (!birth) {
-        const fallback = await supabase.from("birth_data")
-          .select("*").eq("user_id", user!.id)
-          .order("created_at", { ascending: false }).limit(1).maybeSingle();
-        birth = fallback.data;
-      }
-      const profile = await supabase.from("profiles")
-        .select("full_name").eq("id", user!.id).maybeSingle();
-      return { birth, profile: profile.data };
-    },
-    staleTime: 60_000,
-  });
+  const { data: subject, isLoading, error } = useActiveSubject();
 
-  const birth = data?.birth;
-  const fullName =
-    (birth?.full_name?.trim?.() ||
-      data?.profile?.full_name?.trim?.() ||
-      (user?.user_metadata as any)?.full_name?.trim?.() ||
-      (user?.user_metadata as any)?.name?.trim?.() ||
-      "");
+  const birth = subject
+    ? { full_name: subject.full_name, birth_date: subject.birth_date }
+    : null;
+  const fullName = birth?.full_name?.trim() ?? "";
   const nums = fullName ? computeCabalistic(fullName) : null;
 
   const [downloading, setDownloading] = useState(false);
