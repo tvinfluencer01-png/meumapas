@@ -664,7 +664,26 @@ async function runDispatchForOrder(
     dispatch_attempts: ((order as any).dispatch_attempts ?? 0) + 1,
   };
   let pdfUrl: string | null = (order as any).pdf_url ?? null;
+  // Normalize legacy pdf_url values that were built with a preview/lovable host.
+  if (pdfUrl) {
+    try {
+      const { getRequestOrigin } = await import("./short-links.server");
+      const u = new URL(pdfUrl);
+      const host = u.host.toLowerCase();
+      if (
+        host.endsWith(".lovableproject.com") ||
+        host.endsWith(".lovableproject-dev.com") ||
+        host.endsWith(".lovable.app") ||
+        host.startsWith("localhost")
+      ) {
+        const origin = getRequestOrigin();
+        pdfUrl = `${origin}${u.pathname}${u.search}`;
+        patch.pdf_url = pdfUrl;
+      }
+    } catch { /* keep original */ }
+  }
   let pdfBytes: Uint8Array | null = null;
+
 
   try {
     if (action === "pdf" || action === "both") {
