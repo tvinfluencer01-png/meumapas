@@ -1151,19 +1151,3 @@ function WhatsAppFloat({ number }: { number: string }) {
   );
 }
 
-/* ---------------- CHATBOT FLOAT ---------------- */
-function ChatbotFloat() {
-  return (
-    <a
-      href="#planos"
-      aria-label="Escolha sua ascensão"
-      className="group fixed bottom-24 right-6 z-50 flex items-center gap-3 rounded-full border border-gold/40 bg-background/90 px-5 py-3 text-xs uppercase tracking-[0.2em] text-gold backdrop-blur-md transition-all hover:bg-gold hover:text-primary-foreground"
-    >
-      <span className="relative flex size-2">
-        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-gold opacity-75" />
-        <span className="relative inline-flex size-2 rounded-full bg-gold" />
-      </span>
-      Escolha sua ascensão
-    </a>
-  );
-}
