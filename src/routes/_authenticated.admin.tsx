@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
@@ -123,8 +123,19 @@ function AdminPage() {
     );
   }
 
+  return <AdminRouter />;
+}
+
+function AdminRouter() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  // Se estivermos em uma sub-rota do admin (ex: /admin/ilustracoes, /admin/logs),
+  // renderiza a página filha via Outlet em vez do dashboard.
+  if (pathname !== "/admin" && pathname !== "/admin/") {
+    return <Outlet />;
+  }
   return <AdminDashboard />;
 }
+
 
 function AdminDashboard() {
   const initialTab =
