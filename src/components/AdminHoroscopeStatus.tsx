@@ -71,10 +71,33 @@ export function AdminHoroscopeStatus() {
                 )}
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="rounded-lg border border-border bg-card/30 p-4 space-y-2">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  {data.providers.whatsappReady ? (
+                    <ShieldCheck className="size-4 text-emerald-400" />
+                  ) : (
+                    <ShieldAlert className="size-4 text-amber-400" />
+                  )}
+                  Provedores de envio
+                </div>
+                <div className="flex flex-wrap gap-2 text-xs">
+                  <Badge variant="outline" className={data.providers.evolutionReady ? "border-emerald-500/40 text-emerald-300" : "text-muted-foreground"}>
+                    Evolution: {data.providers.evolutionReady ? "OK" : "não configurado"}
+                  </Badge>
+                  <Badge variant="outline" className={data.providers.twilioReady ? "border-emerald-500/40 text-emerald-300" : "text-muted-foreground"}>
+                    Twilio: {data.providers.twilioReady ? "OK" : "não configurado"}
+                  </Badge>
+                  <Badge variant="outline" className={data.providers.emailReady ? "border-emerald-500/40 text-emerald-300" : "text-muted-foreground"}>
+                    Email: {data.providers.emailReady ? "OK" : "não configurado"}
+                  </Badge>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                 <StatCard label="Assinantes" value={data.totals.subscribers} icon={<Send className="size-4 text-gold" />} />
+                <StatCard label="Prontos" value={data.totals.ready} tone="emerald" />
+                <StatCard label="Com pendências" value={data.totals.notReady} tone="amber" />
                 <StatCard label="Entregues hoje" value={data.totals.delivered} tone="emerald" />
-                <StatCard label="Pendentes" value={data.totals.pending} tone="amber" />
                 <StatCard label="Erros" value={data.totals.errors} tone="destructive" />
               </div>
 
