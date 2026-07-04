@@ -34,7 +34,7 @@ export const REPORT_KINDS = [
 ] as const;
 
 const STYLE_SUFFIX =
-  "Estilo ilustração editorial cósmica, aquarela digital com traços dourados e violetas profundos, luz suave, atmosfera onírica e simbólica, sem texto, sem letras, sem rostos identificáveis, composição centralizada, alta qualidade, adequado para relatório espiritual em PDF.";
+  "Formato banner horizontal panorâmico (landscape 3:2), composição cinematográfica em faixa larga, estilo ilustração editorial cósmica, aquarela digital com traços dourados e violetas profundos, luz suave, atmosfera onírica e simbólica, sem texto, sem letras, sem rostos identificáveis, alta qualidade, adequado como banner de abertura de capítulo em relatório espiritual em PDF.";
 
 function themePrompt(theme: string, custom?: string) {
   if (custom && custom.trim().length > 10) return `${custom.trim()}. ${STYLE_SUFFIX}`;
