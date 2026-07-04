@@ -245,3 +245,85 @@ export const pickReportIllustration = createServerFn({ method: "POST" })
       },
     };
   });
+
+/* ------------------------- BULK SEED (admin) ------------------------- */
+
+const THEME_BY_KIND: Record<string, string> = {
+  personality: "cosmos",
+  love: "amor",
+  career: "carreira",
+  spiritual: "espiritualidade",
+  finance: "financas",
+  family: "familia",
+  health: "saude",
+  friendships: "amizade",
+  synastry: "casal",
+  couple_numerology: "casal",
+  annual_forecast: "previsao_anual",
+  personal_kabbalah: "cabala",
+};
+
+async function generateOne(theme: string, report_kind: string, userId: string) {
+  const key = process.env.LOVABLE_API_KEY;
+  if (!key) throw new Error("LOVABLE_API_KEY ausente");
+  const prompt = themePrompt(theme);
+  const res = await fetch("https://ai.gateway.lovable.dev/v1/images/generations", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "openai/gpt-image-2",
+      prompt,
+      size: "1536x1024",
+      quality: "low",
+      n: 1,
+    }),
+  });
+  if (!res.ok) {
+    const txt = await res.text().catch(() => "");
+    throw new Error(`Falha (${res.status}) em ${report_kind}: ${txt.slice(0, 160)}`);
+  }
+  const json = await res.json();
+  const b64 = json?.data?.[0]?.b64_json;
+  if (!b64) throw new Error(`Sem imagem para ${report_kind}`);
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { error } = await supabaseAdmin.from("report_illustrations").insert({
+    theme,
+    report_kind,
+    title: null,
+    prompt,
+    image_data: b64,
+    mime: "image/png",
+    created_by: userId,
+  });
+  if (error) throw new Error(error.message);
+}
+
+export const seedIllustrationsForAllKinds = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({ perKind: z.number().int().min(1).max(5).optional() }).parse(d ?? {}),
+  )
+  .handler(async ({ data, context }) => {
+    await ensureAdmin(context);
+    const perKind = data.perKind ?? 3;
+    const kinds = Object.keys(THEME_BY_KIND);
+    const results: Array<{ kind: string; ok: number; failed: number; error?: string }> = [];
+    for (const kind of kinds) {
+      const theme = THEME_BY_KIND[kind];
+      let ok = 0;
+      let failed = 0;
+      let lastErr: string | undefined;
+      for (let i = 0; i < perKind; i++) {
+        try {
+          await generateOne(theme, kind, context.userId);
+          ok++;
+        } catch (e: any) {
+          failed++;
+          lastErr = e?.message ?? String(e);
+        }
+      }
+      results.push({ kind, ok, failed, error: lastErr });
+    }
+    const total = results.reduce((s, r) => s + r.ok, 0);
+    return { total, results };
+  });
