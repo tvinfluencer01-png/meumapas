@@ -13,6 +13,8 @@
  */
 import { PDFDocument, StandardFonts, rgb, PageSizes, type PDFFont, type PDFPage } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
+import { hyphenPointsPt } from "./pt-hyphen";
+
 
 export type SimplePdfBlock =
   | { type: "h2"; text: string }
