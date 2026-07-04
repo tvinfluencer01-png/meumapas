@@ -1306,7 +1306,9 @@ Regras rígidas:
       signLine: signLine || "Mapa em construcao",
       numerologyLine: `Caminho ${numLabel(num.life_path)} - Destino ${numLabel(num.destiny)} - Alma ${numLabel(num.soul_urge)}`,
       intro: ai.intro,
-      sections: ai.sections,
+      sections: sectionsWithArt,
+      introIllustration,
+
       closing: ai.closing,
       swot: ai.swot,
       recommendations: ai.recommendations,
