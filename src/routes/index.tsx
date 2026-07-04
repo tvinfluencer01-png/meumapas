@@ -61,7 +61,7 @@ function LandingPage() {
       <FAQ />
       <CTASection />
       <Footer />
-      <ChatbotFloat />
+      
       <DynamicWhatsAppFloat />
       
     </div>
