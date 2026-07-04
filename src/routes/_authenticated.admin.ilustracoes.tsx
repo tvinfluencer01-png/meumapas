@@ -362,7 +362,7 @@ function IllustrationCard({
 
   return (
     <div className="rounded-lg border border-border/50 overflow-hidden bg-card/40">
-      <div className="aspect-square bg-muted/30 flex items-center justify-center">
+      <div className="aspect-[3/2] bg-muted/30 flex items-center justify-center">
         {img ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={img} alt={item.title ?? themeLabel} className="w-full h-full object-cover" />
