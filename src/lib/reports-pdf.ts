@@ -1,4 +1,6 @@
 import { PDFDocument, StandardFonts, rgb, PageSizes } from "pdf-lib";
+import { hyphenPointsPt } from "./pt-hyphen";
+
 
 export type SectionPlan = {
   improve: string[]; // 7 itens (um por dia)
