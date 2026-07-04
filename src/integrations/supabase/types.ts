@@ -4542,10 +4542,11 @@ export type Database = {
           created_at: string
           created_by: string | null
           id: string
-          image_data: string
+          image_data: string | null
           mime: string
           prompt: string
           report_kind: string | null
+          storage_path: string | null
           theme: string
           title: string | null
           updated_at: string
@@ -4556,10 +4557,11 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
-          image_data: string
+          image_data?: string | null
           mime?: string
           prompt: string
           report_kind?: string | null
+          storage_path?: string | null
           theme: string
           title?: string | null
           updated_at?: string
@@ -4570,10 +4572,11 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
-          image_data?: string
+          image_data?: string | null
           mime?: string
           prompt?: string
           report_kind?: string | null
+          storage_path?: string | null
           theme?: string
           title?: string | null
           updated_at?: string
