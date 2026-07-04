@@ -122,41 +122,11 @@ function measure(font: PDFFont, size: number, text: string): number {
   return w;
 }
 
-// Hifenização leve PT-BR (mesmo critério de reports-pdf)
+// Hifenização pt-BR compartilhada (padrões TeX via pacote `hyphen`).
 function hyphenPoints(word: string): number[] {
-  // Regras silábicas PT-BR: V|CV, VC|CV, mantendo encontros consonantais
-  // inseparáveis (br, cl, pr, tr, etc.) e dígrafos (ch, lh, nh, qu, gu) juntos.
-  const pts: number[] = [];
-  const vowels = /[aeiouáéíóúâêôãõàüyAEIOUÁÉÍÓÚÂÊÔÃÕÀÜY]/;
-  const inseparable = new Set([
-    "bl","br","cl","cr","dl","dr","fl","fr","gl","gr","pl","pr","tl","tr","vl","vr",
-    "ch","lh","nh","qu","gu",
-  ]);
-  const w = word.toLowerCase();
-  const isV = (ch: string) => vowels.test(ch);
-  let i = 0;
-  while (i < w.length - 2) {
-    if (isV(w[i])) {
-      let j = i + 1;
-      while (j < w.length && !isV(w[j])) j++;
-      if (j >= w.length) break;
-      const consCount = j - (i + 1);
-      let breakAt = -1;
-      if (consCount === 0) breakAt = i + 1;
-      else if (consCount === 1) breakAt = i + 1;
-      else {
-        const lastPair = w[j - 2] + w[j - 1];
-        if (inseparable.has(lastPair)) breakAt = j - 2;
-        else breakAt = j - 1;
-      }
-      if (breakAt >= 2 && breakAt <= w.length - 2) pts.push(breakAt);
-      i = j;
-    } else {
-      i++;
-    }
-  }
-  return pts;
+  return hyphenPointsPt(word);
 }
+
 
 function hexToRgb(hex: string): ReturnType<typeof rgb> {
   const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
