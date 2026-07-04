@@ -1,10 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/use-auth";
+import { useActiveSubject } from "@/hooks/use-active-subject";
 import { formatBirthDateBR } from "@/lib/numerology";
-import { Hash, Heart, Eye, Sparkles, TreePine, Download, Loader2 } from "lucide-react";
+import { Hash, Heart, Eye, Sparkles, TreePine, Download, Loader2, Users } from "lucide-react";
 import { SectionLamp } from "@/components/SectionLamp";
 import { Button } from "@/components/ui/button";
 import { buildSimplePdf, type SimplePdfBlock } from "@/lib/simple-pdf";
