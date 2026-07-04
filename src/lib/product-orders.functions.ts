@@ -570,7 +570,23 @@ async function generatePdfForOrder(order: any, landing: any): Promise<Uint8Array
   });
 }
 
-async function sendOrderEmail(order: any, landing: any, pdfUrl: string | null) {
+async function fetchOrderPdfBytes(orderId: string): Promise<Uint8Array | null> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const path = `product-orders/${orderId}.pdf`;
+  const { data, error } = await supabaseAdmin.storage.from("reports").download(path);
+  if (error || !data) return null;
+  const buf = await data.arrayBuffer();
+  return new Uint8Array(buf);
+}
+
+function fillTemplate(tpl: string, vars: Record<string, string>): string {
+  return tpl.replace(/\{\{\s*([a-zA-Z0-9_\-]+)\s*\}\}/g, (_m, key: string) => {
+    const k = key.toLowerCase();
+    return vars[k] ?? "";
+  });
+}
+
+async function sendOrderEmail(order: any, landing: any, pdfUrl: string | null, pdfBytes: Uint8Array | null) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data: smtp } = await supabaseAdmin
     .from("smtp_settings" as any)
@@ -583,20 +599,35 @@ async function sendOrderEmail(order: any, landing: any, pdfUrl: string | null) {
     throw new Error("SMTP não configurado.");
   }
   const cd = (order.customer_data ?? {}) as Record<string, any>;
-  const to = cd.email;
+  const to = cd.email ?? (order as any).guest_email;
   if (!to) throw new Error("E-mail do cliente não encontrado nos dados do pedido.");
 
+  const nome = String(cd.full_name ?? cd.name ?? cd.nome ?? "cliente");
+  const firstName = nome.split(/\s+/)[0] || nome;
+  const partnerName = String(cd.partner_name ?? cd.parceiro_nome ?? "");
   const subject = landing.delivery_email_subject || `Seu ${landing.title} está pronto`;
   const tpl =
     landing.delivery_email_template ||
-    `<p>Olá {{name}},</p><p>Seu relatório <strong>{{title}}</strong> está pronto.</p>{{download}}<p>Obrigado!</p>`;
+    `Olá {{nome}},\n\nSeu relatório {{title}} está pronto — segue anexo em PDF.\n\nCom carinho,\nEquipe Código Cósmico`;
+
   const downloadHtml = pdfUrl
     ? `<p><a href="${pdfUrl}" style="background:#d4af37;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;display:inline-block">Baixar PDF</a></p>`
     : "";
-  const html = tpl
-    .replace(/\{\{name\}\}/g, String(cd.full_name ?? cd.name ?? "cliente"))
-    .replace(/\{\{title\}\}/g, landing.title)
-    .replace(/\{\{download\}\}/g, downloadHtml);
+  const vars: Record<string, string> = {
+    name: nome, nome, full_name: nome, cliente: nome, first_name: firstName, primeiro_nome: firstName,
+    title: landing.title, produto: landing.title, product: landing.title,
+    link: pdfUrl ?? "", access_link: pdfUrl ?? "", download: downloadHtml, download_link: pdfUrl ?? "", pdf_url: pdfUrl ?? "",
+    partner_name: partnerName, parceiro_nome: partnerName,
+  };
+  const raw = fillTemplate(tpl, vars);
+  // Convert plain-text templates to HTML with basic <br/> so newlines render
+  const looksHtml = /<[a-z][\s\S]*>/i.test(raw);
+  const html = looksHtml ? raw : raw.replace(/\r?\n/g, "<br/>");
+
+  const filename = `${String(landing.title || "relatorio").replace(/[^a-z0-9\-\_]+/gi, "-").toLowerCase()}.pdf`;
+  const attachments = pdfBytes
+    ? [{ filename, content: Buffer.from(pdfBytes), contentType: "application/pdf" }]
+    : undefined;
 
   const nodemailer = (await import("nodemailer")).default;
   const transporter = nodemailer.createTransport({
@@ -611,6 +642,7 @@ async function sendOrderEmail(order: any, landing: any, pdfUrl: string | null) {
     replyTo: s.reply_to || undefined,
     subject,
     html,
+    attachments,
   });
 }
 
@@ -632,14 +664,15 @@ async function runDispatchForOrder(
     dispatch_attempts: ((order as any).dispatch_attempts ?? 0) + 1,
   };
   let pdfUrl: string | null = (order as any).pdf_url ?? null;
+  let pdfBytes: Uint8Array | null = null;
 
   try {
     if (action === "pdf" || action === "both") {
-      const bytes = await generatePdfForOrder(order, landing);
+      pdfBytes = await generatePdfForOrder(order, landing);
       const path = `product-orders/${order.id}.pdf`;
       const { error: upErr } = await supabaseAdmin.storage
         .from("reports")
-        .upload(path, bytes, { contentType: "application/pdf", upsert: true });
+        .upload(path, pdfBytes, { contentType: "application/pdf", upsert: true });
       if (upErr) throw new Error(`Upload PDF: ${upErr.message}`);
       const { data: signed, error: sErr } = await supabaseAdmin.storage
         .from("reports")
@@ -663,7 +696,8 @@ async function runDispatchForOrder(
       patch.pdf_generated_at = new Date().toISOString();
     }
     if (action === "email" || action === "both") {
-      await sendOrderEmail(order, landing, pdfUrl);
+      if (!pdfBytes) pdfBytes = await fetchOrderPdfBytes(order.id);
+      await sendOrderEmail(order, landing, pdfUrl, pdfBytes);
       patch.email_sent_at = new Date().toISOString();
     }
     if (action === "both" || (action === "email" && pdfUrl)) {
@@ -786,17 +820,17 @@ async function sendOrderWhatsapp(orderId: string) {
     const phone = rawPhone.length <= 11 ? `55${rawPhone}` : rawPhone;
 
     let pdfUrl: string | null = (order as any).pdf_url ?? null;
+    let pdfBytes: Uint8Array | null = null;
     if (!pdfUrl) {
-      let bytes: Uint8Array;
       try {
-        bytes = await generatePdfForOrder(order, landing);
+        pdfBytes = await generatePdfForOrder(order, landing);
       } catch (e: any) {
         throw new Error(`Falha ao gerar PDF: ${e?.message ?? e}`);
       }
       const path = `product-orders/${order.id}.pdf`;
       const { error: upErr } = await supabaseAdmin.storage
         .from("reports")
-        .upload(path, bytes, { contentType: "application/pdf", upsert: true });
+        .upload(path, pdfBytes, { contentType: "application/pdf", upsert: true });
       if (upErr) throw new Error(`Upload do PDF falhou: ${upErr.message}`);
       const { data: signed, error: sErr } = await supabaseAdmin.storage
         .from("reports")
@@ -817,6 +851,7 @@ async function sendOrderWhatsapp(orderId: string) {
         .update({ pdf_url: pdfUrl, pdf_generated_at: new Date().toISOString() } as any)
         .eq("id", order.id);
     }
+    if (!pdfBytes) pdfBytes = await fetchOrderPdfBytes(order.id);
 
     const { data: evo } = await supabaseAdmin
       .from("evolution_settings" as any)
@@ -830,23 +865,49 @@ async function sendOrderWhatsapp(orderId: string) {
       throw new Error("Evolution API (WhatsApp) não configurada ou desabilitada.");
     }
 
-    const nome = cd.full_name ?? cd.name ?? "";
-    const text =
-      `Olá ${nome}! ✨\n\nSeu relatório "${landing?.title ?? "produto"}" está pronto.\n\n` +
-      `📄 Acesse seu PDF aqui:\n${pdfUrl}\n\n` +
-      `O link é válido por 30 dias. Guarde com carinho! 🌙`;
+    const nome = String(cd.full_name ?? cd.name ?? cd.nome ?? "");
+    const firstName = nome.split(/\s+/)[0] || nome;
+    const caption =
+      `Olá ${firstName}! ✨\n\nSeu relatório "${landing?.title ?? "produto"}" está pronto — segue em PDF. 🌙`;
     const base = String(e.base_url).replace(/\/+$/, "");
-    const url = `${base}/message/sendText/${encodeURIComponent(e.instance_name)}`;
+    const filename = `${String(landing?.title || "relatorio").replace(/[^a-z0-9\-\_]+/gi, "-").toLowerCase()}.pdf`;
 
     let res: Response;
-    try {
-      res = await fetch(url, {
-        method: "POST",
-        headers: { apikey: e.global_api_key, "Content-Type": "application/json" },
-        body: JSON.stringify({ number: phone, text }),
-      });
-    } catch (netErr: any) {
-      throw new Error(`Falha de rede ao chamar Evolution: ${netErr?.message ?? netErr}`);
+    if (pdfBytes) {
+      // Send PDF as document via Evolution sendMedia
+      let binary = "";
+      for (let i = 0; i < pdfBytes.length; i++) binary += String.fromCharCode(pdfBytes[i]);
+      const b64 = typeof btoa === "function" ? btoa(binary) : Buffer.from(pdfBytes).toString("base64");
+      const url = `${base}/message/sendMedia/${encodeURIComponent(e.instance_name)}`;
+      try {
+        res = await fetch(url, {
+          method: "POST",
+          headers: { apikey: e.global_api_key, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            number: phone,
+            mediatype: "document",
+            mimetype: "application/pdf",
+            media: b64,
+            fileName: filename,
+            caption,
+          }),
+        });
+      } catch (netErr: any) {
+        throw new Error(`Falha de rede ao chamar Evolution: ${netErr?.message ?? netErr}`);
+      }
+    } else {
+      // Fallback: send link as text
+      const text = `${caption}\n\n📄 ${pdfUrl}\n\n(Link válido por 30 dias)`;
+      const url = `${base}/message/sendText/${encodeURIComponent(e.instance_name)}`;
+      try {
+        res = await fetch(url, {
+          method: "POST",
+          headers: { apikey: e.global_api_key, "Content-Type": "application/json" },
+          body: JSON.stringify({ number: phone, text }),
+        });
+      } catch (netErr: any) {
+        throw new Error(`Falha de rede ao chamar Evolution: ${netErr?.message ?? netErr}`);
+      }
     }
     if (!res.ok) {
       const t = await res.text().catch(() => "");
