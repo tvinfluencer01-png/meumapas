@@ -743,20 +743,16 @@ ${astroBlock}${extraContextBlock}`;
     }
 
     function createFallbackBasePayload() {
-      const blueprintDefaults = [
-        {
-          title: `Panorama de ${meta.title}`,
-          focus: `Leitura geral sobre ${meta.focus}`,
-        },
-        {
-          title: "Padrões e bloqueios centrais",
-          focus: `Identificar sombras, travas e repetições dentro de ${meta.focus}`,
-        },
-        {
-          title: "Direções práticas para o próximo ciclo",
-          focus: `Traduzir ${meta.focus} em movimentos concretos, maduros e sustentáveis`,
-        },
+      const baseBlueprints = [
+        { title: `Panorama simbólico de ${meta.title}`, focus: `Leitura geral sobre ${meta.focus}, apresentando o cenário arquetípico dominante.` },
+        { title: "Padrões, feridas e bloqueios centrais", focus: `Investigar sombras, travas e repetições específicas dentro de ${meta.focus}.` },
+        { title: "Dons latentes e recursos disponíveis", focus: `Nomear talentos, forças e recursos ainda pouco explorados em ${meta.focus}.` },
+        { title: "Manifestação no cotidiano", focus: `Como esses símbolos aparecem no dia a dia dentro de ${meta.focus}, com cenas concretas.` },
+        { title: "Travessia e próximo ciclo", focus: `Traduzir ${meta.focus} em movimentos concretos, maduros e sustentáveis para o próximo ciclo.` },
+        { title: "Integração final", focus: `Costurar todos os aprendizados anteriores sobre ${meta.focus} em uma síntese viva.` },
       ];
+      const blueprintDefaults = baseBlueprints.slice(0, sizeProfile.sections);
+
 
       return {
         intro: ensureMinNarrativeLength(
