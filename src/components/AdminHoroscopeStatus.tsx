@@ -1,6 +1,6 @@
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { CheckCircle2, AlertTriangle, Clock, RefreshCw, Send, Sparkles } from "lucide-react";
+import { CheckCircle2, AlertTriangle, Clock, RefreshCw, Send, Sparkles, ShieldAlert, ShieldCheck } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { GradientStatCard } from "@/components/ui/gradient-stat-card";
 import { Badge } from "@/components/ui/badge";
@@ -71,10 +71,33 @@ export function AdminHoroscopeStatus() {
                 )}
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="rounded-lg border border-border bg-card/30 p-4 space-y-2">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  {data.providers.whatsappReady ? (
+                    <ShieldCheck className="size-4 text-emerald-400" />
+                  ) : (
+                    <ShieldAlert className="size-4 text-amber-400" />
+                  )}
+                  Provedores de envio
+                </div>
+                <div className="flex flex-wrap gap-2 text-xs">
+                  <Badge variant="outline" className={data.providers.evolutionReady ? "border-emerald-500/40 text-emerald-300" : "text-muted-foreground"}>
+                    Evolution: {data.providers.evolutionReady ? "OK" : "não configurado"}
+                  </Badge>
+                  <Badge variant="outline" className={data.providers.twilioReady ? "border-emerald-500/40 text-emerald-300" : "text-muted-foreground"}>
+                    Twilio: {data.providers.twilioReady ? "OK" : "não configurado"}
+                  </Badge>
+                  <Badge variant="outline" className={data.providers.emailReady ? "border-emerald-500/40 text-emerald-300" : "text-muted-foreground"}>
+                    Email: {data.providers.emailReady ? "OK" : "não configurado"}
+                  </Badge>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                 <StatCard label="Assinantes" value={data.totals.subscribers} icon={<Send className="size-4 text-gold" />} />
+                <StatCard label="Prontos" value={data.totals.ready} tone="emerald" />
+                <StatCard label="Com pendências" value={data.totals.notReady} tone="amber" />
                 <StatCard label="Entregues hoje" value={data.totals.delivered} tone="emerald" />
-                <StatCard label="Pendentes" value={data.totals.pending} tone="amber" />
                 <StatCard label="Erros" value={data.totals.errors} tone="destructive" />
               </div>
 
@@ -83,23 +106,33 @@ export function AdminHoroscopeStatus() {
                   <thead className="bg-secondary/40 text-left">
                     <tr>
                       <th className="px-3 py-2 font-medium">Usuário</th>
+                      <th className="px-3 py-2 font-medium text-center">Pronto?</th>
                       <th className="px-3 py-2 font-medium">Freq.</th>
                       <th className="px-3 py-2 font-medium">Último envio</th>
                       <th className="px-3 py-2 font-medium text-center">Entregues</th>
                       <th className="px-3 py-2 font-medium text-center">Erros</th>
                       <th className="px-3 py-2 font-medium text-center">Status</th>
-                      <th className="px-3 py-2 font-medium">Detalhe</th>
+                      <th className="px-3 py-2 font-medium">Pendências / Detalhe</th>
                     </tr>
                   </thead>
                   <tbody>
                     {data.users.length === 0 && (
-                      <tr><td colSpan={7} className="px-3 py-6 text-center text-muted-foreground">Sem assinantes.</td></tr>
+                      <tr><td colSpan={8} className="px-3 py-6 text-center text-muted-foreground">Sem assinantes.</td></tr>
                     )}
                     {data.users.map((u) => (
                       <tr key={u.user_id} className="border-t border-border">
                         <td className="px-3 py-2">
                           <div className="font-medium">{u.full_name || "—"}</div>
                           <div className="text-xs text-muted-foreground">{u.email ?? "—"}</div>
+                        </td>
+                        <td className="px-3 py-2 text-center">
+                          {u.ready ? (
+                            <Badge className="bg-emerald-500/15 text-emerald-300 border-emerald-500/30 gap-1"><ShieldCheck className="size-3" />pronto</Badge>
+                          ) : (
+                            <Badge className="bg-amber-500/15 text-amber-300 border-amber-500/30 gap-1" title={u.issues.join(" · ")}>
+                              <ShieldAlert className="size-3" />{u.issues.length} pend.
+                            </Badge>
+                          )}
                         </td>
                         <td className="px-3 py-2 text-muted-foreground">{u.frequency}</td>
                         <td className="px-3 py-2 text-muted-foreground">{u.last_sent_on ?? "—"}</td>
@@ -118,8 +151,12 @@ export function AdminHoroscopeStatus() {
                             <Badge variant="outline">—</Badge>
                           )}
                         </td>
-                        <td className="px-3 py-2 text-xs text-muted-foreground max-w-[280px] truncate" title={u.last_detail ?? ""}>
-                          {u.last_detail ?? "—"}
+                        <td className="px-3 py-2 text-xs text-muted-foreground max-w-[320px]">
+                          {u.issues.length > 0 ? (
+                            <span className="text-amber-300" title={u.issues.join(" · ")}>{u.issues.join(" · ")}</span>
+                          ) : (
+                            <span className="truncate block" title={u.last_detail ?? ""}>{u.last_detail ?? "—"}</span>
+                          )}
                         </td>
                       </tr>
                     ))}
