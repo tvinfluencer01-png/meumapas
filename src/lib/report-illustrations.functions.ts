@@ -162,6 +162,13 @@ export const generateReportIllustration = createServerFn({ method: "POST" })
       if (!b64) throw new Error("Resposta da IA sem imagem.");
 
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+      const path = `${data.report_kind ?? data.theme}/${crypto.randomUUID()}.png`;
+      const { error: upErr } = await supabaseAdmin.storage
+        .from("report-illustrations")
+        .upload(path, bytes, { contentType: "image/png", upsert: false });
+      if (upErr) throw new Error(upErr.message);
+
       const { data: inserted, error } = await supabaseAdmin
         .from("report_illustrations")
         .insert({
@@ -169,7 +176,7 @@ export const generateReportIllustration = createServerFn({ method: "POST" })
           report_kind: data.report_kind ?? null,
           title: data.title ?? null,
           prompt,
-          image_data: b64,
+          storage_path: path,
           mime: "image/png",
           created_by: context.userId,
         })
