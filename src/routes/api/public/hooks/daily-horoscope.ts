@@ -94,6 +94,13 @@ async function handler({ request }: { request: Request }) {
     .select("*")
     .eq("id", true)
     .maybeSingle();
+
+  const { data: smtp } = await (supabaseAdmin as any)
+    .from("smtp_settings")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
   const evoReady =
     evo?.enabled && evo?.base_url && evo?.global_api_key && evo?.instance_name;
 
