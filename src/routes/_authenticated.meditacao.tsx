@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -24,12 +24,14 @@ import {
 import { CreditCostBadge } from "@/components/CreditCostBadge";
 import { emitCreditsChanged } from "@/lib/credits-events";
 import { SEFIROT, findSefirah } from "@/lib/kabbalah.tree";
+import { useActiveSubject } from "@/hooks/use-active-subject";
 import {
   generateKabbalahMeditation,
   exportKabbalahPdf,
   listKabbalahMeditations,
   deleteKabbalahMeditation,
 } from "@/lib/kabbalah.functions";
+
 
 export const Route = createFileRoute("/_authenticated/meditacao")({
   component: MeditacaoPage,
@@ -49,11 +51,20 @@ function MeditacaoPage() {
   const exportFn = useServerFn(exportKabbalahPdf);
   const listFn = useServerFn(listKabbalahMeditations);
   const deleteFn = useServerFn(deleteKabbalahMeditation);
+  const { data: subject } = useActiveSubject();
+  const subjectKey = subject?.client_profile_id ?? "self";
 
   const history = useQuery({
-    queryKey: ["kab-meditations"],
+    queryKey: ["kab-meditations", subjectKey],
     queryFn: () => listFn(),
   });
+
+  useEffect(() => {
+    setCurrent(null);
+  }, [subjectKey]);
+
+
+
 
   const genMut = useMutation({
     mutationFn: () =>
