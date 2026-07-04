@@ -176,7 +176,7 @@ const SuggestionsSchema = z.object({
 
 const SectionBodyOutput = z.object({
   title: z.string().min(2),
-  body: z.string().min(1400),
+  body: z.string().min(2200),
 });
 
 const SectionPlanOutput = z.object({
@@ -185,29 +185,75 @@ const SectionPlanOutput = z.object({
 
 const SectionOutput = z.object({
   title: z.string().min(2),
-  body: z.string().min(1400),
+  body: z.string().min(2200),
   plan: SectionPlanSchema,
 });
 
 const BaseAiOutput = z.object({
-  intro: z.string().min(1600),
-  sectionBlueprints: z.array(z.object({ title: z.string().min(2), focus: z.string().min(30) })).length(3),
-  closing: z.string().min(400),
+  intro: z.string().min(2200),
+  sectionBlueprints: z
+    .array(z.object({ title: z.string().min(2), focus: z.string().min(60) }))
+    .min(3)
+    .max(6),
+  closing: z.string().min(700),
   swot: SwotSchema,
   recommendations: RecommendationsSchema,
   suggestions: SuggestionsSchema,
-  summary: z.string().min(500),
+  summary: z.string().min(900),
 });
 
 const AiOutput = z.object({
-  intro: z.string().min(1600),
-  sections: z.array(SectionBodyOutput).length(3),
-  closing: z.string().min(400),
+  intro: z.string().min(2200),
+  sections: z.array(SectionBodyOutput).min(3).max(6),
+  closing: z.string().min(700),
   swot: SwotSchema,
   recommendations: RecommendationsSchema,
   suggestions: SuggestionsSchema,
-  summary: z.string().min(500),
+  summary: z.string().min(900),
 });
+
+/**
+ * Perfil de tamanho por tipo de relatório.
+ * Controla quantos capítulos são pedidos à IA e o mínimo de caracteres
+ * por bloco, permitindo que cada tipo alcance a faixa de páginas alvo:
+ *   - Grandes (25–40 pág): personality, spiritual, personal_kabbalah,
+ *     annual_forecast, synastry — 5 capítulos, corpo denso.
+ *   - Médios (22–32 pág): love, career, finance, family, health,
+ *     friendships, couple_numerology — 4 capítulos.
+ */
+const REPORT_SIZE_PROFILE: Record<
+  z.infer<typeof KIND>,
+  { sections: number; introMin: number; sectionMin: number; closingMin: number; summaryMin: number; targetPagesLabel: string }
+> = {
+  personality:        { sections: 5, introMin: 3200, sectionMin: 3600, closingMin: 1000, summaryMin: 1400, targetPagesLabel: "30 a 40 páginas" },
+  love:               { sections: 4, introMin: 2800, sectionMin: 3200, closingMin:  900, summaryMin: 1200, targetPagesLabel: "24 a 32 páginas" },
+  career:             { sections: 4, introMin: 2800, sectionMin: 3200, closingMin:  900, summaryMin: 1200, targetPagesLabel: "24 a 32 páginas" },
+  spiritual:          { sections: 5, introMin: 3200, sectionMin: 3400, closingMin: 1000, summaryMin: 1400, targetPagesLabel: "28 a 38 páginas" },
+  finance:            { sections: 4, introMin: 2800, sectionMin: 3200, closingMin:  900, summaryMin: 1200, targetPagesLabel: "24 a 32 páginas" },
+  family:             { sections: 4, introMin: 2800, sectionMin: 3200, closingMin:  900, summaryMin: 1200, targetPagesLabel: "24 a 32 páginas" },
+  health:             { sections: 4, introMin: 2800, sectionMin: 3000, closingMin:  900, summaryMin: 1200, targetPagesLabel: "22 a 30 páginas" },
+  friendships:        { sections: 4, introMin: 2600, sectionMin: 3000, closingMin:  800, summaryMin: 1100, targetPagesLabel: "22 a 30 páginas" },
+  synastry:           { sections: 5, introMin: 3200, sectionMin: 3400, closingMin: 1000, summaryMin: 1400, targetPagesLabel: "28 a 38 páginas" },
+  couple_numerology:  { sections: 4, introMin: 2800, sectionMin: 3200, closingMin:  900, summaryMin: 1200, targetPagesLabel: "24 a 32 páginas" },
+  annual_forecast:    { sections: 5, introMin: 3200, sectionMin: 3400, closingMin: 1000, summaryMin: 1400, targetPagesLabel: "28 a 38 páginas" },
+  personal_kabbalah:  { sections: 5, introMin: 3200, sectionMin: 3400, closingMin: 1000, summaryMin: 1400, targetPagesLabel: "28 a 38 páginas" },
+};
+
+/**
+ * Ângulos obrigatórios por capítulo. Cada índice recebe um "foco
+ * narrativo" distinto para reduzir sobreposição temática entre capítulos.
+ * A ordem cobre 6 slots; usamos apenas os N primeiros conforme o perfil.
+ */
+const CHAPTER_ANGLES: string[] = [
+  "PANORAMA SIMBÓLICO — mapeie o cenário geral do tema no mapa astral e na numerologia, apresentando os arquétipos ativos e a energia dominante do ciclo, sem repetir a abertura.",
+  "PADRÕES E FERIDAS — investigue as tensões, repetições, sombras e feridas centrais que aparecem NESTA área específica, com aspectos e números concretos, sem repetir termos gerais já usados.",
+  "DONS LATENTES E RECURSOS — foque nas forças, talentos e recursos ainda pouco explorados que o mapa revela para este tema, oferecendo exemplos práticos.",
+  "MANIFESTAÇÃO NO COTIDIANO — mostre como esses símbolos aparecem no dia a dia (relacionamentos, rotina, corpo, decisões), com cenas concretas e observáveis.",
+  "TRAVESSIA E PRÓXIMO CICLO — desenhe o convite evolutivo, o rito de passagem e as decisões maduras que o próximo ciclo pede especificamente nesta área.",
+  "INTEGRAÇÃO FINAL — costure aprendizados de todos os capítulos anteriores em uma síntese viva que ainda entrega insights novos.",
+];
+
+
 
 export const generateReport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
