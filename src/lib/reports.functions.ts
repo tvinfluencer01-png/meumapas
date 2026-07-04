@@ -423,12 +423,15 @@ export const generateReport = createServerFn({ method: "POST" })
       .map((a) => `${a.a} ${a.aspect} ${a.b}`)
       .join(", ");
     const numerologyAnchors = `Caminho de Vida ${numLabel(num.life_path)}, Destino ${numLabel(num.destiny)}, Alma ${numLabel(num.soul_urge)} e Personalidade ${numLabel(num.personality)}`;
+    const sizeProfile = REPORT_SIZE_PROFILE[data.kind];
     const CONTENT_MIN = {
-      intro: 1600,
-      section: 1400,
-      closing: 400,
-      summary: 500,
+      intro: sizeProfile.introMin,
+      section: sizeProfile.sectionMin,
+      closing: sizeProfile.closingMin,
+      summary: sizeProfile.summaryMin,
     } as const;
+    const chapterAngles = CHAPTER_ANGLES.slice(0, sizeProfile.sections);
+
 
     function ensureMinNarrativeLength(
       text: unknown,
