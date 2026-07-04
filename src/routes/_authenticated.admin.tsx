@@ -258,7 +258,14 @@ function AdminDashboard() {
                 Configurações sensíveis, integrações e gestão do sistema.
               </p>
             </div>
+            <Button asChild variant="outline" size="sm" className="border-gold/40 text-gold hover:bg-gold/10">
+              <Link to="/admin/ilustracoes">
+                <Sparkles className="size-4 mr-2" />
+                Ilustrações
+              </Link>
+            </Button>
           </header>
+
 
 
           <AdminTabContent tab={tab} />

@@ -4536,6 +4536,51 @@ export type Database = {
         }
         Relationships: []
       }
+      report_illustrations: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string | null
+          id: string
+          image_data: string
+          mime: string
+          prompt: string
+          report_kind: string | null
+          theme: string
+          title: string | null
+          updated_at: string
+          usage_count: number
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          image_data: string
+          mime?: string
+          prompt: string
+          report_kind?: string | null
+          theme: string
+          title?: string | null
+          updated_at?: string
+          usage_count?: number
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          image_data?: string
+          mime?: string
+          prompt?: string
+          report_kind?: string | null
+          theme?: string
+          title?: string | null
+          updated_at?: string
+          usage_count?: number
+        }
+        Relationships: []
+      }
       reports: {
         Row: {
           ai_model: string | null
