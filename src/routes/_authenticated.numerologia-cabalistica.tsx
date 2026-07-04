@@ -1,10 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/use-auth";
+import { useActiveSubject } from "@/hooks/use-active-subject";
 import { formatBirthDateBR } from "@/lib/numerology";
-import { Hash, Heart, Eye, Sparkles, TreePine, Download, Loader2 } from "lucide-react";
+import { Hash, Heart, Eye, Sparkles, TreePine, Download, Loader2, Users } from "lucide-react";
 import { SectionLamp } from "@/components/SectionLamp";
 import { Button } from "@/components/ui/button";
 import { buildSimplePdf, type SimplePdfBlock } from "@/lib/simple-pdf";
@@ -146,34 +144,12 @@ const CARDS = [
 ];
 
 function NumerologiaCabalisticaPage() {
-  const { user } = useAuth();
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["cab-name", user?.id],
-    enabled: !!user,
-    queryFn: async () => {
-      const primary = await supabase.from("birth_data")
-        .select("*").eq("user_id", user!.id).eq("is_primary", true).maybeSingle();
-      let birth = primary.data;
-      if (!birth) {
-        const fallback = await supabase.from("birth_data")
-          .select("*").eq("user_id", user!.id)
-          .order("created_at", { ascending: false }).limit(1).maybeSingle();
-        birth = fallback.data;
-      }
-      const profile = await supabase.from("profiles")
-        .select("full_name").eq("id", user!.id).maybeSingle();
-      return { birth, profile: profile.data };
-    },
-    staleTime: 60_000,
-  });
+  const { data: subject, isLoading, error } = useActiveSubject();
 
-  const birth = data?.birth;
-  const fullName =
-    (birth?.full_name?.trim?.() ||
-      data?.profile?.full_name?.trim?.() ||
-      (user?.user_metadata as any)?.full_name?.trim?.() ||
-      (user?.user_metadata as any)?.name?.trim?.() ||
-      "");
+  const birth = subject
+    ? { full_name: subject.full_name, birth_date: subject.birth_date }
+    : null;
+  const fullName = birth?.full_name?.trim() ?? "";
   const nums = fullName ? computeCabalistic(fullName) : null;
 
   const [downloading, setDownloading] = useState(false);
@@ -564,6 +540,14 @@ function NumerologiaCabalisticaPage() {
         </p>
         {fullName && (
           <p className="mt-2 text-muted-foreground">{fullName}{birth?.birth_date ? ` — nascido em ${formatBirthDateBR(birth.birth_date)}` : ""}</p>
+        )}
+        {subject?.kind === "client" && (
+          <Link
+            to="/clientes"
+            className="inline-flex items-center gap-1.5 mt-2 text-xs text-gold hover:underline"
+          >
+            <Users className="size-3" /> Calculando para cliente ativo · trocar
+          </Link>
         )}
         {nums && (
           <div className="mt-4">
