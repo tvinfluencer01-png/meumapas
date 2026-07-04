@@ -541,6 +541,14 @@ function NumerologiaCabalisticaPage() {
         {fullName && (
           <p className="mt-2 text-muted-foreground">{fullName}{birth?.birth_date ? ` — nascido em ${formatBirthDateBR(birth.birth_date)}` : ""}</p>
         )}
+        {subject?.kind === "client" && (
+          <Link
+            to="/clientes"
+            className="inline-flex items-center gap-1.5 mt-2 text-xs text-gold hover:underline"
+          >
+            <Users className="size-3" /> Calculando para cliente ativo · trocar
+          </Link>
+        )}
         {nums && (
           <div className="mt-4">
             <Button onClick={handleDownload} disabled={downloading} className="gap-2">
