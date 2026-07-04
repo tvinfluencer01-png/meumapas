@@ -236,11 +236,13 @@ export const pickReportIllustration = createServerFn({ method: "POST" })
       })
       .parse(d),
   )
-  .handler(async ({ data, context }) => {
-    let q = context.supabase
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    let q = supabaseAdmin
       .from("report_illustrations")
-      .select("id, image_data, mime, usage_count")
+      .select("id, storage_path, mime, usage_count")
       .eq("active", true)
+      .not("storage_path", "is", null)
       .limit(50);
     if (data.report_kind) q = q.eq("report_kind", data.report_kind);
     else if (data.theme) q = q.eq("theme", data.theme);
@@ -249,17 +251,17 @@ export const pickReportIllustration = createServerFn({ method: "POST" })
     if (!rows || rows.length === 0) return { picked: null };
 
     const chosen = rows[Math.floor(Math.random() * rows.length)];
-    await context.supabase
+    await supabaseAdmin
       .from("report_illustrations")
       .update({ usage_count: (chosen.usage_count ?? 0) + 1 })
       .eq("id", chosen.id);
 
-    return {
-      picked: {
-        id: chosen.id,
-        dataUrl: `data:${chosen.mime};base64,${chosen.image_data}`,
-      },
-    };
+    const { data: signed, error: sErr } = await supabaseAdmin.storage
+      .from("report-illustrations")
+      .createSignedUrl(chosen.storage_path as string, 60 * 60);
+    if (sErr) throw new Error(sErr.message);
+
+    return { picked: { id: chosen.id, dataUrl: signed.signedUrl } };
   });
 
 /* ------------------------- BULK SEED (admin) ------------------------- */
