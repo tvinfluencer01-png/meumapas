@@ -1,6 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export type UserHoroscopeStatus = {
   user_id: string;
@@ -46,6 +45,7 @@ export type HoroscopeStatusResult = {
 export const getHoroscopeStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<HoroscopeStatusResult> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: roleRow } = await supabaseAdmin
       .from("user_roles").select("role")
       .eq("user_id", context.userId).eq("role", "admin").maybeSingle();
@@ -74,7 +74,13 @@ export const getHoroscopeStatus = createServerFn({ method: "GET" })
       .from("twilio_settings").select("*").eq("id", true).maybeSingle();
     const twilioReady = !!(tw?.enabled && tw?.account_sid && tw?.auth_token && tw?.whatsapp_from);
     const whatsappReady = evolutionReady || twilioReady;
-    const emailReady = false; // envio por email ainda não configurado
+    const { data: smtp } = await (supabaseAdmin as any)
+      .from("smtp_settings")
+      .select("enabled, host, port, username, password, from_email")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const emailReady = !!(smtp?.enabled && smtp?.host && smtp?.port && smtp?.username && smtp?.password && smtp?.from_email);
 
     // Subscribers
     const { data: subs } = await supabaseAdmin
@@ -82,7 +88,16 @@ export const getHoroscopeStatus = createServerFn({ method: "GET" })
       .select("user_id, enabled, frequency, last_sent_on, email, sun_sign, phone_e164, channel_whatsapp, channel_email, client_profile_id");
     const subscribers = subs ?? [];
 
-    const today = new Date().toISOString().slice(0, 10);
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/Sao_Paulo",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).formatToParts(new Date()).reduce<Record<string, string>>((acc, part) => {
+      acc[part.type] = part.value;
+      return acc;
+    }, {});
+    const today = `${parts.year}-${parts.month}-${parts.day}`;
     const { data: logs } = await supabaseAdmin
       .from("horoscope_log")
       .select("user_id, status, detail, created_at, date")
