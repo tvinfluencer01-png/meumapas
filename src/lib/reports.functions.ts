@@ -1213,6 +1213,88 @@ Regras rígidas:
       };
     };
 
+    // ---- Illustrations: sorteia da biblioteca por report_kind ou tema ----
+    const THEME_BY_KIND: Record<string, string> = {
+      personality: "cosmos",
+      love: "amor",
+      career: "carreira",
+      spiritual: "espiritualidade",
+      finance: "financas",
+      family: "familia",
+      health: "saude",
+      friendships: "amizade",
+      synastry: "casal",
+      couple_numerology: "casal",
+      annual_forecast: "previsao_anual",
+      personal_kabbalah: "cabala",
+      business: "carreira",
+    };
+    async function loadIllustrationPool() {
+      try {
+        const kindTheme = THEME_BY_KIND[data.kind];
+        const byKind = await supabaseAdmin
+          .from("report_illustrations")
+          .select("id, image_data, mime")
+          .eq("active", true)
+          .eq("report_kind", data.kind)
+          .limit(30);
+        let rows = byKind.data ?? [];
+        if (rows.length < 2 && kindTheme) {
+          const byTheme = await supabaseAdmin
+            .from("report_illustrations")
+            .select("id, image_data, mime")
+            .eq("active", true)
+            .eq("theme", kindTheme)
+            .limit(30);
+          rows = [...rows, ...(byTheme.data ?? [])];
+        }
+        // dedup
+        const seen = new Set<string>();
+        const pool = rows.filter((r) => (seen.has(r.id) ? false : (seen.add(r.id), true)));
+        return pool.map((r) => ({
+          id: r.id,
+          bytes: Uint8Array.from(atob(r.image_data as string), (c) => c.charCodeAt(0)),
+          mime: (r.mime === "image/jpeg" ? "image/jpeg" : "image/png") as "image/png" | "image/jpeg",
+        }));
+      } catch (e) {
+        console.warn("[reports] illustration pool failed", e);
+        return [];
+      }
+    }
+    const illustrationPool = await loadIllustrationPool();
+    const pickedIds: string[] = [];
+    function pickIllustration() {
+      if (illustrationPool.length === 0) return undefined;
+      // prefer unused
+      const unused = illustrationPool.filter((i) => !pickedIds.includes(i.id));
+      const source = unused.length > 0 ? unused : illustrationPool;
+      const chosen = source[Math.floor(Math.random() * source.length)];
+      pickedIds.push(chosen.id);
+      // fire-and-forget usage increment
+      supabaseAdmin.rpc as unknown; // noop reference
+      supabaseAdmin
+        .from("report_illustrations")
+        .select("usage_count")
+        .eq("id", chosen.id)
+        .maybeSingle()
+        .then(({ data: row }) => {
+          if (!row) return;
+          void supabaseAdmin
+            .from("report_illustrations")
+            .update({ usage_count: (row.usage_count ?? 0) + 1 })
+            .eq("id", chosen.id);
+        });
+      return { bytes: chosen.bytes, mime: chosen.mime };
+    }
+
+    const sectionsWithArt = ai.sections.map((s) => ({
+      ...s,
+      illustration: pickIllustration(),
+    }));
+    const introIllustration = pickIllustration();
+
+
+
     const reportData: ReportData = {
       kind: data.kind,
       title: meta.title,
