@@ -1,6 +1,6 @@
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { CheckCircle2, AlertTriangle, Clock, RefreshCw, Send, Sparkles } from "lucide-react";
+import { CheckCircle2, AlertTriangle, Clock, RefreshCw, Send, Sparkles, ShieldAlert, ShieldCheck } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { GradientStatCard } from "@/components/ui/gradient-stat-card";
 import { Badge } from "@/components/ui/badge";
