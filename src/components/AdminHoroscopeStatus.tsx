@@ -174,8 +174,8 @@ export function AdminHoroscopeStatus() {
                   </tbody>
                 </table>
               </div>
-              {totalUsers > pageSize && (
-                <div className="flex items-center justify-between text-xs text-muted-foreground pt-2">
+              {totalUsers > 0 && (
+                <div className="flex flex-col gap-3 pt-2 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     Mostrando {(page - 1) * pageSize + 1}
                     –{Math.min(page * pageSize, totalUsers)} de {totalUsers}
