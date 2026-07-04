@@ -16,12 +16,16 @@ import "@/lib/toast-i18n";
 import { SystemFeedbackHost } from "@/components/system-feedback";
 import { PwaInstallPrompt } from "@/components/PwaInstallPrompt";
 import { SplashScreen } from "@/components/SplashScreen";
+import { Logo } from "@/components/Logo";
 
 
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
+        <div className="mb-6 flex justify-center">
+          <Logo sizeClassName="size-20" animation="float" />
+        </div>
         <h1 className="text-7xl font-bold text-foreground">404</h1>
         <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
         <p className="mt-2 text-sm text-muted-foreground">
@@ -39,6 +43,7 @@ function NotFoundComponent() {
     </div>
   );
 }
+
 
 function isChunkLoadError(error: unknown): boolean {
   const msg = (error as { message?: string } | null)?.message ?? String(error ?? "");
