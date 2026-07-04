@@ -820,17 +820,17 @@ async function sendOrderWhatsapp(orderId: string) {
     const phone = rawPhone.length <= 11 ? `55${rawPhone}` : rawPhone;
 
     let pdfUrl: string | null = (order as any).pdf_url ?? null;
+    let pdfBytes: Uint8Array | null = null;
     if (!pdfUrl) {
-      let bytes: Uint8Array;
       try {
-        bytes = await generatePdfForOrder(order, landing);
+        pdfBytes = await generatePdfForOrder(order, landing);
       } catch (e: any) {
         throw new Error(`Falha ao gerar PDF: ${e?.message ?? e}`);
       }
       const path = `product-orders/${order.id}.pdf`;
       const { error: upErr } = await supabaseAdmin.storage
         .from("reports")
-        .upload(path, bytes, { contentType: "application/pdf", upsert: true });
+        .upload(path, pdfBytes, { contentType: "application/pdf", upsert: true });
       if (upErr) throw new Error(`Upload do PDF falhou: ${upErr.message}`);
       const { data: signed, error: sErr } = await supabaseAdmin.storage
         .from("reports")
@@ -851,6 +851,7 @@ async function sendOrderWhatsapp(orderId: string) {
         .update({ pdf_url: pdfUrl, pdf_generated_at: new Date().toISOString() } as any)
         .eq("id", order.id);
     }
+    if (!pdfBytes) pdfBytes = await fetchOrderPdfBytes(order.id);
 
     const { data: evo } = await supabaseAdmin
       .from("evolution_settings" as any)
@@ -864,23 +865,49 @@ async function sendOrderWhatsapp(orderId: string) {
       throw new Error("Evolution API (WhatsApp) não configurada ou desabilitada.");
     }
 
-    const nome = cd.full_name ?? cd.name ?? "";
-    const text =
-      `Olá ${nome}! ✨\n\nSeu relatório "${landing?.title ?? "produto"}" está pronto.\n\n` +
-      `📄 Acesse seu PDF aqui:\n${pdfUrl}\n\n` +
-      `O link é válido por 30 dias. Guarde com carinho! 🌙`;
+    const nome = String(cd.full_name ?? cd.name ?? cd.nome ?? "");
+    const firstName = nome.split(/\s+/)[0] || nome;
+    const caption =
+      `Olá ${firstName}! ✨\n\nSeu relatório "${landing?.title ?? "produto"}" está pronto — segue em PDF. 🌙`;
     const base = String(e.base_url).replace(/\/+$/, "");
-    const url = `${base}/message/sendText/${encodeURIComponent(e.instance_name)}`;
+    const filename = `${String(landing?.title || "relatorio").replace(/[^a-z0-9\-\_]+/gi, "-").toLowerCase()}.pdf`;
 
     let res: Response;
-    try {
-      res = await fetch(url, {
-        method: "POST",
-        headers: { apikey: e.global_api_key, "Content-Type": "application/json" },
-        body: JSON.stringify({ number: phone, text }),
-      });
-    } catch (netErr: any) {
-      throw new Error(`Falha de rede ao chamar Evolution: ${netErr?.message ?? netErr}`);
+    if (pdfBytes) {
+      // Send PDF as document via Evolution sendMedia
+      let binary = "";
+      for (let i = 0; i < pdfBytes.length; i++) binary += String.fromCharCode(pdfBytes[i]);
+      const b64 = typeof btoa === "function" ? btoa(binary) : Buffer.from(pdfBytes).toString("base64");
+      const url = `${base}/message/sendMedia/${encodeURIComponent(e.instance_name)}`;
+      try {
+        res = await fetch(url, {
+          method: "POST",
+          headers: { apikey: e.global_api_key, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            number: phone,
+            mediatype: "document",
+            mimetype: "application/pdf",
+            media: b64,
+            fileName: filename,
+            caption,
+          }),
+        });
+      } catch (netErr: any) {
+        throw new Error(`Falha de rede ao chamar Evolution: ${netErr?.message ?? netErr}`);
+      }
+    } else {
+      // Fallback: send link as text
+      const text = `${caption}\n\n📄 ${pdfUrl}\n\n(Link válido por 30 dias)`;
+      const url = `${base}/message/sendText/${encodeURIComponent(e.instance_name)}`;
+      try {
+        res = await fetch(url, {
+          method: "POST",
+          headers: { apikey: e.global_api_key, "Content-Type": "application/json" },
+          body: JSON.stringify({ number: phone, text }),
+        });
+      } catch (netErr: any) {
+        throw new Error(`Falha de rede ao chamar Evolution: ${netErr?.message ?? netErr}`);
+      }
     }
     if (!res.ok) {
       const t = await res.text().catch(() => "");
