@@ -1102,8 +1102,9 @@ Regras rígidas:
     // concurrently in sectionPromises above.
     const heartbeatTimer = (async function* () {
       const steps = [
-        { progress: 63, step: "Tecendo capítulo 2 de 3..." },
-        { progress: 66, step: "Tecendo capítulo 3 de 3..." },
+        { progress: 63, step: `Tecendo capítulo 2 de ${sizeProfile.sections}...` },
+        { progress: 66, step: `Tecendo capítulo 3 de ${sizeProfile.sections}...` },
+
         { progress: 69, step: "Aguardando os últimos parágrafos..." },
       ];
       for (const s of steps) {
