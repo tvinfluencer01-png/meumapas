@@ -58,6 +58,7 @@ function IllustrationsPage() {
   const toggleFn = useServerFn(toggleReportIllustration);
   const delFn = useServerFn(deleteReportIllustration);
   const getImgFn = useServerFn(getIllustrationImage);
+  const seedFn = useServerFn(seedIllustrationsForAllKinds);
 
   const [theme, setTheme] = useState<string>(ILLUSTRATION_THEMES[0].value);
   const [reportKind, setReportKind] = useState<string>("");
