@@ -811,7 +811,7 @@ ${astroBlock}${extraContextBlock}`;
 
       return {
         intro: ensureMinNarrativeLength(cleanInlineText(record.intro) || fallback.intro, CONTENT_MIN.intro, "intro", meta.focus),
-        sectionBlueprints: normalizeStringList(sectionBlueprints, 3, (index) => fallback.sectionBlueprints[index]?.title ?? `Capítulo ${index + 1}`).map((title, index) => {
+        sectionBlueprints: normalizeStringList(sectionBlueprints, sizeProfile.sections, (index) => fallback.sectionBlueprints[index]?.title ?? `Capítulo ${index + 1}`).map((title, index) => {
           const source = sectionBlueprints[index];
           if (source && typeof source === "object" && !Array.isArray(source)) {
             const sourceRecord = source as Record<string, unknown>;
@@ -823,6 +823,7 @@ ${astroBlock}${extraContextBlock}`;
 
           return fallback.sectionBlueprints[index] ?? { title, focus: fallback.sectionBlueprints[0].focus };
         }),
+
         closing: ensureMinNarrativeLength(cleanInlineText(record.closing) || fallback.closing, CONTENT_MIN.closing, "closing", meta.focus),
         swot: {
           strengths: normalizeStringList(swot.strengths, 3, (index) => fallback.swot.strengths[index]),
