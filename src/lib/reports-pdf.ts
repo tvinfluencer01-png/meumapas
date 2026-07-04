@@ -62,7 +62,9 @@ export type ReportData = {
   summary: string;
   finalPlan?: SectionPlan;
   branding?: ReportBranding;
+  introIllustration?: ReportIllustration;
 };
+
 
 const GOLD = rgb(0.831, 0.686, 0.216); // #d4af37
 const NIGHT = rgb(0.012, 0.027, 0.067); // deep night
