@@ -59,6 +59,12 @@ function MeditacaoPage() {
     queryFn: () => listFn(),
   });
 
+  useEffect(() => {
+    setCurrent(null);
+  }, [subjectKey]);
+
+
+
 
   const genMut = useMutation({
     mutationFn: () =>
