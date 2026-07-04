@@ -95,15 +95,24 @@ export const listReportIllustrations = createServerFn({ method: "GET" })
 export const getIllustrationImage = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
-  .handler(async ({ data, context }) => {
-    const { data: row, error } = await context.supabase
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: row, error } = await supabaseAdmin
       .from("report_illustrations")
-      .select("image_data, mime")
+      .select("storage_path, mime")
       .eq("id", data.id)
       .maybeSingle();
     if (error) throw new Error(error.message);
     if (!row) throw new Error("Ilustração não encontrada");
-    return { dataUrl: `data:${row.mime};base64,${row.image_data}` };
+    if (!row.storage_path) {
+      // legacy row without storage_path — cannot serve reliably
+      return { dataUrl: "" };
+    }
+    const { data: signed, error: sErr } = await supabaseAdmin.storage
+      .from("report-illustrations")
+      .createSignedUrl(row.storage_path, 60 * 60);
+    if (sErr) throw new Error(sErr.message);
+    return { dataUrl: signed.signedUrl };
   });
 
 /* ------------------------- GENERATE (admin) ------------------------- */
@@ -153,6 +162,13 @@ export const generateReportIllustration = createServerFn({ method: "POST" })
       if (!b64) throw new Error("Resposta da IA sem imagem.");
 
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+      const path = `${data.report_kind ?? data.theme}/${crypto.randomUUID()}.png`;
+      const { error: upErr } = await supabaseAdmin.storage
+        .from("report-illustrations")
+        .upload(path, bytes, { contentType: "image/png", upsert: false });
+      if (upErr) throw new Error(upErr.message);
+
       const { data: inserted, error } = await supabaseAdmin
         .from("report_illustrations")
         .insert({
@@ -160,7 +176,7 @@ export const generateReportIllustration = createServerFn({ method: "POST" })
           report_kind: data.report_kind ?? null,
           title: data.title ?? null,
           prompt,
-          image_data: b64,
+          storage_path: path,
           mime: "image/png",
           created_by: context.userId,
         })
@@ -220,11 +236,13 @@ export const pickReportIllustration = createServerFn({ method: "POST" })
       })
       .parse(d),
   )
-  .handler(async ({ data, context }) => {
-    let q = context.supabase
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    let q = supabaseAdmin
       .from("report_illustrations")
-      .select("id, image_data, mime, usage_count")
+      .select("id, storage_path, mime, usage_count")
       .eq("active", true)
+      .not("storage_path", "is", null)
       .limit(50);
     if (data.report_kind) q = q.eq("report_kind", data.report_kind);
     else if (data.theme) q = q.eq("theme", data.theme);
@@ -233,17 +251,17 @@ export const pickReportIllustration = createServerFn({ method: "POST" })
     if (!rows || rows.length === 0) return { picked: null };
 
     const chosen = rows[Math.floor(Math.random() * rows.length)];
-    await context.supabase
+    await supabaseAdmin
       .from("report_illustrations")
       .update({ usage_count: (chosen.usage_count ?? 0) + 1 })
       .eq("id", chosen.id);
 
-    return {
-      picked: {
-        id: chosen.id,
-        dataUrl: `data:${chosen.mime};base64,${chosen.image_data}`,
-      },
-    };
+    const { data: signed, error: sErr } = await supabaseAdmin.storage
+      .from("report-illustrations")
+      .createSignedUrl(chosen.storage_path as string, 60 * 60);
+    if (sErr) throw new Error(sErr.message);
+
+    return { picked: { id: chosen.id, dataUrl: signed.signedUrl } };
   });
 
 /* ------------------------- BULK SEED (admin) ------------------------- */
@@ -286,12 +304,18 @@ async function generateOne(theme: string, report_kind: string, userId: string) {
   const b64 = json?.data?.[0]?.b64_json;
   if (!b64) throw new Error(`Sem imagem para ${report_kind}`);
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+  const path = `${report_kind}/${crypto.randomUUID()}.png`;
+  const { error: upErr } = await supabaseAdmin.storage
+    .from("report-illustrations")
+    .upload(path, bytes, { contentType: "image/png", upsert: false });
+  if (upErr) throw new Error(upErr.message);
   const { error } = await supabaseAdmin.from("report_illustrations").insert({
     theme,
     report_kind,
     title: null,
     prompt,
-    image_data: b64,
+    storage_path: path,
     mime: "image/png",
     created_by: userId,
   });

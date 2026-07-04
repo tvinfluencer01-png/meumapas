@@ -1234,16 +1234,18 @@ Regras rígidas:
         const kindTheme = THEME_BY_KIND[data.kind];
         const byKind = await supabaseAdmin
           .from("report_illustrations")
-          .select("id, image_data, mime")
+          .select("id, storage_path, mime")
           .eq("active", true)
+          .not("storage_path", "is", null)
           .eq("report_kind", data.kind)
           .limit(30);
         let rows = byKind.data ?? [];
         if (rows.length < 2 && kindTheme) {
           const byTheme = await supabaseAdmin
             .from("report_illustrations")
-            .select("id, image_data, mime")
+            .select("id, storage_path, mime")
             .eq("active", true)
+            .not("storage_path", "is", null)
             .eq("theme", kindTheme)
             .limit(30);
           rows = [...rows, ...(byTheme.data ?? [])];
@@ -1251,11 +1253,26 @@ Regras rígidas:
         // dedup
         const seen = new Set<string>();
         const pool = rows.filter((r) => (seen.has(r.id) ? false : (seen.add(r.id), true)));
-        return pool.map((r) => ({
-          id: r.id,
-          bytes: Uint8Array.from(atob(r.image_data as string), (c) => c.charCodeAt(0)),
-          mime: (r.mime === "image/jpeg" ? "image/jpeg" : "image/png") as "image/png" | "image/jpeg",
-        }));
+        // download bytes from storage
+        const loaded = await Promise.all(
+          pool.map(async (r) => {
+            try {
+              const { data: blob, error } = await supabaseAdmin.storage
+                .from("report-illustrations")
+                .download(r.storage_path as string);
+              if (error || !blob) return null;
+              const buf = new Uint8Array(await blob.arrayBuffer());
+              return {
+                id: r.id,
+                bytes: buf,
+                mime: (r.mime === "image/jpeg" ? "image/jpeg" : "image/png") as "image/png" | "image/jpeg",
+              };
+            } catch {
+              return null;
+            }
+          }),
+        );
+        return loaded.filter((x): x is NonNullable<typeof x> => x !== null);
       } catch (e) {
         console.warn("[reports] illustration pool failed", e);
         return [];
