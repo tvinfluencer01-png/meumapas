@@ -164,19 +164,37 @@ function IllustrationsPage() {
             rotaciona automaticamente entre as opções ativas do mesmo tema.
           </p>
         </div>
-        <Button
-          variant="outline"
-          onClick={() => listQuery.refetch()}
-          disabled={listQuery.isFetching}
-          className="border-gold/40 text-gold hover:bg-gold/10"
-        >
-          {listQuery.isFetching ? (
-            <Loader2 className="size-4 mr-2 animate-spin" />
-          ) : (
-            <RefreshCw className="size-4 mr-2" />
-          )}
-          Atualizar
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            onClick={() => {
+              if (confirm("Gerar 3 banners landscape para CADA tipo de relatório (12 produtos = 36 imagens)? Pode levar alguns minutos.")) {
+                seedMut.mutate();
+              }
+            }}
+            disabled={seedMut.isPending}
+            className="bg-gradient-to-r from-gold to-amber-500 text-black hover:opacity-90"
+          >
+            {seedMut.isPending ? (
+              <Loader2 className="size-4 mr-2 animate-spin" />
+            ) : (
+              <Sparkles className="size-4 mr-2" />
+            )}
+            Gerar 3 para cada produto
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => listQuery.refetch()}
+            disabled={listQuery.isFetching}
+            className="border-gold/40 text-gold hover:bg-gold/10"
+          >
+            {listQuery.isFetching ? (
+              <Loader2 className="size-4 mr-2 animate-spin" />
+            ) : (
+              <RefreshCw className="size-4 mr-2" />
+            )}
+            Atualizar
+          </Button>
+        </div>
       </header>
 
       <Card>
