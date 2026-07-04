@@ -292,12 +292,43 @@ async function handler({ request }: { request: Request }) {
       }
     }
 
-    // Email: log as skipped — email delivery requires email infra (see Cloud → Emails).
+    // Email: envio via SMTP configurado no painel admin (smtp_settings).
     if (s.channel_email && s.email) {
-      await supabaseAdmin.from("horoscope_log").insert({
-        user_id: s.user_id, date: today, channel: "email", status: "skipped",
-        detail: "email infra not configured", sign: s.sun_sign,
-      });
+      if (smtp?.enabled && smtp.host && smtp.username && smtp.password && smtp.from_email) {
+        try {
+          const nodemailer = (await import("nodemailer")).default;
+          const transporter = nodemailer.createTransport({
+            host: smtp.host,
+            port: smtp.port,
+            secure: !!smtp.secure,
+            auth: { user: smtp.username, pass: smtp.password },
+          });
+          const html = `<div style="font-family:Arial,sans-serif;line-height:1.55;color:#222;max-width:640px;margin:0 auto;padding:16px"><h2 style="color:#6b21a8;margin:0 0 12px">🌌 Horóscopo de hoje — ${s.sun_sign}</h2><div style="white-space:pre-wrap">${body.replace(/</g, "&lt;")}</div><hr style="margin:20px 0;border:none;border-top:1px solid #eee"/><div style="color:#555;font-size:13px;white-space:pre-wrap">${footer.replace(/</g, "&lt;")}</div></div>`;
+          await transporter.sendMail({
+            from: `"${smtp.from_name || smtp.from_email}" <${smtp.from_email}>`,
+            to: s.email,
+            replyTo: smtp.reply_to || undefined,
+            subject: `🌌 Horóscopo de hoje — ${s.sun_sign}`,
+            text: message,
+            html,
+          });
+          delivered += 1;
+          await supabaseAdmin.from("horoscope_log").insert({
+            user_id: s.user_id, date: today, channel: "email", status: "sent",
+            detail: "smtp", sign: s.sun_sign,
+          });
+        } catch (e: any) {
+          await supabaseAdmin.from("horoscope_log").insert({
+            user_id: s.user_id, date: today, channel: "email", status: "error",
+            detail: String(e?.message ?? e).slice(0, 240), sign: s.sun_sign,
+          });
+        }
+      } else {
+        await supabaseAdmin.from("horoscope_log").insert({
+          user_id: s.user_id, date: today, channel: "email", status: "skipped",
+          detail: "smtp not configured or disabled", sign: s.sun_sign,
+        });
+      }
     }
 
     await supabaseAdmin
