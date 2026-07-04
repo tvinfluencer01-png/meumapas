@@ -9,18 +9,34 @@ function randomSlug(len = 7): string {
   return s;
 }
 
+const CANONICAL_ORIGIN = "https://codigocosmico.com.br";
+
 export function getRequestOrigin(): string {
-  const fallback = process.env.PUBLIC_APP_URL || "https://meumapas.lovable.app";
+  const envOrigin = process.env.PUBLIC_APP_URL;
+  if (envOrigin) return envOrigin.replace(/\/$/, "");
   try {
     const req = getRequest();
     const url = new URL(req.url);
     const forwardedHost = req.headers.get("x-forwarded-host") ?? req.headers.get("host");
     const forwardedProto = req.headers.get("x-forwarded-proto") ?? url.protocol.replace(":", "");
+    const host = (forwardedHost ?? url.host).toLowerCase();
+    // Never emit preview/lovable hosts in user-facing links.
+    if (
+      host.endsWith(".lovableproject.com") ||
+      host.endsWith(".lovableproject-dev.com") ||
+      host.endsWith(".lovable.app") ||
+      host === "localhost" ||
+      host.startsWith("localhost:") ||
+      host.startsWith("127.0.0.1")
+    ) {
+      return CANONICAL_ORIGIN;
+    }
     return `${forwardedProto}://${forwardedHost ?? url.host}`;
   } catch {
-    return fallback;
+    return CANONICAL_ORIGIN;
   }
 }
+
 
 /**
  * Creates (or reuses) a short link for the given target URL and returns the
