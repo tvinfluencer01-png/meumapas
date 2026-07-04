@@ -24,12 +24,14 @@ import {
 import { CreditCostBadge } from "@/components/CreditCostBadge";
 import { emitCreditsChanged } from "@/lib/credits-events";
 import { SEFIROT, findSefirah } from "@/lib/kabbalah.tree";
+import { useActiveSubject } from "@/hooks/use-active-subject";
 import {
   generateKabbalahMeditation,
   exportKabbalahPdf,
   listKabbalahMeditations,
   deleteKabbalahMeditation,
 } from "@/lib/kabbalah.functions";
+
 
 export const Route = createFileRoute("/_authenticated/meditacao")({
   component: MeditacaoPage,
