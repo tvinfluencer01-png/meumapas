@@ -1054,7 +1054,7 @@ Regras rígidas:
     try {
       const baseText = await callWithRetry({
         prompt: basePrompt,
-        timeoutMs: 45_000,
+        timeoutMs: 90_000,
         errorMessage: "A geração demorou além do limite. Tente novamente.",
       });
       base = parseJsonWithSchema(baseText, BaseAiOutput, "base", {
@@ -1066,20 +1066,19 @@ Regras rígidas:
       base = normalizeBasePayload(null) as z.infer<typeof BaseAiOutput>;
     }
 
-    // Generate all 3 chapters in PARALLEL to avoid sequential wall-clock timeouts.
-    // Each call has its own 40s timeout; running in parallel keeps total time ~40s
-    // instead of ~120s, eliminating the "stuck at 60%" hang on the 2nd chapter.
+    // Generate all N chapters in PARALLEL. Each call has its own timeout;
+    // running in parallel keeps total wall-clock ~90s independente de N.
     yield {
       type: "progress" as const,
       progress: 50,
-      step: `Escrevendo os 3 capítulos em paralelo...`,
+      step: `Escrevendo os ${sizeProfile.sections} capítulos em paralelo...`,
     };
 
     const sectionPromises = base.sectionBlueprints.map(async (blueprint, index) => {
       try {
         const sectionBodyText = await callWithRetry({
           prompt: makeSectionBodyPrompt(blueprint, index, base.sectionBlueprints),
-          timeoutMs: 45_000,
+          timeoutMs: 90_000,
           errorMessage: "A geração demorou além do limite. Tente novamente.",
         });
         return parseJsonWithSchema(sectionBodyText, SectionBodyOutput, `section-body-${index + 1}`, {
@@ -1095,8 +1094,9 @@ Regras rígidas:
     yield {
       type: "progress" as const,
       progress: 60,
-      step: `Tecendo capítulo 1 de 3...`,
+      step: `Tecendo capítulo 1 de ${sizeProfile.sections}...`,
     };
+
     // Heartbeat yields so the client progress bar keeps moving while we await
     // the parallel chapter generations. These are cosmetic; the real work runs
     // concurrently in sectionPromises above.
