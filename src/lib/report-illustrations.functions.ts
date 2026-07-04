@@ -304,12 +304,18 @@ async function generateOne(theme: string, report_kind: string, userId: string) {
   const b64 = json?.data?.[0]?.b64_json;
   if (!b64) throw new Error(`Sem imagem para ${report_kind}`);
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+  const path = `${report_kind}/${crypto.randomUUID()}.png`;
+  const { error: upErr } = await supabaseAdmin.storage
+    .from("report-illustrations")
+    .upload(path, bytes, { contentType: "image/png", upsert: false });
+  if (upErr) throw new Error(upErr.message);
   const { error } = await supabaseAdmin.from("report_illustrations").insert({
     theme,
     report_kind,
     title: null,
     prompt,
-    image_data: b64,
+    storage_path: path,
     mime: "image/png",
     created_by: userId,
   });
