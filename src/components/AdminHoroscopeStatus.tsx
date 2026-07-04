@@ -106,23 +106,33 @@ export function AdminHoroscopeStatus() {
                   <thead className="bg-secondary/40 text-left">
                     <tr>
                       <th className="px-3 py-2 font-medium">Usuário</th>
+                      <th className="px-3 py-2 font-medium text-center">Pronto?</th>
                       <th className="px-3 py-2 font-medium">Freq.</th>
                       <th className="px-3 py-2 font-medium">Último envio</th>
                       <th className="px-3 py-2 font-medium text-center">Entregues</th>
                       <th className="px-3 py-2 font-medium text-center">Erros</th>
                       <th className="px-3 py-2 font-medium text-center">Status</th>
-                      <th className="px-3 py-2 font-medium">Detalhe</th>
+                      <th className="px-3 py-2 font-medium">Pendências / Detalhe</th>
                     </tr>
                   </thead>
                   <tbody>
                     {data.users.length === 0 && (
-                      <tr><td colSpan={7} className="px-3 py-6 text-center text-muted-foreground">Sem assinantes.</td></tr>
+                      <tr><td colSpan={8} className="px-3 py-6 text-center text-muted-foreground">Sem assinantes.</td></tr>
                     )}
                     {data.users.map((u) => (
                       <tr key={u.user_id} className="border-t border-border">
                         <td className="px-3 py-2">
                           <div className="font-medium">{u.full_name || "—"}</div>
                           <div className="text-xs text-muted-foreground">{u.email ?? "—"}</div>
+                        </td>
+                        <td className="px-3 py-2 text-center">
+                          {u.ready ? (
+                            <Badge className="bg-emerald-500/15 text-emerald-300 border-emerald-500/30 gap-1"><ShieldCheck className="size-3" />pronto</Badge>
+                          ) : (
+                            <Badge className="bg-amber-500/15 text-amber-300 border-amber-500/30 gap-1" title={u.issues.join(" · ")}>
+                              <ShieldAlert className="size-3" />{u.issues.length} pend.
+                            </Badge>
+                          )}
                         </td>
                         <td className="px-3 py-2 text-muted-foreground">{u.frequency}</td>
                         <td className="px-3 py-2 text-muted-foreground">{u.last_sent_on ?? "—"}</td>
@@ -141,8 +151,12 @@ export function AdminHoroscopeStatus() {
                             <Badge variant="outline">—</Badge>
                           )}
                         </td>
-                        <td className="px-3 py-2 text-xs text-muted-foreground max-w-[280px] truncate" title={u.last_detail ?? ""}>
-                          {u.last_detail ?? "—"}
+                        <td className="px-3 py-2 text-xs text-muted-foreground max-w-[320px]">
+                          {u.issues.length > 0 ? (
+                            <span className="text-amber-300" title={u.issues.join(" · ")}>{u.issues.join(" · ")}</span>
+                          ) : (
+                            <span className="truncate block" title={u.last_detail ?? ""}>{u.last_detail ?? "—"}</span>
+                          )}
                         </td>
                       </tr>
                     ))}
