@@ -664,14 +664,15 @@ async function runDispatchForOrder(
     dispatch_attempts: ((order as any).dispatch_attempts ?? 0) + 1,
   };
   let pdfUrl: string | null = (order as any).pdf_url ?? null;
+  let pdfBytes: Uint8Array | null = null;
 
   try {
     if (action === "pdf" || action === "both") {
-      const bytes = await generatePdfForOrder(order, landing);
+      pdfBytes = await generatePdfForOrder(order, landing);
       const path = `product-orders/${order.id}.pdf`;
       const { error: upErr } = await supabaseAdmin.storage
         .from("reports")
-        .upload(path, bytes, { contentType: "application/pdf", upsert: true });
+        .upload(path, pdfBytes, { contentType: "application/pdf", upsert: true });
       if (upErr) throw new Error(`Upload PDF: ${upErr.message}`);
       const { data: signed, error: sErr } = await supabaseAdmin.storage
         .from("reports")
@@ -695,7 +696,8 @@ async function runDispatchForOrder(
       patch.pdf_generated_at = new Date().toISOString();
     }
     if (action === "email" || action === "both") {
-      await sendOrderEmail(order, landing, pdfUrl);
+      if (!pdfBytes) pdfBytes = await fetchOrderPdfBytes(order.id);
+      await sendOrderEmail(order, landing, pdfUrl, pdfBytes);
       patch.email_sent_at = new Date().toISOString();
     }
     if (action === "both" || (action === "email" && pdfUrl)) {
