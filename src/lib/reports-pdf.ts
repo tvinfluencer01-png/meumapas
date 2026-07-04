@@ -7,7 +7,9 @@ export type SectionPlan = {
   avoid: string[];   // 7 itens
   follow: string[];  // 7 itens
 };
-export type ReportSection = { title: string; body: string; plan?: SectionPlan };
+export type ReportIllustration = { bytes: Uint8Array; mime: "image/png" | "image/jpeg" };
+export type ReportSection = { title: string; body: string; plan?: SectionPlan; illustration?: ReportIllustration };
+
 export type ReportSwot = {
   strengths: string[];
   weaknesses: string[];
