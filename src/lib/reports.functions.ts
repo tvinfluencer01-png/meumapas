@@ -1271,7 +1271,7 @@ Regras rígidas:
       const chosen = source[Math.floor(Math.random() * source.length)];
       pickedIds.push(chosen.id);
       // fire-and-forget usage increment
-      supabaseAdmin.rpc as unknown; // noop reference
+
       supabaseAdmin
         .from("report_illustrations")
         .select("usage_count")
