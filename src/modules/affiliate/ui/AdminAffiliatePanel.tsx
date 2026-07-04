@@ -19,6 +19,7 @@ import {
   adminGetMenuCounters,
 } from "../admin.functions";
 import { adminGetAffiliateReports } from "../admin-reports.functions";
+import { useAffiliateRealtime } from "@/hooks/useAffiliateRealtime";
 import {
   adminListAffiliates, adminSetAffiliateStatus, adminGetSettings,
   adminUpdateAffiliate, adminSetAffiliatePassword, adminSendAffiliatePasswordReset,
@@ -249,6 +250,10 @@ function Kpi({ title, value, icon: Icon, tone = "sky" }: { title: string; value:
 function DashboardSection() {
   const fn = useServerFn(adminGetDashboard);
   const { data, isLoading } = useQuery({ queryKey: ["aff-dash"], queryFn: () => fn() });
+  useAffiliateRealtime(
+    [["aff-dash"], ["aff-menu-counters"], ["adm-aff-reports"]],
+    { channelKey: "adm-aff-sales" },
+  );
   if (isLoading || !data) return <div className="p-6 text-center text-muted-foreground"><Loader2 className="size-5 animate-spin inline mr-2" />Carregando…</div>;
   const k = data.kpis;
   const pieData = [

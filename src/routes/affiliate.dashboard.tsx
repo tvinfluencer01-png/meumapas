@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { AffiliateShell } from "@/modules/affiliate/ui/AffiliateShell";
 import { getPanelDashboard, getPanelLandingMetrics } from "@/modules/affiliate/panel.functions";
+import { getMyAffiliate } from "@/modules/affiliate/affiliate.functions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { GradientStatCard } from "@/components/ui/gradient-stat-card";
 import { toneByIndex, toneRow } from "@/lib/kpi-tones";
@@ -12,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from "recharts";
 import { MousePointerClick, TrendingUp, ShoppingCart, Ticket, Wallet, Lock, CheckCircle2, ArrowRight, BarChart3 } from "lucide-react";
 import { useState } from "react";
+import { useAffiliateRealtime } from "@/hooks/useAffiliateRealtime";
 
 export const Route = createFileRoute("/affiliate/dashboard")({
   component: Page,
@@ -30,7 +32,14 @@ function Page() {
 
 function Content() {
   const fn = useServerFn(getPanelDashboard);
+  const meFn = useServerFn(getMyAffiliate);
+  const { data: me } = useQuery({ queryKey: ["my-affiliate"], queryFn: () => meFn() });
+  const affiliateId: string | undefined = (me as any)?.profile?.id;
   const { data, isLoading } = useQuery({ queryKey: ["aff-dashboard"], queryFn: () => fn(), refetchInterval: 60000 });
+  useAffiliateRealtime(
+    [["aff-dashboard"], ["aff-landing-metrics"]],
+    { affiliateId, channelKey: "aff-panel-sales", enabled: !!affiliateId },
+  );
 
   if (isLoading) return <div className="text-muted-foreground">Carregando dashboard…</div>;
   if (!data) return <div>Sem dados.</div>;
