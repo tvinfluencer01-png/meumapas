@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { AffiliateShell } from "@/modules/affiliate/ui/AffiliateShell";
 import { getPanelDashboard, getPanelLandingMetrics } from "@/modules/affiliate/panel.functions";
+import { getMyAffiliate } from "@/modules/affiliate/affiliate.functions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { GradientStatCard } from "@/components/ui/gradient-stat-card";
 import { toneByIndex, toneRow } from "@/lib/kpi-tones";
@@ -12,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from "recharts";
 import { MousePointerClick, TrendingUp, ShoppingCart, Ticket, Wallet, Lock, CheckCircle2, ArrowRight, BarChart3 } from "lucide-react";
 import { useState } from "react";
+import { useAffiliateRealtime } from "@/hooks/useAffiliateRealtime";
 
 export const Route = createFileRoute("/affiliate/dashboard")({
   component: Page,
