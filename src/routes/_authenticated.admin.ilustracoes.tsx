@@ -118,6 +118,15 @@ function IllustrationsPage() {
     },
   });
 
+  const seedMut = useMutation({
+    mutationFn: () => seedFn({ data: { perKind: 3 } }),
+    onSuccess: (res) => {
+      toast.success(`Seed concluído: ${res.total} banners gerados`);
+      qc.invalidateQueries({ queryKey: ["report-illustrations"] });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Falha no seed"),
+  });
+
   if (roleLoading) return <div className="p-8 text-muted-foreground">Carregando…</div>;
 
   if (!role?.isAdmin) {
