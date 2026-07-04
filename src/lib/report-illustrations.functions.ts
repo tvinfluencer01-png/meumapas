@@ -137,7 +137,7 @@ export const generateReportIllustration = createServerFn({ method: "POST" })
         body: JSON.stringify({
           model: "openai/gpt-image-2",
           prompt,
-          size: "1024x1024",
+          size: "1536x1024",
           quality: "low",
           n: 1,
         }),
