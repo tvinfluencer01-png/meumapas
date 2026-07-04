@@ -7,7 +7,9 @@ export type SectionPlan = {
   avoid: string[];   // 7 itens
   follow: string[];  // 7 itens
 };
-export type ReportSection = { title: string; body: string; plan?: SectionPlan };
+export type ReportIllustration = { bytes: Uint8Array; mime: "image/png" | "image/jpeg" };
+export type ReportSection = { title: string; body: string; plan?: SectionPlan; illustration?: ReportIllustration };
+
 export type ReportSwot = {
   strengths: string[];
   weaknesses: string[];
@@ -60,7 +62,9 @@ export type ReportData = {
   summary: string;
   finalPlan?: SectionPlan;
   branding?: ReportBranding;
+  introIllustration?: ReportIllustration;
 };
+
 
 const GOLD = rgb(0.831, 0.686, 0.216); // #d4af37
 const NIGHT = rgb(0.012, 0.027, 0.067); // deep night
@@ -565,17 +569,43 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
     cursor.y -= size + 12;
   }
 
+  async function drawIllustration(ill: ReportIllustration | undefined | null) {
+    if (!ill || !ill.bytes || ill.bytes.length === 0) return;
+    try {
+      const img =
+        ill.mime === "image/png"
+          ? await pdf.embedPng(ill.bytes)
+          : await pdf.embedJpg(ill.bytes);
+      // target: half A4 height, keep aspect, centered
+      const maxW = CONTENT_W * 0.72;
+      const maxH = 240;
+      const ratio = img.width / img.height;
+      let dw = maxW;
+      let dh = dw / ratio;
+      if (dh > maxH) { dh = maxH; dw = dh * ratio; }
+      ensureSpace(dh + 20);
+      const x = MARGIN + (CONTENT_W - dw) / 2;
+      cursor.page.drawImage(img, { x, y: cursor.y - dh, width: dw, height: dh });
+      cursor.y -= dh + 14;
+    } catch (e) {
+      console.warn("[reports-pdf] failed to embed illustration", e);
+    }
+  }
+
   // Intro chapter
   setChapter("Abertura");
   drawHeading("Abertura", 30);
+  await drawIllustration(data.introIllustration);
   drawParagraph(data.intro, { italic: true, size: 14, color: rgb(0.25, 0.22, 0.18) });
 
   // Sections
   for (const section of data.sections) {
     setChapter(section.title);
     drawHeading(section.title, 22, { startOnNewPage: true });
+    await drawIllustration(section.illustration);
     drawParagraph(section.body);
   }
+
 
   // Closing
   setChapter("Selo final");
