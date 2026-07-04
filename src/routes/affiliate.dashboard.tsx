@@ -32,7 +32,14 @@ function Page() {
 
 function Content() {
   const fn = useServerFn(getPanelDashboard);
+  const meFn = useServerFn(getMyAffiliate);
+  const { data: me } = useQuery({ queryKey: ["my-affiliate"], queryFn: () => meFn() });
+  const affiliateId: string | undefined = (me as any)?.profile?.id;
   const { data, isLoading } = useQuery({ queryKey: ["aff-dashboard"], queryFn: () => fn(), refetchInterval: 60000 });
+  useAffiliateRealtime(
+    [["aff-dashboard"], ["aff-landing-metrics"]],
+    { affiliateId, channelKey: "aff-panel-sales", enabled: !!affiliateId },
+  );
 
   if (isLoading) return <div className="text-muted-foreground">Carregando dashboard…</div>;
   if (!data) return <div>Sem dados.</div>;
