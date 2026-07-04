@@ -233,7 +233,16 @@ function AdminDashboard() {
               </button>
             );
           })}
+          <Link
+            to="/admin/ilustracoes"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-gold hover:bg-secondary/40 border border-transparent transition-colors"
+          >
+            <Sparkles className="size-4 shrink-0" />
+            <span className="flex-1">Ilustrações</span>
+          </Link>
         </nav>
+
+
 
         <div className="shrink-0 p-3 border-t border-border">
           <Button variant="outline" size="sm" asChild className="w-full border-gold/30 hover:bg-gold/10 text-gold">
