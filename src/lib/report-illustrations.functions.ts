@@ -405,7 +405,7 @@ export const seedIllustrationsForAllKinds = createServerFn({ method: "POST" })
       let lastErr: string | undefined;
       for (let i = 0; i < perKind; i++) {
         try {
-          await generateOne(theme, kind, context.userId);
+          await generateOne(theme, kind, context.userId, i);
           ok++;
         } catch (e: any) {
           failed++;
