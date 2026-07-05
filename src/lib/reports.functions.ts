@@ -226,10 +226,10 @@ const REPORT_SIZE_PROFILE: Record<
   { sections: number; introMin: number; sectionMin: number; closingMin: number; summaryMin: number; targetPagesLabel: string }
 > = {
   personality:        { sections: 5, introMin: 3200, sectionMin: 3600, closingMin: 1000, summaryMin: 1400, targetPagesLabel: "30 a 40 páginas" },
-  love:               { sections: 4, introMin: 2800, sectionMin: 3200, closingMin:  900, summaryMin: 1200, targetPagesLabel: "24 a 32 páginas" },
-  career:             { sections: 4, introMin: 2800, sectionMin: 3200, closingMin:  900, summaryMin: 1200, targetPagesLabel: "24 a 32 páginas" },
+  love:               { sections: 5, introMin: 3400, sectionMin: 3600, closingMin: 1000, summaryMin: 1400, targetPagesLabel: "30 a 40 páginas" },
+  career:             { sections: 5, introMin: 3200, sectionMin: 3400, closingMin: 1000, summaryMin: 1400, targetPagesLabel: "28 a 38 páginas" },
   spiritual:          { sections: 5, introMin: 3200, sectionMin: 3400, closingMin: 1000, summaryMin: 1400, targetPagesLabel: "28 a 38 páginas" },
-  finance:            { sections: 4, introMin: 2800, sectionMin: 3200, closingMin:  900, summaryMin: 1200, targetPagesLabel: "24 a 32 páginas" },
+  finance:            { sections: 5, introMin: 3400, sectionMin: 3600, closingMin: 1000, summaryMin: 1400, targetPagesLabel: "30 a 40 páginas" },
   family:             { sections: 4, introMin: 2800, sectionMin: 3200, closingMin:  900, summaryMin: 1200, targetPagesLabel: "24 a 32 páginas" },
   health:             { sections: 4, introMin: 2800, sectionMin: 3000, closingMin:  900, summaryMin: 1200, targetPagesLabel: "22 a 30 páginas" },
   friendships:        { sections: 4, introMin: 2600, sectionMin: 3000, closingMin:  800, summaryMin: 1100, targetPagesLabel: "22 a 30 páginas" },
@@ -1249,6 +1249,17 @@ Regras rígidas:
             .eq("theme", kindTheme)
             .limit(30);
           rows = [...rows, ...(byTheme.data ?? [])];
+        }
+        // Fallback final: se ainda não houver ilustrações específicas, usa qualquer
+        // ilustração ativa disponível para não deixar o relatório sem imagens.
+        if (rows.length === 0) {
+          const anyRows = await supabaseAdmin
+            .from("report_illustrations")
+            .select("id, storage_path, mime")
+            .eq("active", true)
+            .not("storage_path", "is", null)
+            .limit(30);
+          rows = anyRows.data ?? [];
         }
         // dedup
         const seen = new Set<string>();
