@@ -133,6 +133,7 @@ function CopyButton({ label, text, icon: Icon }: { label: string; text: string; 
 }
 
 function MaterialDialog({ m, open, onOpenChange }: { m: any; open: boolean; onOpenChange: (v: boolean) => void }) {
+  const isCopy = m.kind === "copy";
   const isImage = ["banner", "story", "carousel", "logo"].includes(m.kind);
   const isVideo = ["video", "reel"].includes(m.kind);
   const pack = useMemo(() => buildCopyPack(m), [m]);
