@@ -64,6 +64,7 @@ import {
   sendEvolutionTest,
 } from "@/lib/admin.functions";
 import { adminExportDatabase } from "@/lib/admin-backup.functions";
+import { countUnviewedOrders } from "@/lib/product-orders.functions";
 
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -144,6 +145,13 @@ function AdminDashboard() {
       : "settings";
   const [tab, setTab] = useState(initialTab);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const unviewedFn = useServerFn(countUnviewedOrders);
+  const { data: unviewed } = useQuery({
+    queryKey: ["admin-unviewed-orders"],
+    queryFn: () => unviewedFn(),
+    refetchInterval: 30_000,
+  });
+  const unviewedCount = unviewed?.count ?? 0;
 
   function selectTab(value: string) {
     setTab(value);
@@ -240,6 +248,12 @@ function AdminDashboard() {
               >
                 <Icon className={`size-4 shrink-0 ${isActive ? "text-gold" : ""}`} />
                 <span className="flex-1">{item.label}</span>
+                {item.value === "pedidos" && unviewedCount > 0 && (
+                  <span className="relative inline-flex" title={`${unviewedCount} novo(s) pedido(s)`}>
+                    <span className="absolute inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500 opacity-75 animate-ping" />
+                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.9)]" />
+                  </span>
+                )}
                 {isActive && <span className="size-1.5 rounded-full bg-gold shadow-[0_0_6px_rgba(212,175,55,0.8)]" />}
               </button>
             );
