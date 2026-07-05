@@ -194,7 +194,7 @@ export const generateReportIllustration = createServerFn({ method: "POST" })
         report_kind: z.string().min(1).max(60).optional(),
         title: z.string().max(120).optional(),
         customPrompt: z.string().max(2000).optional(),
-        count: z.number().int().min(1).max(4).optional(),
+        count: z.number().int().min(1).max(12).optional(),
       })
       .parse(d),
   )
