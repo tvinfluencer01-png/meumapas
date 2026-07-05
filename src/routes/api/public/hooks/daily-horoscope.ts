@@ -257,6 +257,7 @@ async function handler({ request }: { request: Request }) {
         user_id: s.user_id, date: today, channel: "ai", status: "error",
         detail: detail || String(e), sign: s.sun_sign,
       });
+      await scheduleRetryOrGiveUp(s, `ai: ${detail || String(e)}`);
       return;
     }
 
