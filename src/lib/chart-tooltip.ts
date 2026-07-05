@@ -8,15 +8,15 @@ export const chartTooltipProps = {
     boxShadow: "0 8px 24px rgba(0,0,0,0.35)",
     color: "hsl(0 0% 100%)",
     padding: "8px 12px",
-  } as React.CSSProperties,
+  },
   labelStyle: {
     color: "hsl(0 0% 100%)",
     fontWeight: 600,
     marginBottom: 4,
-  } as React.CSSProperties,
+  },
   itemStyle: {
     color: "hsl(0 0% 100%)",
-  } as React.CSSProperties,
+  },
   cursor: {
     stroke: "hsl(var(--primary))",
     strokeOpacity: 0.25,
@@ -25,5 +25,5 @@ export const chartTooltipProps = {
   },
   wrapperStyle: {
     outline: "none",
-  } as React.CSSProperties,
-};
+  },
+} as const;
