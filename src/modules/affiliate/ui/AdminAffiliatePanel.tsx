@@ -1280,10 +1280,11 @@ function KPI({ label, value, tone }: { label: string; value: string; tone?: stri
 }
 
 function ReportTable({
-  title, description, rows, columns, onExport,
+  title, description, rows, columns, onExport, hrefForKey,
 }: {
   title: string; description?: string; rows: any[];
   columns: [string, string][]; onExport?: () => void;
+  hrefForKey?: (row: any) => string | null;
 }) {
   const fmt = (col: string, v: any) => {
     if (v == null) return "—";
@@ -1317,16 +1318,31 @@ function ReportTable({
               {rows.length === 0 && (
                 <tr><td colSpan={columns.length} className="px-3 py-4 text-center text-muted-foreground">Sem dados no período.</td></tr>
               )}
-              {rows.map((r, i) => (
-                <tr
-                  key={i}
-                  className={`border-b border-border/50 border-l-[3px] hover:bg-muted/40 transition-colors ${toneRow(toneByIndex(i))}`}
-                >
-                  {columns.map(([k]) => (
-                    <td key={k} className="px-3 py-1.5 truncate max-w-xs">{fmt(k, r[k])}</td>
-                  ))}
-                </tr>
-              ))}
+              {rows.map((r, i) => {
+                const href = hrefForKey?.(r) ?? null;
+                return (
+                  <tr
+                    key={i}
+                    className={`border-b border-border/50 border-l-[3px] hover:bg-muted/40 transition-colors ${toneRow(toneByIndex(i))}`}
+                  >
+                    {columns.map(([k]) => (
+                      <td key={k} className="px-3 py-1.5 truncate max-w-xs">
+                        {k === "key" && href ? (
+                          <a
+                            href={href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline font-medium"
+                            title={`Abrir ${href}`}
+                          >
+                            {fmt(k, r[k])}
+                          </a>
+                        ) : fmt(k, r[k])}
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -1334,6 +1350,7 @@ function ReportTable({
     </Card>
   );
 }
+
 
 // ═══════════════════════════════════════════════════════
 // SETTINGS
