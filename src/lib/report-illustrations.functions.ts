@@ -291,6 +291,46 @@ export const deleteReportIllustration = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/**
+ * Apaga TODAS as ilustrações do storage e do banco. Uso: limpar a biblioteca
+ * antes de regerar do zero com novos padrões.
+ */
+export const purgeAllReportIllustrations = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await ensureAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Lista tudo que existe no bucket e remove em lote.
+    let removed = 0;
+    async function listAndRemove(prefix = "") {
+      const { data: entries } = await supabaseAdmin.storage
+        .from("report-illustrations")
+        .list(prefix, { limit: 1000 });
+      if (!entries || entries.length === 0) return;
+      const files: string[] = [];
+      for (const e of entries) {
+        const full = prefix ? `${prefix}/${e.name}` : e.name;
+        // Pastas não têm metadata; recursão.
+        if (!e.metadata) await listAndRemove(full);
+        else files.push(full);
+      }
+      if (files.length > 0) {
+        await supabaseAdmin.storage.from("report-illustrations").remove(files);
+        removed += files.length;
+      }
+    }
+    await listAndRemove("");
+
+    const { error, count } = await supabaseAdmin
+      .from("report_illustrations")
+      .delete({ count: "exact" })
+      .not("id", "is", null);
+    if (error) throw new Error(`Falha ao limpar banco: ${error.message}`);
+
+    return { removedFiles: removed, deletedRows: count ?? 0 };
+  });
+
 /* ------------------------- ROTATION HELPER ------------------------- */
 
 /**
