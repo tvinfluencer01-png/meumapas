@@ -207,16 +207,15 @@ export const generateReportIllustration = createServerFn({ method: "POST" })
         throw new Error(`Falha na geração (${res.status}): ${txt.slice(0, 200)}`);
       }
       const json = await res.json();
-      const b64 = json?.data?.[0]?.b64_json;
-      if (!b64) throw new Error("Resposta da IA sem imagem.");
+      const bytes = await extractImageBytes(json);
+      if (!bytes) throw new Error("Resposta da IA sem imagem utilizável.");
 
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
       const path = `${data.report_kind ?? data.theme}/${crypto.randomUUID()}.png`;
       const { error: upErr } = await supabaseAdmin.storage
         .from("report-illustrations")
         .upload(path, bytes, { contentType: "image/png", upsert: false });
-      if (upErr) throw new Error(upErr.message);
+      if (upErr) throw new Error(`Falha ao salvar no storage: ${upErr.message}`);
 
       const { data: inserted, error } = await supabaseAdmin
         .from("report_illustrations")
@@ -228,10 +227,15 @@ export const generateReportIllustration = createServerFn({ method: "POST" })
           storage_path: path,
           mime: "image/png",
           created_by: context.userId,
+          active: true,
         })
         .select("id, theme")
         .single();
-      if (error) throw new Error(error.message);
+      if (error) {
+        // rollback storage para não deixar arquivo órfão
+        await supabaseAdmin.storage.from("report-illustrations").remove([path]).catch(() => {});
+        throw new Error(`Falha ao registrar ilustração: ${error.message}`);
+      }
       created.push(inserted);
     }
 
