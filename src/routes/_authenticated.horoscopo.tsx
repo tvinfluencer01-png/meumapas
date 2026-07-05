@@ -57,6 +57,7 @@ function HoroscopoPage() {
     setPhone(s?.phone_e164 ?? data.defaults.phone_e164 ?? "");
     setFrequency((s?.frequency as any) ?? "daily");
     setSendHour(s?.send_local_hour ?? 7);
+    setSendMinute(s?.send_local_minute ?? 0);
     setSendWeekday(s?.send_weekday ?? 1);
   }, [data]);
 
