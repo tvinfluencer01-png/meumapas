@@ -601,17 +601,34 @@ export async function buildReportPdf(data: ReportData): Promise<Uint8Array> {
         ill.mime === "image/png"
           ? await pdf.embedPng(ill.bytes)
           : await pdf.embedJpg(ill.bytes);
-      // banner landscape: full content width, max height ~200pt
-      const maxW = CONTENT_W;
-      const maxH = 200;
+
+      // Banner com tamanho fixo (config global). A imagem é escalada para
+      // preencher a largura e recortada no eixo Y para garantir a altura
+      // fixa — resultado sempre fino, largo e uniforme entre relatórios.
+      const bannerW = CONTENT_W * BANNER_CONFIG.widthRatio;
+      const bannerH = BANNER_CONFIG.heightPt;
+      const x = MARGIN + (CONTENT_W - bannerW) / 2;
+      ensureSpace(bannerH + 20);
+      const yTop = cursor.y;
+      const yBottom = yTop - bannerH;
+
+      // Cover: escala para preencher a largura; se altura da imagem escalada
+      // for maior que o banner, centraliza verticalmente e recorta via clip.
       const ratio = img.width / img.height;
-      let dw = maxW;
-      let dh = dw / ratio;
-      if (dh > maxH) { dh = maxH; dw = dh * ratio; }
-      ensureSpace(dh + 20);
-      const x = MARGIN + (CONTENT_W - dw) / 2;
-      cursor.page.drawImage(img, { x, y: cursor.y - dh, width: dw, height: dh });
-      cursor.y -= dh + 14;
+      const drawW = bannerW;
+      const drawH = drawW / ratio;
+      const drawY = yBottom - (drawH - bannerH) / 2;
+
+      cursor.page.pushOperators(
+        pushGraphicsState(),
+        rectangle(x, yBottom, bannerW, bannerH),
+        clip(),
+        endPath(),
+      );
+      cursor.page.drawImage(img, { x, y: drawY, width: drawW, height: drawH });
+      cursor.page.pushOperators(popGraphicsState());
+
+      cursor.y = yBottom - 14;
     } catch (e) {
       console.warn("[reports-pdf] failed to embed illustration", e);
     }
