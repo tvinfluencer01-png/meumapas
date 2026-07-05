@@ -60,6 +60,36 @@ function themePrompt(theme: string, custom?: string) {
   return `${base}. ${STYLE_SUFFIX}`;
 }
 
+/**
+ * Extrai bytes PNG da resposta da IA. Aceita tanto `b64_json` quanto `url`
+ * (o gateway pode alternar entre os dois formatos). Retorna null se nenhum
+ * for utilizável — o chamador decide como tratar.
+ */
+async function extractImageBytes(json: any): Promise<Uint8Array | null> {
+  const item = json?.data?.[0];
+  if (!item) return null;
+  const b64: string | undefined = item.b64_json;
+  if (b64 && typeof b64 === "string") {
+    try {
+      return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+    } catch {
+      // fall through to url
+    }
+  }
+  const url: string | undefined = item.url;
+  if (url && typeof url === "string") {
+    try {
+      const r = await fetch(url);
+      if (!r.ok) return null;
+      const ab = await r.arrayBuffer();
+      return new Uint8Array(ab);
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
 async function ensureAdmin(context: any) {
   const { data: isAdmin } = await context.supabase.rpc("has_role", {
     _user_id: context.userId,
