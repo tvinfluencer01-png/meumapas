@@ -43,6 +43,7 @@ import {
   deleteReportIllustration,
   getIllustrationImage,
   seedIllustrationsForAllKinds,
+  purgeAllReportIllustrations,
 } from "@/lib/report-illustrations.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/ilustracoes")({
