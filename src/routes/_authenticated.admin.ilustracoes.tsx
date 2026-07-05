@@ -335,7 +335,6 @@ function IllustrationCard({
   item,
   onToggle,
   onDelete,
-  loadImage,
 }: {
   item: {
     id: string;
@@ -345,16 +344,13 @@ function IllustrationCard({
     usage_count: number;
     active: boolean;
     created_at: string;
+    dataUrl?: string;
   };
   onToggle: (active: boolean) => void;
   onDelete: () => void;
-  loadImage: () => Promise<string>;
 }) {
-  const { data: img } = useQuery({
-    queryKey: ["illustration-img", item.id],
-    queryFn: loadImage,
-    staleTime: Infinity,
-  });
+  const img = item.dataUrl || "";
+
 
   const themeLabel =
     ILLUSTRATION_THEMES.find((t) => t.value === item.theme)?.label ?? item.theme;
