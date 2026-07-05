@@ -309,15 +309,20 @@ function DashboardSection() {
                   data={pieData}
                   dataKey="value"
                   nameKey="name"
-                  innerRadius={45}
-                  outerRadius={85}
+                  cx="50%"
+                  cy="45%"
+                  innerRadius={40}
+                  outerRadius={70}
                   paddingAngle={3}
                   stroke="hsl(var(--background))"
                   strokeWidth={2}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  minAngle={8}
+                  labelLine={{ stroke: "hsl(var(--muted-foreground))", strokeWidth: 1 }}
+                  label={({ percent }) => (percent > 0.04 ? `${(percent * 100).toFixed(0)}%` : "")}
                 >
                   {pieData.map((d) => <Cell key={d.gradId} fill={`url(#${d.gradId})`} />)}
                 </Pie>
+
                 <Tooltip
                   formatter={(v: any) => money(v)}
                   contentStyle={{ background: "hsl(var(--background))", border: "1px solid hsl(var(--border))", borderRadius: 8 }}
