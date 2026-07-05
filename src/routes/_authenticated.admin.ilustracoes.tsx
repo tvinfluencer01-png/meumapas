@@ -121,12 +121,23 @@ function IllustrationsPage() {
   });
 
   const seedMut = useMutation({
-    mutationFn: () => seedFn({ data: { perKind: 3 } }),
+    mutationFn: () => seedFn({ data: { perKind: 12 } }),
     onSuccess: (res) => {
       toast.success(`Seed concluído: ${res.total} banners gerados`);
       qc.invalidateQueries({ queryKey: ["report-illustrations"] });
     },
     onError: (e: any) => toast.error(e.message ?? "Falha no seed"),
+  });
+
+  const purgeMut = useMutation({
+    mutationFn: () => purgeFn(),
+    onSuccess: (res) => {
+      toast.success(
+        `Biblioteca limpa: ${res.deletedRows} registros e ${res.removedFiles} arquivos removidos`,
+      );
+      qc.invalidateQueries({ queryKey: ["report-illustrations"] });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Falha ao limpar"),
   });
 
   if (roleLoading) return <div className="p-8 text-muted-foreground">Carregando…</div>;
