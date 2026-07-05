@@ -17,6 +17,7 @@ import { SystemFeedbackHost } from "@/components/system-feedback";
 import { PwaInstallPrompt } from "@/components/PwaInstallPrompt";
 import { SplashScreen } from "@/components/SplashScreen";
 import { Logo } from "@/components/Logo";
+import { RouteTransitionIndicator } from "@/components/RouteTransitionIndicator";
 
 
 function NotFoundComponent() {
