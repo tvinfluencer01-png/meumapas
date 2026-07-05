@@ -83,13 +83,32 @@ export const listReportIllustrations = createServerFn({ method: "GET" })
   .handler(async ({ data, context }) => {
     let q = context.supabase
       .from("report_illustrations")
-      .select("id, theme, report_kind, title, prompt, mime, usage_count, active, created_at")
+      .select("id, theme, report_kind, title, prompt, mime, usage_count, active, created_at, storage_path")
       .order("created_at", { ascending: false });
     if (data.theme) q = q.eq("theme", data.theme);
     if (!data.includeInactive) q = q.eq("active", true);
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
-    return { items: rows ?? [] };
+
+    // Assina em lote (uma única chamada) para evitar N round-trips do client.
+    const paths = (rows ?? [])
+      .map((r: any) => r.storage_path)
+      .filter((p: string | null): p is string => !!p);
+    let urlMap = new Map<string, string>();
+    if (paths.length > 0) {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: signed } = await supabaseAdmin.storage
+        .from("report-illustrations")
+        .createSignedUrls(paths, 60 * 60);
+      for (const s of signed ?? []) {
+        if (s.path && s.signedUrl) urlMap.set(s.path, s.signedUrl);
+      }
+    }
+    const items = (rows ?? []).map((r: any) => ({
+      ...r,
+      dataUrl: r.storage_path ? (urlMap.get(r.storage_path) ?? "") : "",
+    }));
+    return { items };
   });
 
 export const getIllustrationImage = createServerFn({ method: "GET" })
