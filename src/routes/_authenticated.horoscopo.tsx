@@ -72,6 +72,7 @@ function HoroscopoPage() {
           phone_e164: phone || null,
           frequency,
           send_local_hour: sendHour,
+          send_local_minute: sendMinute,
           send_weekday: frequency === "weekly" ? sendWeekday : null,
         },
       }),
