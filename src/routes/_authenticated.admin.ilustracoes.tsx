@@ -179,8 +179,32 @@ function IllustrationsPage() {
         </div>
         <div className="flex flex-wrap gap-2">
           <Button
+            variant="destructive"
             onClick={() => {
-              if (confirm("Gerar 3 banners landscape para CADA tipo de relatório (12 produtos = 36 imagens)? Pode levar alguns minutos.")) {
+              if (
+                confirm(
+                  "APAGAR TODAS as ilustrações (banco + storage)? Esta ação é irreversível.",
+                )
+              ) {
+                purgeMut.mutate();
+              }
+            }}
+            disabled={purgeMut.isPending}
+          >
+            {purgeMut.isPending ? (
+              <Loader2 className="size-4 mr-2 animate-spin" />
+            ) : (
+              <Trash2 className="size-4 mr-2" />
+            )}
+            Apagar tudo
+          </Button>
+          <Button
+            onClick={() => {
+              if (
+                confirm(
+                  "Gerar 12 banners variados para CADA tipo de relatório (12 produtos = 144 imagens)? Pode levar vários minutos.",
+                )
+              ) {
                 seedMut.mutate();
               }
             }}
@@ -192,7 +216,7 @@ function IllustrationsPage() {
             ) : (
               <Sparkles className="size-4 mr-2" />
             )}
-            Gerar 3 para cada produto
+            Gerar 12 para cada produto
           </Button>
           <Button
             variant="outline"
