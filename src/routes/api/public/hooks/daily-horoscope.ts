@@ -49,6 +49,8 @@ async function handler({ request }: { request: Request }) {
   }).formatToParts(now).reduce<Record<string, string>>((a, p) => (a[p.type] = p.value, a), {});
   const today = `${spParts.year}-${spParts.month}-${spParts.day}`;
   const currentLocalHour = Number(spParts.hour) % 24;
+  const currentLocalMinute = Number(spParts.minute) % 60;
+  const currentMinutesOfDay = currentLocalHour * 60 + currentLocalMinute;
   const dowMap: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
   const localDow = dowMap[spParts.weekday] ?? 0;
 
