@@ -58,7 +58,7 @@ async function handler({ request }: { request: Request }) {
     .from("horoscope_subscriptions")
     .select("*")
     .eq("enabled", true)
-    .or(force ? "id.not.is.null" : `last_sent_on.is.null,last_sent_on.lt.${today}`)
+    .or(force ? "id.not.is.null" : `last_sent_on.is.null,last_sent_on.lt.${today},next_retry_at.lte.${now.toISOString()}`)
     .limit(2000);
   if (error) return new Response(error.message, { status: 500 });
 
