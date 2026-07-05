@@ -294,9 +294,11 @@ async function handler({ request }: { request: Request }) {
           });
           if (!res.ok) {
             const t = await res.text();
+            const msg = `evo HTTP ${res.status}: ${t.slice(0, 180)}`;
+            deliveryError = msg;
             await supabaseAdmin.from("horoscope_log").insert({
               user_id: s.user_id, date: today, channel: "whatsapp", status: "error",
-              detail: `evo HTTP ${res.status}: ${t.slice(0, 180)}`, sign: s.sun_sign,
+              detail: msg, sign: s.sun_sign,
             });
           } else {
             delivered += 1; anyDelivered = true;
@@ -306,9 +308,11 @@ async function handler({ request }: { request: Request }) {
             });
           }
         } catch (e: any) {
+          const msg = String(e?.message ?? e).slice(0, 240);
+          deliveryError = `wa: ${msg}`;
           await supabaseAdmin.from("horoscope_log").insert({
             user_id: s.user_id, date: today, channel: "whatsapp", status: "error",
-            detail: String(e?.message ?? e).slice(0, 240), sign: s.sun_sign,
+            detail: msg, sign: s.sun_sign,
           });
         }
       } else if (twilio?.enabled && twilio.account_sid && twilio.auth_token && twilio.whatsapp_from) {
