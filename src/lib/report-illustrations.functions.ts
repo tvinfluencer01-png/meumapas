@@ -195,10 +195,10 @@ export const generateReportIllustration = createServerFn({ method: "POST" })
     if (!key) throw new Error("LOVABLE_API_KEY ausente");
 
     const n = data.count ?? 1;
-    const prompt = themePrompt(data.theme, data.customPrompt);
     const created: Array<{ id: string; theme: string }> = [];
 
     for (let i = 0; i < n; i++) {
+      const prompt = themePrompt(data.theme, data.customPrompt, i);
       const res = await fetch("https://ai.gateway.lovable.dev/v1/images/generations", {
         method: "POST",
         headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
