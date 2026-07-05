@@ -181,14 +181,25 @@ function HoroscopoPage() {
 
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">Horário (BRT)</Label>
-            <Select value={String(sendHour)} onValueChange={(v) => setSendHour(Number(v))}>
+            <Select
+              value={`${sendHour}:${sendMinute}`}
+              onValueChange={(v) => {
+                const [h, m] = v.split(":").map(Number);
+                setSendHour(h);
+                setSendMinute(m);
+              }}
+            >
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent className="max-h-72">
-                {Array.from({ length: 24 }, (_, h) => (
-                  <SelectItem key={h} value={String(h)}>
-                    {String(h).padStart(2, "0")}:00
-                  </SelectItem>
-                ))}
+                {Array.from({ length: 48 }, (_, i) => {
+                  const h = Math.floor(i / 2);
+                  const m = (i % 2) * 30;
+                  return (
+                    <SelectItem key={`${h}:${m}`} value={`${h}:${m}`}>
+                      {String(h).padStart(2, "0")}:{String(m).padStart(2, "0")}
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>
