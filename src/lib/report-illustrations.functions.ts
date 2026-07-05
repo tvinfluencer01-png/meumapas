@@ -354,15 +354,14 @@ async function generateOne(theme: string, report_kind: string, userId: string) {
     throw new Error(`Falha (${res.status}) em ${report_kind}: ${txt.slice(0, 160)}`);
   }
   const json = await res.json();
-  const b64 = json?.data?.[0]?.b64_json;
-  if (!b64) throw new Error(`Sem imagem para ${report_kind}`);
+  const bytes = await extractImageBytes(json);
+  if (!bytes) throw new Error(`Sem imagem utilizável para ${report_kind}`);
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
   const path = `${report_kind}/${crypto.randomUUID()}.png`;
   const { error: upErr } = await supabaseAdmin.storage
     .from("report-illustrations")
     .upload(path, bytes, { contentType: "image/png", upsert: false });
-  if (upErr) throw new Error(upErr.message);
+  if (upErr) throw new Error(`Storage: ${upErr.message}`);
   const { error } = await supabaseAdmin.from("report_illustrations").insert({
     theme,
     report_kind,
@@ -371,8 +370,12 @@ async function generateOne(theme: string, report_kind: string, userId: string) {
     storage_path: path,
     mime: "image/png",
     created_by: userId,
+    active: true,
   });
-  if (error) throw new Error(error.message);
+  if (error) {
+    await supabaseAdmin.storage.from("report-illustrations").remove([path]).catch(() => {});
+    throw new Error(`DB: ${error.message}`);
+  }
 }
 
 export const seedIllustrationsForAllKinds = createServerFn({ method: "POST" })
