@@ -33,11 +33,21 @@ export const REPORT_KINDS = [
   "annual_forecast", "personal_kabbalah",
 ] as const;
 
-const STYLE_SUFFIX =
-  "Formato banner horizontal panorâmico (landscape 3:2), composição cinematográfica em faixa larga, estilo ilustração editorial cósmica, aquarela digital com traços dourados e violetas profundos, luz suave, atmosfera onírica e simbólica, sem texto, sem letras, sem rostos identificáveis, alta qualidade, adequado como banner de abertura de capítulo em relatório espiritual em PDF.";
+const BANNER_FORMAT =
+  "IMPORTANTE: composição em faixa panorâmica ultra-larga tipo banner de YouTube / capa de canal, letterbox cinematográfico, elemento principal centralizado horizontalmente ocupando toda a largura, muito espaço negativo (céu/atmosfera) acima e abaixo para permitir corte em altura reduzida, proporção visual aproximada 3:1 dentro do frame, sem texto, sem letras, sem rostos identificáveis, adequado como banner fino e largo de abertura de capítulo em relatório PDF.";
 
-function themePrompt(theme: string, custom?: string) {
-  if (custom && custom.trim().length > 10) return `${custom.trim()}. ${STYLE_SUFFIX}`;
+// Cada variante altera paleta, técnica e mood — evita que as N imagens saiam parecidas.
+const STYLE_VARIANTS = [
+  "Estilo aquarela digital etérea, paleta violeta profundo, índigo e dourado, luz difusa e onírica, traços suaves e translúcidos.",
+  "Estilo ilustração editorial art nouveau, paleta esmeralda, bronze e marfim, contornos dourados finos, textura de papel antigo e mood místico solene.",
+  "Estilo pintura cósmica hiper-detalhada, paleta magenta, azul-noite e turquesa fosforescente, luz de nebulosa vibrante, atmosfera vívida e contemporânea.",
+  "Estilo gravura mística monocromática com toques metálicos, paleta grafite, cobre e ouro velho, textura de xilogravura, mood ancestral e sagrado.",
+];
+
+function themePrompt(theme: string, custom?: string, variantIndex = 0) {
+  const variant = STYLE_VARIANTS[variantIndex % STYLE_VARIANTS.length];
+  const suffix = `${variant} ${BANNER_FORMAT}`;
+  if (custom && custom.trim().length > 10) return `${custom.trim()}. ${suffix}`;
   const map: Record<string, string> = {
     cosmos: "Uma vastidão cósmica com galáxias, nebulosas e constelações em tons de dourado e violeta",
     mapa_astral: "Um mapa astral estilizado com signos do zodíaco, planetas e casas astrológicas em roda mandálica",
