@@ -394,6 +394,7 @@ const UpdateSchema = z.object({
     .optional(),
   frequency: z.enum(["daily", "weekly", "alternate"]).default("daily"),
   send_local_hour: z.number().int().min(0).max(23).default(7),
+  send_local_minute: z.number().int().min(0).max(59).default(0),
   send_weekday: z.number().int().min(0).max(6).nullable().optional(),
 });
 
