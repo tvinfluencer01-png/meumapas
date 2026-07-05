@@ -67,7 +67,7 @@ function themePrompt(theme: string, custom?: string, variantIndex = 0) {
     chakras: "Sete chakras alinhados em coluna vertebral cósmica, com cores vibrantes",
   };
   const base = map[theme] ?? `Ilustração simbólica sobre o tema ${theme}`;
-  return `${base}. ${STYLE_SUFFIX}`;
+  return `${base}. ${suffix}`;
 }
 
 /**
