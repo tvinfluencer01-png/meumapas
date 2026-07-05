@@ -1173,7 +1173,7 @@ function ReportsSection() {
         <>
           <ReportTable
             title="Por landing page (produto)"
-            description="Quais páginas geram mais tráfego e vendas."
+            description="Quais páginas geram mais tráfego e vendas. Clique no nome para abrir a landing."
             rows={data.byLanding}
             columns={[
               ["key", "Landing"],
@@ -1183,8 +1183,14 @@ function ReportsSection() {
               ["revenueCents", "Receita"],
               ["conversionRate", "Conv. %"],
             ]}
+            hrefForKey={(row) => {
+              const k = String(row.key ?? "");
+              if (!k || k.startsWith("(")) return null;
+              return k.startsWith("/") ? k : `/${k}`;
+            }}
             onExport={() => downloadReportCSV("landings", data.byLanding, [["key","Landing"],["clicks","Cliques"],["uniqueVisitors","Visitantes"],["conversions","Conversoes"],["revenueCents","Receita_centavos"],["conversionRate","Conv_pct"]])}
           />
+
           <ReportTable
             title="Top afiliados por tráfego"
             description="Quem mais traz cliques e visitantes."
