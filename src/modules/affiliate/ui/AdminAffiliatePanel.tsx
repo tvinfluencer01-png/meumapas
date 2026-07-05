@@ -257,11 +257,11 @@ function DashboardSection() {
   if (isLoading || !data) return <div className="p-6 text-center text-muted-foreground"><Loader2 className="size-5 animate-spin inline mr-2" />Carregando…</div>;
   const k = data.kpis;
   const pieData = [
-    { name: "Disponível", value: k.commAvailableCents },
-    { name: "Pendente", value: k.commPendingCents },
-    { name: "Pago", value: k.commPaidCents },
+    { name: "Disponível", value: k.commAvailableCents, color: "#10b981", gradId: "grad-avail" },
+    { name: "Pendente", value: k.commPendingCents, color: "#f59e0b", gradId: "grad-pend" },
+    { name: "Pago", value: k.commPaidCents, color: "#6366f1", gradId: "grad-paid" },
   ];
-  const COLORS = ["hsl(var(--primary))", "hsl(var(--muted-foreground))", "hsl(var(--accent))"];
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
