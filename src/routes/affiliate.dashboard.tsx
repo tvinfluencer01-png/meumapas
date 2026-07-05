@@ -7,6 +7,7 @@ import { getMyAffiliate } from "@/modules/affiliate/affiliate.functions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { GradientStatCard } from "@/components/ui/gradient-stat-card";
 import { toneByIndex, toneRow } from "@/lib/kpi-tones";
+import { chartTooltipProps } from "@/lib/chart-tooltip";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -87,7 +88,7 @@ function Content() {
                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                 <XAxis dataKey="date" hide />
                 <YAxis fontSize={11} />
-                <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }} />
+                <Tooltip {...chartTooltipProps} />
                 <Legend />
                 <Line type="monotone" dataKey="clicks" stroke="hsl(210 90% 60%)" strokeWidth={2} dot={false} name="Cliques" />
                 <Line type="monotone" dataKey="sales" stroke="hsl(45 90% 55%)" strokeWidth={2} dot={false} name="Vendas" />
@@ -107,7 +108,7 @@ function Content() {
                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                 <XAxis dataKey="date" hide />
                 <YAxis fontSize={11} />
-                <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }} formatter={(v: any) => `R$ ${Number(v).toFixed(2)}`} />
+                <Tooltip {...chartTooltipProps} formatter={(v: any) => `R$ ${Number(v).toFixed(2)}`} />
                 <Bar dataKey="revenue" fill="hsl(45 90% 55%)" name="Receita" />
               </BarChart>
             </ResponsiveContainer>
