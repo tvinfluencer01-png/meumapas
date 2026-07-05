@@ -44,6 +44,7 @@ function HoroscopoPage() {
   const [phone, setPhone] = useState("");
   const [frequency, setFrequency] = useState<"daily" | "weekly" | "alternate">("daily");
   const [sendHour, setSendHour] = useState<number>(7);
+  const [sendMinute, setSendMinute] = useState<number>(0);
   const [sendWeekday, setSendWeekday] = useState<number>(1);
 
   useEffect(() => {
