@@ -1,5 +1,30 @@
-import { PDFDocument, StandardFonts, rgb, PageSizes } from "pdf-lib";
+import {
+  PDFDocument,
+  StandardFonts,
+  rgb,
+  PageSizes,
+  pushGraphicsState,
+  popGraphicsState,
+  rectangle,
+  clip,
+  endPath,
+} from "pdf-lib";
 import { hyphenPointsPt } from "./pt-hyphen";
+
+/**
+ * Configuração global do banner de ilustração dos relatórios.
+ * Ajuste aqui para todo o produto — largura sempre = 100% do conteúdo,
+ * altura fixa em pontos PDF (1pt ≈ 1.333px). Aspect ratio é derivado.
+ *
+ * Padrão: banner largo e fino (~5.7:1), tipo capa de canal do YouTube.
+ * Exemplos: 90pt ≈ 120px de altura; 120pt ≈ 160px; 60pt ≈ 80px.
+ */
+export const BANNER_CONFIG = {
+  /** Fração da largura de conteúdo utilizada (1 = 100%). */
+  widthRatio: 1,
+  /** Altura fixa em pontos PDF. */
+  heightPt: 90,
+} as const;
 
 
 export type SectionPlan = {
