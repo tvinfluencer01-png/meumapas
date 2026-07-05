@@ -8,9 +8,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Copy, ExternalLink, Share2, QrCode, Package } from "lucide-react";
+import { Copy, ExternalLink, Share2, QrCode, Package, Trash2, History } from "lucide-react";
 import { toast } from "sonner";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export const Route = createFileRoute("/affiliate/link")({
   component: Page,
