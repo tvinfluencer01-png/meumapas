@@ -62,8 +62,13 @@ async function handler({ request }: { request: Request }) {
     .limit(2000);
   if (error) return new Response(error.message, { status: 500 });
 
+  const nowIso = now.toISOString();
   const subs = (allSubs ?? []).filter((s: any) => {
     if (force) return true;
+    // Se há um retry agendado no futuro, pula. Se já passou, roda mesmo antes do horário.
+    if (s.next_retry_at) {
+      return new Date(s.next_retry_at).getTime() <= now.getTime();
+    }
     // Compara em horário local de São Paulo (com precisão de minutos).
     const scheduledLocalHour = s.send_local_hour != null
       ? Number(s.send_local_hour)
@@ -85,6 +90,10 @@ async function handler({ request }: { request: Request }) {
     }
     return true;
   });
+
+  // Retry policy
+  const MAX_ATTEMPTS = 5;
+  const backoffMinutes = (attempt: number) => Math.min(240, Math.pow(2, attempt) * 5); // 5,10,20,40,80,160,240
 
 
   const { data: twilio } = await supabaseAdmin
