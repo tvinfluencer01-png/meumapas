@@ -463,11 +463,16 @@ async function generatePdfForOrder(order: any, landing: any): Promise<Uint8Array
     { type: "kv", rows },
   ];
 
-  // === Mapa de Personalidade Numerológico — conteúdo completo ===
+  // === Conteúdo REAL do relatório ===
+  // 1) Numerologia (Mapa da Personalidade) tem gerador dedicado.
+  // 2) Demais tipos: gera análise completa via IA a partir do report_type + customer_data.
+  // 3) Fallback (sem IA / sem dados suficientes): descrição da landing.
   const isNumerologyPersonality =
     String(landing.report_type ?? "") === "numerologia" ||
     /numerolog/i.test(String(landing.slug ?? "")) ||
     /personalidade.*numerolog/i.test(String(landing.title ?? ""));
+
+  let realContentAdded = false;
 
   if (isNumerologyPersonality) {
     const customerName = String(cd.full_name ?? cd.name ?? "").trim();
@@ -481,20 +486,34 @@ async function generatePdfForOrder(order: any, landing: any): Promise<Uint8Array
         customerBirth,
       );
       for (const b of numBlocks) blocks.push(b);
-    } else {
-      blocks.push({ type: "h2", text: "Atenção" });
-      blocks.push({
-        type: "p",
-        text:
-          "Para gerar o mapa numerológico completo precisamos do nome completo de batismo e da data de nascimento. Por favor, responda ao e-mail de entrega com esses dados para que possamos enviar o mapa personalizado.",
-      });
+      realContentAdded = true;
     }
-  } else if (descriptionParas.length) {
-    blocks.push({ type: "h2", text: "Sobre o seu relatório" });
-    for (const p of descriptionParas) blocks.push({ type: "p", text: p });
   } else {
-    blocks.push({ type: "p", text: "Seu relatório personalizado está sendo preparado." });
+    try {
+      const { buildAiOrderReportBlocks } = await import("@/lib/product-report-ai.server");
+      const aiBlocks = await buildAiOrderReportBlocks(
+        String(landing.report_type ?? "custom"),
+        String(landing.title ?? ""),
+        cd,
+      );
+      if (aiBlocks && aiBlocks.length > 0) {
+        for (const b of aiBlocks) blocks.push(b);
+        realContentAdded = true;
+      }
+    } catch (e) {
+      console.error("[generatePdfForOrder] AI report failed", e);
+    }
   }
+
+  if (!realContentAdded) {
+    if (descriptionParas.length) {
+      blocks.push({ type: "h2", text: "Sobre o seu relatório" });
+      for (const p of descriptionParas) blocks.push({ type: "p", text: p });
+    } else {
+      blocks.push({ type: "p", text: "Seu relatório personalizado está sendo preparado." });
+    }
+  }
+
 
   if (benefits.length) {
     blocks.push({ type: "h2", text: "O que está incluso" });
