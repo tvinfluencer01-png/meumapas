@@ -438,6 +438,7 @@ export const updateMyHoroscopeSubscription = createServerFn({ method: "POST" })
       send_hour_utc: sendHourUtc,
       frequency: data.frequency,
       send_local_hour: data.send_local_hour,
+      send_local_minute: data.send_local_minute,
       send_weekday: data.frequency === "weekly" ? (data.send_weekday ?? 1) : null,
     };
 
