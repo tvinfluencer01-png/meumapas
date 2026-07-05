@@ -344,10 +344,10 @@ const THEME_BY_KIND: Record<string, string> = {
   personal_kabbalah: "cabala",
 };
 
-async function generateOne(theme: string, report_kind: string, userId: string) {
+async function generateOne(theme: string, report_kind: string, userId: string, variantIndex = 0) {
   const key = process.env.LOVABLE_API_KEY;
   if (!key) throw new Error("LOVABLE_API_KEY ausente");
-  const prompt = themePrompt(theme);
+  const prompt = themePrompt(theme, undefined, variantIndex);
   const res = await fetch("https://ai.gateway.lovable.dev/v1/images/generations", {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
