@@ -29,6 +29,7 @@ function Content() {
   const { data: landings } = useQuery({ queryKey: ["public-landings"], queryFn: () => listFn() });
   const [utm, setUtm] = useState({ source: "", medium: "", campaign: "" });
   const [productSlug, setProductSlug] = useState<string>("");
+  const [saved, setSaved] = useState<SavedLink[]>(() => loadSaved());
 
   const code = (data as any)?.profile?.affiliate_code;
   const base = typeof window !== "undefined" ? window.location.origin : "";
