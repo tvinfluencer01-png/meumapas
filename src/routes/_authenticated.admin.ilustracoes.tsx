@@ -283,7 +283,7 @@ function IllustrationsPage() {
             <Select value={String(count)} onValueChange={(v) => setCount(Number(v))}>
               <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
               <SelectContent>
-                {[1, 2, 3, 4].map((n) => (
+                {[1, 2, 3, 4, 6, 8, 10, 12].map((n) => (
                   <SelectItem key={n} value={String(n)}>{n}</SelectItem>
                 ))}
               </SelectContent>
