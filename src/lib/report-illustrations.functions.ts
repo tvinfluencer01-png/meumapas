@@ -33,11 +33,21 @@ export const REPORT_KINDS = [
   "annual_forecast", "personal_kabbalah",
 ] as const;
 
-const STYLE_SUFFIX =
-  "Formato banner horizontal panorâmico (landscape 3:2), composição cinematográfica em faixa larga, estilo ilustração editorial cósmica, aquarela digital com traços dourados e violetas profundos, luz suave, atmosfera onírica e simbólica, sem texto, sem letras, sem rostos identificáveis, alta qualidade, adequado como banner de abertura de capítulo em relatório espiritual em PDF.";
+const BANNER_FORMAT =
+  "IMPORTANTE: composição em faixa panorâmica ultra-larga tipo banner de YouTube / capa de canal, letterbox cinematográfico, elemento principal centralizado horizontalmente ocupando toda a largura, muito espaço negativo (céu/atmosfera) acima e abaixo para permitir corte em altura reduzida, proporção visual aproximada 3:1 dentro do frame, sem texto, sem letras, sem rostos identificáveis, adequado como banner fino e largo de abertura de capítulo em relatório PDF.";
 
-function themePrompt(theme: string, custom?: string) {
-  if (custom && custom.trim().length > 10) return `${custom.trim()}. ${STYLE_SUFFIX}`;
+// Cada variante altera paleta, técnica e mood — evita que as N imagens saiam parecidas.
+const STYLE_VARIANTS = [
+  "Estilo aquarela digital etérea, paleta violeta profundo, índigo e dourado, luz difusa e onírica, traços suaves e translúcidos.",
+  "Estilo ilustração editorial art nouveau, paleta esmeralda, bronze e marfim, contornos dourados finos, textura de papel antigo e mood místico solene.",
+  "Estilo pintura cósmica hiper-detalhada, paleta magenta, azul-noite e turquesa fosforescente, luz de nebulosa vibrante, atmosfera vívida e contemporânea.",
+  "Estilo gravura mística monocromática com toques metálicos, paleta grafite, cobre e ouro velho, textura de xilogravura, mood ancestral e sagrado.",
+];
+
+function themePrompt(theme: string, custom?: string, variantIndex = 0) {
+  const variant = STYLE_VARIANTS[variantIndex % STYLE_VARIANTS.length];
+  const suffix = `${variant} ${BANNER_FORMAT}`;
+  if (custom && custom.trim().length > 10) return `${custom.trim()}. ${suffix}`;
   const map: Record<string, string> = {
     cosmos: "Uma vastidão cósmica com galáxias, nebulosas e constelações em tons de dourado e violeta",
     mapa_astral: "Um mapa astral estilizado com signos do zodíaco, planetas e casas astrológicas em roda mandálica",
@@ -57,7 +67,7 @@ function themePrompt(theme: string, custom?: string) {
     chakras: "Sete chakras alinhados em coluna vertebral cósmica, com cores vibrantes",
   };
   const base = map[theme] ?? `Ilustração simbólica sobre o tema ${theme}`;
-  return `${base}. ${STYLE_SUFFIX}`;
+  return `${base}. ${suffix}`;
 }
 
 /**
@@ -185,10 +195,10 @@ export const generateReportIllustration = createServerFn({ method: "POST" })
     if (!key) throw new Error("LOVABLE_API_KEY ausente");
 
     const n = data.count ?? 1;
-    const prompt = themePrompt(data.theme, data.customPrompt);
     const created: Array<{ id: string; theme: string }> = [];
 
     for (let i = 0; i < n; i++) {
+      const prompt = themePrompt(data.theme, data.customPrompt, i);
       const res = await fetch("https://ai.gateway.lovable.dev/v1/images/generations", {
         method: "POST",
         headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
@@ -334,10 +344,10 @@ const THEME_BY_KIND: Record<string, string> = {
   personal_kabbalah: "cabala",
 };
 
-async function generateOne(theme: string, report_kind: string, userId: string) {
+async function generateOne(theme: string, report_kind: string, userId: string, variantIndex = 0) {
   const key = process.env.LOVABLE_API_KEY;
   if (!key) throw new Error("LOVABLE_API_KEY ausente");
-  const prompt = themePrompt(theme);
+  const prompt = themePrompt(theme, undefined, variantIndex);
   const res = await fetch("https://ai.gateway.lovable.dev/v1/images/generations", {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
@@ -395,7 +405,7 @@ export const seedIllustrationsForAllKinds = createServerFn({ method: "POST" })
       let lastErr: string | undefined;
       for (let i = 0; i < perKind; i++) {
         try {
-          await generateOne(theme, kind, context.userId);
+          await generateOne(theme, kind, context.userId, i);
           ok++;
         } catch (e: any) {
           failed++;
