@@ -36,12 +36,21 @@ export const REPORT_KINDS = [
 const BANNER_FORMAT =
   "IMPORTANTE: composição em faixa panorâmica ultra-larga tipo banner de YouTube / capa de canal, letterbox cinematográfico, elemento principal centralizado horizontalmente ocupando toda a largura, muito espaço negativo (céu/atmosfera) acima e abaixo para permitir corte em altura reduzida, proporção visual aproximada 3:1 dentro do frame, sem texto, sem letras, sem rostos identificáveis, adequado como banner fino e largo de abertura de capítulo em relatório PDF.";
 
-// Cada variante altera paleta, técnica e mood — evita que as N imagens saiam parecidas.
+// 12 variantes distintas: paleta + técnica + ângulo/composição.
+// Combinadas evitam repetição visual até 12 imagens por tema.
 const STYLE_VARIANTS = [
-  "Estilo aquarela digital etérea, paleta violeta profundo, índigo e dourado, luz difusa e onírica, traços suaves e translúcidos.",
-  "Estilo ilustração editorial art nouveau, paleta esmeralda, bronze e marfim, contornos dourados finos, textura de papel antigo e mood místico solene.",
-  "Estilo pintura cósmica hiper-detalhada, paleta magenta, azul-noite e turquesa fosforescente, luz de nebulosa vibrante, atmosfera vívida e contemporânea.",
-  "Estilo gravura mística monocromática com toques metálicos, paleta grafite, cobre e ouro velho, textura de xilogravura, mood ancestral e sagrado.",
+  "Estilo aquarela digital etérea, paleta violeta profundo, índigo e dourado, luz difusa e onírica, composição centralizada simétrica.",
+  "Estilo ilustração editorial art nouveau, paleta esmeralda, bronze e marfim, contornos dourados finos, textura de papel antigo, composição em arco superior.",
+  "Estilo pintura cósmica hiper-detalhada, paleta magenta, azul-noite e turquesa fosforescente, luz de nebulosa vibrante, composição diagonal dinâmica.",
+  "Estilo gravura mística monocromática com toques metálicos, paleta grafite, cobre e ouro velho, textura de xilogravura, composição frontal solene.",
+  "Estilo vitral gótico luminoso, paleta rubi, safira e âmbar dourado, luz filtrada por chumbo negro, composição em painéis verticais.",
+  "Estilo aquarela oriental sumi-e, paleta tinta preta, vermelho vermelhão e ouro pálido, pinceladas gestuais, composição assimétrica com espaço vazio à direita.",
+  "Estilo iluminura medieval renascentista, paleta lápis-lazúli, verde-oliva e folha de ouro, ornamentos vegetais, composição em moldura decorativa.",
+  "Estilo surrealismo cósmico onírico, paleta pêssego pastel, lavanda e ciano leitoso, luz de alvorada, composição flutuante em nuvens.",
+  "Estilo mosaico bizantino, paleta terracota, azul-egípcio e ouro martelado, tesselas visíveis, composição radial mandálica.",
+  "Estilo ilustração botânica cientista vitoriana, paleta sépia, verde-musgo e cobre polido, traços de bico-de-pena finos, composição horizontal como friso.",
+  "Estilo pintura barroca chiaroscuro, paleta bordô profundo, dourado quente e negro veludo, luz dramática lateral, composição de baixo-alto contraste.",
+  "Estilo arte digital neon cyberpunk místico, paleta violeta-elétrico, ciano-neon e rosa quente, brilho holográfico, composição futurista simétrica.",
 ];
 
 function themePrompt(theme: string, custom?: string, variantIndex = 0) {
@@ -185,7 +194,7 @@ export const generateReportIllustration = createServerFn({ method: "POST" })
         report_kind: z.string().min(1).max(60).optional(),
         title: z.string().max(120).optional(),
         customPrompt: z.string().max(2000).optional(),
-        count: z.number().int().min(1).max(4).optional(),
+        count: z.number().int().min(1).max(12).optional(),
       })
       .parse(d),
   )
@@ -280,6 +289,46 @@ export const deleteReportIllustration = createServerFn({ method: "POST" })
       .eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
+  });
+
+/**
+ * Apaga TODAS as ilustrações do storage e do banco. Uso: limpar a biblioteca
+ * antes de regerar do zero com novos padrões.
+ */
+export const purgeAllReportIllustrations = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await ensureAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Lista tudo que existe no bucket e remove em lote.
+    let removed = 0;
+    async function listAndRemove(prefix = "") {
+      const { data: entries } = await supabaseAdmin.storage
+        .from("report-illustrations")
+        .list(prefix, { limit: 1000 });
+      if (!entries || entries.length === 0) return;
+      const files: string[] = [];
+      for (const e of entries) {
+        const full = prefix ? `${prefix}/${e.name}` : e.name;
+        // Pastas não têm metadata; recursão.
+        if (!e.metadata) await listAndRemove(full);
+        else files.push(full);
+      }
+      if (files.length > 0) {
+        await supabaseAdmin.storage.from("report-illustrations").remove(files);
+        removed += files.length;
+      }
+    }
+    await listAndRemove("");
+
+    const { error, count } = await supabaseAdmin
+      .from("report_illustrations")
+      .delete({ count: "exact" })
+      .not("id", "is", null);
+    if (error) throw new Error(`Falha ao limpar banco: ${error.message}`);
+
+    return { removedFiles: removed, deletedRows: count ?? 0 };
   });
 
 /* ------------------------- ROTATION HELPER ------------------------- */
@@ -391,7 +440,7 @@ async function generateOne(theme: string, report_kind: string, userId: string, v
 export const seedIllustrationsForAllKinds = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) =>
-    z.object({ perKind: z.number().int().min(1).max(5).optional() }).parse(d ?? {}),
+    z.object({ perKind: z.number().int().min(1).max(12).optional() }).parse(d ?? {}),
   )
   .handler(async ({ data, context }) => {
     await ensureAdmin(context);

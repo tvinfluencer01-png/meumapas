@@ -43,6 +43,7 @@ import {
   deleteReportIllustration,
   getIllustrationImage,
   seedIllustrationsForAllKinds,
+  purgeAllReportIllustrations,
 } from "@/lib/report-illustrations.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/ilustracoes")({
@@ -59,6 +60,7 @@ function IllustrationsPage() {
   const delFn = useServerFn(deleteReportIllustration);
   const getImgFn = useServerFn(getIllustrationImage);
   const seedFn = useServerFn(seedIllustrationsForAllKinds);
+  const purgeFn = useServerFn(purgeAllReportIllustrations);
 
   const [theme, setTheme] = useState<string>(ILLUSTRATION_THEMES[0].value);
   const [reportKind, setReportKind] = useState<string>("");
@@ -119,12 +121,23 @@ function IllustrationsPage() {
   });
 
   const seedMut = useMutation({
-    mutationFn: () => seedFn({ data: { perKind: 3 } }),
+    mutationFn: () => seedFn({ data: { perKind: 12 } }),
     onSuccess: (res) => {
       toast.success(`Seed concluído: ${res.total} banners gerados`);
       qc.invalidateQueries({ queryKey: ["report-illustrations"] });
     },
     onError: (e: any) => toast.error(e.message ?? "Falha no seed"),
+  });
+
+  const purgeMut = useMutation({
+    mutationFn: () => purgeFn(),
+    onSuccess: (res) => {
+      toast.success(
+        `Biblioteca limpa: ${res.deletedRows} registros e ${res.removedFiles} arquivos removidos`,
+      );
+      qc.invalidateQueries({ queryKey: ["report-illustrations"] });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Falha ao limpar"),
   });
 
   if (roleLoading) return <div className="p-8 text-muted-foreground">Carregando…</div>;
@@ -166,8 +179,32 @@ function IllustrationsPage() {
         </div>
         <div className="flex flex-wrap gap-2">
           <Button
+            variant="destructive"
             onClick={() => {
-              if (confirm("Gerar 3 banners landscape para CADA tipo de relatório (12 produtos = 36 imagens)? Pode levar alguns minutos.")) {
+              if (
+                confirm(
+                  "APAGAR TODAS as ilustrações (banco + storage)? Esta ação é irreversível.",
+                )
+              ) {
+                purgeMut.mutate();
+              }
+            }}
+            disabled={purgeMut.isPending}
+          >
+            {purgeMut.isPending ? (
+              <Loader2 className="size-4 mr-2 animate-spin" />
+            ) : (
+              <Trash2 className="size-4 mr-2" />
+            )}
+            Apagar tudo
+          </Button>
+          <Button
+            onClick={() => {
+              if (
+                confirm(
+                  "Gerar 12 banners variados para CADA tipo de relatório (12 produtos = 144 imagens)? Pode levar vários minutos.",
+                )
+              ) {
                 seedMut.mutate();
               }
             }}
@@ -179,7 +216,7 @@ function IllustrationsPage() {
             ) : (
               <Sparkles className="size-4 mr-2" />
             )}
-            Gerar 3 para cada produto
+            Gerar 12 para cada produto
           </Button>
           <Button
             variant="outline"
@@ -246,7 +283,7 @@ function IllustrationsPage() {
             <Select value={String(count)} onValueChange={(v) => setCount(Number(v))}>
               <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
               <SelectContent>
-                {[1, 2, 3, 4].map((n) => (
+                {[1, 2, 3, 4, 6, 8, 10, 12].map((n) => (
                   <SelectItem key={n} value={String(n)}>{n}</SelectItem>
                 ))}
               </SelectContent>
