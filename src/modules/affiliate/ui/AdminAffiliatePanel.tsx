@@ -285,7 +285,7 @@ function DashboardSection() {
                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                 <XAxis dataKey="date" tick={{ fontSize: 10 }} />
                 <YAxis tick={{ fontSize: 10 }} />
-                <Tooltip />
+                <Tooltip {...chartTooltipProps} />
                 <Line type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" name="Receita R$" />
                 <Line type="monotone" dataKey="orders" stroke="hsl(var(--accent))" name="Pedidos" />
               </LineChart>
@@ -325,8 +325,8 @@ function DashboardSection() {
                 </Pie>
 
                 <Tooltip
+                  {...chartTooltipProps}
                   formatter={(v: any) => money(v)}
-                  contentStyle={{ background: "hsl(var(--background))", border: "1px solid hsl(var(--border))", borderRadius: 8 }}
                 />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: 12 }} />
               </PieChart>
@@ -362,7 +362,7 @@ function DashboardSection() {
               <BarChart data={data.topProducts} layout="vertical">
                 <XAxis type="number" tick={{ fontSize: 10 }} />
                 <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 10 }} />
-                <Tooltip formatter={(v: any) => money(v)} />
+                <Tooltip {...chartTooltipProps} formatter={(v: any) => money(v)} />
                 <Bar dataKey="revenue" fill="hsl(var(--primary))" />
               </BarChart>
             </ResponsiveContainer>
