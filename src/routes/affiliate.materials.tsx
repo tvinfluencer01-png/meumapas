@@ -8,9 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Copy, Download, ExternalLink, Search, Video, Image as ImageIcon, FileText, GraduationCap, Palette } from "lucide-react";
+import { Copy, Download, ExternalLink, Search, Video, Image as ImageIcon, FileText, GraduationCap, Palette, Sparkles, Hash, Type, Check } from "lucide-react";
 import { toast } from "sonner";
 import { useMemo, useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { buildCopyPack } from "@/lib/marketing-copy";
 
 export const Route = createFileRoute("/affiliate/materials")({
   component: Page,
@@ -84,35 +86,120 @@ function MaterialCard({ m }: { m: any }) {
   const isImage = ["banner", "story", "carousel", "logo"].includes(m.kind);
   const isVideo = ["video", "reel"].includes(m.kind);
   const isCopy = m.kind === "copy";
+  const [open, setOpen] = useState(false);
   return (
-    <Card className="overflow-hidden hover:border-gold/50 transition-colors">
-      {m.thumb_url && isImage && <img src={m.thumb_url} alt={m.title} className="w-full h-40 object-cover" />}
-      {isVideo && m.url && <video src={m.url} className="w-full h-40 object-cover bg-black" controls />}
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between gap-2">
-          <CardTitle className="text-base truncate">{m.title}</CardTitle>
-          <Badge variant="outline" className="text-[10px] shrink-0">{m.kind}</Badge>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        {m.description && <p className="text-xs text-muted-foreground line-clamp-2">{m.description}</p>}
-        {isCopy && m.content && (
-          <div className="text-xs bg-muted/40 rounded-md p-2 border max-h-40 overflow-auto whitespace-pre-wrap">{m.content}</div>
+    <>
+      <Card
+        className="overflow-hidden hover:border-gold/50 transition-colors cursor-pointer group"
+        onClick={() => setOpen(true)}
+      >
+        {m.thumb_url && isImage && <img src={m.thumb_url} alt={m.title} className="w-full h-40 object-cover" />}
+        {isVideo && m.url && <video src={m.url} className="w-full h-40 object-cover bg-black" />}
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between gap-2">
+            <CardTitle className="text-base truncate group-hover:text-gold transition-colors">{m.title}</CardTitle>
+            <Badge variant="outline" className="text-[10px] shrink-0">{m.kind}</Badge>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          {m.description && <p className="text-xs text-muted-foreground line-clamp-2">{m.description}</p>}
+          <div className="flex items-center gap-1 text-xs text-gold/80">
+            <Sparkles className="size-3" /> Clique para ver copy + hashtags
+          </div>
+        </CardContent>
+      </Card>
+      <MaterialDialog m={m} open={open} onOpenChange={setOpen} />
+    </>
+  );
+}
+
+function CopyButton({ label, text, icon: Icon }: { label: string; text: string; icon: any }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <Button
+      size="sm"
+      variant="outline"
+      onClick={() => {
+        navigator.clipboard.writeText(text);
+        setCopied(true);
+        toast.success(`${label} copiado`);
+        setTimeout(() => setCopied(false), 1500);
+      }}
+    >
+      {copied ? <Check className="size-3 mr-1" /> : <Icon className="size-3 mr-1" />}
+      {copied ? "Copiado" : `Copiar ${label.toLowerCase()}`}
+    </Button>
+  );
+}
+
+function MaterialDialog({ m, open, onOpenChange }: { m: any; open: boolean; onOpenChange: (v: boolean) => void }) {
+  const isCopy = m.kind === "copy";
+  const isImage = ["banner", "story", "carousel", "logo"].includes(m.kind);
+  const isVideo = ["video", "reel"].includes(m.kind);
+  const pack = useMemo(() => buildCopyPack(m), [m]);
+  const hashtagStr = pack.hashtags.join(" ");
+  const fullPost = `${pack.title}\n\n${pack.copy}\n\n${hashtagStr}`;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-gold">
+            <Sparkles className="size-5" /> {m.title}
+          </DialogTitle>
+          <DialogDescription>
+            Copy persuasiva com gatilhos mentais gerada para este material.
+          </DialogDescription>
+        </DialogHeader>
+
+        {m.thumb_url && isImage && (
+          <img src={m.thumb_url} alt={m.title} className="w-full max-h-64 object-contain rounded-md bg-black/20" />
         )}
-        <div className="flex gap-2 flex-wrap">
-          {isCopy && m.content && (
-            <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(m.content); toast.success("Copiado"); }}>
-              <Copy className="size-3 mr-1" /> Copiar
-            </Button>
-          )}
+        {isVideo && m.url && <video src={m.url} className="w-full max-h-64 rounded-md bg-black" controls />}
+
+        <section className="space-y-2">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold flex items-center gap-1"><Type className="size-4 text-gold" /> Título</h3>
+            <CopyButton label="Título" text={pack.title} icon={Copy} />
+          </div>
+          <div className="text-sm bg-muted/40 rounded-md p-3 border">{pack.title}</div>
+        </section>
+
+        <section className="space-y-2">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold flex items-center gap-1"><FileText className="size-4 text-gold" /> Copy</h3>
+            <CopyButton label="Copy" text={pack.copy} icon={Copy} />
+          </div>
+          <div className="text-sm bg-muted/40 rounded-md p-3 border whitespace-pre-wrap max-h-64 overflow-auto">{pack.copy}</div>
+        </section>
+
+        <section className="space-y-2">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold flex items-center gap-1"><Hash className="size-4 text-gold" /> Hashtags</h3>
+            <CopyButton label="Hashtags" text={hashtagStr} icon={Copy} />
+          </div>
+          <div className="flex flex-wrap gap-1 bg-muted/40 rounded-md p-3 border">
+            {pack.hashtags.map((h) => (
+              <span key={h} className="text-xs px-2 py-0.5 rounded bg-gold/10 text-gold border border-gold/30">{h}</span>
+            ))}
+          </div>
+        </section>
+
+        <div className="flex flex-wrap gap-2 pt-2 border-t">
+          <CopyButton label="Post completo" text={fullPost} icon={Copy} />
           {m.url && (
             <>
-              <Button size="sm" variant="outline" asChild><a href={m.url} target="_blank" rel="noreferrer"><ExternalLink className="size-3 mr-1" /> Abrir</a></Button>
-              <Button size="sm" asChild><a href={m.url} download><Download className="size-3 mr-1" /> Baixar</a></Button>
+              <Button size="sm" variant="outline" asChild>
+                <a href={m.url} target="_blank" rel="noreferrer"><ExternalLink className="size-3 mr-1" /> Abrir</a>
+              </Button>
+              <Button size="sm" asChild>
+                <a href={m.url} download><Download className="size-3 mr-1" /> Baixar</a>
+              </Button>
             </>
           )}
+          {isCopy && m.content && <CopyButton label="Conteúdo original" text={m.content} icon={Copy} />}
         </div>
-      </CardContent>
-    </Card>
+      </DialogContent>
+    </Dialog>
   );
 }
