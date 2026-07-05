@@ -244,19 +244,18 @@ export const updateOrderStatus = createServerFn({ method: "POST" })
       } catch (e) {
         console.error("[updateOrderStatus] affiliate credit failed", e);
       }
-      // Fire-and-forget: gera PDF real + email + WhatsApp.
-      (async () => {
-        try {
-          await runDispatchForOrder(data.id, "both");
-        } catch (e) {
-          console.error("[updateOrderStatus] email/pdf dispatch failed", e);
-        }
-        try {
-          await sendOrderWhatsapp(data.id);
-        } catch (e) {
-          console.error("[updateOrderStatus] whatsapp dispatch failed", e);
-        }
-      })();
+      // Gera PDF real + envia email + WhatsApp (aguardado para garantir entrega no Worker).
+      try {
+        await runDispatchForOrder(data.id, "both");
+      } catch (e) {
+        console.error("[updateOrderStatus] email/pdf dispatch failed", e);
+      }
+      try {
+        await sendOrderWhatsapp(data.id);
+      } catch (e) {
+        console.error("[updateOrderStatus] whatsapp dispatch failed", e);
+      }
+
     }
     return { ok: true };
   });
