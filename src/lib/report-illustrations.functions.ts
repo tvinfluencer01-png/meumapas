@@ -400,7 +400,7 @@ async function generateOne(theme: string, report_kind: string, userId: string, v
 export const seedIllustrationsForAllKinds = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) =>
-    z.object({ perKind: z.number().int().min(1).max(5).optional() }).parse(d ?? {}),
+    z.object({ perKind: z.number().int().min(1).max(12).optional() }).parse(d ?? {}),
   )
   .handler(async ({ data, context }) => {
     await ensureAdmin(context);
