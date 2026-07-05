@@ -390,9 +390,11 @@ async function handler({ request }: { request: Request }) {
             detail: "smtp", sign: s.sun_sign,
           });
         } catch (e: any) {
+          const msg = String(e?.message ?? e).slice(0, 240);
+          deliveryError = `email: ${msg}`;
           await supabaseAdmin.from("horoscope_log").insert({
             user_id: s.user_id, date: today, channel: "email", status: "error",
-            detail: String(e?.message ?? e).slice(0, 240), sign: s.sun_sign,
+            detail: msg, sign: s.sun_sign,
           });
         }
       } else {
@@ -403,14 +405,31 @@ async function handler({ request }: { request: Request }) {
       }
     }
 
-    await supabaseAdmin
-      .from("horoscope_subscriptions")
-      .update({ last_sent_on: today })
-      .eq("id", s.id);
+    // Finaliza: se entregou em ao menos um canal, marca como enviado; se falhou, agenda retry.
+    if (anyDelivered) {
+      await supabaseAdmin
+        .from("horoscope_subscriptions")
+        .update({
+          last_sent_on: today,
+          attempt_count: 0,
+          next_retry_at: null,
+          last_attempt_at: nowIso,
+          last_error: null,
+        })
+        .eq("id", s.id);
+    } else if (deliveryError) {
+      await scheduleRetryOrGiveUp(s, deliveryError);
+    } else {
+      // Nenhum canal configurado — evita loop infinito marcando como enviado.
+      await supabaseAdmin
+        .from("horoscope_subscriptions")
+        .update({ last_sent_on: today, last_attempt_at: nowIso })
+        .eq("id", s.id);
+    }
   };
 
   await Promise.allSettled((subs ?? []).map((s) => processOne(s).catch(() => {})));
 
 
-  return Response.json({ ok: true, processed, delivered });
+  return Response.json({ ok: true, processed, delivered, retriesScheduled, givenUp });
 }
