@@ -321,7 +321,6 @@ function IllustrationsPage() {
                       delMut.mutate(it.id);
                     }
                   }}
-                  loadImage={() => getImgFn({ data: { id: it.id } }).then((r) => r.dataUrl)}
                 />
               ))}
             </div>
