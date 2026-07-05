@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { confirmDialog } from "@/components/system-feedback";
 import { checkIsAdmin } from "@/lib/admin.functions";
 import {
   ILLUSTRATION_THEMES,
