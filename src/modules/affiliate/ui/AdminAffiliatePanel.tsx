@@ -297,12 +297,35 @@ function DashboardSection() {
           <CardContent className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={pieData} dataKey="value" nameKey="name" outerRadius={80} label>
-                  {pieData.map((_, i) => <Cell key={i} fill={COLORS[i]} />)}
+                <defs>
+                  {pieData.map((d) => (
+                    <linearGradient key={d.gradId} id={d.gradId} x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stopColor={d.color} stopOpacity={0.95} />
+                      <stop offset="100%" stopColor={d.color} stopOpacity={0.55} />
+                    </linearGradient>
+                  ))}
+                </defs>
+                <Pie
+                  data={pieData}
+                  dataKey="value"
+                  nameKey="name"
+                  innerRadius={45}
+                  outerRadius={85}
+                  paddingAngle={3}
+                  stroke="hsl(var(--background))"
+                  strokeWidth={2}
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                >
+                  {pieData.map((d) => <Cell key={d.gradId} fill={`url(#${d.gradId})`} />)}
                 </Pie>
-                <Tooltip formatter={(v: any) => money(v)} />
+                <Tooltip
+                  formatter={(v: any) => money(v)}
+                  contentStyle={{ background: "hsl(var(--background))", border: "1px solid hsl(var(--border))", borderRadius: 8 }}
+                />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: 12 }} />
               </PieChart>
             </ResponsiveContainer>
+
           </CardContent>
         </Card>
       </div>
