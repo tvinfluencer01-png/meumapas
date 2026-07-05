@@ -1008,6 +1008,11 @@ export async function runAutomaticDispatchSweep() {
     } catch {
       /* logged in order */
     }
+    try {
+      await sendOrderWhatsapp(o.id);
+    } catch {
+      /* já logado no pedido */
+    }
   }
   return { ran };
 }
