@@ -234,7 +234,7 @@ export const updateOrderStatus = createServerFn({ method: "POST" })
     const { error } = await supabaseAdmin.from("product_orders").update(patch as any).eq("id", data.id);
     if (error) throw new Error(error.message);
 
-    // Credita comissão do afiliado quando a transição é para "paid" (aprovação manual).
+    // Credita comissão do afiliado e dispara envios quando a transição é para "paid" (aprovação manual).
     if (data.status === "paid" && (prev as any)?.status !== "paid") {
       try {
         const { creditAffiliateForProductOrder } = await import(
@@ -244,6 +244,19 @@ export const updateOrderStatus = createServerFn({ method: "POST" })
       } catch (e) {
         console.error("[updateOrderStatus] affiliate credit failed", e);
       }
+      // Fire-and-forget: gera PDF real + email + WhatsApp.
+      (async () => {
+        try {
+          await runDispatchForOrder(data.id, "both");
+        } catch (e) {
+          console.error("[updateOrderStatus] email/pdf dispatch failed", e);
+        }
+        try {
+          await sendOrderWhatsapp(data.id);
+        } catch (e) {
+          console.error("[updateOrderStatus] whatsapp dispatch failed", e);
+        }
+      })();
     }
     return { ok: true };
   });
