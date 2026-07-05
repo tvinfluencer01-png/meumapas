@@ -36,7 +36,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell } from "recharts";
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell, Legend } from "recharts";
 import {
   LayoutDashboard, Users, Package, Percent, HandCoins, MessageSquare, ImageIcon,
   Megaphone, Trophy, FileBarChart, Settings as SettingsIcon, ScrollText, Download,
@@ -257,11 +257,11 @@ function DashboardSection() {
   if (isLoading || !data) return <div className="p-6 text-center text-muted-foreground"><Loader2 className="size-5 animate-spin inline mr-2" />Carregando…</div>;
   const k = data.kpis;
   const pieData = [
-    { name: "Disponível", value: k.commAvailableCents },
-    { name: "Pendente", value: k.commPendingCents },
-    { name: "Pago", value: k.commPaidCents },
+    { name: "Disponível", value: k.commAvailableCents, color: "#10b981", gradId: "grad-avail" },
+    { name: "Pendente", value: k.commPendingCents, color: "#f59e0b", gradId: "grad-pend" },
+    { name: "Pago", value: k.commPaidCents, color: "#6366f1", gradId: "grad-paid" },
   ];
-  const COLORS = ["hsl(var(--primary))", "hsl(var(--muted-foreground))", "hsl(var(--accent))"];
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -297,12 +297,35 @@ function DashboardSection() {
           <CardContent className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={pieData} dataKey="value" nameKey="name" outerRadius={80} label>
-                  {pieData.map((_, i) => <Cell key={i} fill={COLORS[i]} />)}
+                <defs>
+                  {pieData.map((d) => (
+                    <linearGradient key={d.gradId} id={d.gradId} x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stopColor={d.color} stopOpacity={0.95} />
+                      <stop offset="100%" stopColor={d.color} stopOpacity={0.55} />
+                    </linearGradient>
+                  ))}
+                </defs>
+                <Pie
+                  data={pieData}
+                  dataKey="value"
+                  nameKey="name"
+                  innerRadius={45}
+                  outerRadius={85}
+                  paddingAngle={3}
+                  stroke="hsl(var(--background))"
+                  strokeWidth={2}
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                >
+                  {pieData.map((d) => <Cell key={d.gradId} fill={`url(#${d.gradId})`} />)}
                 </Pie>
-                <Tooltip formatter={(v: any) => money(v)} />
+                <Tooltip
+                  formatter={(v: any) => money(v)}
+                  contentStyle={{ background: "hsl(var(--background))", border: "1px solid hsl(var(--border))", borderRadius: 8 }}
+                />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: 12 }} />
               </PieChart>
             </ResponsiveContainer>
+
           </CardContent>
         </Card>
       </div>
