@@ -127,8 +127,51 @@ async function handler({ request }: { request: Request }) {
 
   let processed = 0;
   let delivered = 0;
+  let retriesScheduled = 0;
+  let givenUp = 0;
+
+  const scheduleRetryOrGiveUp = async (s: any, errorMsg: string) => {
+    const nextAttempt = (Number(s.attempt_count) || 0) + 1;
+    if (nextAttempt >= MAX_ATTEMPTS) {
+      await supabaseAdmin
+        .from("horoscope_subscriptions")
+        .update({
+          last_sent_on: today,
+          attempt_count: 0,
+          next_retry_at: null,
+          last_attempt_at: nowIso,
+          last_error: `giveup after ${nextAttempt}: ${errorMsg}`.slice(0, 500),
+        })
+        .eq("id", s.id);
+      givenUp += 1;
+      await supabaseAdmin.from("horoscope_log").insert({
+        user_id: s.user_id, date: today, channel: "system", status: "giveup",
+        detail: `max attempts (${MAX_ATTEMPTS}) reached: ${errorMsg}`.slice(0, 500), sign: s.sun_sign,
+      });
+      return;
+    }
+    const delayMin = backoffMinutes(nextAttempt - 1);
+    const nextRetry = new Date(now.getTime() + delayMin * 60 * 1000).toISOString();
+    await supabaseAdmin
+      .from("horoscope_subscriptions")
+      .update({
+        attempt_count: nextAttempt,
+        next_retry_at: nextRetry,
+        last_attempt_at: nowIso,
+        last_error: errorMsg.slice(0, 500),
+      })
+      .eq("id", s.id);
+    retriesScheduled += 1;
+    await supabaseAdmin.from("horoscope_log").insert({
+      user_id: s.user_id, date: today, channel: "system", status: "retry_scheduled",
+      detail: `attempt ${nextAttempt}/${MAX_ATTEMPTS}, next in ${delayMin}min: ${errorMsg}`.slice(0, 500),
+      sign: s.sun_sign,
+    });
+  };
 
   const processOne = async (s: any) => {
+    let anyDelivered = false;
+    let deliveryError: string | null = null;
 
     if (!s.sun_sign) {
       await supabaseAdmin.from("horoscope_log").insert({
