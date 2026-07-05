@@ -64,11 +64,13 @@ async function handler({ request }: { request: Request }) {
 
   const subs = (allSubs ?? []).filter((s: any) => {
     if (force) return true;
-    // Compara em horário local de São Paulo. Fallback: send_hour_utc convertido (-3), senão 7h local.
+    // Compara em horário local de São Paulo (com precisão de minutos).
     const scheduledLocalHour = s.send_local_hour != null
       ? Number(s.send_local_hour)
       : (s.send_hour_utc != null ? (Number(s.send_hour_utc) - 3 + 24) % 24 : 7);
-    if (currentLocalHour < scheduledLocalHour) return false;
+    const scheduledLocalMinute = s.send_local_minute != null ? Number(s.send_local_minute) : 0;
+    const scheduledMinutesOfDay = scheduledLocalHour * 60 + scheduledLocalMinute;
+    if (currentMinutesOfDay < scheduledMinutesOfDay) return false;
     const freq = s.frequency ?? "daily";
     if (freq === "weekly") {
       return s.send_weekday != null && s.send_weekday === localDow;
