@@ -210,6 +210,7 @@ function RootComponent() {
         <SystemFeedbackHost />
         <PwaInstallPrompt />
         <SplashScreen minimumDuration={6500} />
+        <RouteTransitionIndicator />
       </AuthProvider>
     </QueryClientProvider>
   );
