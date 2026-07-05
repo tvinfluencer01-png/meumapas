@@ -299,7 +299,7 @@ async function handler({ request }: { request: Request }) {
               detail: `evo HTTP ${res.status}: ${t.slice(0, 180)}`, sign: s.sun_sign,
             });
           } else {
-            delivered += 1;
+            delivered += 1; anyDelivered = true;
             await supabaseAdmin.from("horoscope_log").insert({
               user_id: s.user_id, date: today, channel: "whatsapp", status: "sent",
               detail: "evolution", sign: s.sun_sign,
@@ -336,7 +336,7 @@ async function handler({ request }: { request: Request }) {
               detail: `HTTP ${res.status}: ${t.slice(0, 200)}`, sign: s.sun_sign,
             });
           } else {
-            delivered += 1;
+            delivered += 1; anyDelivered = true;
             await supabaseAdmin.from("horoscope_log").insert({
               user_id: s.user_id, date: today, channel: "whatsapp", status: "sent",
               detail: "twilio", sign: s.sun_sign,
@@ -376,7 +376,7 @@ async function handler({ request }: { request: Request }) {
             text: message,
             html,
           });
-          delivered += 1;
+          delivered += 1; anyDelivered = true;
           await supabaseAdmin.from("horoscope_log").insert({
             user_id: s.user_id, date: today, channel: "email", status: "sent",
             detail: "smtp", sign: s.sun_sign,
