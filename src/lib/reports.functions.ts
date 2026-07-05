@@ -1250,6 +1250,17 @@ Regras rígidas:
             .limit(30);
           rows = [...rows, ...(byTheme.data ?? [])];
         }
+        // Fallback final: se ainda não houver ilustrações específicas, usa qualquer
+        // ilustração ativa disponível para não deixar o relatório sem imagens.
+        if (rows.length === 0) {
+          const anyRows = await supabaseAdmin
+            .from("report_illustrations")
+            .select("id, storage_path, mime")
+            .eq("active", true)
+            .not("storage_path", "is", null)
+            .limit(30);
+          rows = anyRows.data ?? [];
+        }
         // dedup
         const seen = new Set<string>();
         const pool = rows.filter((r) => (seen.has(r.id) ? false : (seen.add(r.id), true)));
