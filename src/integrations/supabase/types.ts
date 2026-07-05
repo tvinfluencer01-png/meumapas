@@ -3711,6 +3711,7 @@ export type Database = {
           phone_e164: string | null
           send_hour_utc: number
           send_local_hour: number
+          send_local_minute: number
           send_weekday: number | null
           sun_sign: string | null
           updated_at: string
@@ -3729,6 +3730,7 @@ export type Database = {
           phone_e164?: string | null
           send_hour_utc?: number
           send_local_hour?: number
+          send_local_minute?: number
           send_weekday?: number | null
           sun_sign?: string | null
           updated_at?: string
@@ -3747,6 +3749,7 @@ export type Database = {
           phone_e164?: string | null
           send_hour_utc?: number
           send_local_hour?: number
+          send_local_minute?: number
           send_weekday?: number | null
           sun_sign?: string | null
           updated_at?: string

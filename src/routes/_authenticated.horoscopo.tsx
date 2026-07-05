@@ -44,6 +44,7 @@ function HoroscopoPage() {
   const [phone, setPhone] = useState("");
   const [frequency, setFrequency] = useState<"daily" | "weekly" | "alternate">("daily");
   const [sendHour, setSendHour] = useState<number>(7);
+  const [sendMinute, setSendMinute] = useState<number>(0);
   const [sendWeekday, setSendWeekday] = useState<number>(1);
 
   useEffect(() => {
@@ -56,6 +57,7 @@ function HoroscopoPage() {
     setPhone(s?.phone_e164 ?? data.defaults.phone_e164 ?? "");
     setFrequency((s?.frequency as any) ?? "daily");
     setSendHour(s?.send_local_hour ?? 7);
+    setSendMinute(s?.send_local_minute ?? 0);
     setSendWeekday(s?.send_weekday ?? 1);
   }, [data]);
 
@@ -70,6 +72,7 @@ function HoroscopoPage() {
           phone_e164: phone || null,
           frequency,
           send_local_hour: sendHour,
+          send_local_minute: sendMinute,
           send_weekday: frequency === "weekly" ? sendWeekday : null,
         },
       }),
@@ -178,14 +181,25 @@ function HoroscopoPage() {
 
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">Horário (BRT)</Label>
-            <Select value={String(sendHour)} onValueChange={(v) => setSendHour(Number(v))}>
+            <Select
+              value={`${sendHour}:${sendMinute}`}
+              onValueChange={(v) => {
+                const [h, m] = v.split(":").map(Number);
+                setSendHour(h);
+                setSendMinute(m);
+              }}
+            >
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent className="max-h-72">
-                {Array.from({ length: 24 }, (_, h) => (
-                  <SelectItem key={h} value={String(h)}>
-                    {String(h).padStart(2, "0")}:00
-                  </SelectItem>
-                ))}
+                {Array.from({ length: 48 }, (_, i) => {
+                  const h = Math.floor(i / 2);
+                  const m = (i % 2) * 30;
+                  return (
+                    <SelectItem key={`${h}:${m}`} value={`${h}:${m}`}>
+                      {String(h).padStart(2, "0")}:{String(m).padStart(2, "0")}
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>
