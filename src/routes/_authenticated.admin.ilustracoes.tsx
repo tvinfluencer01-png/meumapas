@@ -181,14 +181,16 @@ function IllustrationsPage() {
         <div className="flex flex-wrap gap-2">
           <Button
             variant="destructive"
-            onClick={() => {
-              if (
-                confirm(
-                  "APAGAR TODAS as ilustrações (banco + storage)? Esta ação é irreversível.",
-                )
-              ) {
-                purgeMut.mutate();
-              }
+            onClick={async () => {
+              const ok = await confirmDialog({
+                title: "Apagar todas as ilustrações?",
+                description:
+                  "Isso removerá TODAS as ilustrações do banco e do storage. Esta ação é irreversível.",
+                type: "warning",
+                destructive: true,
+                confirmText: "Apagar tudo",
+              });
+              if (ok) purgeMut.mutate();
             }}
             disabled={purgeMut.isPending}
           >
@@ -200,14 +202,15 @@ function IllustrationsPage() {
             Apagar tudo
           </Button>
           <Button
-            onClick={() => {
-              if (
-                confirm(
-                  "Gerar 12 banners variados para CADA tipo de relatório (12 produtos = 144 imagens)? Pode levar vários minutos.",
-                )
-              ) {
-                seedMut.mutate();
-              }
+            onClick={async () => {
+              const ok = await confirmDialog({
+                title: "Gerar banners para todos os relatórios?",
+                description:
+                  "Serão gerados 12 banners variados para CADA tipo de relatório (12 produtos = 144 imagens). Pode levar vários minutos.",
+                type: "info",
+                confirmText: "Gerar agora",
+              });
+              if (ok) seedMut.mutate();
             }}
             disabled={seedMut.isPending}
             className="bg-gradient-to-r from-gold to-amber-500 text-black hover:opacity-90"
