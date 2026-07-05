@@ -8,9 +8,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Copy, ExternalLink, Share2, QrCode, Package } from "lucide-react";
+import { Copy, ExternalLink, Share2, QrCode, Package, Trash2, History } from "lucide-react";
 import { toast } from "sonner";
 import { useMemo, useState } from "react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export const Route = createFileRoute("/affiliate/link")({
   component: Page,
@@ -28,6 +29,7 @@ function Content() {
   const { data: landings } = useQuery({ queryKey: ["public-landings"], queryFn: () => listFn() });
   const [utm, setUtm] = useState({ source: "", medium: "", campaign: "" });
   const [productSlug, setProductSlug] = useState<string>("");
+  const [saved, setSaved] = useState<SavedLink[]>(() => loadSaved());
 
   const code = (data as any)?.profile?.affiliate_code;
   const base = typeof window !== "undefined" ? window.location.origin : "";
@@ -143,18 +145,115 @@ function Content() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2"><QrCode className="size-4" /> QR Code</CardTitle>
-          <CardDescription>{productUrl ? "Do link do produto selecionado." : "Do link geral."}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <img src={qrUrl} alt="QR Code" className="rounded-md border" width={240} height={240} />
-        </CardContent>
-      </Card>
+      <div className="grid md:grid-cols-2 gap-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><QrCode className="size-4" /> QR Code</CardTitle>
+            <CardDescription>{productUrl ? "Do link do produto selecionado." : "Do link geral."}</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col items-center gap-3">
+            <img src={qrUrl} alt="QR Code" className="rounded-md border" width={240} height={240} />
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                const url = productUrl || refUrl;
+                const slug = productSlug || null;
+                const title = slug
+                  ? (landings ?? []).find((l: any) => l.slug === slug)?.title ?? slug
+                  : "Link geral";
+                setSaved((prev) => addSaved(prev, { url, title, slug, utm }));
+                toast.success("Link salvo!");
+              }}
+            >
+              Salvar este link
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><History className="size-4" /> Links salvos</CardTitle>
+            <CardDescription>Histórico local dos seus links gerados.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {saved.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Nenhum link salvo ainda. Clique em <em>Salvar este link</em> para começar.
+              </p>
+            ) : (
+              <ScrollArea className="h-[280px] pr-2">
+                <ul className="space-y-2">
+                  {saved.map((s) => (
+                    <li key={s.id} className="rounded-md border p-2 bg-muted/30 space-y-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-medium truncate">{s.title}</span>
+                        <span className="text-[10px] text-muted-foreground shrink-0">
+                          {new Date(s.created_at).toLocaleDateString("pt-BR")}
+                        </span>
+                      </div>
+                      <code className="block text-[10px] break-all text-muted-foreground">{s.url}</code>
+                      <div className="flex gap-1">
+                        <Button size="sm" variant="outline" className="h-7 px-2" onClick={() => copy(s.url)}>
+                          <Copy className="size-3" />
+                        </Button>
+                        <Button size="sm" variant="outline" className="h-7 px-2" asChild>
+                          <a href={s.url} target="_blank" rel="noreferrer"><ExternalLink className="size-3" /></a>
+                        </Button>
+                        <Button size="sm" variant="outline" className="h-7 px-2" onClick={() => share(s.url)}>
+                          <Share2 className="size-3" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 px-2 ml-auto text-destructive"
+                          onClick={() => setSaved((prev) => removeSaved(prev, s.id))}
+                        >
+                          <Trash2 className="size-3" />
+                        </Button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </ScrollArea>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
+
+type SavedLink = {
+  id: string;
+  url: string;
+  title: string;
+  slug: string | null;
+  utm: { source: string; medium: string; campaign: string };
+  created_at: number;
+};
+
+const SAVED_KEY = "affiliate.saved-links.v1";
+
+function loadSaved(): SavedLink[] {
+  if (typeof window === "undefined") return [];
+  try { return JSON.parse(localStorage.getItem(SAVED_KEY) ?? "[]"); } catch { return []; }
+}
+function persist(list: SavedLink[]) {
+  try { localStorage.setItem(SAVED_KEY, JSON.stringify(list)); } catch {}
+}
+function addSaved(prev: SavedLink[], input: Omit<SavedLink, "id" | "created_at">): SavedLink[] {
+  if (prev.some((s) => s.url === input.url)) return prev;
+  const next = [{ ...input, id: crypto.randomUUID(), created_at: Date.now() }, ...prev].slice(0, 50);
+  persist(next);
+  return next;
+}
+function removeSaved(prev: SavedLink[], id: string): SavedLink[] {
+  const next = prev.filter((s) => s.id !== id);
+  persist(next);
+  return next;
+}
+
 
 function HighlightedUrl({ url }: { url: string }) {
   try {
