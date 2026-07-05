@@ -8,9 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Copy, Download, ExternalLink, Search, Video, Image as ImageIcon, FileText, GraduationCap, Palette } from "lucide-react";
+import { Copy, Download, ExternalLink, Search, Video, Image as ImageIcon, FileText, GraduationCap, Palette, Sparkles, Hash, Type, Check } from "lucide-react";
 import { toast } from "sonner";
 import { useMemo, useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { buildCopyPack } from "@/lib/marketing-copy";
 
 export const Route = createFileRoute("/affiliate/materials")({
   component: Page,
