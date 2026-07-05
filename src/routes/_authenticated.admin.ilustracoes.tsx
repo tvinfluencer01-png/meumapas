@@ -357,10 +357,15 @@ function IllustrationsPage() {
                   key={it.id}
                   item={it}
                   onToggle={(active) => toggleMut.mutate({ id: it.id, active })}
-                  onDelete={() => {
-                    if (confirm("Remover esta ilustração permanentemente?")) {
-                      delMut.mutate(it.id);
-                    }
+                  onDelete={async () => {
+                    const ok = await confirmDialog({
+                      title: "Remover ilustração?",
+                      description: "Esta ilustração será removida permanentemente.",
+                      type: "warning",
+                      destructive: true,
+                      confirmText: "Remover",
+                    });
+                    if (ok) delMut.mutate(it.id);
                   }}
                 />
               ))}
