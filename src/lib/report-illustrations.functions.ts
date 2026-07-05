@@ -36,12 +36,21 @@ export const REPORT_KINDS = [
 const BANNER_FORMAT =
   "IMPORTANTE: composição em faixa panorâmica ultra-larga tipo banner de YouTube / capa de canal, letterbox cinematográfico, elemento principal centralizado horizontalmente ocupando toda a largura, muito espaço negativo (céu/atmosfera) acima e abaixo para permitir corte em altura reduzida, proporção visual aproximada 3:1 dentro do frame, sem texto, sem letras, sem rostos identificáveis, adequado como banner fino e largo de abertura de capítulo em relatório PDF.";
 
-// Cada variante altera paleta, técnica e mood — evita que as N imagens saiam parecidas.
+// 12 variantes distintas: paleta + técnica + ângulo/composição.
+// Combinadas evitam repetição visual até 12 imagens por tema.
 const STYLE_VARIANTS = [
-  "Estilo aquarela digital etérea, paleta violeta profundo, índigo e dourado, luz difusa e onírica, traços suaves e translúcidos.",
-  "Estilo ilustração editorial art nouveau, paleta esmeralda, bronze e marfim, contornos dourados finos, textura de papel antigo e mood místico solene.",
-  "Estilo pintura cósmica hiper-detalhada, paleta magenta, azul-noite e turquesa fosforescente, luz de nebulosa vibrante, atmosfera vívida e contemporânea.",
-  "Estilo gravura mística monocromática com toques metálicos, paleta grafite, cobre e ouro velho, textura de xilogravura, mood ancestral e sagrado.",
+  "Estilo aquarela digital etérea, paleta violeta profundo, índigo e dourado, luz difusa e onírica, composição centralizada simétrica.",
+  "Estilo ilustração editorial art nouveau, paleta esmeralda, bronze e marfim, contornos dourados finos, textura de papel antigo, composição em arco superior.",
+  "Estilo pintura cósmica hiper-detalhada, paleta magenta, azul-noite e turquesa fosforescente, luz de nebulosa vibrante, composição diagonal dinâmica.",
+  "Estilo gravura mística monocromática com toques metálicos, paleta grafite, cobre e ouro velho, textura de xilogravura, composição frontal solene.",
+  "Estilo vitral gótico luminoso, paleta rubi, safira e âmbar dourado, luz filtrada por chumbo negro, composição em painéis verticais.",
+  "Estilo aquarela oriental sumi-e, paleta tinta preta, vermelho vermelhão e ouro pálido, pinceladas gestuais, composição assimétrica com espaço vazio à direita.",
+  "Estilo iluminura medieval renascentista, paleta lápis-lazúli, verde-oliva e folha de ouro, ornamentos vegetais, composição em moldura decorativa.",
+  "Estilo surrealismo cósmico onírico, paleta pêssego pastel, lavanda e ciano leitoso, luz de alvorada, composição flutuante em nuvens.",
+  "Estilo mosaico bizantino, paleta terracota, azul-egípcio e ouro martelado, tesselas visíveis, composição radial mandálica.",
+  "Estilo ilustração botânica cientista vitoriana, paleta sépia, verde-musgo e cobre polido, traços de bico-de-pena finos, composição horizontal como friso.",
+  "Estilo pintura barroca chiaroscuro, paleta bordô profundo, dourado quente e negro veludo, luz dramática lateral, composição de baixo-alto contraste.",
+  "Estilo arte digital neon cyberpunk místico, paleta violeta-elétrico, ciano-neon e rosa quente, brilho holográfico, composição futurista simétrica.",
 ];
 
 function themePrompt(theme: string, custom?: string, variantIndex = 0) {
