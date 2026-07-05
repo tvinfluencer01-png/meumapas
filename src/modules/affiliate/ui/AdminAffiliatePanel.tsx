@@ -19,6 +19,7 @@ import {
   adminGetMenuCounters,
 } from "../admin.functions";
 import { adminGetAffiliateReports } from "../admin-reports.functions";
+import { chartTooltipProps } from "@/lib/chart-tooltip";
 import { useAffiliateRealtime } from "@/hooks/useAffiliateRealtime";
 import {
   adminListAffiliates, adminSetAffiliateStatus, adminGetSettings,
