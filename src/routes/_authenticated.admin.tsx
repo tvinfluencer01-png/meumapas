@@ -145,6 +145,13 @@ function AdminDashboard() {
       : "settings";
   const [tab, setTab] = useState(initialTab);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const unviewedFn = useServerFn(countUnviewedOrders);
+  const { data: unviewed } = useQuery({
+    queryKey: ["admin-unviewed-orders"],
+    queryFn: () => unviewedFn(),
+    refetchInterval: 30_000,
+  });
+  const unviewedCount = unviewed?.count ?? 0;
 
   function selectTab(value: string) {
     setTab(value);
