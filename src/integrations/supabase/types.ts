@@ -3699,6 +3699,7 @@ export type Database = {
       }
       horoscope_subscriptions: {
         Row: {
+          attempt_count: number
           channel_email: boolean
           channel_whatsapp: boolean
           client_profile_id: string | null
@@ -3707,7 +3708,10 @@ export type Database = {
           enabled: boolean
           frequency: string
           id: string
+          last_attempt_at: string | null
+          last_error: string | null
           last_sent_on: string | null
+          next_retry_at: string | null
           phone_e164: string | null
           send_hour_utc: number
           send_local_hour: number
@@ -3718,6 +3722,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          attempt_count?: number
           channel_email?: boolean
           channel_whatsapp?: boolean
           client_profile_id?: string | null
@@ -3726,7 +3731,10 @@ export type Database = {
           enabled?: boolean
           frequency?: string
           id?: string
+          last_attempt_at?: string | null
+          last_error?: string | null
           last_sent_on?: string | null
+          next_retry_at?: string | null
           phone_e164?: string | null
           send_hour_utc?: number
           send_local_hour?: number
@@ -3737,6 +3745,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          attempt_count?: number
           channel_email?: boolean
           channel_whatsapp?: boolean
           client_profile_id?: string | null
@@ -3745,7 +3754,10 @@ export type Database = {
           enabled?: boolean
           frequency?: string
           id?: string
+          last_attempt_at?: string | null
+          last_error?: string | null
           last_sent_on?: string | null
+          next_retry_at?: string | null
           phone_e164?: string | null
           send_hour_utc?: number
           send_local_hour?: number

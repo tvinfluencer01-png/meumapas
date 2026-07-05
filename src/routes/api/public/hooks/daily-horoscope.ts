@@ -58,12 +58,17 @@ async function handler({ request }: { request: Request }) {
     .from("horoscope_subscriptions")
     .select("*")
     .eq("enabled", true)
-    .or(force ? "id.not.is.null" : `last_sent_on.is.null,last_sent_on.lt.${today}`)
+    .or(force ? "id.not.is.null" : `last_sent_on.is.null,last_sent_on.lt.${today},next_retry_at.lte.${now.toISOString()}`)
     .limit(2000);
   if (error) return new Response(error.message, { status: 500 });
 
+  const nowIso = now.toISOString();
   const subs = (allSubs ?? []).filter((s: any) => {
     if (force) return true;
+    // Se há um retry agendado no futuro, pula. Se já passou, roda mesmo antes do horário.
+    if (s.next_retry_at) {
+      return new Date(s.next_retry_at).getTime() <= now.getTime();
+    }
     // Compara em horário local de São Paulo (com precisão de minutos).
     const scheduledLocalHour = s.send_local_hour != null
       ? Number(s.send_local_hour)
@@ -85,6 +90,10 @@ async function handler({ request }: { request: Request }) {
     }
     return true;
   });
+
+  // Retry policy
+  const MAX_ATTEMPTS = 5;
+  const backoffMinutes = (attempt: number) => Math.min(240, Math.pow(2, attempt) * 5); // 5,10,20,40,80,160,240
 
 
   const { data: twilio } = await supabaseAdmin
@@ -118,8 +127,51 @@ async function handler({ request }: { request: Request }) {
 
   let processed = 0;
   let delivered = 0;
+  let retriesScheduled = 0;
+  let givenUp = 0;
+
+  const scheduleRetryOrGiveUp = async (s: any, errorMsg: string) => {
+    const nextAttempt = (Number(s.attempt_count) || 0) + 1;
+    if (nextAttempt >= MAX_ATTEMPTS) {
+      await supabaseAdmin
+        .from("horoscope_subscriptions")
+        .update({
+          last_sent_on: today,
+          attempt_count: 0,
+          next_retry_at: null,
+          last_attempt_at: nowIso,
+          last_error: `giveup after ${nextAttempt}: ${errorMsg}`.slice(0, 500),
+        })
+        .eq("id", s.id);
+      givenUp += 1;
+      await supabaseAdmin.from("horoscope_log").insert({
+        user_id: s.user_id, date: today, channel: "system", status: "giveup",
+        detail: `max attempts (${MAX_ATTEMPTS}) reached: ${errorMsg}`.slice(0, 500), sign: s.sun_sign,
+      });
+      return;
+    }
+    const delayMin = backoffMinutes(nextAttempt - 1);
+    const nextRetry = new Date(now.getTime() + delayMin * 60 * 1000).toISOString();
+    await supabaseAdmin
+      .from("horoscope_subscriptions")
+      .update({
+        attempt_count: nextAttempt,
+        next_retry_at: nextRetry,
+        last_attempt_at: nowIso,
+        last_error: errorMsg.slice(0, 500),
+      })
+      .eq("id", s.id);
+    retriesScheduled += 1;
+    await supabaseAdmin.from("horoscope_log").insert({
+      user_id: s.user_id, date: today, channel: "system", status: "retry_scheduled",
+      detail: `attempt ${nextAttempt}/${MAX_ATTEMPTS}, next in ${delayMin}min: ${errorMsg}`.slice(0, 500),
+      sign: s.sun_sign,
+    });
+  };
 
   const processOne = async (s: any) => {
+    let anyDelivered = false;
+    let deliveryError: string | null = null;
 
     if (!s.sun_sign) {
       await supabaseAdmin.from("horoscope_log").insert({
@@ -205,6 +257,7 @@ async function handler({ request }: { request: Request }) {
         user_id: s.user_id, date: today, channel: "ai", status: "error",
         detail: detail || String(e), sign: s.sun_sign,
       });
+      await scheduleRetryOrGiveUp(s, `ai: ${detail || String(e)}`);
       return;
     }
 
@@ -241,21 +294,25 @@ async function handler({ request }: { request: Request }) {
           });
           if (!res.ok) {
             const t = await res.text();
+            const msg = `evo HTTP ${res.status}: ${t.slice(0, 180)}`;
+            deliveryError = msg;
             await supabaseAdmin.from("horoscope_log").insert({
               user_id: s.user_id, date: today, channel: "whatsapp", status: "error",
-              detail: `evo HTTP ${res.status}: ${t.slice(0, 180)}`, sign: s.sun_sign,
+              detail: msg, sign: s.sun_sign,
             });
           } else {
-            delivered += 1;
+            delivered += 1; anyDelivered = true;
             await supabaseAdmin.from("horoscope_log").insert({
               user_id: s.user_id, date: today, channel: "whatsapp", status: "sent",
               detail: "evolution", sign: s.sun_sign,
             });
           }
         } catch (e: any) {
+          const msg = String(e?.message ?? e).slice(0, 240);
+          deliveryError = `wa: ${msg}`;
           await supabaseAdmin.from("horoscope_log").insert({
             user_id: s.user_id, date: today, channel: "whatsapp", status: "error",
-            detail: String(e?.message ?? e).slice(0, 240), sign: s.sun_sign,
+            detail: msg, sign: s.sun_sign,
           });
         }
       } else if (twilio?.enabled && twilio.account_sid && twilio.auth_token && twilio.whatsapp_from) {
@@ -278,21 +335,25 @@ async function handler({ request }: { request: Request }) {
           );
           if (!res.ok) {
             const t = await res.text();
+            const msg = `twilio HTTP ${res.status}: ${t.slice(0, 200)}`;
+            deliveryError = msg;
             await supabaseAdmin.from("horoscope_log").insert({
               user_id: s.user_id, date: today, channel: "whatsapp", status: "error",
-              detail: `HTTP ${res.status}: ${t.slice(0, 200)}`, sign: s.sun_sign,
+              detail: msg, sign: s.sun_sign,
             });
           } else {
-            delivered += 1;
+            delivered += 1; anyDelivered = true;
             await supabaseAdmin.from("horoscope_log").insert({
               user_id: s.user_id, date: today, channel: "whatsapp", status: "sent",
               detail: "twilio", sign: s.sun_sign,
             });
           }
         } catch (e: any) {
+          const msg = String(e?.message ?? e).slice(0, 240);
+          deliveryError = `wa: ${msg}`;
           await supabaseAdmin.from("horoscope_log").insert({
             user_id: s.user_id, date: today, channel: "whatsapp", status: "error",
-            detail: String(e?.message ?? e).slice(0, 240), sign: s.sun_sign,
+            detail: msg, sign: s.sun_sign,
           });
         }
       } else {
@@ -323,15 +384,17 @@ async function handler({ request }: { request: Request }) {
             text: message,
             html,
           });
-          delivered += 1;
+          delivered += 1; anyDelivered = true;
           await supabaseAdmin.from("horoscope_log").insert({
             user_id: s.user_id, date: today, channel: "email", status: "sent",
             detail: "smtp", sign: s.sun_sign,
           });
         } catch (e: any) {
+          const msg = String(e?.message ?? e).slice(0, 240);
+          deliveryError = `email: ${msg}`;
           await supabaseAdmin.from("horoscope_log").insert({
             user_id: s.user_id, date: today, channel: "email", status: "error",
-            detail: String(e?.message ?? e).slice(0, 240), sign: s.sun_sign,
+            detail: msg, sign: s.sun_sign,
           });
         }
       } else {
@@ -342,14 +405,31 @@ async function handler({ request }: { request: Request }) {
       }
     }
 
-    await supabaseAdmin
-      .from("horoscope_subscriptions")
-      .update({ last_sent_on: today })
-      .eq("id", s.id);
+    // Finaliza: se entregou em ao menos um canal, marca como enviado; se falhou, agenda retry.
+    if (anyDelivered) {
+      await supabaseAdmin
+        .from("horoscope_subscriptions")
+        .update({
+          last_sent_on: today,
+          attempt_count: 0,
+          next_retry_at: null,
+          last_attempt_at: nowIso,
+          last_error: null,
+        })
+        .eq("id", s.id);
+    } else if (deliveryError) {
+      await scheduleRetryOrGiveUp(s, deliveryError);
+    } else {
+      // Nenhum canal configurado — evita loop infinito marcando como enviado.
+      await supabaseAdmin
+        .from("horoscope_subscriptions")
+        .update({ last_sent_on: today, last_attempt_at: nowIso })
+        .eq("id", s.id);
+    }
   };
 
   await Promise.allSettled((subs ?? []).map((s) => processOne(s).catch(() => {})));
 
 
-  return Response.json({ ok: true, processed, delivered });
+  return Response.json({ ok: true, processed, delivered, retriesScheduled, givenUp });
 }
