@@ -1173,7 +1173,7 @@ function ReportsSection() {
         <>
           <ReportTable
             title="Por landing page (produto)"
-            description="Quais páginas geram mais tráfego e vendas."
+            description="Quais páginas geram mais tráfego e vendas. Clique no nome para abrir a landing."
             rows={data.byLanding}
             columns={[
               ["key", "Landing"],
@@ -1183,8 +1183,14 @@ function ReportsSection() {
               ["revenueCents", "Receita"],
               ["conversionRate", "Conv. %"],
             ]}
+            hrefForKey={(row) => {
+              const k = String(row.key ?? "");
+              if (!k || k.startsWith("(")) return null;
+              return k.startsWith("/") ? k : `/${k}`;
+            }}
             onExport={() => downloadReportCSV("landings", data.byLanding, [["key","Landing"],["clicks","Cliques"],["uniqueVisitors","Visitantes"],["conversions","Conversoes"],["revenueCents","Receita_centavos"],["conversionRate","Conv_pct"]])}
           />
+
           <ReportTable
             title="Top afiliados por tráfego"
             description="Quem mais traz cliques e visitantes."
@@ -1230,7 +1236,19 @@ function ReportsSection() {
                     <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                     <XAxis dataKey="date" tick={{ fontSize: 10 }} />
                     <YAxis tick={{ fontSize: 10 }} />
-                    <Tooltip />
+                    <Tooltip
+                      contentStyle={{
+                        background: "hsl(var(--background))",
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: 8,
+                        color: "hsl(var(--foreground))",
+                        boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                      }}
+                      labelStyle={{ color: "hsl(var(--foreground))", fontWeight: 600 }}
+                      itemStyle={{ color: "hsl(var(--foreground))" }}
+                      cursor={{ stroke: "hsl(var(--primary))", strokeOpacity: 0.2, strokeWidth: 2 }}
+                    />
+
                     <Line type="monotone" dataKey="clicks" stroke="hsl(var(--primary))" strokeWidth={2} name="Cliques" />
                     <Line type="monotone" dataKey="conversions" stroke="#10b981" strokeWidth={2} name="Conversões" />
                   </LineChart>
@@ -1274,10 +1292,11 @@ function KPI({ label, value, tone }: { label: string; value: string; tone?: stri
 }
 
 function ReportTable({
-  title, description, rows, columns, onExport,
+  title, description, rows, columns, onExport, hrefForKey,
 }: {
   title: string; description?: string; rows: any[];
   columns: [string, string][]; onExport?: () => void;
+  hrefForKey?: (row: any) => string | null;
 }) {
   const fmt = (col: string, v: any) => {
     if (v == null) return "—";
@@ -1311,16 +1330,31 @@ function ReportTable({
               {rows.length === 0 && (
                 <tr><td colSpan={columns.length} className="px-3 py-4 text-center text-muted-foreground">Sem dados no período.</td></tr>
               )}
-              {rows.map((r, i) => (
-                <tr
-                  key={i}
-                  className={`border-b border-border/50 border-l-[3px] hover:bg-muted/40 transition-colors ${toneRow(toneByIndex(i))}`}
-                >
-                  {columns.map(([k]) => (
-                    <td key={k} className="px-3 py-1.5 truncate max-w-xs">{fmt(k, r[k])}</td>
-                  ))}
-                </tr>
-              ))}
+              {rows.map((r, i) => {
+                const href = hrefForKey?.(r) ?? null;
+                return (
+                  <tr
+                    key={i}
+                    className={`border-b border-border/50 border-l-[3px] hover:bg-muted/40 transition-colors ${toneRow(toneByIndex(i))}`}
+                  >
+                    {columns.map(([k]) => (
+                      <td key={k} className="px-3 py-1.5 truncate max-w-xs">
+                        {k === "key" && href ? (
+                          <a
+                            href={href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline font-medium"
+                            title={`Abrir ${href}`}
+                          >
+                            {fmt(k, r[k])}
+                          </a>
+                        ) : fmt(k, r[k])}
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -1328,6 +1362,7 @@ function ReportTable({
     </Card>
   );
 }
+
 
 // ═══════════════════════════════════════════════════════
 // SETTINGS
