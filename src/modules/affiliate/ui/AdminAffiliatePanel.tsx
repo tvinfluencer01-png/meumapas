@@ -19,6 +19,7 @@ import {
   adminGetMenuCounters,
 } from "../admin.functions";
 import { adminGetAffiliateReports } from "../admin-reports.functions";
+import { chartTooltipProps } from "@/lib/chart-tooltip";
 import { useAffiliateRealtime } from "@/hooks/useAffiliateRealtime";
 import {
   adminListAffiliates, adminSetAffiliateStatus, adminGetSettings,
@@ -284,7 +285,7 @@ function DashboardSection() {
                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                 <XAxis dataKey="date" tick={{ fontSize: 10 }} />
                 <YAxis tick={{ fontSize: 10 }} />
-                <Tooltip />
+                <Tooltip {...chartTooltipProps} />
                 <Line type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" name="Receita R$" />
                 <Line type="monotone" dataKey="orders" stroke="hsl(var(--accent))" name="Pedidos" />
               </LineChart>
@@ -324,8 +325,8 @@ function DashboardSection() {
                 </Pie>
 
                 <Tooltip
+                  {...chartTooltipProps}
                   formatter={(v: any) => money(v)}
-                  contentStyle={{ background: "hsl(var(--background))", border: "1px solid hsl(var(--border))", borderRadius: 8 }}
                 />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: 12 }} />
               </PieChart>
@@ -361,7 +362,7 @@ function DashboardSection() {
               <BarChart data={data.topProducts} layout="vertical">
                 <XAxis type="number" tick={{ fontSize: 10 }} />
                 <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 10 }} />
-                <Tooltip formatter={(v: any) => money(v)} />
+                <Tooltip {...chartTooltipProps} formatter={(v: any) => money(v)} />
                 <Bar dataKey="revenue" fill="hsl(var(--primary))" />
               </BarChart>
             </ResponsiveContainer>
@@ -1241,18 +1242,7 @@ function ReportsSection() {
                     <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                     <XAxis dataKey="date" tick={{ fontSize: 10 }} />
                     <YAxis tick={{ fontSize: 10 }} />
-                    <Tooltip
-                      contentStyle={{
-                        background: "hsl(var(--background))",
-                        border: "1px solid hsl(var(--border))",
-                        borderRadius: 8,
-                        color: "hsl(var(--foreground))",
-                        boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-                      }}
-                      labelStyle={{ color: "hsl(var(--foreground))", fontWeight: 600 }}
-                      itemStyle={{ color: "hsl(var(--foreground))" }}
-                      cursor={{ stroke: "hsl(var(--primary))", strokeOpacity: 0.2, strokeWidth: 2 }}
-                    />
+                    <Tooltip {...chartTooltipProps} />
 
                     <Line type="monotone" dataKey="clicks" stroke="hsl(var(--primary))" strokeWidth={2} name="Cliques" />
                     <Line type="monotone" dataKey="conversions" stroke="#10b981" strokeWidth={2} name="Conversões" />
