@@ -216,53 +216,109 @@ export const adminSyncCatalogProducts = createServerFn({ method: "POST" })
       sb.from("landing_packages").select("slug,name,price_cents,credits_per_month").eq("enabled", true),
       sb.from("credit_packages").select("name,credits,price_cents").eq("active", true),
       sb.from("product_landings").select("slug,title,description,price_cents").eq("active", true),
-      sb.from("affiliate_products").select("slug"),
+      sb.from("affiliate_products").select("id,slug,active"),
     ]);
 
-    const existingSlugs = new Set<string>((existing ?? []).map((r: any) => r.slug));
-    const toInsert: any[] = [];
+    const existingBySlug = new Map<string, any>((existing ?? []).map((r: any) => [r.slug, r]));
+    const desired: Array<{ slug: string; row: any }> = [];
 
     (plans ?? []).forEach((p: any) => {
-      const slug = `plan-${p.slug}`;
-      if (existingSlugs.has(slug)) return;
-      toInsert.push({
-        slug, name: `Plano ${p.name}`, category: "plano",
-        description: `Assinatura mensal — ${p.credits_per_month ?? 0} créditos/mês`,
-        price_cents: p.price_cents, commission_rate: 20, active: true,
-        metadata: { source: "landing_packages", source_slug: p.slug },
+      desired.push({
+        slug: `plan-${p.slug}`,
+        row: {
+          slug: `plan-${p.slug}`,
+          name: `Plano ${p.name}`,
+          category: "plano",
+          description: `Assinatura mensal — ${p.credits_per_month ?? 0} créditos/mês`,
+          price_cents: p.price_cents,
+          commission_rate: 20,
+          metadata: { source: "landing_packages", source_slug: p.slug },
+        },
       });
     });
 
     (credits ?? []).forEach((c: any) => {
       const slug = `credits-${String(c.name).toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
-      if (existingSlugs.has(slug)) return;
-      toInsert.push({
-        slug, name: c.name, category: "creditos",
-        description: `${c.credits} créditos avulsos`,
-        price_cents: c.price_cents, commission_rate: 15, active: true,
-        metadata: { source: "credit_packages", credits: c.credits },
+      desired.push({
+        slug,
+        row: {
+          slug,
+          name: c.name,
+          category: "creditos",
+          description: `${c.credits} créditos avulsos`,
+          price_cents: c.price_cents,
+          commission_rate: 15,
+          metadata: { source: "credit_packages", credits: c.credits },
+        },
       });
     });
 
     (landings ?? []).forEach((l: any) => {
       const slug = `report-${l.slug}`;
-      if (existingSlugs.has(slug)) return;
-      toInsert.push({
-        slug, name: l.title, category: "relatorio",
-        description: l.description ?? null,
-        price_cents: l.price_cents, commission_rate: 30, active: true,
-        metadata: { source: "product_landings", source_slug: l.slug },
+      desired.push({
+        slug,
+        row: {
+          slug,
+          name: l.title,
+          category: "relatorio",
+          description: l.description ?? null,
+          price_cents: l.price_cents,
+          commission_rate: 30,
+          metadata: { source: "product_landings", source_slug: l.slug },
+        },
       });
     });
+
+    const desiredSlugs = new Set(desired.map((d) => d.slug));
+    const toInsert: any[] = [];
+    let updated = 0;
+    let deactivated = 0;
+
+    for (const d of desired) {
+      const ex = existingBySlug.get(d.slug);
+      if (!ex) {
+        toInsert.push({ ...d.row, active: true });
+      } else {
+        // Preserve admin-controlled `active` and commission overrides via update on catalog fields only
+        const { error } = await sb
+          .from("affiliate_products")
+          .update({
+            name: d.row.name,
+            description: d.row.description,
+            category: d.row.category,
+            price_cents: d.row.price_cents,
+            metadata: d.row.metadata,
+          })
+          .eq("id", ex.id);
+        if (error) throw new Error(error.message);
+        updated++;
+      }
+    }
 
     if (toInsert.length > 0) {
       const { error } = await sb.from("affiliate_products").insert(toInsert);
       if (error) throw new Error(error.message);
     }
 
-    await writeLog(context, "admin.product.sync", { inserted: toInsert.length });
-    return { inserted: toInsert.length, total: (existing?.length ?? 0) + toInsert.length };
+    // Desativa itens que saíram do catálogo (fonte conhecida mas não mais listada)
+    for (const ex of existingBySlug.values()) {
+      const isCatalogSourced = ex.slug.startsWith("plan-") || ex.slug.startsWith("credits-") || ex.slug.startsWith("report-");
+      if (isCatalogSourced && !desiredSlugs.has(ex.slug) && ex.active !== false) {
+        const { error } = await sb.from("affiliate_products").update({ active: false }).eq("id", ex.id);
+        if (error) throw new Error(error.message);
+        deactivated++;
+      }
+    }
+
+    await writeLog(context, "admin.product.sync", { inserted: toInsert.length, updated, deactivated });
+    return {
+      inserted: toInsert.length,
+      updated,
+      deactivated,
+      total: (existing?.length ?? 0) + toInsert.length,
+    };
   });
+
 
 // ────────────────────────────────────────────────────────────
 // COMMISSION RULES
