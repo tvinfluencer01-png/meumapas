@@ -21,6 +21,8 @@ import {
   trackAffiliateSignup,
 } from "@/modules/affiliate/lib/client-tracking";
 import { AffiliateDebugPanel } from "@/modules/affiliate/ui/AffiliateDebugPanel";
+import { MapaEspiritualLanding } from "@/components/landings/MapaEspiritualLanding";
+
 
 export const Route = createFileRoute("/p/$slug")({
   loader: async ({ params }) => {
@@ -93,6 +95,21 @@ function ProductLandingPage() {
   });
 
   if (!landing) return <NotFound />;
+
+  if (landing.slug === "mapa-espiritual") {
+    return (
+      <MapaEspiritualLanding
+        landing={landing as any}
+        onCheckoutSuccess={(orderId) => {
+          void Promise.allSettled([
+            trackAffiliateSignup({ reference: orderId ?? landingRef }),
+            trackAffiliateCheckout({ value_cents: landing.price_cents, reference: orderId ?? landingRef }),
+          ]);
+        }}
+      />
+    );
+  }
+
 
   // Ensure email + full_name are always collected for account provisioning
   const required = Array.from(new Set([
