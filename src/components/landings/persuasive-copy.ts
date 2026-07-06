@@ -146,6 +146,57 @@ export const PERSUASIVE_COPY: Record<string, PersuasiveCopy> = {
     dialogTitle: "Dados para seu mapa astral",
     dialogDesc: "A precisão da hora e local de nascimento define a precisão do mapa. Após o pagamento criamos sua conta e enviamos o PDF por e-mail.",
   },
+
+  "mapa-do-amor": {
+    eyebrow: "Mapa do Amor · Leitura Íntima",
+    heroHeadline: "Seu coração fala uma língua.",
+    heroHeadlineAccent: "Chegou a hora de traduzi-la.",
+    heroSub: "Descubra <strong>como você ama, o que te atrai de verdade e os padrões invisíveis que sabotam seus relacionamentos</strong> — decifrados pelos astros do amor no seu mapa.",
+    heroBullets: [
+      "Por que você atrai sempre o mesmo tipo de pessoa",
+      "Sua verdadeira linguagem do amor (não é o que você pensa)",
+      "O que Vênus e Marte revelam sobre seu desejo e afeto",
+    ],
+    socialProofLabel: "4.9 · +3.200 corações lidos",
+    urgencyBar: "Leitura do amor — condição especial ativa esta semana",
+    livePurchase: "48 pessoas descobriram nas últimas 24h",
+    painEyebrow: "Se o amor parece um enigma…",
+    painHeadline: "Talvez você esteja amando <em>no idioma errado</em>.",
+    painBody: "Você se entrega, mas se sente incompreendida. Escolhe pessoas parecidas e o ciclo se repete. Não é falta de sorte — é <strong>um padrão inscrito no seu mapa que ninguém te mostrou como ler</strong>.",
+    pillarsEyebrow: "O que você vai desvendar",
+    pillarsHeadline: "6 camadas do seu amor",
+    pillars: [
+      { icon: Heart, title: "Sua Vênus", desc: "Como você ama, o que te encanta e o que te faz sentir amada de verdade." },
+      { icon: Flame, title: "Seu Marte", desc: "Desejo, paixão e a forma como você conquista — e como aparece nas brigas." },
+      { icon: HeartHandshake, title: "Casa 7 — Parcerias", desc: "O perfil da pessoa que seu mapa atrai (e do parceiro ideal pra sua evolução)." },
+      { icon: Moon, title: "Sua Lua no Amor", desc: "Do que sua alma precisa emocionalmente pra se sentir segura em um vínculo." },
+      { icon: Eye, title: "Padrões que Se Repetem", desc: "As feridas de infância que você projeta no amor — e como quebrar o loop." },
+      { icon: Star, title: "Janelas Astrais do Amor", desc: "Os melhores momentos dos próximos 12 meses pra encontros, DR e decisões." },
+    ],
+    testimonialsEyebrow: "Depoimentos de coração aberto",
+    testimonialsHeadline: "Elas leram e o amor mudou",
+    testimonials: [
+      { name: "Beatriz L.", text: "Chorei reconhecendo cada padrão. Terminei um ciclo tóxico depois dessa leitura.", rating: 5 },
+      { name: "Fernanda G.", text: "Meu marido leu comigo. Nunca conversamos tão fundo sobre o que a gente precisa.", rating: 5 },
+      { name: "Aline C.", text: "Descobri por que me apaixono pelo mesmo perfil sempre. Impossível não se ver ali.", rating: 5 },
+    ],
+    guaranteeTitle: "Garantia de 7 dias — sem risco",
+    guaranteeBody: "Leia com calma. Se não sentir que a leitura tocou algo verdadeiro em você, devolvemos <strong>100% do valor</strong>. Simples assim.",
+    faqEyebrow: "Perguntas frequentes",
+    faqHeadline: "Antes de abrir seu coração",
+    faqs: [
+      { q: "Em quanto tempo recebo?", a: "Em poucos minutos após o pagamento aprovado. Chega no seu e-mail e WhatsApp." },
+      { q: "Preciso da hora exata do nascimento?", a: "Sim, é o ideal pra ler Casa 7 e Vênus com precisão. Se não souber, geramos com aproximação." },
+      { q: "Serve pra quem está solteira?", a: "Sim — talvez seja o momento mais importante pra ler. Você entende o padrão antes de repeti-lo." },
+      { q: "É diferente do mapa astral comum?", a: "Aqui o foco é só amor: Vênus, Marte, Casa 5, Casa 7, Lua e trânsitos afetivos. Aprofundado nesse tema." },
+    ],
+    finalEyebrow: "O amor está esperando você entender",
+    finalHeadline: "Ou você repete o padrão.\nOu você <em>finalmente escolhe</em>.",
+    finalBody: "Menos que um jantar romântico. Uma leitura que muda como você ama pelos próximos anos.",
+    dialogTitle: "Dados para sua leitura do amor",
+    dialogDesc: "A precisão dos dados aprofunda a leitura. Após o pagamento criamos sua conta e enviamos o PDF por e-mail.",
+  },
+
 };
 
 export const PILL_ICONS = { Sparkles }; // export for future use
