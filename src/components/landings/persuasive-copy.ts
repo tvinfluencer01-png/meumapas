@@ -1,8 +1,11 @@
 import {
   Sparkles, Compass, Eye, Flame, Moon, HeartHandshake, Infinity as InfinityIcon,
-  Sun, Star, Target, Route, Users, Zap, Heart, Coins, Briefcase, Brain,
+  Sun, Star, Target, Users, Zap, Heart, Coins, Briefcase, Brain,
+  Leaf, Sprout, Building2, KeyRound, BookOpen, Scale, TrendingUp, Waves,
+  Shield, Handshake, Landmark, Activity, Sparkle, Clock, Feather, Gem,
   type LucideIcon,
 } from "lucide-react";
+
 
 export type PersuasivePillar = { icon: LucideIcon; title: string; desc: string };
 export type PersuasiveTestimonial = { name: string; text: string; rating: number };
