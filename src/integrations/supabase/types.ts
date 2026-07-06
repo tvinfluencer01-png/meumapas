@@ -2272,6 +2272,7 @@ export type Database = {
           updated_at: string
           user_id: string
           whatsapp: string
+          whatsapp_verified_at: string | null
         }
         Insert: {
           affiliate_code: string
@@ -2300,6 +2301,7 @@ export type Database = {
           updated_at?: string
           user_id: string
           whatsapp: string
+          whatsapp_verified_at?: string | null
         }
         Update: {
           affiliate_code?: string
@@ -2328,6 +2330,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           whatsapp?: string
+          whatsapp_verified_at?: string | null
         }
         Relationships: []
       }
@@ -2873,6 +2876,47 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      affiliate_verification_codes: {
+        Row: {
+          affiliate_id: string
+          attempts: number
+          channel: string
+          code_hash: string
+          consumed_at: string | null
+          created_at: string
+          expires_at: string
+          id: string
+        }
+        Insert: {
+          affiliate_id: string
+          attempts?: number
+          channel?: string
+          code_hash: string
+          consumed_at?: string | null
+          created_at?: string
+          expires_at: string
+          id?: string
+        }
+        Update: {
+          affiliate_id?: string
+          attempts?: number
+          channel?: string
+          code_hash?: string
+          consumed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_verification_codes_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       affiliate_webhook_events: {
         Row: {
