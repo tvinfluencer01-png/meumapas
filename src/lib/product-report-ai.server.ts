@@ -52,10 +52,46 @@ const TYPE_META: Record<string, { title: string; focus: string }> = {
     title: "Cabala Pessoal",
     focus: "Sephirot e caminhos da Árvore da Vida ativos no consulente.",
   },
+  love: {
+    title: "Mapa do Amor",
+    focus:
+      "Analise Sol, Lua, Vênus e Marte no amor. Padrões afetivos, feridas, tipo ideal de parceiro(a), magnetismo, sexualidade e caminhos para atrair um amor saudável.",
+  },
+  career: {
+    title: "Mapa da Vocação e Carreira",
+    focus:
+      "Analise Meio-do-Céu, Casa 10, Sol e Saturno. Talentos vocacionais, profissões alinhadas, ciclos de prosperidade profissional, liderança e bloqueios.",
+  },
+  spiritual: {
+    title: "Mapa Espiritual",
+    focus:
+      "Missão kármica, ferida ancestral, dons mediúnicos, portais de despertar e práticas espirituais alinhadas ao mapa e à numerologia.",
+  },
+  finance: {
+    title: "Mapa da Prosperidade Financeira",
+    focus:
+      "Padrões financeiros, crenças de escassez/abundância, talentos monetizáveis, ciclos de prosperidade e estratégias concretas de gestão e investimento.",
+  },
+  family: {
+    title: "Mapa Familiar & Ancestral",
+    focus:
+      "Padrões familiares herdados, papel no clã, ferida ancestral, dinâmicas com pais/irmãos/filhos e rituais de cura da linhagem.",
+  },
+  health: {
+    title: "Mapa da Saúde Integrativa",
+    focus:
+      "Tendências de vitalidade, pontos sensíveis, padrões emocionais que afetam a saúde, ritmo ideal e práticas integrativas. Nunca dar diagnóstico clínico — sempre reforçar que não substitui acompanhamento médico.",
+  },
+  friendships: {
+    title: "Mapa das Amizades e Círculo Social",
+    focus:
+      "Padrões sociais, perfis de amigos que combinam, feridas de pertencimento, liderança em grupo e práticas para cultivar círculos verdadeiros.",
+  },
   custom: {
     title: "Consulta Personalizada",
     focus: "Interprete os dados fornecidos com profundidade espiritual.",
   },
+
 };
 
 function fmt(cd: CD): string {
