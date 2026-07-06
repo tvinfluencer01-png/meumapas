@@ -1,8 +1,66 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { createHash, randomInt } from "node:crypto";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { isValidCpf, normalizeCpf } from "./lib/cpf";
 import { generateAffiliateCode, generateSecret } from "./lib/codes";
+
+// ─────────────────────────────────────────────────────────────
+// WhatsApp verification helpers
+// ─────────────────────────────────────────────────────────────
+function hashCode(code: string) {
+  return createHash("sha256").update(code).digest("hex");
+}
+function maskWhatsapp(w: string) {
+  const d = w.replace(/\D/g, "");
+  if (d.length < 4) return "***";
+  return `${d.slice(0, 2)}****${d.slice(-2)}`;
+}
+async function sendWhatsappCode(phone: string, code: string) {
+  const { getAdmin } = await import("./affiliate.server");
+  const admin = await getAdmin();
+  const { data: evo } = await admin
+    .from("evolution_settings" as any)
+    .select("*")
+    .eq("enabled", true)
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const e = evo as any;
+  if (!e?.base_url || !e?.global_api_key || !e?.instance_name) {
+    throw new Error("Envio de WhatsApp indisponível: Evolution API não configurada.");
+  }
+  const base = String(e.base_url).replace(/\/+$/, "");
+  const text =
+    `✨ Programa de Afiliados\n\nSeu código de confirmação é: *${code}*\n\nEle expira em 10 minutos. Use-o para ativar seu login.`;
+  const res = await fetch(`${base}/message/sendText/${encodeURIComponent(e.instance_name)}`, {
+    method: "POST",
+    headers: { apikey: e.global_api_key, "Content-Type": "application/json" },
+    body: JSON.stringify({ number: phone.replace(/\D/g, ""), text }),
+  });
+  if (!res.ok) {
+    const t = await res.text().catch(() => "");
+    throw new Error(`Falha ao enviar código via WhatsApp (HTTP ${res.status}): ${t.slice(0, 160)}`);
+  }
+}
+async function issueVerificationCode(affiliateId: string, phone: string) {
+  const { getAdmin } = await import("./affiliate.server");
+  const admin = await getAdmin();
+  const code = String(randomInt(0, 1_000_000)).padStart(6, "0");
+  await admin
+    .from("affiliate_verification_codes" as any)
+    .update({ consumed_at: new Date().toISOString() })
+    .eq("affiliate_id", affiliateId)
+    .is("consumed_at", null);
+  await admin.from("affiliate_verification_codes" as any).insert({
+    affiliate_id: affiliateId,
+    code_hash: hashCode(code),
+    channel: "whatsapp",
+    expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+  });
+  await sendWhatsappCode(phone, code);
+}
+
 
 // ─────────────────────────────────────────────────────────────
 // Public: register affiliate (creates auth user + profile)
@@ -116,18 +174,128 @@ export const registerAffiliate = createServerFn({ method: "POST" })
     await emit("affiliate.registered", { affiliateId: (profile as any).id });
     if (autoApprove) await emit("affiliate.approved", { affiliateId: (profile as any).id });
 
-    // IMPORTANT: api key + token returned ONCE; never stored in raw form.
+    // Send WhatsApp verification code. Credentials are only revealed after
+    // the affiliate confirms the code on the verification screen.
+    let whatsappSent = true;
+    let sendError: string | null = null;
+    try {
+      await issueVerificationCode((profile as any).id, data.whatsapp);
+    } catch (e: any) {
+      whatsappSent = false;
+      sendError = e?.message ?? "Falha ao enviar código.";
+    }
+
     return {
       ok: true,
       affiliateId: (profile as any).id,
       affiliateCode,
       status: (profile as any).status,
-      credentials: {
-        apiKey: apiKey.raw,
-        token: token.raw,
-      },
+      needsVerification: true,
+      whatsappMasked: maskWhatsapp(data.whatsapp),
+      whatsappSent,
+      sendError,
     };
   });
+
+// ─────────────────────────────────────────────────────────────
+// Public: resend WhatsApp verification code
+// ─────────────────────────────────────────────────────────────
+export const resendAffiliateVerification = createServerFn({ method: "POST" })
+  .inputValidator((input) => z.object({ affiliateId: z.string().uuid() }).parse(input))
+  .handler(async ({ data }) => {
+    const { getAdmin } = await import("./affiliate.server");
+    const admin = await getAdmin();
+    const { data: rl } = await admin.rpc("affiliate_check_rate_limit", {
+      _bucket: `verif:${data.affiliateId}`,
+      _limit: 5,
+      _window_seconds: 3600,
+    });
+    if (rl === false) throw new Error("Muitas tentativas. Aguarde antes de solicitar outro código.");
+    const { data: prof } = await admin
+      .from("affiliate_profiles" as any)
+      .select("id, whatsapp, whatsapp_verified_at")
+      .eq("id", data.affiliateId)
+      .maybeSingle();
+    if (!prof) throw new Error("Afiliado não encontrado.");
+    if ((prof as any).whatsapp_verified_at) return { ok: true, alreadyVerified: true };
+    await issueVerificationCode((prof as any).id, (prof as any).whatsapp);
+    return { ok: true, whatsappMasked: maskWhatsapp((prof as any).whatsapp) };
+  });
+
+// ─────────────────────────────────────────────────────────────
+// Public: verify WhatsApp code → activates login and reveals credentials
+// ─────────────────────────────────────────────────────────────
+export const verifyAffiliateWhatsapp = createServerFn({ method: "POST" })
+  .inputValidator((input) =>
+    z.object({
+      affiliateId: z.string().uuid(),
+      code: z.string().regex(/^\d{6}$/),
+    }).parse(input),
+  )
+  .handler(async ({ data }) => {
+    const { getAdmin, writeAudit } = await import("./affiliate.server");
+    const admin = await getAdmin();
+
+    const { data: prof } = await admin
+      .from("affiliate_profiles" as any)
+      .select("id, user_id, affiliate_code, whatsapp_verified_at")
+      .eq("id", data.affiliateId)
+      .maybeSingle();
+    if (!prof) throw new Error("Afiliado não encontrado.");
+
+    const { data: row } = await admin
+      .from("affiliate_verification_codes" as any)
+      .select("*")
+      .eq("affiliate_id", data.affiliateId)
+      .is("consumed_at", null)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (!row) throw new Error("Nenhum código ativo. Solicite um novo.");
+    const r = row as any;
+    if (new Date(r.expires_at).getTime() < Date.now()) {
+      throw new Error("Código expirado. Solicite um novo.");
+    }
+    if (r.attempts >= 5) throw new Error("Muitas tentativas. Solicite um novo código.");
+    if (r.code_hash !== hashCode(data.code)) {
+      await admin
+        .from("affiliate_verification_codes" as any)
+        .update({ attempts: r.attempts + 1 })
+        .eq("id", r.id);
+      throw new Error("Código inválido.");
+    }
+
+    const apiKey = generateSecret(32);
+    const token = generateSecret(24);
+
+    await admin
+      .from("affiliate_profiles" as any)
+      .update({
+        whatsapp_verified_at: new Date().toISOString(),
+        api_key_hash: apiKey.hash,
+        token_hash: token.hash,
+      })
+      .eq("id", data.affiliateId);
+
+    await admin
+      .from("affiliate_verification_codes" as any)
+      .update({ consumed_at: new Date().toISOString() })
+      .eq("id", r.id);
+
+    await writeAudit({
+      actorId: (prof as any).user_id,
+      action: "affiliate.whatsapp_verified",
+      entity: "affiliate_profile",
+      entityId: data.affiliateId,
+    });
+
+    return {
+      ok: true,
+      affiliateCode: (prof as any).affiliate_code,
+      credentials: { apiKey: apiKey.raw, token: token.raw },
+    };
+  });
+
 
 // ─────────────────────────────────────────────────────────────
 // Authenticated: my profile + stats

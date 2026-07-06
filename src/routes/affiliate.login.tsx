@@ -1,11 +1,16 @@
 import { useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  resendAffiliateVerification,
+  verifyAffiliateWhatsapp,
+} from "@/modules/affiliate/affiliate.functions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Eye, EyeOff, Sparkles, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Sparkles, Loader2, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/affiliate/login")({
@@ -20,10 +25,16 @@ export const Route = createFileRoute("/affiliate/login")({
 
 function AffiliateLoginPage() {
   const navigate = useNavigate();
+  const resendFn = useServerFn(resendAffiliateVerification);
+  const verifyFn = useServerFn(verifyAffiliateWhatsapp);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [needsVerification, setNeedsVerification] = useState<
+    null | { affiliateId: string; whatsappMasked: string }
+  >(null);
+  const [code, setCode] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -39,7 +50,7 @@ function AffiliateLoginPage() {
       // Verifica que a conta é de afiliado
       const { data: profile } = await supabase
         .from("affiliate_profiles" as any)
-        .select("id, status")
+        .select("id, status, whatsapp, whatsapp_verified_at")
         .eq("user_id", signIn.user.id)
         .maybeSingle();
 
@@ -48,7 +59,29 @@ function AffiliateLoginPage() {
         toast.error("Esta conta não é de afiliado. Cadastre-se no Programa de Afiliados.");
         return;
       }
-      const status = (profile as any).status;
+
+      const p = profile as any;
+      if (!p.whatsapp_verified_at) {
+        // Bloqueia acesso até confirmar WhatsApp.
+        await supabase.auth.signOut();
+        try {
+          const res: any = await resendFn({ data: { affiliateId: p.id } });
+          setNeedsVerification({
+            affiliateId: p.id,
+            whatsappMasked: res.whatsappMasked ?? "seu WhatsApp",
+          });
+          toast.warning("Confirme seu WhatsApp para liberar o acesso. Enviamos um novo código.");
+        } catch (err: any) {
+          setNeedsVerification({
+            affiliateId: p.id,
+            whatsappMasked: String(p.whatsapp ?? "").replace(/\D/g, "").replace(/^(\d{2})\d+(\d{2})$/, "$1****$2"),
+          });
+          toast.error(err?.message ?? "Solicite um novo código de confirmação.");
+        }
+        return;
+      }
+
+      const status = p.status;
       if (status && status !== "approved" && status !== "active") {
         toast.warning("Sua conta de afiliado ainda não foi aprovada. Você poderá navegar, mas ações ficam limitadas.");
       } else {
@@ -62,6 +95,36 @@ function AffiliateLoginPage() {
     }
   }
 
+  async function handleVerify() {
+    if (!/^\d{6}$/.test(code) || !needsVerification) {
+      toast.error("Digite o código de 6 dígitos.");
+      return;
+    }
+    setLoading(true);
+    try {
+      await verifyFn({ data: { affiliateId: needsVerification.affiliateId, code } });
+      toast.success("WhatsApp confirmado! Faça login novamente.");
+      setNeedsVerification(null);
+      setCode("");
+    } catch (err: any) {
+      toast.error(err?.message ?? "Código inválido.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleResend() {
+    if (!needsVerification) return;
+    try {
+      await resendFn({ data: { affiliateId: needsVerification.affiliateId } });
+      toast.success("Novo código enviado pelo WhatsApp.");
+    } catch (err: any) {
+      toast.error(err?.message ?? "Falha ao reenviar código.");
+    }
+  }
+
+
+
   async function handleReset() {
     if (!email) {
       toast.error("Informe seu email para recuperar a senha.");
@@ -74,7 +137,55 @@ function AffiliateLoginPage() {
     else toast.success("Enviamos um link de recuperação para seu email.");
   }
 
+  if (needsVerification) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6">
+        <Card className="max-w-md w-full border-gold/40 shadow-lg">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MessageCircle className="size-5 text-gold" /> Confirme seu WhatsApp
+            </CardTitle>
+            <CardDescription>
+              Enviamos um código de 6 dígitos para <strong>{needsVerification.whatsappMasked}</strong>.
+              Após confirmar, seu login será liberado.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div>
+              <Label>Código de confirmação</Label>
+              <Input
+                inputMode="numeric"
+                maxLength={6}
+                placeholder="000000"
+                value={code}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                className="text-center text-lg tracking-[0.5em]"
+              />
+            </div>
+            <Button
+              className="w-full bg-gold text-primary-foreground hover:bg-gold-glow"
+              disabled={loading || code.length !== 6}
+              onClick={handleVerify}
+            >
+              {loading ? <Loader2 className="size-4 animate-spin mr-2" /> : null}
+              Confirmar e liberar login
+            </Button>
+            <div className="flex justify-between text-xs">
+              <button type="button" onClick={handleResend} className="text-muted-foreground hover:text-gold underline">
+                Reenviar código
+              </button>
+              <button type="button" onClick={() => setNeedsVerification(null)} className="text-muted-foreground hover:text-gold underline">
+                Voltar ao login
+              </button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
+
     <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-b from-background to-background/80">
       <Card className="max-w-md w-full border-gold/40 shadow-lg">
         <CardHeader>
