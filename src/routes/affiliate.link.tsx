@@ -187,41 +187,68 @@ function Content() {
                 Nenhum link salvo ainda. Clique em <em>Salvar este link</em> para começar.
               </p>
             ) : (
-              <ScrollArea className="h-[280px] pr-2">
-                <ul className="space-y-2">
-                  {saved.map((s) => (
-                    <li key={s.id} className="rounded-md border p-2 bg-muted/30 space-y-1">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs font-medium truncate">{s.title}</span>
-                        <span className="text-[10px] text-muted-foreground shrink-0">
-                          {new Date(s.created_at).toLocaleDateString("pt-BR")}
-                        </span>
-                      </div>
-                      <code className="block text-[10px] break-all text-muted-foreground">{s.url}</code>
-                      <div className="flex gap-1">
-                        <Button size="sm" variant="outline" className="h-7 px-2" onClick={() => copy(s.url)}>
-                          <Copy className="size-3" />
-                        </Button>
-                        <Button size="sm" variant="outline" className="h-7 px-2" asChild>
-                          <a href={s.url} target="_blank" rel="noreferrer"><ExternalLink className="size-3" /></a>
-                        </Button>
-                        <Button size="sm" variant="outline" className="h-7 px-2" onClick={() => share(s.url)}>
-                          <Share2 className="size-3" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-7 px-2 ml-auto text-destructive"
-                          onClick={() => setSaved((prev) => removeSaved(prev, s.id))}
-                        >
-                          <Trash2 className="size-3" />
-                        </Button>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </ScrollArea>
-            )}
+              <>
+                <ScrollArea className="h-[280px] pr-2">
+                  <ul className="space-y-2">
+                    {pagedSaved.map((s) => (
+                      <li key={s.id} className="rounded-md border p-2 bg-muted/30 space-y-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs font-medium truncate">{s.title}</span>
+                          <span className="text-[10px] text-muted-foreground shrink-0">
+                            {new Date(s.created_at).toLocaleDateString("pt-BR")}
+                          </span>
+                        </div>
+                        <code className="block text-[10px] break-all text-muted-foreground">{s.url}</code>
+                        <div className="flex gap-1">
+                          <Button size="sm" variant="outline" className="h-7 px-2" onClick={() => copy(s.url)}>
+                            <Copy className="size-3" />
+                          </Button>
+                          <Button size="sm" variant="outline" className="h-7 px-2" asChild>
+                            <a href={s.url} target="_blank" rel="noreferrer"><ExternalLink className="size-3" /></a>
+                          </Button>
+                          <Button size="sm" variant="outline" className="h-7 px-2" onClick={() => share(s.url)}>
+                            <Share2 className="size-3" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 px-2 ml-auto text-destructive"
+                            onClick={() => setSaved((prev) => removeSaved(prev, s.id))}
+                          >
+                            <Trash2 className="size-3" />
+                          </Button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </ScrollArea>
+                <div className="flex items-center justify-between pt-3 mt-2 border-t">
+                  <span className="text-[11px] text-muted-foreground">
+                    Página {currentPage} de {totalPages} · {saved.length} link{saved.length === 1 ? "" : "s"}
+                  </span>
+                  <div className="flex gap-1">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 px-2"
+                      disabled={currentPage <= 1}
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    >
+                      Anterior
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 px-2"
+                      disabled={currentPage >= totalPages}
+                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    >
+                      Próxima
+                    </Button>
+                  </div>
+                </div>
+              </>
+
           </CardContent>
         </Card>
       </div>
