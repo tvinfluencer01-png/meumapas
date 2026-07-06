@@ -21,7 +21,9 @@ import {
   trackAffiliateSignup,
 } from "@/modules/affiliate/lib/client-tracking";
 import { AffiliateDebugPanel } from "@/modules/affiliate/ui/AffiliateDebugPanel";
-import { MapaEspiritualLanding } from "@/components/landings/MapaEspiritualLanding";
+import { PersuasiveLanding } from "@/components/landings/PersuasiveLanding";
+import { PERSUASIVE_COPY } from "@/components/landings/persuasive-copy";
+
 
 
 export const Route = createFileRoute("/p/$slug")({
