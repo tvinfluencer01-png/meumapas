@@ -97,13 +97,8 @@ export function MapaEspiritualLanding({
         </span>
       </div>
 
-      <header className="relative z-10 flex items-center justify-between px-6 py-4 border-b border-border/40 backdrop-blur-sm bg-background/40">
-        <Link to="/" className="flex items-center gap-2.5">
-          <Logo sizeClassName="size-10" animation="float" />
-          <span className="font-serif text-lg shimmer-text">Código Cósmico</span>
-        </Link>
-        <Button variant="ghost" size="sm" asChild><Link to="/auth">Já tenho conta</Link></Button>
-      </header>
+
+
 
       <main className="relative z-10 max-w-6xl mx-auto px-6 py-10 lg:py-16">
         {/* HERO */}
