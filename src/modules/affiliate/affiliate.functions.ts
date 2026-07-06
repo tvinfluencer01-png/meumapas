@@ -1,8 +1,66 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { createHash, randomInt } from "node:crypto";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { isValidCpf, normalizeCpf } from "./lib/cpf";
 import { generateAffiliateCode, generateSecret } from "./lib/codes";
+
+// ─────────────────────────────────────────────────────────────
+// WhatsApp verification helpers
+// ─────────────────────────────────────────────────────────────
+function hashCode(code: string) {
+  return createHash("sha256").update(code).digest("hex");
+}
+function maskWhatsapp(w: string) {
+  const d = w.replace(/\D/g, "");
+  if (d.length < 4) return "***";
+  return `${d.slice(0, 2)}****${d.slice(-2)}`;
+}
+async function sendWhatsappCode(phone: string, code: string) {
+  const { getAdmin } = await import("./affiliate.server");
+  const admin = await getAdmin();
+  const { data: evo } = await admin
+    .from("evolution_settings" as any)
+    .select("*")
+    .eq("enabled", true)
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const e = evo as any;
+  if (!e?.base_url || !e?.global_api_key || !e?.instance_name) {
+    throw new Error("Envio de WhatsApp indisponível: Evolution API não configurada.");
+  }
+  const base = String(e.base_url).replace(/\/+$/, "");
+  const text =
+    `✨ Programa de Afiliados\n\nSeu código de confirmação é: *${code}*\n\nEle expira em 10 minutos. Use-o para ativar seu login.`;
+  const res = await fetch(`${base}/message/sendText/${encodeURIComponent(e.instance_name)}`, {
+    method: "POST",
+    headers: { apikey: e.global_api_key, "Content-Type": "application/json" },
+    body: JSON.stringify({ number: phone.replace(/\D/g, ""), text }),
+  });
+  if (!res.ok) {
+    const t = await res.text().catch(() => "");
+    throw new Error(`Falha ao enviar código via WhatsApp (HTTP ${res.status}): ${t.slice(0, 160)}`);
+  }
+}
+async function issueVerificationCode(affiliateId: string, phone: string) {
+  const { getAdmin } = await import("./affiliate.server");
+  const admin = await getAdmin();
+  const code = String(randomInt(0, 1_000_000)).padStart(6, "0");
+  await admin
+    .from("affiliate_verification_codes" as any)
+    .update({ consumed_at: new Date().toISOString() })
+    .eq("affiliate_id", affiliateId)
+    .is("consumed_at", null);
+  await admin.from("affiliate_verification_codes" as any).insert({
+    affiliate_id: affiliateId,
+    code_hash: hashCode(code),
+    channel: "whatsapp",
+    expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+  });
+  await sendWhatsappCode(phone, code);
+}
+
 
 // ─────────────────────────────────────────────────────────────
 // Public: register affiliate (creates auth user + profile)
