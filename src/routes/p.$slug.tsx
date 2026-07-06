@@ -98,11 +98,10 @@ function ProductLandingPage() {
 
   if (!landing) return <NotFound />;
 
-  if (landing.slug === "mapa-espiritual") {
-    return (
   const persuasiveCopy = PERSUASIVE_COPY[landing.slug];
   if (persuasiveCopy) {
     return (
+
       <PersuasiveLanding
         landing={landing as any}
         copy={persuasiveCopy}
