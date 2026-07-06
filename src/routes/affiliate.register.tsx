@@ -2,12 +2,16 @@ import { useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
-import { registerAffiliate } from "@/modules/affiliate/affiliate.functions";
+import {
+  registerAffiliate,
+  resendAffiliateVerification,
+  verifyAffiliateWhatsapp,
+} from "@/modules/affiliate/affiliate.functions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Eye, EyeOff, Sparkles, Copy, Check } from "lucide-react";
+import { Eye, EyeOff, Sparkles, Copy, Check, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { isValidCpf, normalizeCpf } from "@/modules/affiliate/lib/cpf";
 
@@ -21,9 +25,17 @@ export const Route = createFileRoute("/affiliate/register")({
   }),
 });
 
+type Pending = { affiliateId: string; whatsappMasked: string; whatsappSent: boolean };
+type Created = {
+  affiliateCode: string;
+  credentials: { apiKey: string; token: string };
+};
+
 function AffiliateRegisterPage() {
   const navigate = useNavigate();
   const registerFn = useServerFn(registerAffiliate);
+  const verifyFn = useServerFn(verifyAffiliateWhatsapp);
+  const resendFn = useServerFn(resendAffiliateVerification);
 
   const [form, setForm] = useState({
     fullName: "",
@@ -35,11 +47,9 @@ function AffiliateRegisterPage() {
   });
   const [showPw, setShowPw] = useState(false);
   const [showPw2, setShowPw2] = useState(false);
-  const [created, setCreated] = useState<null | {
-    affiliateCode: string;
-    status: string;
-    credentials: { apiKey: string; token: string };
-  }>(null);
+  const [pending, setPending] = useState<Pending | null>(null);
+  const [code, setCode] = useState("");
+  const [created, setCreated] = useState<Created | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
 
   function validate(): string | null {
@@ -66,13 +76,32 @@ function AffiliateRegisterPage() {
       });
     },
     onSuccess: (res: any) => {
-      setCreated({
-        affiliateCode: res.affiliateCode,
-        status: res.status,
-        credentials: res.credentials,
+      setPending({
+        affiliateId: res.affiliateId,
+        whatsappMasked: res.whatsappMasked,
+        whatsappSent: !!res.whatsappSent,
       });
-      toast.success("Cadastro realizado!");
+      if (res.whatsappSent) toast.success("Enviamos um código pelo WhatsApp.");
+      else toast.warning(res.sendError ?? "Não foi possível enviar o código agora.");
     },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const verifyMut = useMutation({
+    mutationFn: () => {
+      if (!/^\d{6}$/.test(code)) return Promise.reject(new Error("Digite o código de 6 dígitos."));
+      return verifyFn({ data: { affiliateId: pending!.affiliateId, code } });
+    },
+    onSuccess: (res: any) => {
+      setCreated({ affiliateCode: res.affiliateCode, credentials: res.credentials });
+      toast.success("WhatsApp confirmado! Cadastro concluído.");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const resendMut = useMutation({
+    mutationFn: () => resendFn({ data: { affiliateId: pending!.affiliateId } }),
+    onSuccess: () => toast.success("Novo código enviado pelo WhatsApp."),
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -91,9 +120,7 @@ function AffiliateRegisterPage() {
               <Sparkles className="size-5 text-gold" /> Cadastro concluído
             </CardTitle>
             <CardDescription>
-              {created.status === "approved"
-                ? "Sua conta já está ativa. Guarde suas credenciais — elas só aparecem uma vez."
-                : "Aguardando aprovação manual. Você receberá uma notificação. Mesmo assim, guarde suas credenciais agora."}
+              Guarde suas credenciais — elas só aparecem uma vez.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -101,9 +128,63 @@ function AffiliateRegisterPage() {
             <CredentialRow label="API Key" value={created.credentials.apiKey} copied={copied} onCopy={copy} />
             <CredentialRow label="Token" value={created.credentials.token} copied={copied} onCopy={copy} />
             <div className="flex justify-end pt-3 gap-2">
-              <Button variant="outline" asChild><Link to="/">Voltar</Link></Button>
-              <Button onClick={() => navigate({ to: "/affiliate/dashboard" })}>Ir para o painel</Button>
+              <Button variant="outline" asChild><Link to="/affiliate/login">Fazer login</Link></Button>
+              <Button onClick={() => navigate({ to: "/affiliate/login" })}>Entrar agora</Button>
             </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (pending) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6">
+        <Card className="max-w-md w-full border-gold/40">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MessageCircle className="size-5 text-gold" /> Confirme seu WhatsApp
+            </CardTitle>
+            <CardDescription>
+              Enviamos um código de 6 dígitos para <strong>{pending.whatsappMasked}</strong>.
+              Confirme para liberar o acesso ao painel.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div>
+              <Label>Código de confirmação</Label>
+              <Input
+                inputMode="numeric"
+                maxLength={6}
+                placeholder="000000"
+                value={code}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                className="text-center text-lg tracking-[0.5em]"
+              />
+            </div>
+            <Button
+              className="w-full bg-gold text-primary-foreground hover:bg-gold-glow"
+              disabled={verifyMut.isPending || code.length !== 6}
+              onClick={() => verifyMut.mutate()}
+            >
+              {verifyMut.isPending ? "Verificando…" : "Confirmar código"}
+            </Button>
+            <div className="flex justify-between text-xs">
+              <button
+                type="button"
+                className="text-muted-foreground hover:text-gold underline"
+                disabled={resendMut.isPending}
+                onClick={() => resendMut.mutate()}
+              >
+                {resendMut.isPending ? "Enviando…" : "Reenviar código"}
+              </button>
+              <Link to="/affiliate/login" className="text-gold underline">
+                Já confirmei — entrar
+              </Link>
+            </div>
+            <p className="text-[11px] text-center text-muted-foreground pt-1">
+              O código expira em 10 minutos.
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -117,12 +198,12 @@ function AffiliateRegisterPage() {
           <CardTitle className="flex items-center gap-2">
             <Sparkles className="size-5 text-gold" /> Programa de Afiliados
           </CardTitle>
-          <CardDescription>Preencha seus dados para se cadastrar. Aprovação conforme política.</CardDescription>
+          <CardDescription>Preencha seus dados. Vamos enviar um código pelo WhatsApp para confirmar seu cadastro.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           <Field label="Nome completo" value={form.fullName} onChange={(v) => setForm({ ...form, fullName: v })} />
           <Field label="Email" type="email" value={form.email} onChange={(v) => setForm({ ...form, email: v })} />
-          <Field label="WhatsApp" value={form.whatsapp} onChange={(v) => setForm({ ...form, whatsapp: v })} />
+          <Field label="WhatsApp (com DDD)" value={form.whatsapp} onChange={(v) => setForm({ ...form, whatsapp: v })} />
           <Field label="CPF" value={form.cpf} onChange={(v) => setForm({ ...form, cpf: v })} />
           <div>
             <Label>Senha</Label>
