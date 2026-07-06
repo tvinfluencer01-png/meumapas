@@ -15,7 +15,7 @@ export const Route = createFileRoute("/affiliate/reports")({
   head: () => ({
     meta: [
       { title: "Relatório de Tráfego — Affiliate Center" },
-      { name: "description", content: "De onde vem o seu tráfego: sites e origens externas que enviam visitantes." },
+      { name: "description", content: "De onde vem o seu tráfego: sites, UTMs, países, cidades, dispositivos." },
     ],
   }),
 });
@@ -25,6 +25,8 @@ const PERIODS = [
   { value: 30, label: "30 dias" },
   { value: 90, label: "90 dias" },
 ] as const;
+
+type Row = { key: string; clicks: number; uniqueVisitors: number };
 
 function AffiliateReportsPage() {
   const [days, setDays] = useState<number>(30);
@@ -59,7 +61,7 @@ function AffiliateReportsPage() {
               <BarChart3 className="size-6 text-gold" /> Relatório de Tráfego
             </h1>
             <p className="text-sm text-muted-foreground">
-              De onde vem o tráfego: sites e origens externas que enviaram visitantes ao seu link.
+              Sites, UTMs, geografia e dispositivos que enviaram visitantes ao seu link.
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -86,35 +88,43 @@ function AffiliateReportsPage() {
           <StatCard label="Diretos / sem referrer" value={data?.totals.directClicks ?? 0} loading={isLoading} />
         </div>
 
+        <BarBreakdown
+          title="Categorias de origem"
+          desc="Agrupamento por tipo (busca, redes sociais, mensageiros, email, direto)."
+          rows={data?.byCategory ?? []}
+          total={data?.totals.clicks ?? 0}
+          loading={isLoading}
+        />
+
+        <div className="grid gap-4 md:grid-cols-3">
+          <BarBreakdown title="UTM Source" rows={data?.byUtmSource ?? []} total={data?.totals.clicks ?? 0} loading={isLoading} compact />
+          <BarBreakdown title="UTM Medium" rows={data?.byUtmMedium ?? []} total={data?.totals.clicks ?? 0} loading={isLoading} compact />
+          <BarBreakdown title="UTM Campaign" rows={data?.byUtmCampaign ?? []} total={data?.totals.clicks ?? 0} loading={isLoading} compact />
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <BarBreakdown title="Países" rows={data?.byCountry ?? []} total={data?.totals.clicks ?? 0} loading={isLoading} compact />
+          <BarBreakdown title="Cidades" rows={data?.byCity ?? []} total={data?.totals.clicks ?? 0} loading={isLoading} compact />
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-3">
+          <BarBreakdown title="Dispositivo" rows={data?.byDevice ?? []} total={data?.totals.clicks ?? 0} loading={isLoading} compact />
+          <BarBreakdown title="Sistema" rows={data?.byOs ?? []} total={data?.totals.clicks ?? 0} loading={isLoading} compact />
+          <BarBreakdown title="Navegador" rows={data?.byBrowser ?? []} total={data?.totals.clicks ?? 0} loading={isLoading} compact />
+        </div>
+
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Categorias de origem</CardTitle>
-            <CardDescription>Agrupamento por tipo (busca, redes sociais, mensageiros, email, direto).</CardDescription>
+            <CardTitle className="text-lg">Evolução diária</CardTitle>
+            <CardDescription>Cliques por dia no período selecionado.</CardDescription>
           </CardHeader>
           <CardContent>
             {isLoading ? (
               <div className="text-sm text-muted-foreground">Carregando…</div>
-            ) : (data?.byCategory ?? []).length === 0 ? (
-              <div className="text-sm text-muted-foreground">Sem dados no período selecionado.</div>
+            ) : (data?.daily ?? []).length === 0 ? (
+              <div className="text-sm text-muted-foreground">Sem dados no período.</div>
             ) : (
-              <div className="space-y-2">
-                {data!.byCategory.map((c) => {
-                  const pct = data!.totals.clicks > 0 ? (c.clicks / data!.totals.clicks) * 100 : 0;
-                  return (
-                    <div key={c.key}>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="font-medium">{c.key}</span>
-                        <span className="text-muted-foreground">
-                          {c.clicks} cliques · {c.uniqueVisitors} visitantes · {pct.toFixed(1)}%
-                        </span>
-                      </div>
-                      <div className="h-2 bg-muted rounded mt-1">
-                        <div className="h-2 bg-gold rounded" style={{ width: `${pct}%` }} />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+              <DailyChart daily={data!.daily} />
             )}
           </CardContent>
         </Card>
@@ -189,5 +199,78 @@ function StatCard({ label, value, loading }: { label: string; value: number; loa
         <div className="text-2xl font-serif mt-1">{loading ? "…" : value.toLocaleString("pt-BR")}</div>
       </CardContent>
     </Card>
+  );
+}
+
+function BarBreakdown({
+  title,
+  desc,
+  rows,
+  total,
+  loading,
+  compact,
+}: {
+  title: string;
+  desc?: string;
+  rows: Row[];
+  total: number;
+  loading?: boolean;
+  compact?: boolean;
+}) {
+  const shown = compact ? rows.slice(0, 8) : rows;
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">{title}</CardTitle>
+        {desc && <CardDescription>{desc}</CardDescription>}
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <div className="text-sm text-muted-foreground">Carregando…</div>
+        ) : shown.length === 0 ? (
+          <div className="text-sm text-muted-foreground">Sem dados.</div>
+        ) : (
+          <div className="space-y-2">
+            {shown.map((c) => {
+              const pct = total > 0 ? (c.clicks / total) * 100 : 0;
+              return (
+                <div key={c.key}>
+                  <div className="flex items-center justify-between text-sm gap-2">
+                    <span className="font-medium truncate">{c.key}</span>
+                    <span className="text-muted-foreground text-xs whitespace-nowrap">
+                      {c.clicks} · {pct.toFixed(1)}%
+                    </span>
+                  </div>
+                  <div className="h-1.5 bg-muted rounded mt-1">
+                    <div className="h-1.5 bg-gold rounded" style={{ width: `${pct}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function DailyChart({ daily }: { daily: { date: string; clicks: number; referredClicks: number }[] }) {
+  const max = Math.max(1, ...daily.map((d) => d.clicks));
+  return (
+    <div className="flex items-end gap-1 h-40">
+      {daily.map((d) => {
+        const h = (d.clicks / max) * 100;
+        const hr = (d.referredClicks / max) * 100;
+        return (
+          <div key={d.date} className="flex-1 flex flex-col items-center gap-1" title={`${d.date}: ${d.clicks} cliques (${d.referredClicks} c/ referrer)`}>
+            <div className="w-full relative bg-muted rounded" style={{ height: "100%" }}>
+              <div className="absolute bottom-0 left-0 right-0 bg-gold/30 rounded" style={{ height: `${h}%` }} />
+              <div className="absolute bottom-0 left-0 right-0 bg-gold rounded" style={{ height: `${hr}%` }} />
+            </div>
+            <span className="text-[10px] text-muted-foreground truncate w-full text-center">{d.date.slice(5)}</span>
+          </div>
+        );
+      })}
+    </div>
   );
 }
