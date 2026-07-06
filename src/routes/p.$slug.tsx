@@ -96,6 +96,21 @@ function ProductLandingPage() {
 
   if (!landing) return <NotFound />;
 
+  if (landing.slug === "mapa-espiritual") {
+    return (
+      <MapaEspiritualLanding
+        landing={landing as any}
+        onCheckoutSuccess={(orderId) => {
+          void Promise.allSettled([
+            trackAffiliateSignup({ reference: orderId ?? landingRef }),
+            trackAffiliateCheckout({ value_cents: landing.price_cents, reference: orderId ?? landingRef }),
+          ]);
+        }}
+      />
+    );
+  }
+
+
   // Ensure email + full_name are always collected for account provisioning
   const required = Array.from(new Set([
     ...((landing.required_fields as string[]) ?? []),
