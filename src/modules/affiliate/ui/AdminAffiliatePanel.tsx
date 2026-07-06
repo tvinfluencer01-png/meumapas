@@ -542,7 +542,7 @@ function ProductsSection() {
   });
   const sync = useMutation({
     mutationFn: () => syncFn(),
-    onSuccess: (r: any) => { toast.success(`Sincronizado: ${r.inserted} novo(s) produto(s) adicionado(s)`); invalidate(); },
+    onSuccess: (r: any) => { toast.success(`Catálogo sincronizado — ${r.inserted} novo(s), ${r.updated} atualizado(s), ${r.deactivated} desativado(s)`); invalidate(); },
     onError: (e: any) => toast.error(e.message),
   });
   return (
