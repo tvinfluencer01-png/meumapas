@@ -100,9 +100,13 @@ function ProductLandingPage() {
 
   if (landing.slug === "mapa-espiritual") {
     return (
-      <MapaEspiritualLanding
+  const persuasiveCopy = PERSUASIVE_COPY[landing.slug];
+  if (persuasiveCopy) {
+    return (
+      <PersuasiveLanding
         landing={landing as any}
-        onCheckoutSuccess={(orderId) => {
+        copy={persuasiveCopy}
+        onCheckoutSuccess={(orderId: string | undefined) => {
           void Promise.allSettled([
             trackAffiliateSignup({ reference: orderId ?? landingRef }),
             trackAffiliateCheckout({ value_cents: landing.price_cents, reference: orderId ?? landingRef }),
@@ -111,6 +115,7 @@ function ProductLandingPage() {
       />
     );
   }
+
 
 
   // Ensure email + full_name are always collected for account provisioning
