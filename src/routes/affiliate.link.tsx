@@ -30,6 +30,11 @@ function Content() {
   const [utm, setUtm] = useState({ source: "", medium: "", campaign: "" });
   const [productSlug, setProductSlug] = useState<string>("");
   const [saved, setSaved] = useState<SavedLink[]>(() => loadSaved());
+  const [page, setPage] = useState(1);
+  const pageSize = 5;
+  const totalPages = Math.max(1, Math.ceil(saved.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const pagedSaved = saved.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const code = (data as any)?.profile?.affiliate_code;
   const base = typeof window !== "undefined" ? window.location.origin : "";
