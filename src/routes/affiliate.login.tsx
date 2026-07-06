@@ -137,7 +137,55 @@ function AffiliateLoginPage() {
     else toast.success("Enviamos um link de recuperação para seu email.");
   }
 
+  if (needsVerification) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6">
+        <Card className="max-w-md w-full border-gold/40 shadow-lg">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MessageCircle className="size-5 text-gold" /> Confirme seu WhatsApp
+            </CardTitle>
+            <CardDescription>
+              Enviamos um código de 6 dígitos para <strong>{needsVerification.whatsappMasked}</strong>.
+              Após confirmar, seu login será liberado.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div>
+              <Label>Código de confirmação</Label>
+              <Input
+                inputMode="numeric"
+                maxLength={6}
+                placeholder="000000"
+                value={code}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                className="text-center text-lg tracking-[0.5em]"
+              />
+            </div>
+            <Button
+              className="w-full bg-gold text-primary-foreground hover:bg-gold-glow"
+              disabled={loading || code.length !== 6}
+              onClick={handleVerify}
+            >
+              {loading ? <Loader2 className="size-4 animate-spin mr-2" /> : null}
+              Confirmar e liberar login
+            </Button>
+            <div className="flex justify-between text-xs">
+              <button type="button" onClick={handleResend} className="text-muted-foreground hover:text-gold underline">
+                Reenviar código
+              </button>
+              <button type="button" onClick={() => setNeedsVerification(null)} className="text-muted-foreground hover:text-gold underline">
+                Voltar ao login
+              </button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
+
     <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-b from-background to-background/80">
       <Card className="max-w-md w-full border-gold/40 shadow-lg">
         <CardHeader>
