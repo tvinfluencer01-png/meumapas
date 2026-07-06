@@ -1,11 +1,16 @@
 import { useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  resendAffiliateVerification,
+  verifyAffiliateWhatsapp,
+} from "@/modules/affiliate/affiliate.functions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Eye, EyeOff, Sparkles, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Sparkles, Loader2, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/affiliate/login")({
@@ -20,10 +25,16 @@ export const Route = createFileRoute("/affiliate/login")({
 
 function AffiliateLoginPage() {
   const navigate = useNavigate();
+  const resendFn = useServerFn(resendAffiliateVerification);
+  const verifyFn = useServerFn(verifyAffiliateWhatsapp);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [needsVerification, setNeedsVerification] = useState<
+    null | { affiliateId: string; whatsappMasked: string }
+  >(null);
+  const [code, setCode] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -39,7 +50,7 @@ function AffiliateLoginPage() {
       // Verifica que a conta é de afiliado
       const { data: profile } = await supabase
         .from("affiliate_profiles" as any)
-        .select("id, status")
+        .select("id, status, whatsapp, whatsapp_verified_at")
         .eq("user_id", signIn.user.id)
         .maybeSingle();
 
@@ -48,7 +59,29 @@ function AffiliateLoginPage() {
         toast.error("Esta conta não é de afiliado. Cadastre-se no Programa de Afiliados.");
         return;
       }
-      const status = (profile as any).status;
+
+      const p = profile as any;
+      if (!p.whatsapp_verified_at) {
+        // Bloqueia acesso até confirmar WhatsApp.
+        await supabase.auth.signOut();
+        try {
+          const res: any = await resendFn({ data: { affiliateId: p.id } });
+          setNeedsVerification({
+            affiliateId: p.id,
+            whatsappMasked: res.whatsappMasked ?? "seu WhatsApp",
+          });
+          toast.warning("Confirme seu WhatsApp para liberar o acesso. Enviamos um novo código.");
+        } catch (err: any) {
+          setNeedsVerification({
+            affiliateId: p.id,
+            whatsappMasked: String(p.whatsapp ?? "").replace(/\D/g, "").replace(/^(\d{2})\d+(\d{2})$/, "$1****$2"),
+          });
+          toast.error(err?.message ?? "Solicite um novo código de confirmação.");
+        }
+        return;
+      }
+
+      const status = p.status;
       if (status && status !== "approved" && status !== "active") {
         toast.warning("Sua conta de afiliado ainda não foi aprovada. Você poderá navegar, mas ações ficam limitadas.");
       } else {
@@ -61,6 +94,36 @@ function AffiliateLoginPage() {
       setLoading(false);
     }
   }
+
+  async function handleVerify() {
+    if (!/^\d{6}$/.test(code) || !needsVerification) {
+      toast.error("Digite o código de 6 dígitos.");
+      return;
+    }
+    setLoading(true);
+    try {
+      await verifyFn({ data: { affiliateId: needsVerification.affiliateId, code } });
+      toast.success("WhatsApp confirmado! Faça login novamente.");
+      setNeedsVerification(null);
+      setCode("");
+    } catch (err: any) {
+      toast.error(err?.message ?? "Código inválido.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleResend() {
+    if (!needsVerification) return;
+    try {
+      await resendFn({ data: { affiliateId: needsVerification.affiliateId } });
+      toast.success("Novo código enviado pelo WhatsApp.");
+    } catch (err: any) {
+      toast.error(err?.message ?? "Falha ao reenviar código.");
+    }
+  }
+
+
 
   async function handleReset() {
     if (!email) {
