@@ -11,13 +11,14 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
   LayoutDashboard, Link2, Image as ImageIcon, Wallet, HandCoins, History,
-  Bell, MessageSquare, User, Settings, Moon, Sun, LogOut, Sparkles, Trophy, Menu, X,
+  Bell, MessageSquare, User, Settings, Moon, Sun, LogOut, Sparkles, Trophy, Menu, X, BarChart3,
 } from "lucide-react";
 
 const MENU = [
   { to: "/affiliate/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/affiliate/link", label: "Meu Link", icon: Link2 },
   { to: "/affiliate/materials", label: "Materiais", icon: ImageIcon },
+  { to: "/affiliate/reports", label: "Relatório", icon: BarChart3 },
   { to: "/affiliate/financial", label: "Financeiro", icon: Wallet },
   { to: "/affiliate/withdraw", label: "Solicitar Saque", icon: HandCoins },
   { to: "/affiliate/history", label: "Histórico", icon: History },
@@ -28,6 +29,7 @@ const MENU = [
   { to: "/affiliate/account", label: "Minha Conta", icon: User },
   { to: "/affiliate/settings", label: "Configurações", icon: Settings },
 ] as const;
+
 
 export function AffiliateShell({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
