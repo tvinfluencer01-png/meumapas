@@ -21,7 +21,9 @@ import {
   trackAffiliateSignup,
 } from "@/modules/affiliate/lib/client-tracking";
 import { AffiliateDebugPanel } from "@/modules/affiliate/ui/AffiliateDebugPanel";
-import { MapaEspiritualLanding } from "@/components/landings/MapaEspiritualLanding";
+import { PersuasiveLanding } from "@/components/landings/PersuasiveLanding";
+import { PERSUASIVE_COPY } from "@/components/landings/persuasive-copy";
+
 
 
 export const Route = createFileRoute("/p/$slug")({
@@ -96,11 +98,14 @@ function ProductLandingPage() {
 
   if (!landing) return <NotFound />;
 
-  if (landing.slug === "mapa-espiritual") {
+  const persuasiveCopy = PERSUASIVE_COPY[landing.slug];
+  if (persuasiveCopy) {
     return (
-      <MapaEspiritualLanding
+
+      <PersuasiveLanding
         landing={landing as any}
-        onCheckoutSuccess={(orderId) => {
+        copy={persuasiveCopy}
+        onCheckoutSuccess={(orderId: string | undefined) => {
           void Promise.allSettled([
             trackAffiliateSignup({ reference: orderId ?? landingRef }),
             trackAffiliateCheckout({ value_cents: landing.price_cents, reference: orderId ?? landingRef }),
@@ -109,6 +114,7 @@ function ProductLandingPage() {
       />
     );
   }
+
 
 
   // Ensure email + full_name are always collected for account provisioning
