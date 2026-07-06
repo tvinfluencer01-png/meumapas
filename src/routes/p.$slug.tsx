@@ -21,6 +21,8 @@ import {
   trackAffiliateSignup,
 } from "@/modules/affiliate/lib/client-tracking";
 import { AffiliateDebugPanel } from "@/modules/affiliate/ui/AffiliateDebugPanel";
+import { MapaEspiritualLanding } from "@/components/landings/MapaEspiritualLanding";
+
 
 export const Route = createFileRoute("/p/$slug")({
   loader: async ({ params }) => {
