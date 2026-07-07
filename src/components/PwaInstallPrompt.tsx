@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Download, Menu, Sparkles, Share } from "lucide-react";
+import { logPwaInstallEvent } from "@/lib/pwa-events.functions";
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -50,6 +51,25 @@ export function PwaInstallPrompt() {
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
   const [open, setOpen] = useState(false);
   const [hintMode, setHintMode] = useState<"ios" | "browser" | null>(null);
+  const pathRef = useRef<string>("");
+  const shownLoggedRef = useRef(false);
+
+  const track = (
+    event: "shown" | "accepted" | "dismissed" | "installed",
+    hint: "ios" | "browser" | null,
+  ) => {
+    try {
+      void logPwaInstallEvent({
+        data: {
+          event,
+          path: pathRef.current || (typeof window !== "undefined" ? window.location.pathname : "/"),
+          hint_mode: hint,
+        },
+      });
+    } catch {
+      // ignore
+    }
+  };
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -58,26 +78,30 @@ export function PwaInstallPrompt() {
     // Don't show on product landing pages or the free horoscope landing
     const path = window.location.pathname;
     if (path.startsWith("/p/") || path.startsWith("/horoscopo-gratis")) return;
+    pathRef.current = path;
 
     const dismissed = Number(localStorage.getItem(DISMISS_KEY) || 0);
     if (dismissed && Date.now() - dismissed < DISMISS_TTL_MS) return;
 
+    const showPrompt = (mode: "ios" | "browser") => {
+      setHintMode((prev) => prev ?? mode);
+      setOpen(true);
+      if (!shownLoggedRef.current) {
+        shownLoggedRef.current = true;
+        track("shown", mode);
+      }
+    };
+
     const onBeforeInstall = (e: Event) => {
       e.preventDefault();
       setDeferred(e as BeforeInstallPromptEvent);
-      // Keep browser hint visible alongside the native install button so users
-      // see clear instructions if they dismiss the system prompt.
-      setHintMode((prev) => (prev === "ios" ? prev : "browser"));
-      setTimeout(() => setOpen(true), 1200);
+      setTimeout(() => showPrompt("browser"), 1200);
     };
     window.addEventListener("beforeinstallprompt", onBeforeInstall);
 
     // iOS doesn't fire beforeinstallprompt — show manual instructions
     if (isIOS()) {
-      const t = setTimeout(() => {
-        setHintMode("ios");
-        setOpen(true);
-      }, 1500);
+      const t = setTimeout(() => showPrompt("ios"), 1500);
       return () => {
         clearTimeout(t);
         window.removeEventListener("beforeinstallprompt", onBeforeInstall);
@@ -85,13 +109,12 @@ export function PwaInstallPrompt() {
     }
 
     // Some browsers/incognito sessions don't expose the native prompt.
-    // Still show clear install instructions so visitors know what to do.
-    const fallbackTimer = setTimeout(() => {
-      setHintMode("browser");
-      setOpen(true);
-    }, 2200);
+    const fallbackTimer = setTimeout(() => showPrompt("browser"), 2200);
 
-    const onInstalled = () => setOpen(false);
+    const onInstalled = () => {
+      track("installed", hintMode);
+      setOpen(false);
+    };
     window.addEventListener("appinstalled", onInstalled);
 
     return () => {
@@ -99,13 +122,15 @@ export function PwaInstallPrompt() {
       window.removeEventListener("beforeinstallprompt", onBeforeInstall);
       window.removeEventListener("appinstalled", onInstalled);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleInstall = async () => {
     if (!deferred) return;
     try {
       await deferred.prompt();
-      await deferred.userChoice;
+      const choice = await deferred.userChoice;
+      track(choice.outcome === "accepted" ? "accepted" : "dismissed", hintMode);
     } catch {
       // ignore
     } finally {
@@ -116,6 +141,7 @@ export function PwaInstallPrompt() {
   };
 
   const handleDismiss = () => {
+    if (open) track("dismissed", hintMode);
     localStorage.setItem(DISMISS_KEY, String(Date.now()));
     setOpen(false);
   };
