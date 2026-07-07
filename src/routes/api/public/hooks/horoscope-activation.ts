@@ -133,7 +133,7 @@ async function handler({ request }: { request: Request }) {
   // Idempotência: só ativa (e responde) se a linha ainda estiver pendente.
   const didActivate = await tryActivateLead(supabaseAdmin, lead.id, patch);
   const reply = settings?.confirmation_reply ??
-    `✨ Cadastro confirmado! A partir de amanhã, você receberá seu horóscopo por ${trialDays} dias.`;
+    `✨ Cadastro confirmado! A partir de hoje, você receberá seu horóscopo por ${trialDays} dias (no próximo horário configurado).`;
 
   const confirmationLead = {
     ...lead,

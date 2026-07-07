@@ -86,7 +86,7 @@ async function handler({ request }: { request: Request }) {
       if (lead.status === "active") {
         const trialDays = Number(settings?.trial_days ?? lead.trial_days ?? 7);
         const reply = settings?.confirmation_reply ??
-          `✨ Cadastro confirmado! A partir de amanhã, você receberá seu horóscopo por ${trialDays} dias.`;
+          `✨ Cadastro confirmado! A partir de hoje, você receberá seu horóscopo por ${trialDays} dias (no próximo horário configurado).`;
         const confirmation = await sendConfirmationIfNeeded(supabaseAdmin, lead, reply);
         if (confirmation.claimed) {
           await (supabaseAdmin as any).from("app_logs").insert({
@@ -205,7 +205,7 @@ async function handler({ request }: { request: Request }) {
 
 
       const reply = settings?.confirmation_reply ??
-        `✨ Cadastro confirmado! A partir de amanhã, você receberá seu horóscopo por ${trialDays} dias.`;
+        `✨ Cadastro confirmado! A partir de hoje, você receberá seu horóscopo por ${trialDays} dias (no próximo horário configurado).`;
       const confirmation = await sendConfirmationIfNeeded(supabaseAdmin, {
         ...lead,
         status: "active",
