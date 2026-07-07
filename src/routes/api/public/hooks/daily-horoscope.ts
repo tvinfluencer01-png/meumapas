@@ -62,23 +62,25 @@ async function handler({ request }: { request: Request }) {
     if (s.next_retry_at) {
       return new Date(s.next_retry_at).getTime() <= now.getTime();
     }
-    // Compara em horário local de São Paulo (com precisão de minutos).
+    // Avalia janela no fuso do assinante.
+    const ctx = localContextFor(s.timezone, now);
+    // Filtro "não enviado hoje" precisa usar o hoje local do assinante.
+    if (s.last_sent_on && s.last_sent_on >= ctx.today) return false;
+
     const scheduledLocalHour = s.send_local_hour != null
       ? Number(s.send_local_hour)
       : (s.send_hour_utc != null ? (Number(s.send_hour_utc) - 3 + 24) % 24 : 7);
     const scheduledLocalMinute = s.send_local_minute != null ? Number(s.send_local_minute) : 0;
     const scheduledMinutesOfDay = scheduledLocalHour * 60 + scheduledLocalMinute;
-    if (currentMinutesOfDay < scheduledMinutesOfDay) return false;
+    if (ctx.currentMinutesOfDay < scheduledMinutesOfDay) return false;
     const freq = s.frequency ?? "daily";
     if (freq === "weekly") {
-      return s.send_weekday != null && s.send_weekday === localDow;
+      return s.send_weekday != null && s.send_weekday === ctx.localDow;
     }
-
-
     if (freq === "alternate") {
       if (!s.last_sent_on) return true;
       const last = new Date(s.last_sent_on + "T00:00:00Z").getTime();
-      const diffDays = Math.floor((Date.parse(today + "T00:00:00Z") - last) / 86400000);
+      const diffDays = Math.floor((Date.parse(ctx.today + "T00:00:00Z") - last) / 86400000);
       return diffDays >= 2;
     }
     return true;
