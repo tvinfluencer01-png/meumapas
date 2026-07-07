@@ -327,3 +327,59 @@ export const adminDeleteHoroscopeLead = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+/* ---------- ADMIN: auto-configure Evolution webhook ---------- */
+
+export const adminConfigureEvolutionWebhook = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context as any);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: evo } = await (supabaseAdmin as any)
+      .from("evolution_settings").select("*").eq("id", true).maybeSingle();
+    if (!evo?.enabled || !evo?.base_url || !evo?.global_api_key || !evo?.instance_name) {
+      throw new Error("Configure Evolution (base_url, api_key, instance) e ative antes.");
+    }
+
+    const anonKey = process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.SUPABASE_ANON_KEY ?? "";
+    const webhookUrl = "https://meumapas.lovable.app/api/public/hooks/horoscope-activation";
+
+    const base_url = String(evo.base_url).replace(/\/+$/, "");
+    const instance = encodeURIComponent(evo.instance_name);
+
+    const attempt = async (body: any) => {
+      const r = await fetch(`${base_url}/webhook/set/${instance}`, {
+        method: "POST",
+        headers: { apikey: evo.global_api_key, "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      return { ok: r.ok, status: r.status, text: await r.text().catch(() => "") };
+    };
+
+    // Evolution v2 shape
+    let res = await attempt({
+      webhook: {
+        enabled: true,
+        url: webhookUrl,
+        byEvents: false,
+        base64: false,
+        headers: { apikey: anonKey, "Content-Type": "application/json" },
+        events: ["MESSAGES_UPSERT"],
+      },
+    });
+    if (!res.ok) {
+      // Evolution v1 flat shape
+      res = await attempt({
+        url: webhookUrl,
+        enabled: true,
+        webhook_by_events: false,
+        webhook_base64: false,
+        events: ["MESSAGES_UPSERT"],
+      });
+    }
+    if (!res.ok) {
+      throw new Error(`Falha ao configurar webhook (HTTP ${res.status}): ${res.text.slice(0, 200)}`);
+    }
+
+    return { ok: true, webhookUrl, instance: evo.instance_name };
+  });
