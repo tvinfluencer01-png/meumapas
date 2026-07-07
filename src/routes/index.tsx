@@ -236,6 +236,7 @@ function Nav() {
         </Link>
         <div className="hidden gap-10 text-xs uppercase tracking-[0.25em] text-muted-foreground md:flex">
           <a href="#recursos" className="transition-colors hover:text-gold">Recursos</a>
+          <a href="#relatorios" className="transition-colors hover:text-gold">Relatórios</a>
           <a href="#ia" className="transition-colors hover:text-gold">IA Espiritual</a>
           <Link to="/profissionais" className="transition-colors hover:text-gold">Profissionais</Link>
           <a href="#planos" className="transition-colors hover:text-gold">Planos</a>
