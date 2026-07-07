@@ -3720,6 +3720,7 @@ export type Database = {
           consent_user_agent: string | null
           created_at: string
           email: string
+          expiry_reminder_sent_at: string | null
           full_name: string
           id: string
           last_retry_at: string | null
@@ -3747,6 +3748,7 @@ export type Database = {
           consent_user_agent?: string | null
           created_at?: string
           email: string
+          expiry_reminder_sent_at?: string | null
           full_name: string
           id?: string
           last_retry_at?: string | null
@@ -3774,6 +3776,7 @@ export type Database = {
           consent_user_agent?: string | null
           created_at?: string
           email?: string
+          expiry_reminder_sent_at?: string | null
           full_name?: string
           id?: string
           last_retry_at?: string | null
@@ -3799,6 +3802,7 @@ export type Database = {
           consent_text: string
           cta_button_label: string
           enabled: boolean
+          expiry_reminder_minutes_before: number
           hero_subtitle: string
           hero_title: string
           id: boolean
@@ -3819,6 +3823,7 @@ export type Database = {
           consent_text?: string
           cta_button_label?: string
           enabled?: boolean
+          expiry_reminder_minutes_before?: number
           hero_subtitle?: string
           hero_title?: string
           id?: boolean
@@ -3839,6 +3844,7 @@ export type Database = {
           consent_text?: string
           cta_button_label?: string
           enabled?: boolean
+          expiry_reminder_minutes_before?: number
           hero_subtitle?: string
           hero_title?: string
           id?: boolean
