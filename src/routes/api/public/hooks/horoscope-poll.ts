@@ -61,16 +61,16 @@ async function handler({ request }: { request: Request }) {
   const inst = encodeURIComponent(evo.instance_name);
   const {
     buildActivationPatch,
-        collectWhatsappMessageRecords,
-        extractMessageTimestampMs,
+    collectWhatsappMessageRecords,
+    extractMessageTimestampMs,
     extractIncomingText,
     extractMessageRemoteJid,
     getWhatsAppJidCandidates,
     isIncomingWhatsappMessage,
     phoneMatches,
-        sendConfirmationIfNeeded,
-        textContainsActivationCode,
-        textContainsActivationKeyword,
+    sendConfirmationIfNeeded,
+    textContainsActivationCode,
+    textContainsActivationKeyword,
     tryActivateLead,
   } = await import("@/lib/horoscope-activation.server");
   let activated = 0;
