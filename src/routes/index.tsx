@@ -975,8 +975,8 @@ function FAQ() {
       a: "Você cadastra clientes ilimitados, gera mapas, numerologias, tarot e relatórios temáticos para cada um, e exporta PDFs com a SUA marca (logo, cores, fontes). É o seu consultório digital, completo.",
     },
     {
-      q: "E se eu não quiser assinar?",
-      a: "Sem problema. O plano Iniciante é grátis para sempre. Ou compre créditos avulsos que nunca expiram e use no seu ritmo.",
+      q: "E se eu não quiser assinar agora?",
+      a: "Sem problema. O plano Iniciante é grátis para sempre — você já experimenta o mapa astral, a numerologia básica e o Oráculo com créditos de boas-vindas. Quando fizer sentido, sobe para o plano Místico ou Profissional.",
     },
   ];
   return (
