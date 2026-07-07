@@ -57,6 +57,10 @@ function PreferenciaPage() {
   const [hour, setHour] = useState(8);
   const [minute, setMinute] = useState(30);
   const [weekday, setWeekday] = useState(1);
+  const [city, setCity] = useState("São Paulo - SP");
+  const browserTz = useMemo(() => {
+    try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch { return ""; }
+  }, []);
 
   const save = useMutation({
     mutationFn: () =>
@@ -66,6 +70,8 @@ function PreferenciaPage() {
           send_local_hour: hour,
           send_local_minute: minute,
           send_weekday: frequency === "weekly" ? weekday : null,
+          city,
+          timezone: browserTz || undefined,
         },
       }),
     onSuccess: () => {
