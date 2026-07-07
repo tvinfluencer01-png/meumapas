@@ -144,6 +144,8 @@ const PreferenceSchema = z.object({
   send_local_minute: z.number().int().min(0).max(59).default(30),
   send_weekday: z.number().int().min(0).max(6).nullable().optional(),
   phone_e164: z.string().trim().optional(),
+  timezone: z.string().trim().max(64).optional(),
+  city: z.string().trim().max(120).optional(),
 });
 
 export const saveHoroscopeSubscriptionPreference = createServerFn({ method: "POST" })
@@ -151,12 +153,24 @@ export const saveHoroscopeSubscriptionPreference = createServerFn({ method: "POS
   .inputValidator((d) => PreferenceSchema.parse(d))
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { findCity, timezoneForUF } = await import("@/lib/br-cities");
 
     const { data: { user } } = await (supabaseAdmin as any).auth.admin.getUserById(context.userId);
     const email = user?.email ?? null;
     const { data: prof } = await (supabaseAdmin as any)
       .from("profiles").select("phone").eq("id", context.userId).maybeSingle();
     const phone = data.phone_e164?.trim() || prof?.phone || null;
+
+    let tz = data.timezone?.trim() || "";
+    if (!tz && data.city) {
+      const c = findCity(data.city);
+      if (c) tz = c.timezone;
+      else {
+        const m = data.city.match(/-\s*([A-Za-z]{2})\s*$/);
+        if (m) tz = timezoneForUF(m[1]);
+      }
+    }
+    if (!tz) tz = "America/Sao_Paulo";
 
     const payload = {
       user_id: context.userId,
@@ -169,6 +183,7 @@ export const saveHoroscopeSubscriptionPreference = createServerFn({ method: "POS
       send_local_hour: data.send_local_hour,
       send_local_minute: data.send_local_minute,
       send_weekday: data.frequency === "weekly" ? (data.send_weekday ?? 1) : null,
+      timezone: tz,
     };
 
     const { data: existing } = await (supabaseAdmin as any)
