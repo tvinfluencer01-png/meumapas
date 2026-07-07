@@ -102,7 +102,39 @@ async function handler({ request }: { request: Request }) {
     } catch {
       // continue
     }
+
+    // Retentativa: se ainda pendente e passou do intervalo, reenvia o código.
+    try {
+      if (maxRetries > 0 && (lead.retry_count ?? 0) < maxRetries) {
+        const lastMs = lead.last_retry_at
+          ? new Date(lead.last_retry_at).getTime()
+          : new Date(lead.created_at).getTime();
+        if (Date.now() - lastMs >= retryAfterMs) {
+          const msg = `⏳ Ainda não recebemos sua confirmação. Envie *${keyword}-${lead.activation_code}* para ativar seu horóscopo grátis.`;
+          const { data: bumped } = await (supabaseAdmin as any)
+            .from("horoscope_free_leads")
+            .update({
+              retry_count: (lead.retry_count ?? 0) + 1,
+              last_retry_at: new Date().toISOString(),
+            })
+            .eq("id", lead.id)
+            .eq("status", "pending_confirmation")
+            .eq("retry_count", lead.retry_count ?? 0) // trava otimista
+            .select("id");
+          if (bumped?.length) {
+            await fetch(`${base}/message/sendText/${inst}`, {
+              method: "POST",
+              headers: { apikey: evo.global_api_key, "Content-Type": "application/json" },
+              body: JSON.stringify({ number: digits, text: msg }),
+            }).catch(() => {});
+            retried++;
+          }
+        }
+      }
+    } catch {
+      // continue
+    }
   }
 
-  return Response.json({ ok: true, checked: leads.length, activated });
+  return Response.json({ ok: true, checked: leads.length, activated, retried });
 }
