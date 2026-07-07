@@ -3803,6 +3803,7 @@ export type Database = {
           cta_button_label: string
           enabled: boolean
           expiry_reminder_minutes_before: number
+          expiry_reminder_template: string
           hero_subtitle: string
           hero_title: string
           id: boolean
@@ -3824,6 +3825,7 @@ export type Database = {
           cta_button_label?: string
           enabled?: boolean
           expiry_reminder_minutes_before?: number
+          expiry_reminder_template?: string
           hero_subtitle?: string
           hero_title?: string
           id?: boolean
@@ -3845,6 +3847,7 @@ export type Database = {
           cta_button_label?: string
           enabled?: boolean
           expiry_reminder_minutes_before?: number
+          expiry_reminder_template?: string
           hero_subtitle?: string
           hero_title?: string
           id?: boolean

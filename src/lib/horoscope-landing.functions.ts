@@ -210,6 +210,7 @@ const SettingsSchema = z.object({
   retry_after_minutes: z.number().int().min(1).max(1440).optional(),
   max_retries: z.number().int().min(0).max(10).optional(),
   expiry_reminder_minutes_before: z.number().int().min(1).max(1440).optional(),
+  expiry_reminder_template: z.string().trim().min(10).max(1000).optional(),
 });
 
 async function assertAdmin(context: { supabase: any; userId: string }) {

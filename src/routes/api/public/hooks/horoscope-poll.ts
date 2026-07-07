@@ -29,7 +29,7 @@ async function handler({ request }: { request: Request }) {
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
   const { data: leads } = await (supabaseAdmin as any)
     .from("horoscope_free_leads")
-    .select("id, phone_e164, activation_code, trial_days, retry_count, last_retry_at, created_at, expiry_reminder_sent_at")
+    .select("id, full_name, phone_e164, activation_code, trial_days, retry_count, last_retry_at, created_at, expiry_reminder_sent_at")
     .eq("status", "pending_confirmation")
     .gte("created_at", since)
     .limit(50);
@@ -37,14 +37,24 @@ async function handler({ request }: { request: Request }) {
 
   const { data: settings } = await (supabaseAdmin as any)
     .from("horoscope_landing_settings")
-    .select("trial_days, confirmation_reply, retry_after_minutes, max_retries, expiry_reminder_minutes_before, whatsapp_number_e164, activation_keyword")
+    .select("trial_days, confirmation_reply, retry_after_minutes, max_retries, expiry_reminder_minutes_before, expiry_reminder_template, whatsapp_number_e164, activation_keyword")
     .eq("id", true).maybeSingle();
 
   const retryAfterMs = Math.max(1, Number(settings?.retry_after_minutes ?? 10)) * 60_000;
   const maxRetries = Math.max(0, Number(settings?.max_retries ?? 2));
   const reminderBeforeMs = Math.max(1, Number(settings?.expiry_reminder_minutes_before ?? 60)) * 60_000;
   const keyword = String(settings?.activation_keyword ?? "ATIVAR").toUpperCase();
+  const reminderTemplate = String(
+    settings?.expiry_reminder_template ??
+      "⚠️ Olá {{name}}, seu cadastro no horóscopo grátis expira em ~{{minutes_left}} min. Envie *{{keyword}}-{{code}}* agora para garantir seus {{trial_days}} dias grátis. ✨",
+  );
   const EXPIRY_MS = 24 * 60 * 60 * 1000; // janela de 24h para confirmar
+
+  function renderTemplate(tpl: string, vars: Record<string, string | number>): string {
+    return tpl.replace(/\{\{\s*(\w+)\s*\}\}/g, (_m, k) =>
+      vars[k] !== undefined && vars[k] !== null ? String(vars[k]) : "",
+    );
+  }
 
   const base = String(evo.base_url).replace(/\/+$/, "");
   const inst = encodeURIComponent(evo.instance_name);
@@ -126,7 +136,18 @@ async function handler({ request }: { request: Request }) {
           const claimed = await tryClaimExpiryReminder(supabaseAdmin, lead.id);
           if (claimed) {
             const minsLeft = Math.max(1, Math.round(msToExpiry / 60_000));
-            const msg = `⚠️ Seu cadastro no horóscopo grátis expira em ~${minsLeft} min. Envie *${keyword}-${lead.activation_code}* agora para garantir seus 7 dias grátis. ✨`;
+            const expiresAtDate = new Date(createdMs + EXPIRY_MS);
+            const trialDays = Number(settings?.trial_days ?? lead.trial_days ?? 7);
+            const firstName = String(lead.full_name ?? "").trim().split(/\s+/)[0] ?? "";
+            const msg = renderTemplate(reminderTemplate, {
+              name: firstName,
+              full_name: lead.full_name ?? "",
+              code: lead.activation_code,
+              keyword,
+              minutes_left: minsLeft,
+              trial_days: trialDays,
+              expires_at: expiresAtDate.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }),
+            });
             await fetch(`${base}/message/sendText/${inst}`, {
               method: "POST",
               headers: { apikey: evo.global_api_key, "Content-Type": "application/json" },
