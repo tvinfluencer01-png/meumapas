@@ -11,7 +11,6 @@
  * ativação manual/teste pelo admin.
  */
 import { createFileRoute } from "@tanstack/react-router";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export const Route = createFileRoute("/api/public/hooks/horoscope-activation")({
   server: {
@@ -22,6 +21,7 @@ export const Route = createFileRoute("/api/public/hooks/horoscope-activation")({
 });
 
 async function handler({ request }: { request: Request }) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const apikey = request.headers.get("apikey");
   const auth = request.headers.get("authorization") ?? "";
   const authorized =
@@ -48,6 +48,7 @@ async function handler({ request }: { request: Request }) {
     extractActivationCodes,
     extractIncomingText,
     phoneMatches,
+    sendConfirmationIfNeeded,
     tryActivateLead,
   } = await import("@/lib/horoscope-activation.server");
 
@@ -125,49 +126,38 @@ async function handler({ request }: { request: Request }) {
 
   // Idempotência: só ativa (e responde) se a linha ainda estiver pendente.
   const didActivate = await tryActivateLead(supabaseAdmin, lead.id, patch);
-  if (!didActivate) {
-    return Response.json({ ok: true, action: "already_activated" });
-  }
-
   const reply = settings?.confirmation_reply ??
     `✨ Cadastro confirmado! A partir de amanhã, você receberá seu horóscopo por ${trialDays} dias.`;
 
-  // Envia a mensagem de confirmação imediatamente via Evolution ou Twilio
-  await sendWhatsapp(lead.phone_e164, reply).catch(() => {});
+  const confirmationLead = {
+    ...lead,
+    status: didActivate ? "active" : lead.status,
+    confirmation_attempts: lead.confirmation_attempts ?? 0,
+    confirmation_sent_at: lead.confirmation_sent_at ?? null,
+  };
+  const confirmation = await sendConfirmationIfNeeded(supabaseAdmin, confirmationLead, reply);
 
-  return Response.json({ ok: true, action: "activated", reply });
-}
-
-async function sendWhatsapp(phoneE164: string, message: string) {
-  const { data: evo } = await (supabaseAdmin as any)
-    .from("evolution_settings").select("*").eq("id", true).maybeSingle();
-  if (evo?.enabled && evo.base_url && evo.global_api_key && evo.instance_name) {
-    const base = String(evo.base_url).replace(/\/+$/, "");
-    const url = `${base}/message/sendText/${encodeURIComponent(evo.instance_name)}`;
-    await fetch(url, {
-      method: "POST",
-      headers: { apikey: evo.global_api_key, "Content-Type": "application/json" },
-      body: JSON.stringify({ number: phoneE164.replace(/\D+/g, ""), text: message }),
-    });
-    return;
-  }
-  const { data: twilio } = await supabaseAdmin
-    .from("twilio_settings").select("*").eq("id", true).maybeSingle();
-  if (twilio?.enabled && twilio.account_sid && twilio.auth_token && twilio.whatsapp_from) {
-    const form = new URLSearchParams();
-    form.set("From", `whatsapp:${twilio.whatsapp_from}`);
-    form.set("To", `whatsapp:${phoneE164}`);
-    form.set("Body", message);
-    await fetch(
-      `https://api.twilio.com/2010-04-01/Accounts/${twilio.account_sid}/Messages.json`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: "Basic " + btoa(`${twilio.account_sid}:${twilio.auth_token}`),
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: form.toString(),
+  try {
+    await (supabaseAdmin as any).from("app_logs").insert({
+      event: "horoscope_confirmation_attempt",
+      payload: {
+        lead_id: lead.id,
+        action: didActivate ? "activated" : "already_active",
+        claimed: confirmation.claimed,
+        ok: confirmation.result?.ok ?? null,
+        provider: confirmation.result?.provider ?? null,
+        status: confirmation.result?.status ?? null,
+        error: confirmation.result?.error ?? null,
+        at: new Date().toISOString(),
       },
-    );
-  }
+    });
+  } catch {}
+
+  return Response.json({
+    ok: true,
+    action: didActivate ? "activated" : "already_activated",
+    confirmationSent: confirmation.result?.ok ?? false,
+    confirmationError: confirmation.result?.error ?? null,
+    reply,
+  });
 }
