@@ -130,6 +130,8 @@ function SettingsBlock() {
           <Textarea rows={2} value={form.trial_end_message} onChange={(e) => set("trial_end_message", e.target.value)} />
         </div>
 
+        <EvolutionWebhookBlock />
+
         <div className="rounded-lg border border-gold/20 bg-gold/5 p-3 text-xs text-muted-foreground">
           <b className="text-gold">Webhook de ativação</b> — configure seu provedor WhatsApp (Evolution/Twilio) para chamar:
           <br />
