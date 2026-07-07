@@ -16,6 +16,7 @@ import {
   adminListHoroscopeLeads,
   adminActivateHoroscopeLead,
   adminDeleteHoroscopeLead,
+  adminConfigureEvolutionWebhook,
 } from "@/lib/horoscope-landing.functions";
 
 export function AdminHoroscopeLanding() {
