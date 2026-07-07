@@ -157,17 +157,17 @@ function AddonsPage() {
           <Sparkles className="size-6 text-gold" />
           <div>
             <h1 className="text-2xl font-serif shimmer-text inline-flex items-center gap-3 flex-wrap">
-              Add-ons & Créditos
+              Planos & Assinaturas
               <SectionLamp
               sectionKey="addons"
-                title="Add-ons & Créditos"
-                why="A IA tem custo. Os créditos garantem uso justo e os add-ons habilitam recursos extras (Clientes, Horóscopo, Mapa Empresarial etc.)."
-                how="Compre pacotes avulsos para usar quando quiser ou assine add-ons mensais. Acompanhe o saldo, o histórico e as renovações nesta página."
-                purpose="Você controla quanto investir em IA: paga só pelo que usa e ativa apenas os módulos que fazem sentido para o seu trabalho."
+                title="Planos & Assinaturas"
+                why="Os planos mensais liberam relatórios ilimitados, Oráculo IA, Tarot, Meditação Cabalística e módulos profissionais."
+                how="Escolha o plano que faz sentido para você e ative módulos extras conforme cresce. Cancele quando quiser."
+                purpose="Você paga uma mensalidade previsível e desbloqueia toda a experiência Cósmica — sem consumo por relatório."
               />
             </h1>
             <p className="text-sm text-muted-foreground">
-              Amplie sua experiência com créditos avulsos ou assinaturas mensais.
+              Assine mensalmente e desbloqueie a experiência completa — cancele quando quiser.
             </p>
           </div>
         </div>
