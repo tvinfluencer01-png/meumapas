@@ -155,6 +155,16 @@ export function textContainsActivationKeyword(text: string, keyword = "ATIVAR"):
   return wordBoundaryMatch || compactText === normalizedKeyword || compactText.startsWith(`${normalizedKeyword}-`);
 }
 
+export function isWhatsappLid(remoteJid: string): boolean {
+  return /@lid$/i.test(String(remoteJid ?? ""));
+}
+
+export function isRecentLeadMessage(payload: any, leadCreatedAt: string, toleranceMinutes = 5): boolean {
+  const ts = extractMessageTimestampMs(payload);
+  if (ts === null) return false;
+  return ts >= new Date(leadCreatedAt).getTime() - toleranceMinutes * 60_000;
+}
+
 export function extractMessageTimestampMs(payload: any): number | null {
   const candidates = [
     payload?.messageTimestamp,
