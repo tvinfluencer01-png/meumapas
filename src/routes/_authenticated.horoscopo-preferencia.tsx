@@ -1,9 +1,9 @@
 import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
-import { CheckCircle2, Loader2, Clock, Calendar, Sparkles } from "lucide-react";
+import { CheckCircle2, Loader2, Clock, Calendar, Sparkles, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -14,6 +14,7 @@ import {
   getMyHoroscopeSubscription,
   saveHoroscopeSubscriptionPreference,
 } from "@/lib/horoscope-plans.functions";
+import { BR_CITIES } from "@/lib/br-cities";
 
 type Search = { sid?: string; status?: string };
 
