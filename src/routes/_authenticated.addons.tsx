@@ -188,7 +188,8 @@ function AddonsPage() {
         )}
       </header>
 
-      {/* Credit packages */}
+      {/* Pacotes de créditos removidos do fluxo público. Mantidos apenas via back-office. */}
+      {false && (
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
@@ -212,6 +213,7 @@ function AddonsPage() {
           ))}
         </div>
       </section>
+      )}
 
       {/* Subscriptions */}
       <section className="space-y-4">
