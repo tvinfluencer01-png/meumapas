@@ -294,6 +294,9 @@ function HoroscopoGratisPage() {
                     </SelectContent>
                   </Select>
                   {errors.city && <p className="text-xs text-destructive">{errors.city}</p>}
+                </div>
+
+
 
                 <label className="flex gap-3 items-start pt-2 cursor-pointer">
                   <Checkbox
