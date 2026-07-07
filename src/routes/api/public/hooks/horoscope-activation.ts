@@ -128,7 +128,10 @@ async function handler({ request }: { request: Request }) {
   const endsOn = new Date(startsOn.getTime() + (trialDays - 1) * 24 * 60 * 60 * 1000);
   const iso = (d: Date) => d.toISOString().slice(0, 10);
 
-  await (supabaseAdmin as any)
+  // Idempotência: só ativa (e responde) se a linha ainda estiver pendente.
+  // Se webhook e poll processarem a mesma mensagem, apenas o primeiro
+  // update retornará linhas — o segundo vira no-op.
+  const { data: updated } = await (supabaseAdmin as any)
     .from("horoscope_free_leads")
     .update({
       status: "active",
@@ -137,7 +140,13 @@ async function handler({ request }: { request: Request }) {
       trial_ends_on: iso(endsOn),
       trial_days: trialDays,
     })
-    .eq("id", lead.id);
+    .eq("id", lead.id)
+    .eq("status", "pending_confirmation")
+    .select("id");
+
+  if (!updated?.length) {
+    return Response.json({ ok: true, action: "already_activated" });
+  }
 
   const reply = settings?.confirmation_reply ??
     `✨ Cadastro confirmado! A partir de amanhã, você receberá seu horóscopo por ${trialDays} dias.`;
