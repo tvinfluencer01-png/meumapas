@@ -127,6 +127,75 @@ export function extractActivationCodes(text: string): string[] {
   );
 }
 
+function stripDiacritics(value: string): string {
+  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+export function normalizeActivationText(text: string): string {
+  return stripDiacritics(String(text ?? "").toUpperCase());
+}
+
+export function textContainsActivationCode(text: string, code: string): boolean {
+  const normalizedText = normalizeActivationText(text);
+  const normalizedCode = normalizeActivationText(code).replace(/[^A-Z0-9]/g, "");
+  if (!normalizedCode) return false;
+  return normalizedText.includes(normalizedCode) || normalizedText.replace(/[^A-Z0-9]/g, "").includes(normalizedCode);
+}
+
+export function textContainsActivationKeyword(text: string, keyword = "ATIVAR"): boolean {
+  const normalizedText = normalizeActivationText(text);
+  const normalizedKeyword = normalizeActivationText(keyword).replace(/[^A-Z0-9]/g, "");
+  if (!normalizedKeyword) return false;
+  const wordBoundaryMatch = new RegExp(`(^|[^A-Z0-9])${escapeRegExp(normalizedKeyword)}([^A-Z0-9]|$)`).test(normalizedText);
+  const compactText = normalizedText.replace(/[^A-Z0-9]/g, "");
+  return wordBoundaryMatch || compactText === normalizedKeyword || compactText.startsWith(`${normalizedKeyword}-`);
+}
+
+export function isWhatsappLid(remoteJid: string): boolean {
+  return /@lid$/i.test(String(remoteJid ?? ""));
+}
+
+export function isRecentLeadMessage(payload: any, leadCreatedAt: string, toleranceMinutes = 5): boolean {
+  const ts = extractMessageTimestampMs(payload);
+  if (ts === null) return false;
+  return ts >= new Date(leadCreatedAt).getTime() - toleranceMinutes * 60_000;
+}
+
+export function extractMessageTimestampMs(payload: any): number | null {
+  const candidates = [
+    payload?.messageTimestamp,
+    payload?.timestamp,
+    payload?.createdAt,
+    payload?.created_at,
+    payload?.date_time,
+    payload?.key?.timestamp,
+    payload?.data?.messageTimestamp,
+    payload?.data?.timestamp,
+    payload?.data?.createdAt,
+    payload?.data?.created_at,
+  ];
+
+  for (const raw of candidates) {
+    if (raw === null || raw === undefined || raw === "") continue;
+    if (typeof raw === "number" && Number.isFinite(raw)) {
+      return raw > 1_000_000_000_000 ? raw : raw * 1000;
+    }
+    const value = String(raw).trim();
+    if (/^\d+$/.test(value)) {
+      const n = Number(value);
+      if (Number.isFinite(n)) return n > 1_000_000_000_000 ? n : n * 1000;
+    }
+    const parsed = Date.parse(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+
+  return null;
+}
+
 export function buildActivationPatch(trialDays: number, now = new Date()): ActivationPatch {
   const startsOn = new Date(now.getTime() + 24 * 60 * 60 * 1000);
   const endsOn = new Date(startsOn.getTime() + (trialDays - 1) * 24 * 60 * 60 * 1000);
