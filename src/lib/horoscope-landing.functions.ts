@@ -3,6 +3,7 @@ import { getRequestHeader, getRequestIP } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { sunSignFromBirthDate } from "@/lib/horoscope.functions";
+import { findCity, timezoneForUF } from "@/lib/br-cities";
 
 
 const PHONE_REGEX = /^\+?[1-9]\d{7,14}$/;
