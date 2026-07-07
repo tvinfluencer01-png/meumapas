@@ -1,74 +1,129 @@
 ## Objetivo
-Criar uma landing pública `/horoscopo-gratis` para captar **nome, e-mail e WhatsApp** oferecendo **7 dias grátis** do horóscopo diário. Após o cadastro, o usuário clica num botão que abre o WhatsApp com uma mensagem pré-pronta (ex.: `ATIVAR`) para o número oficial; ao recebermos essa mensagem no webhook da Evolution/Twilio, respondemos automaticamente confirmando a ativação e o envio começa **no dia seguinte por 7 dias**. Admin controla tudo (dias grátis, textos, número, opt-in) num novo painel.
 
-## Estrutura
+Impedir que o mesmo e-mail OU WhatsApp faça mais de um trial gratuito do horóscopo diário e criar toda a experiência de assinatura paga (Mercado Pago) com painel admin para configurar planos.
 
-### 1. Banco (migração)
-- Nova tabela `horoscope_free_leads`:
-  - `id uuid pk`, `full_name text`, `email text`, `phone_e164 text`,
-  - `birth_date date null`, `sign text null`,
-  - `consent_marketing boolean not null default false`, `consent_ip inet`, `consent_user_agent text`, `consent_at timestamptz`,
-  - `status text` (`pending_confirmation` | `active` | `expired` | `unsubscribed`),
-  - `activation_code text` (curto, ex. 6 chars — usado como palavra-chave no WhatsApp),
-  - `activated_at timestamptz`, `trial_starts_on date`, `trial_ends_on date`,
-  - `last_sent_on date`, `source text`, `utm jsonb`,
-  - `created_at`, `updated_at`.
-  - Índices em `email`, `phone_e164`, `activation_code`, `status`.
-  - RLS: sem SELECT anon; INSERT via server function (service role). Admin lê tudo via `has_role(admin)`.
-- Nova linha em `system_settings` (chave `horoscope_landing`) com JSON:
-  ```json
-  {
-    "enabled": true,
-    "trial_days": 7,
-    "whatsapp_number_e164": "+55...",
-    "activation_keyword": "ATIVAR",
-    "hero_title": "...", "hero_subtitle": "...",
-    "consent_text": "Aceito receber mensagens ...",
-    "confirmation_reply": "Cadastro confirmado! ...",
-    "success_message": "Enviamos o link de ativação no WhatsApp"
-  }
-  ```
+## 1. Regra: 1 trial por vida (email + telefone)
 
-### 2. Server functions / rotas
-- `src/lib/horoscope-landing.functions.ts`:
-  - `submitHoroscopeLead` (público, com rate-limit por IP + validação Zod) — cria lead `pending_confirmation`, gera `activation_code`, retorna `{ whatsappUrl, keyword }` (link `https://wa.me/<num>?text=ATIVAR-XXXXXX`).
-  - `getHoroscopeLandingSettings` (público, leitura só de campos seguros).
-  - `adminGetHoroscopeLandingSettings` / `adminUpdateHoroscopeLandingSettings` (admin).
-  - `adminListHoroscopeLeads` (admin, paginado, filtros por status).
-- Server route `src/routes/api/public/hooks/horoscope-activation.ts` (POST) — webhook chamado pelo provedor de WhatsApp (Evolution/Twilio) quando o lead responde `ATIVAR-XXXXXX`:
-  - Valida assinatura/secret.
-  - Marca lead como `active`, define `trial_starts_on = amanhã`, `trial_ends_on = +trial_days-1`.
-  - Cria/atualiza `horoscope_subscriptions` para envio diário durante o trial (channel WhatsApp).
-  - Retorna JSON com `reply` = `confirmation_reply` para o provedor enviar.
-- Integração no cron `daily-horoscope`: incluir leads com `status='active'` e `today between trial_starts_on and trial_ends_on`, marcando `last_sent_on`. Ao expirar, marcar `expired` e enviar mensagem final com CTA para assinar.
+**Backend** (`src/lib/horoscope-landing.functions.ts` → `submitHoroscopeLead`):
 
-### 3. Landing pública `/horoscopo-gratis`
-- Rota `src/routes/horoscopo-gratis.tsx` (SSR on, público), estilo **Éter Dourado** consistente com o resto do site.
-- Seções: hero com promessa + prova social, formulário (nome, e-mail, WhatsApp com máscara +55, data de nascimento opcional p/ signo, checkbox obrigatório de consentimento com texto legal Meta/LGPD), como funciona (3 passos), FAQ curto, footer com política.
-- Após submit, tela de sucesso com **botão grande "Concluir cadastro no WhatsApp"** que abre `wa.me` com a mensagem `ATIVAR-XXXXXX` pré-preenchida + instruções.
-- SEO: `head()` com título, descrição e og:image próprios.
+Antes de criar novo lead, consultar `horoscope_free_leads` por `lower(email)` OU `phone_e164`. Se existir QUALQUER registro anterior (independente do status — pending, active, expired, unsubscribed), retornar:
 
-### 4. Painel Superadmin
-- Nova aba em `_authenticated.admin.tsx` "Horóscopo Grátis":
-  - Form de configurações (todos os campos do JSON `horoscope_landing`).
-  - Tabela de leads (nome, contato, status, código, datas, origem) com filtros e export CSV.
-  - Botão "Reenviar link de ativação" (regenera URL wa.me).
+```ts
+{ blocked: true, reason: "trial_already_used", subscribeUrl: "/horoscopo-assinar" }
+```
 
-## Detalhes técnicos
-- **Conformidade Meta/LGPD**: o consentimento é obrigatório antes do submit; armazenamos `consent_ip`, `consent_user_agent`, `consent_at`, `consent_text` (snapshot). A ativação exige uma mensagem **iniciada pelo usuário** no WhatsApp — isso abre a janela de 24h e satisfaz a política de opt-in da Meta.
-- **Anti-abuso**: rate-limit no submit (IP + email + telefone), normalização E.164, dedupe por telefone+email.
-- **Envio diário**: reutiliza o pipeline atual do `daily-horoscope`; adiciona um branch para leads em trial (sem `user_id`). Após `trial_ends_on`, envia mensagem final com link para `/addons`.
-- **Provider WhatsApp**: usa configuração existente (Evolution/Twilio). Se nenhum estiver configurado, admin vê aviso.
-- **Restauração**: as mudanças são aditivas (nova tabela, nova rota, nova aba); nada é removido, então voltar é trivial.
+Landing (`src/routes/horoscopo-gratis.tsx`): quando o form receber `blocked: true`, abrir dialog persuasivo em vez de mostrar o painel de sucesso.
+
+## 2. Popup persuasivo
+
+Novo componente `HoroscopeTrialUsedDialog` (shadcn Dialog):
+
+- Ícone estrela + título "Você já viveu o seu período gratuito ✨"
+- Copy persuasiva: reforça o benefício, cita o costume diário, e propõe assinar
+- 3 bullets (7h todo dia, previsão personalizada, cancela quando quiser)
+- CTA primário dourado "Ver planos de assinatura" → `/horoscopo-assinar`
+- Link secundário "Continuar navegando"
+
+## 3. Página de assinatura pública `/horoscopo-assinar`
+
+Layout no mesmo estilo da landing gratuita (Starfield, dourado, serif):
+
+- Hero com pitch e social proof
+- Grid com **2 planos** carregados de `horoscope_plans` (só `is_active=true`):
+  - Mensal
+  - Trimestral (destacado "Mais popular", ~15% de desconto por padrão)
+- Cada card mostra: nome, preço, ciclo, features, botão "Assinar agora"
+- Botão gera preferência de checkout Mercado Pago via server fn e redireciona
+
+Requer login. Se não logado, envia para `/auth?redirect=/horoscopo-assinar`.
+
+## 4. Tela pós-pagamento de periodicidade `/horoscopo-assinar/preferencia`
+
+Após webhook confirmar pagamento, usuário é redirecionado. Tela mostra:
+
+- Mensagem de sucesso
+- Radio group: **Diária (padrão, 8h30)** | Dia sim / dia não | Semanal (escolher dia)
+- Horário local (default 08:30)
+- Botão "Salvar preferências" (grava em `horoscope_subscriptions`)
+- Se pular a tela, permanece o default: `frequency='daily'`, `send_local_hour=8`, `send_local_minute=30`
+
+## 5. Admin: gerenciar planos `/admin` (nova seção)
+
+Novo componente `AdminHoroscopePlans` (padrão dos outros admins):
+
+- Listar planos com: nome, preço BRL, ciclo (`month`/`quarter`), features (textarea 1 por linha), ativo, ordem
+- Criar / editar / desativar
+- Seeda 2 planos iniciais na migration (preços editáveis pelo admin depois)
+
+## 6. Modelo de dados (migration)
+
+```sql
+-- planos configuráveis
+CREATE TABLE public.horoscope_plans (
+  id uuid PK,
+  slug text UNIQUE,          -- 'mensal' | 'trimestral'
+  name text,
+  description text,
+  price_cents int,           -- BRL
+  billing_cycle text CHECK (billing_cycle IN ('month','quarter')),
+  interval_months int,       -- 1 ou 3
+  features jsonb,            -- array de strings
+  is_active bool DEFAULT true,
+  is_featured bool DEFAULT false,
+  sort_order int DEFAULT 0,
+  created_at, updated_at
+);
+GRANT SELECT ON ...horoscope_plans TO anon, authenticated;
+GRANT ALL TO service_role;
+-- RLS: SELECT público (só is_active), tudo mais só admin
+
+-- assinaturas pagas (ordens/status Mercado Pago)
+CREATE TABLE public.horoscope_paid_subscriptions (
+  id uuid PK,
+  user_id uuid REFERENCES auth.users,
+  plan_id uuid REFERENCES horoscope_plans,
+  status text,                -- 'pending','active','canceled','expired'
+  mp_preference_id text,
+  mp_payment_id text,
+  current_period_start timestamptz,
+  current_period_end timestamptz,
+  phone_e164 text,
+  email text,
+  created_at, updated_at
+);
+-- RLS: dono lê o seu; admin lê tudo
+
+-- Seed dos 2 planos padrão
+INSERT INTO horoscope_plans (slug,name,price_cents,billing_cycle,interval_months,is_featured,sort_order,features) VALUES
+ ('mensal','Mensal',1990,'month',1,false,1,'["Horóscopo diário no WhatsApp","Personalizado pelo seu signo","Cancele quando quiser"]'::jsonb),
+ ('trimestral','Trimestral',4990,'quarter',3,true,2,'["Tudo do plano mensal","Economize ~15%","Cobrança a cada 3 meses"]'::jsonb);
+```
+
+## 7. Checkout Mercado Pago
+
+- Server fn `createHoroscopePlanCheckout({planId})` (autenticada): cria pref MP com `back_urls.success = /horoscopo-assinar/preferencia?sid=...`, grava `horoscope_paid_subscriptions` status=pending
+- Reutiliza `MERCADO_PAGO_ACCESS_TOKEN` já existente no projeto
+- Webhook `/api/public/hooks/mercadopago` (já existe): estender `handlePayment` para reconhecer `external_reference` iniciando com `horoscope_plan:` → marca subscription active, define `current_period_end = now + interval_months`, cria/atualiza `horoscope_subscriptions` (canal WhatsApp) com defaults (daily 08:30 local)
+
+## 8. Cron `send-daily-horoscope`
+
+Já filtra por `horoscope_subscriptions` — sem alteração. A tabela `horoscope_free_leads` continua servindo os trials. Assinantes pagos passam a viver em `horoscope_subscriptions` como qualquer outro (mas sem `user_id=auth` restrição — eles são usuários reais logados, então funciona).
 
 ## Arquivos a criar/editar
-- Migração SQL nova (tabela + grants + RLS + seed do `system_settings`).
-- `src/lib/horoscope-landing.functions.ts` (novo).
-- `src/routes/horoscopo-gratis.tsx` (novo).
-- `src/routes/api/public/hooks/horoscope-activation.ts` (novo).
-- `src/components/AdminHoroscopeLanding.tsx` (novo — form + tabela de leads).
-- `src/routes/_authenticated.admin.tsx` (nova aba).
-- `src/routes/api/public/hooks/daily-horoscope.ts` (incluir leads em trial).
-- `src/routes/index.tsx` (banner/CTA discreto para a landing, opcional).
 
-Confirmar para eu implementar. Se quiser, ajusto: (a) usar um provider específico de WhatsApp, (b) mudar keyword/URL, (c) incluir CTA na home.
+- Migration: `horoscope_plans` + `horoscope_paid_subscriptions` + seed
+- `src/lib/horoscope-landing.functions.ts` — bloqueio de trial repetido
+- `src/lib/horoscope-plans.functions.ts` (novo) — list/get/admin CRUD + checkout MP
+- `src/components/HoroscopeTrialUsedDialog.tsx` (novo)
+- `src/routes/horoscopo-gratis.tsx` — integra bloqueio + dialog
+- `src/routes/horoscopo-assinar.tsx` (novo) — página pública de planos
+- `src/routes/_authenticated.horoscopo-assinar.preferencia.tsx` (novo) — tela pós-pagamento
+- `src/components/AdminHoroscopePlans.tsx` (novo) + registrar em `_authenticated.admin.tsx`
+- `src/routes/api/public/hooks/mercadopago.ts` — handler para plano de horóscopo
+
+## Fora do escopo (fica pra depois se você quiser)
+
+- Cobrança recorrente automática Mercado Pago (assinatura MP nativa). Como MP recorrente exige aprovação extra, a v1 usa checkout único por período e envia lembrete de renovação perto do fim.
+- Portal do assinante para trocar cartão / cancelar (por ora, cancelar = admin ou botão que marca `canceled` e mantém acesso até `current_period_end`).
+
+Confirma que posso seguir com esse plano?

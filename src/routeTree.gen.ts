@@ -13,6 +13,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ProgramaAfiliadosRouteImport } from './routes/programa-afiliados'
 import { Route as ProfissionaisRouteImport } from './routes/profissionais'
 import { Route as HoroscopoGratisRouteImport } from './routes/horoscopo-gratis'
+import { Route as HoroscopoAssinarRouteImport } from './routes/horoscopo-assinar'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AtivacaoRouteImport } from './routes/ativacao'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
@@ -46,6 +47,7 @@ import { Route as AuthenticatedNumerologiaRouteImport } from './routes/_authenti
 import { Route as AuthenticatedMeditacaoRouteImport } from './routes/_authenticated.meditacao'
 import { Route as AuthenticatedMapaEmpresarialRouteImport } from './routes/_authenticated.mapa-empresarial'
 import { Route as AuthenticatedMapaAstralRouteImport } from './routes/_authenticated.mapa-astral'
+import { Route as AuthenticatedHoroscopoPreferenciaRouteImport } from './routes/_authenticated.horoscopo-preferencia'
 import { Route as AuthenticatedHoroscopoRouteImport } from './routes/_authenticated.horoscopo'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated.dashboard'
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated.configuracoes'
@@ -96,6 +98,11 @@ const ProfissionaisRoute = ProfissionaisRouteImport.update({
 const HoroscopoGratisRoute = HoroscopoGratisRouteImport.update({
   id: '/horoscopo-gratis',
   path: '/horoscopo-gratis',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HoroscopoAssinarRoute = HoroscopoAssinarRouteImport.update({
+  id: '/horoscopo-assinar',
+  path: '/horoscopo-assinar',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -265,6 +272,12 @@ const AuthenticatedMapaAstralRoute = AuthenticatedMapaAstralRouteImport.update({
   path: '/mapa-astral',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedHoroscopoPreferenciaRoute =
+  AuthenticatedHoroscopoPreferenciaRouteImport.update({
+    id: '/horoscopo-preferencia',
+    path: '/horoscopo-preferencia',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedHoroscopoRoute = AuthenticatedHoroscopoRouteImport.update({
   id: '/horoscopo',
   path: '/horoscopo',
@@ -447,6 +460,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/ativacao': typeof AtivacaoRoute
   '/auth': typeof AuthRoute
+  '/horoscopo-assinar': typeof HoroscopoAssinarRoute
   '/horoscopo-gratis': typeof HoroscopoGratisRoute
   '/profissionais': typeof ProfissionaisRoute
   '/programa-afiliados': typeof ProgramaAfiliadosRoute
@@ -457,6 +471,7 @@ export interface FileRoutesByFullPath {
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/horoscopo': typeof AuthenticatedHoroscopoRoute
+  '/horoscopo-preferencia': typeof AuthenticatedHoroscopoPreferenciaRoute
   '/mapa-astral': typeof AuthenticatedMapaAstralRoute
   '/mapa-empresarial': typeof AuthenticatedMapaEmpresarialRoute
   '/meditacao': typeof AuthenticatedMeditacaoRoute
@@ -516,6 +531,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/ativacao': typeof AtivacaoRoute
   '/auth': typeof AuthRoute
+  '/horoscopo-assinar': typeof HoroscopoAssinarRoute
   '/horoscopo-gratis': typeof HoroscopoGratisRoute
   '/profissionais': typeof ProfissionaisRoute
   '/programa-afiliados': typeof ProgramaAfiliadosRoute
@@ -526,6 +542,7 @@ export interface FileRoutesByTo {
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/horoscopo': typeof AuthenticatedHoroscopoRoute
+  '/horoscopo-preferencia': typeof AuthenticatedHoroscopoPreferenciaRoute
   '/mapa-astral': typeof AuthenticatedMapaAstralRoute
   '/mapa-empresarial': typeof AuthenticatedMapaEmpresarialRoute
   '/meditacao': typeof AuthenticatedMeditacaoRoute
@@ -587,6 +604,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/ativacao': typeof AtivacaoRoute
   '/auth': typeof AuthRoute
+  '/horoscopo-assinar': typeof HoroscopoAssinarRoute
   '/horoscopo-gratis': typeof HoroscopoGratisRoute
   '/profissionais': typeof ProfissionaisRoute
   '/programa-afiliados': typeof ProgramaAfiliadosRoute
@@ -597,6 +615,7 @@ export interface FileRoutesById {
   '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/horoscopo': typeof AuthenticatedHoroscopoRoute
+  '/_authenticated/horoscopo-preferencia': typeof AuthenticatedHoroscopoPreferenciaRoute
   '/_authenticated/mapa-astral': typeof AuthenticatedMapaAstralRoute
   '/_authenticated/mapa-empresarial': typeof AuthenticatedMapaEmpresarialRoute
   '/_authenticated/meditacao': typeof AuthenticatedMeditacaoRoute
@@ -658,6 +677,7 @@ export interface FileRouteTypes {
     | '/'
     | '/ativacao'
     | '/auth'
+    | '/horoscopo-assinar'
     | '/horoscopo-gratis'
     | '/profissionais'
     | '/programa-afiliados'
@@ -668,6 +688,7 @@ export interface FileRouteTypes {
     | '/configuracoes'
     | '/dashboard'
     | '/horoscopo'
+    | '/horoscopo-preferencia'
     | '/mapa-astral'
     | '/mapa-empresarial'
     | '/meditacao'
@@ -727,6 +748,7 @@ export interface FileRouteTypes {
     | '/'
     | '/ativacao'
     | '/auth'
+    | '/horoscopo-assinar'
     | '/horoscopo-gratis'
     | '/profissionais'
     | '/programa-afiliados'
@@ -737,6 +759,7 @@ export interface FileRouteTypes {
     | '/configuracoes'
     | '/dashboard'
     | '/horoscopo'
+    | '/horoscopo-preferencia'
     | '/mapa-astral'
     | '/mapa-empresarial'
     | '/meditacao'
@@ -797,6 +820,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/ativacao'
     | '/auth'
+    | '/horoscopo-assinar'
     | '/horoscopo-gratis'
     | '/profissionais'
     | '/programa-afiliados'
@@ -807,6 +831,7 @@ export interface FileRouteTypes {
     | '/_authenticated/configuracoes'
     | '/_authenticated/dashboard'
     | '/_authenticated/horoscopo'
+    | '/_authenticated/horoscopo-preferencia'
     | '/_authenticated/mapa-astral'
     | '/_authenticated/mapa-empresarial'
     | '/_authenticated/meditacao'
@@ -868,6 +893,7 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AtivacaoRoute: typeof AtivacaoRoute
   AuthRoute: typeof AuthRoute
+  HoroscopoAssinarRoute: typeof HoroscopoAssinarRoute
   HoroscopoGratisRoute: typeof HoroscopoGratisRoute
   ProfissionaisRoute: typeof ProfissionaisRoute
   ProgramaAfiliadosRoute: typeof ProgramaAfiliadosRoute
@@ -943,6 +969,13 @@ declare module '@tanstack/react-router' {
       path: '/horoscopo-gratis'
       fullPath: '/horoscopo-gratis'
       preLoaderRoute: typeof HoroscopoGratisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/horoscopo-assinar': {
+      id: '/horoscopo-assinar'
+      path: '/horoscopo-assinar'
+      fullPath: '/horoscopo-assinar'
+      preLoaderRoute: typeof HoroscopoAssinarRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -1174,6 +1207,13 @@ declare module '@tanstack/react-router' {
       path: '/mapa-astral'
       fullPath: '/mapa-astral'
       preLoaderRoute: typeof AuthenticatedMapaAstralRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/horoscopo-preferencia': {
+      id: '/_authenticated/horoscopo-preferencia'
+      path: '/horoscopo-preferencia'
+      fullPath: '/horoscopo-preferencia'
+      preLoaderRoute: typeof AuthenticatedHoroscopoPreferenciaRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/horoscopo': {
@@ -1416,6 +1456,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedHoroscopoRoute: typeof AuthenticatedHoroscopoRoute
+  AuthenticatedHoroscopoPreferenciaRoute: typeof AuthenticatedHoroscopoPreferenciaRoute
   AuthenticatedMapaAstralRoute: typeof AuthenticatedMapaAstralRoute
   AuthenticatedMapaEmpresarialRoute: typeof AuthenticatedMapaEmpresarialRoute
   AuthenticatedMeditacaoRoute: typeof AuthenticatedMeditacaoRoute
@@ -1436,6 +1477,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedHoroscopoRoute: AuthenticatedHoroscopoRoute,
+  AuthenticatedHoroscopoPreferenciaRoute:
+    AuthenticatedHoroscopoPreferenciaRoute,
   AuthenticatedMapaAstralRoute: AuthenticatedMapaAstralRoute,
   AuthenticatedMapaEmpresarialRoute: AuthenticatedMapaEmpresarialRoute,
   AuthenticatedMeditacaoRoute: AuthenticatedMeditacaoRoute,
@@ -1459,6 +1502,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AtivacaoRoute: AtivacaoRoute,
   AuthRoute: AuthRoute,
+  HoroscopoAssinarRoute: HoroscopoAssinarRoute,
   HoroscopoGratisRoute: HoroscopoGratisRoute,
   ProfissionaisRoute: ProfissionaisRoute,
   ProgramaAfiliadosRoute: ProgramaAfiliadosRoute,
