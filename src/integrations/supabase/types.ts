@@ -3917,6 +3917,9 @@ export type Database = {
       }
       horoscope_paid_subscriptions: {
         Row: {
+          cancel_at_period_end: boolean
+          cancel_reason: string | null
+          canceled_at: string | null
           created_at: string
           current_period_end: string | null
           current_period_start: string | null
@@ -3931,6 +3934,9 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          cancel_at_period_end?: boolean
+          cancel_reason?: string | null
+          canceled_at?: string | null
           created_at?: string
           current_period_end?: string | null
           current_period_start?: string | null
@@ -3945,6 +3951,9 @@ export type Database = {
           user_id: string
         }
         Update: {
+          cancel_at_period_end?: boolean
+          cancel_reason?: string | null
+          canceled_at?: string | null
           created_at?: string
           current_period_end?: string | null
           current_period_start?: string | null
