@@ -62,12 +62,15 @@ async function handler({ request }: { request: Request }) {
   const {
     buildActivationPatch,
     collectWhatsappMessageRecords,
+        extractMessageTimestampMs,
     extractIncomingText,
     extractMessageRemoteJid,
     getWhatsAppJidCandidates,
     isIncomingWhatsappMessage,
     phoneMatches,
     sendConfirmationIfNeeded,
+        textContainsActivationCode,
+        textContainsActivationKeyword,
     tryActivateLead,
   } = await import("@/lib/horoscope-activation.server");
   let activated = 0;
@@ -102,6 +105,7 @@ async function handler({ request }: { request: Request }) {
 
       // Evolution v2: POST chat/findMessages/{instance}
       const arr: any[] = [];
+      const queryErrors: any[] = [];
       const queryBodies = (jid: string) => [
         { where: { key: { remoteJid: jid } }, limit: 50 },
         { where: { remoteJid: jid }, limit: 50 },
@@ -114,22 +118,49 @@ async function handler({ request }: { request: Request }) {
             headers: { apikey: evo.global_api_key, "Content-Type": "application/json" },
             body: JSON.stringify(body),
           });
-          if (!r.ok) continue;
+          if (!r.ok) {
+            queryErrors.push({ jid, status: r.status, body: await r.text().catch(() => "") });
+            continue;
+          }
           const json: any = await r.json().catch(() => null);
           arr.push(...collectWhatsappMessageRecords(json));
         }
       }
+
+      // Fallback: algumas instalações da Evolution não filtram corretamente por
+      // remoteJid no findMessages. Como o código é único por lead, também varremos
+      // as mensagens recentes da instância e validamos pelo texto/telefone abaixo.
+      try {
+        const r = await fetch(`${base}/chat/findMessages/${inst}`, {
+          method: "POST",
+          headers: { apikey: evo.global_api_key, "Content-Type": "application/json" },
+          body: JSON.stringify({ limit: 120 }),
+        });
+        if (r.ok) {
+          const json: any = await r.json().catch(() => null);
+          arr.push(...collectWhatsappMessageRecords(json));
+        } else {
+          queryErrors.push({ jid: "*", status: r.status, body: await r.text().catch(() => "") });
+        }
+      } catch (error: any) {
+        queryErrors.push({ jid: "*", status: "network", body: String(error?.message ?? error) });
+      }
+
       const code = String(lead.activation_code).toUpperCase();
       inspectedMessages += arr.length;
       const hit = arr.find((m) => {
         if (!isIncomingWhatsappMessage(m)) return false;
         const remoteJid = extractMessageRemoteJid(m);
-        if (remoteJid && !phoneMatches(remoteJid, lead.phone_e164)) return false;
-        const t = extractIncomingText(m).toUpperCase();
-        return t.includes(code);
+        const phoneOk = !remoteJid || phoneMatches(remoteJid, lead.phone_e164);
+        const t = extractIncomingText(m);
+        if (textContainsActivationCode(t, code)) return phoneOk || !remoteJid;
+        if (!phoneOk || !textContainsActivationKeyword(t, keyword)) return false;
+        const ts = extractMessageTimestampMs(m);
+        return ts !== null && ts >= new Date(lead.created_at).getTime() - 2 * 60_000;
       });
       if (!hit) {
         try {
+          const incoming = arr.filter(isIncomingWhatsappMessage);
           await (supabaseAdmin as any).from("app_logs").insert({
             event: "horoscope_poll_no_activation",
             payload: {
@@ -138,11 +169,25 @@ async function handler({ request }: { request: Request }) {
               phone: lead.phone_e164,
               candidates: getWhatsAppJidCandidates(lead.phone_e164),
               messages_found: arr.length,
-              incoming_found: arr.filter(isIncomingWhatsappMessage).length,
+              incoming_found: incoming.length,
+              code_seen_anywhere: arr.some((m) => textContainsActivationCode(extractIncomingText(m), code)),
+              query_errors: queryErrors.slice(0, 6).map((e) => ({
+                ...e,
+                body: String(e.body ?? "").slice(0, 180),
+              })),
               sample: arr.slice(0, 3).map((m) => ({
                 remoteJid: extractMessageRemoteJid(m),
                 fromMe: m?.key?.fromMe ?? m?.fromMe ?? m?.data?.key?.fromMe ?? null,
                 text: extractIncomingText(m).slice(0, 120),
+                ts: extractMessageTimestampMs(m),
+              })),
+              incoming_sample: incoming.slice(0, 8).map((m) => ({
+                remoteJid: extractMessageRemoteJid(m),
+                fromMe: m?.key?.fromMe ?? m?.fromMe ?? m?.data?.key?.fromMe ?? null,
+                text: extractIncomingText(m).slice(0, 180),
+                has_code: textContainsActivationCode(extractIncomingText(m), code),
+                has_keyword: textContainsActivationKeyword(extractIncomingText(m), keyword),
+                ts: extractMessageTimestampMs(m),
               })),
               at: new Date().toISOString(),
             },
