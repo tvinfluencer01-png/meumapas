@@ -20,6 +20,7 @@ import { AdminProductOrders } from "@/components/AdminProductOrders";
 import { AdminCrm } from "@/components/AdminCrm";
 import { AdminHoroscopeStatus } from "@/components/AdminHoroscopeStatus";
 import { AdminHoroscopeLanding } from "@/components/AdminHoroscopeLanding";
+import { AdminHoroscopePlans } from "@/components/AdminHoroscopePlans";
 
 import { AdminAffiliatePanel } from "@/modules/affiliate/ui/AdminAffiliatePanel";
 import { getServerTime } from "@/lib/server-time.functions";
@@ -91,6 +92,7 @@ const ADMIN_MENU: { value: string; label: string; icon: typeof SettingsIcon }[] 
   { value: "cron", label: "Cron Jobs", icon: Clock },
   { value: "horoscope-status", label: "Horóscopo Status", icon: Sparkles },
   { value: "horoscope-landing", label: "Horóscopo Grátis (Landing)", icon: Sparkles },
+  { value: "horoscope-plans", label: "Horóscopo Planos Pagos", icon: Sparkles },
 
   { value: "backup", label: "Backup", icon: Database },
   { value: "global", label: "Landing Page", icon: Phone },
@@ -367,6 +369,7 @@ function AdminTabContent({ tab }: { tab: string }) {
     case "cron": return <AdminCronStatus />;
     case "horoscope-status": return <AdminHoroscopeStatus />;
     case "horoscope-landing": return <AdminHoroscopeLanding />;
+    case "horoscope-plans": return <AdminHoroscopePlans />;
 
     case "backup": return <BackupAdmin />;
     case "global": return <AdminGlobalSettings />;

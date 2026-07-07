@@ -108,6 +108,25 @@ export const submitHoroscopeLead = createServerFn({ method: "POST" })
       );
     }
 
+    // Regra: 1 trial por vida. Se o e-mail OU o telefone já ATIVOU um trial
+    // (independente do status atual), bloqueia novo cadastro e sinaliza para
+    // o front abrir o popup persuasivo com CTA de assinatura.
+    const emailLower = data.email.toLowerCase();
+    const { data: priorLead } = await (supabaseAdmin as any)
+      .from("horoscope_free_leads")
+      .select("id, status, activated_at")
+      .or(`email.eq.${emailLower},phone_e164.eq.${data.phone_e164}`)
+      .not("activated_at", "is", null)
+      .limit(1)
+      .maybeSingle();
+    if (priorLead) {
+      return {
+        blocked: true as const,
+        reason: "trial_already_used" as const,
+        subscribeUrl: "/horoscopo-assinar",
+      };
+    }
+
     // Anti-abuso simples: no máx 3 leads por telefone em 24h
     const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     const { count: recentCount } = await (supabaseAdmin as any)

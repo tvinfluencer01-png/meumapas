@@ -15,6 +15,7 @@ import {
   getHoroscopeLandingSettings,
   submitHoroscopeLead,
 } from "@/lib/horoscope-landing.functions";
+import { HoroscopeTrialUsedDialog } from "@/components/HoroscopeTrialUsedDialog";
 
 export const Route = createFileRoute("/horoscopo-gratis")({
   head: () => ({
@@ -81,6 +82,7 @@ function HoroscopoGratisPage() {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [success, setSuccess] = useState<SuccessInfo | null>(null);
+  const [trialBlocked, setTrialBlocked] = useState(false);
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -103,7 +105,13 @@ function HoroscopoGratisPage() {
         },
       });
     },
-    onSuccess: (r) => setSuccess(r as SuccessInfo),
+    onSuccess: (r: any) => {
+      if (r?.blocked) {
+        setTrialBlocked(true);
+        return;
+      }
+      setSuccess(r as SuccessInfo);
+    },
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -336,6 +344,8 @@ function HoroscopoGratisPage() {
       <footer className="relative z-10 border-t border-gold/10 mt-16 py-6 text-center text-xs text-muted-foreground">
         © {new Date().getFullYear()} Código Cósmico · <Link to="/" className="hover:text-gold">Home</Link>
       </footer>
+
+      <HoroscopeTrialUsedDialog open={trialBlocked} onOpenChange={setTrialBlocked} />
     </div>
   );
 }

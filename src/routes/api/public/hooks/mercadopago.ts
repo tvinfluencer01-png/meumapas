@@ -84,6 +84,67 @@ async function handler({ request }: { request: Request }) {
 
   // Verifica se é um pedido de produto avulso (product_orders)
   const metadataKind = pay?.metadata?.kind;
+
+  // ─── Assinatura do Horóscopo Diário (planos pagos) ───
+  if (metadataKind === "horoscope_plan" || String(pay?.external_reference ?? "").startsWith("horoscope_plan:")) {
+    const subId: string | undefined =
+      pay?.metadata?.subscription_id ??
+      (String(pay?.external_reference ?? "").startsWith("horoscope_plan:")
+        ? String(pay.external_reference).split(":")[1]
+        : undefined);
+    if (!subId) return Response.json({ ok: false, reason: "no horoscope subscription id" });
+
+    const { data: hsub } = await supabaseAdmin
+      .from("horoscope_paid_subscriptions")
+      .select("*, plan:horoscope_plans(interval_months)")
+      .eq("id", subId)
+      .maybeSingle();
+    if (!hsub) return Response.json({ ok: false, reason: "horoscope subscription not found" });
+    if (hsub.status === "active") return Response.json({ ok: true, idempotent: true });
+
+    const now = new Date();
+    const months = (hsub as any).plan?.interval_months ?? 1;
+    const periodEnd = new Date(now);
+    periodEnd.setUTCMonth(periodEnd.getUTCMonth() + months);
+
+    await supabaseAdmin
+      .from("horoscope_paid_subscriptions")
+      .update({
+        status: "active",
+        mp_payment_id: String(paymentId),
+        current_period_start: now.toISOString(),
+        current_period_end: periodEnd.toISOString(),
+      })
+      .eq("id", subId);
+
+    // Seed horoscope_subscriptions (canal WhatsApp) com defaults se ainda não existir
+    const userId = (hsub as any).user_id;
+    const { data: existingHS } = await supabaseAdmin
+      .from("horoscope_subscriptions")
+      .select("id")
+      .eq("user_id", userId)
+      .is("client_profile_id", null)
+      .maybeSingle();
+    if (!existingHS) {
+      const { data: { user } } = await supabaseAdmin.auth.admin.getUserById(userId);
+      const { data: prof } = await supabaseAdmin
+        .from("profiles").select("phone").eq("id", userId).maybeSingle();
+      await supabaseAdmin.from("horoscope_subscriptions").insert({
+        user_id: userId,
+        enabled: true,
+        channel_email: !!(user?.email),
+        channel_whatsapp: !!(prof?.phone),
+        email: user?.email ?? null,
+        phone_e164: prof?.phone ?? null,
+        frequency: "daily",
+        send_local_hour: 8,
+        send_local_minute: 30,
+      });
+    }
+
+    return Response.json({ ok: true, kind: "horoscope_plan", subscription_id: subId });
+  }
+
   if (metadataKind === "product_order") {
     const { data: prodOrder } = await supabaseAdmin
       .from("product_orders")
