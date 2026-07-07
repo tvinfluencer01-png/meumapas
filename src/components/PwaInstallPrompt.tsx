@@ -51,6 +51,25 @@ export function PwaInstallPrompt() {
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
   const [open, setOpen] = useState(false);
   const [hintMode, setHintMode] = useState<"ios" | "browser" | null>(null);
+  const pathRef = useRef<string>("");
+  const shownLoggedRef = useRef(false);
+
+  const track = (
+    event: "shown" | "accepted" | "dismissed" | "installed",
+    hint: "ios" | "browser" | null,
+  ) => {
+    try {
+      void logPwaInstallEvent({
+        data: {
+          event,
+          path: pathRef.current || (typeof window !== "undefined" ? window.location.pathname : "/"),
+          hint_mode: hint,
+        },
+      });
+    } catch {
+      // ignore
+    }
+  };
 
   useEffect(() => {
     if (typeof window === "undefined") return;
