@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -330,6 +332,23 @@ function LeadsBlock() {
     queryKey: ["admin-horoscope-leads", page, search, status],
     queryFn: () => listFn({ data: { page, search: search || null, status: status || null } }),
   });
+
+  useEffect(() => {
+    const channel = supabase
+      .channel("admin-horoscope-leads-rt")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "horoscope_free_leads" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["admin-horoscope-leads"] });
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [qc]);
+
 
   const activate = useMutation({
     mutationFn: (id: string) => activateFn({ data: { id } }),
