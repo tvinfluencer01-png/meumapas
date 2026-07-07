@@ -115,6 +115,26 @@ function SettingsBlock() {
         </div>
 
         <div className="space-y-1.5">
+          <Label>Reenvio automático do código</Label>
+          <div className="flex items-center gap-2">
+            <Input
+              type="number" min={1} max={1440} className="w-28"
+              value={form.retry_after_minutes ?? 10}
+              onChange={(e) => set("retry_after_minutes", Math.max(1, Math.min(1440, Number(e.target.value) || 1)))}
+            />
+            <span className="text-muted-foreground text-sm">min entre tentativas ·</span>
+            <Input
+              type="number" min={0} max={10} className="w-20"
+              value={form.max_retries ?? 2}
+              onChange={(e) => set("max_retries", Math.max(0, Math.min(10, Number(e.target.value) || 0)))}
+            />
+            <span className="text-xs text-muted-foreground">
+              tentativas máx. Se o lead não confirmar, reenviamos o código automaticamente.
+            </span>
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
           <Label>Título do hero</Label>
           <Input value={form.hero_title} onChange={(e) => set("hero_title", e.target.value)} />
         </div>

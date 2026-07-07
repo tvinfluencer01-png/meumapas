@@ -3722,8 +3722,10 @@ export type Database = {
           email: string
           full_name: string
           id: string
+          last_retry_at: string | null
           last_sent_on: string | null
           phone_e164: string
+          retry_count: number
           source: string | null
           status: string
           sun_sign: string | null
@@ -3747,8 +3749,10 @@ export type Database = {
           email: string
           full_name: string
           id?: string
+          last_retry_at?: string | null
           last_sent_on?: string | null
           phone_e164: string
+          retry_count?: number
           source?: string | null
           status?: string
           sun_sign?: string | null
@@ -3772,8 +3776,10 @@ export type Database = {
           email?: string
           full_name?: string
           id?: string
+          last_retry_at?: string | null
           last_sent_on?: string | null
           phone_e164?: string
+          retry_count?: number
           source?: string | null
           status?: string
           sun_sign?: string | null
@@ -3796,6 +3802,8 @@ export type Database = {
           hero_subtitle: string
           hero_title: string
           id: boolean
+          max_retries: number
+          retry_after_minutes: number
           send_local_hour: number
           send_local_minute: number
           success_message: string
@@ -3814,6 +3822,8 @@ export type Database = {
           hero_subtitle?: string
           hero_title?: string
           id?: boolean
+          max_retries?: number
+          retry_after_minutes?: number
           send_local_hour?: number
           send_local_minute?: number
           success_message?: string
@@ -3832,6 +3842,8 @@ export type Database = {
           hero_subtitle?: string
           hero_title?: string
           id?: boolean
+          max_retries?: number
+          retry_after_minutes?: number
           send_local_hour?: number
           send_local_minute?: number
           success_message?: string

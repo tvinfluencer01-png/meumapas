@@ -29,20 +29,25 @@ async function handler({ request }: { request: Request }) {
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
   const { data: leads } = await (supabaseAdmin as any)
     .from("horoscope_free_leads")
-    .select("id, phone_e164, activation_code, trial_days")
+    .select("id, phone_e164, activation_code, trial_days, retry_count, last_retry_at, created_at")
     .eq("status", "pending_confirmation")
     .gte("created_at", since)
     .limit(50);
-  if (!leads?.length) return Response.json({ ok: true, checked: 0, activated: 0 });
+  if (!leads?.length) return Response.json({ ok: true, checked: 0, activated: 0, retried: 0 });
 
   const { data: settings } = await (supabaseAdmin as any)
     .from("horoscope_landing_settings")
-    .select("trial_days, confirmation_reply")
+    .select("trial_days, confirmation_reply, retry_after_minutes, max_retries, whatsapp_number_e164, activation_keyword")
     .eq("id", true).maybeSingle();
+
+  const retryAfterMs = Math.max(1, Number(settings?.retry_after_minutes ?? 10)) * 60_000;
+  const maxRetries = Math.max(0, Number(settings?.max_retries ?? 2));
+  const keyword = String(settings?.activation_keyword ?? "ATIVAR").toUpperCase();
 
   const base = String(evo.base_url).replace(/\/+$/, "");
   const inst = encodeURIComponent(evo.instance_name);
   let activated = 0;
+  let retried = 0;
 
   for (const lead of leads) {
     const digits = String(lead.phone_e164).replace(/\D+/g, "");
@@ -97,7 +102,39 @@ async function handler({ request }: { request: Request }) {
     } catch {
       // continue
     }
+
+    // Retentativa: se ainda pendente e passou do intervalo, reenvia o código.
+    try {
+      if (maxRetries > 0 && (lead.retry_count ?? 0) < maxRetries) {
+        const lastMs = lead.last_retry_at
+          ? new Date(lead.last_retry_at).getTime()
+          : new Date(lead.created_at).getTime();
+        if (Date.now() - lastMs >= retryAfterMs) {
+          const msg = `⏳ Ainda não recebemos sua confirmação. Envie *${keyword}-${lead.activation_code}* para ativar seu horóscopo grátis.`;
+          const { data: bumped } = await (supabaseAdmin as any)
+            .from("horoscope_free_leads")
+            .update({
+              retry_count: (lead.retry_count ?? 0) + 1,
+              last_retry_at: new Date().toISOString(),
+            })
+            .eq("id", lead.id)
+            .eq("status", "pending_confirmation")
+            .eq("retry_count", lead.retry_count ?? 0) // trava otimista
+            .select("id");
+          if (bumped?.length) {
+            await fetch(`${base}/message/sendText/${inst}`, {
+              method: "POST",
+              headers: { apikey: evo.global_api_key, "Content-Type": "application/json" },
+              body: JSON.stringify({ number: digits, text: msg }),
+            }).catch(() => {});
+            retried++;
+          }
+        }
+      }
+    } catch {
+      // continue
+    }
   }
 
-  return Response.json({ ok: true, checked: leads.length, activated });
+  return Response.json({ ok: true, checked: leads.length, activated, retried });
 }

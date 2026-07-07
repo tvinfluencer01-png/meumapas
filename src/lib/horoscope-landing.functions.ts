@@ -207,6 +207,8 @@ const SettingsSchema = z.object({
   trial_end_link: z.string().trim().url().or(z.literal("")),
   send_local_hour: z.number().int().min(0).max(23),
   send_local_minute: z.number().int().min(0).max(59),
+  retry_after_minutes: z.number().int().min(1).max(1440).optional(),
+  max_retries: z.number().int().min(0).max(10).optional(),
 });
 
 async function assertAdmin(context: { supabase: any; userId: string }) {
