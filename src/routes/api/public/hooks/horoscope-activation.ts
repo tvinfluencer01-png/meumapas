@@ -124,27 +124,12 @@ async function handler({ request }: { request: Request }) {
     .maybeSingle();
 
   const trialDays = Number(settings?.trial_days ?? lead.trial_days ?? 7);
-  const startsOn = new Date(Date.now() + 24 * 60 * 60 * 1000);
-  const endsOn = new Date(startsOn.getTime() + (trialDays - 1) * 24 * 60 * 60 * 1000);
-  const iso = (d: Date) => d.toISOString().slice(0, 10);
+  const { buildActivationPatch, tryActivateLead } = await import("@/lib/horoscope-activation.server");
+  const patch = buildActivationPatch(trialDays);
 
   // Idempotência: só ativa (e responde) se a linha ainda estiver pendente.
-  // Se webhook e poll processarem a mesma mensagem, apenas o primeiro
-  // update retornará linhas — o segundo vira no-op.
-  const { data: updated } = await (supabaseAdmin as any)
-    .from("horoscope_free_leads")
-    .update({
-      status: "active",
-      activated_at: new Date().toISOString(),
-      trial_starts_on: iso(startsOn),
-      trial_ends_on: iso(endsOn),
-      trial_days: trialDays,
-    })
-    .eq("id", lead.id)
-    .eq("status", "pending_confirmation")
-    .select("id");
-
-  if (!updated?.length) {
+  const didActivate = await tryActivateLead(supabaseAdmin, lead.id, patch);
+  if (!didActivate) {
     return Response.json({ ok: true, action: "already_activated" });
   }
 
