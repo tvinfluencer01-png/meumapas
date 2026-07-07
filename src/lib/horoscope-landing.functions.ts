@@ -80,6 +80,8 @@ const SubmitSchema = z.object({
     .regex(/^\d{4}-\d{2}-\d{2}$/, "Data em formato AAAA-MM-DD")
     .nullable()
     .optional(),
+  city: z.string().trim().max(120).nullable().optional(),
+  timezone: z.string().trim().max(64).nullable().optional(),
   consent_marketing: z.literal(true, {
     errorMap: () => ({
       message: "É necessário aceitar receber mensagens para continuar.",
