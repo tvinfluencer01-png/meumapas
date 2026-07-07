@@ -6,7 +6,12 @@
  */
 // @ts-expect-error — bun:test types not bundled; runtime is provided by `bun test`
 import { describe, expect, test } from "bun:test";
-import { buildActivationPatch, tryActivateLead } from "./horoscope-activation.server";
+import {
+  buildActivationPatch,
+  tryActivateLead,
+  tryClaimRetry,
+  tryClaimExpiryReminder,
+} from "./horoscope-activation.server";
 
 /** Mock supabase com UPDATE atômico condicional (simula o Postgres). */
 function makeFakeSupabase(initialRow: Record<string, any>) {
