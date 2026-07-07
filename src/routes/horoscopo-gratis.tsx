@@ -156,8 +156,8 @@ function HoroscopoGratisPage() {
             </div>
 
             <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl leading-tight shimmer-text">
-              <span className="block">Receba seu Horóscopo Diário</span>
-              <span className="block">no WhatsApp</span>
+              <span className="block">Receba seu</span>
+              <span className="block">Horóscopo Diário no WhatsApp</span>
               <span className="block">— 7 dias grátis</span>
             </h1>
             <p className="text-lg text-muted-foreground leading-relaxed">
