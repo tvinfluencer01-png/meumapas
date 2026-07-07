@@ -123,7 +123,36 @@ async function handler({ request }: { request: Request }) {
     } catch {
       // continue
     }
+
+    // Lembrete final: X min antes da janela de 24h expirar, se ainda não enviado.
+    try {
+      if (!lead.expiry_reminder_sent_at) {
+        const createdMs = new Date(lead.created_at).getTime();
+        const msToExpiry = createdMs + EXPIRY_MS - Date.now();
+        if (msToExpiry > 0 && msToExpiry <= reminderBeforeMs) {
+          const minsLeft = Math.max(1, Math.round(msToExpiry / 60_000));
+          const msg = `⚠️ Seu cadastro no horóscopo grátis expira em ~${minsLeft} min. Envie *${keyword}-${lead.activation_code}* agora para garantir seus 7 dias grátis. ✨`;
+          const { data: marked } = await (supabaseAdmin as any)
+            .from("horoscope_free_leads")
+            .update({ expiry_reminder_sent_at: new Date().toISOString() })
+            .eq("id", lead.id)
+            .eq("status", "pending_confirmation")
+            .is("expiry_reminder_sent_at", null) // trava: só o primeiro concorrente envia
+            .select("id");
+          if (marked?.length) {
+            await fetch(`${base}/message/sendText/${inst}`, {
+              method: "POST",
+              headers: { apikey: evo.global_api_key, "Content-Type": "application/json" },
+              body: JSON.stringify({ number: digits, text: msg }),
+            }).catch(() => {});
+            reminded++;
+          }
+        }
+      }
+    } catch {
+      // continue
+    }
   }
 
-  return Response.json({ ok: true, checked: leads.length, activated, retried });
+  return Response.json({ ok: true, checked: leads.length, activated, retried, reminded });
 }
