@@ -46,6 +46,7 @@ function LandingPage() {
       <TrustBar />
       <Pillars />
       <AstralPreview />
+      <ReportsGallery />
       <Numerology />
       <OracleSection />
       <TarotMeditation />
@@ -55,16 +56,156 @@ function LandingPage() {
       <BrandIdentity />
       <Testimonials />
       <Pricing />
-      <AddonsSection />
       <PlanComparison />
       <Guarantee />
       <FAQ />
       <CTASection />
       <Footer />
-      
+
       <DynamicWhatsAppFloat />
-      
     </div>
+  );
+}
+
+/* ---------------- REPORTS GALLERY (novos relatórios com capas) ---------------- */
+const REPORT_SHOWCASE: Array<{
+  slug: string;
+  title: string;
+  tag: string;
+  hook: string;
+  img: string;
+}> = [
+  {
+    slug: "mapa-astral-completo",
+    title: "Mapa Astral Completo",
+    tag: "O retrato da alma",
+    hook: "Planetas, casas e aspectos decifrados em linguagem que atravessa o coração.",
+    img: "/__l5e/assets-v1/e73ccb6a-0db9-4efc-9b08-09640de0a093/credits-pacote-estelar.png",
+  },
+  {
+    slug: "mapa-do-amor",
+    title: "Mapa do Amor",
+    tag: "Vênus, Marte & Casa 7",
+    hook: "Descubra por que você ama assim — e como reescrever o padrão.",
+    img: "/__l5e/assets-v1/e9dbf0cc-bef1-4049-aed6-39419663a59f/plan-galactico.png",
+  },
+  {
+    slug: "sinastria-amorosa",
+    title: "Sinastria Amorosa",
+    tag: "Dois mapas · uma dança",
+    hook: "A geometria invisível que une (ou tensiona) o seu vínculo.",
+    img: "/__l5e/assets-v1/9b2c4dc2-2391-40c8-9853-74144554f434/plan-estelar.png",
+  },
+  {
+    slug: "previsao-anual",
+    title: "Previsão Anual",
+    tag: "Trânsitos & Revolução Solar",
+    hook: "Os próximos 12 meses mapa a mapa — janelas de plantar, colher e recuar.",
+    img: "/__l5e/assets-v1/3ed803e1-5530-45fb-9d17-f38df6a0e9cc/report-previsao-anual.png",
+  },
+  {
+    slug: "tarot-dos-caminhos",
+    title: "Tarot dos Caminhos",
+    tag: "Passado · Presente · Futuro",
+    hook: "Cartas lidas pela IA com base no seu momento astrológico exato.",
+    img: "/__l5e/assets-v1/d1699126-32b5-4757-ae54-365b9991ff40/plan-cosmico.png",
+  },
+  {
+    slug: "numerologia-cabalistica",
+    title: "Numerologia Cabalística",
+    tag: "Gematria & Árvore da Vida",
+    hook: "A matemática mística do seu nome — decifrada pela tradição cabalística.",
+    img: "/__l5e/assets-v1/0d659f35-03a5-4d3c-b1ac-e55ca96af2a3/credits-pacote-omnisciente.png",
+  },
+  {
+    slug: "numerologia-do-casal",
+    title: "Numerologia do Casal",
+    tag: "Vibrações compartilhadas",
+    hook: "Onde vocês vibram juntos — e o número que precisa ser trabalhado.",
+    img: "/__l5e/assets-v1/23510d25-c96a-4035-9fe2-ce28bd76762d/credits-pacote-universal.png",
+  },
+  {
+    slug: "cabala-pessoal",
+    title: "Cabala Pessoal",
+    tag: "Sua árvore, sua sefirá",
+    hook: "A trilha das 10 Sefirot desenhada só para o seu caminho de alma.",
+    img: "/__l5e/assets-v1/70751772-821c-46ed-90a1-b0f63755e8a3/plan-mistico.png",
+  },
+  {
+    slug: "mapa-empresarial",
+    title: "Mapa Empresarial",
+    tag: "Para fundadores & sócios",
+    hook: "Ciclos, sinastria societária e plano estratégico para os 12 meses.",
+    img: "/__l5e/assets-v1/0351239e-c209-43a9-9bd4-0552c61bbf83/plan-profissional.png",
+  },
+];
+
+function ReportsGallery() {
+  return (
+    <section id="relatorios" className="relative overflow-hidden py-32 nebula-bg">
+      <Starfield count={40} />
+      <div className="relative mx-auto max-w-7xl px-6">
+        <div className="mb-16 flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
+          <div className="max-w-2xl">
+            <span className="mb-4 block text-xs uppercase tracking-[0.4em] text-gold/70">
+              Biblioteca Cósmica · Relatórios cinematográficos
+            </span>
+            <h2 className="font-serif text-5xl italic leading-tight">
+              Cada relatório é um <span className="text-gold">portal</span>.
+            </h2>
+            <p className="mt-6 max-w-xl text-muted-foreground">
+              Não são laudos frios. São PDFs escritos como cartas para a sua alma —
+              ilustrados, encadernados em ouro cerimonial, prontos para imprimir e guardar.
+              <em className="mt-2 block text-stardust not-italic">Todos incluídos nos planos mensais.</em>
+            </p>
+          </div>
+          <a
+            href="#planos"
+            className="shrink-0 rounded-full border border-gold/40 bg-gold/10 px-6 py-3 text-xs uppercase tracking-[0.25em] text-gold transition-colors hover:bg-gold hover:text-primary-foreground"
+          >
+            Ver planos mensais →
+          </a>
+        </div>
+
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {REPORT_SHOWCASE.map((r) => (
+            <Link
+              key={r.slug}
+              to="/p/$slug"
+              params={{ slug: r.slug }}
+              className="group relative overflow-hidden rounded-2xl border border-border bg-card/40 transition-all hover:border-gold/50 hover:gold-glow"
+            >
+              <div className="relative aspect-[4/5] overflow-hidden">
+                <img
+                  src={r.img}
+                  alt={`Capa do relatório ${r.title}`}
+                  loading="lazy"
+                  className="size-full object-cover transition-transform duration-700 group-hover:scale-105"
+                />
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
+                <span className="absolute left-4 top-4 rounded-full border border-gold/40 bg-background/70 px-3 py-1 text-[10px] uppercase tracking-[0.25em] text-gold backdrop-blur">
+                  {r.tag}
+                </span>
+              </div>
+              <div className="relative -mt-16 space-y-3 p-6">
+                <h3 className="font-serif text-2xl text-stardust transition-colors group-hover:text-gold">
+                  {r.title}
+                </h3>
+                <p className="text-sm leading-relaxed text-muted-foreground">{r.hook}</p>
+                <span className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.3em] text-gold">
+                  Ver relatório
+                  <span className="transition-transform group-hover:translate-x-1">→</span>
+                </span>
+              </div>
+            </Link>
+          ))}
+        </div>
+
+        <p className="mt-12 text-center text-xs uppercase tracking-[0.3em] text-muted-foreground">
+          + Meditação Cabalística · Mapa Vocacional · Prosperidade Financeira · Vida Familiar · Saúde · Amizades · Personalidade
+        </p>
+      </div>
+    </section>
   );
 }
 
