@@ -281,6 +281,20 @@ function HoroscopoGratisPage() {
                   />
                 </div>
 
+                <div className="space-y-1.5">
+                  <Label htmlFor="city">Sua cidade <span className="text-muted-foreground">(para acertar o fuso do envio)</span></Label>
+                  <Select value={form.city} onValueChange={(v) => setForm((f) => ({ ...f, city: v }))}>
+                    <SelectTrigger id="city"><SelectValue placeholder="Selecione sua cidade" /></SelectTrigger>
+                    <SelectContent className="max-h-72">
+                      {BR_CITIES.map((c) => (
+                        <SelectItem key={`${c.name}-${c.state}`} value={`${c.name} - ${c.state}`}>
+                          {c.name} - {c.state}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.city && <p className="text-xs text-destructive">{errors.city}</p>}
+
                 <label className="flex gap-3 items-start pt-2 cursor-pointer">
                   <Checkbox
                     checked={form.consent}
