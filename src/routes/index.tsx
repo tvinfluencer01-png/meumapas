@@ -865,52 +865,7 @@ function Pricing() {
   );
 }
 
-/* ---------------- ADDONS À LA CARTE ---------------- */
-function AddonsSection() {
-  const { user } = useAuth();
-  
-  const { data: pkgsData } = useQuery({
-    queryKey: ["admin-credit-packages-public"],
-    queryFn: async () => {
-      const { listCreditPackages } = await import("@/lib/credits.functions");
-      return listCreditPackages();
-    },
-  });
 
-  const packages = pkgsData?.packages.filter(p => p.active) || [];
-
-  return (
-    <section className="border-y border-border bg-card/20 py-24">
-      <div className="mx-auto max-w-5xl px-6 text-center">
-        <span className="mb-4 block text-xs uppercase tracking-[0.4em] text-gold/70">
-          Uso pontual & Sem compromisso
-        </span>
-        <h2 className="mb-4 font-serif text-3xl italic">Créditos de Ascensão</h2>
-        <p className="mb-12 text-sm text-muted-foreground">
-          Cada relatório ou consulta consome 1 crédito. Expira nunca. Use quando sentir o chamado.
-        </p>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          {packages.map((a) => (
-            <Link
-              key={a.id}
-              to={user ? "/addons" : `/auth?mode=signup&plan=${a.id}`}
-              className={`rounded-2xl border p-6 text-left transition-all ${
-                a.credits > 40 ? "border-gold/40 bg-gold/5 gold-glow" : "border-border hover:border-gold/30"
-              }`}
-            >
-              <p className="text-xs uppercase tracking-[0.25em] text-gold/80">{a.credits} créditos</p>
-              <p className="mt-2 font-serif text-2xl text-stardust">{formatBRL(a.price_cents)}</p>
-              <p className="mt-1 text-sm text-muted-foreground">{a.name}</p>
-              <div className="mt-4 text-xs font-semibold uppercase tracking-wider text-gold flex items-center gap-1 group">
-                Obter agora <span className="transition-transform group-hover:translate-x-1">→</span>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
 
 /* ---------------- PLAN COMPARISON ---------------- */
 function PlanComparison() {
