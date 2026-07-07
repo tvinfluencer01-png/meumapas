@@ -17,6 +17,8 @@ export function SplashScreen({ onComplete, minimumDuration = 4500 }: SplashScree
     // (ex.: /auth — a splash sobreposta bloqueia os campos de e-mail/senha).
     const path = window.location.pathname;
     if (path.startsWith("/auth")) return false;
+    // Landings públicas não devem ficar bloqueadas pela splash da área logada
+    if (path.startsWith("/horoscopo-gratis") || path.startsWith("/p/")) return false;
     return sessionStorage.getItem(SPLASH_SHOWN_KEY) !== "1";
   });
 
