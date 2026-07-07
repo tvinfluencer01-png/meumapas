@@ -19,6 +19,8 @@ import { AdminProductLandings } from "@/components/AdminProductLandings";
 import { AdminProductOrders } from "@/components/AdminProductOrders";
 import { AdminCrm } from "@/components/AdminCrm";
 import { AdminHoroscopeStatus } from "@/components/AdminHoroscopeStatus";
+import { AdminHoroscopeLanding } from "@/components/AdminHoroscopeLanding";
+
 import { AdminAffiliatePanel } from "@/modules/affiliate/ui/AdminAffiliatePanel";
 import { getServerTime } from "@/lib/server-time.functions";
 
