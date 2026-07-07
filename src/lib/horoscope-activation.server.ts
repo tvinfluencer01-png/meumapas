@@ -43,3 +43,43 @@ export async function tryActivateLead(
     .select("id");
   return Array.isArray(data) && data.length > 0;
 }
+
+/**
+ * Reivindica atomicamente o direito de enviar UM retry para o lead.
+ * Retorna true só para o primeiro caller — usa trava otimista em `retry_count`.
+ */
+export async function tryClaimRetry(
+  supabase: any,
+  leadId: string,
+  currentRetryCount: number,
+): Promise<boolean> {
+  const { data } = await supabase
+    .from("horoscope_free_leads")
+    .update({
+      retry_count: currentRetryCount + 1,
+      last_retry_at: new Date().toISOString(),
+    })
+    .eq("id", leadId)
+    .eq("status", "pending_confirmation")
+    .eq("retry_count", currentRetryCount)
+    .select("id");
+  return Array.isArray(data) && data.length > 0;
+}
+
+/**
+ * Reivindica atomicamente o direito de enviar o lembrete final de expiração.
+ * Retorna true só para o primeiro caller — usa trava em `expiry_reminder_sent_at IS NULL`.
+ */
+export async function tryClaimExpiryReminder(
+  supabase: any,
+  leadId: string,
+): Promise<boolean> {
+  const { data } = await supabase
+    .from("horoscope_free_leads")
+    .update({ expiry_reminder_sent_at: new Date().toISOString() })
+    .eq("id", leadId)
+    .eq("status", "pending_confirmation")
+    .is("expiry_reminder_sent_at", null)
+    .select("id");
+  return Array.isArray(data) && data.length > 0;
+}
