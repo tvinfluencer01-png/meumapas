@@ -3713,6 +3713,7 @@ export type Database = {
           activated_at: string | null
           activation_code: string
           birth_date: string | null
+          city: string | null
           confirmation_attempts: number
           confirmation_error: string | null
           confirmation_sent_at: string | null
@@ -3734,6 +3735,7 @@ export type Database = {
           source: string | null
           status: string
           sun_sign: string | null
+          timezone: string
           trial_days: number
           trial_ends_on: string | null
           trial_starts_on: string | null
@@ -3745,6 +3747,7 @@ export type Database = {
           activated_at?: string | null
           activation_code: string
           birth_date?: string | null
+          city?: string | null
           confirmation_attempts?: number
           confirmation_error?: string | null
           confirmation_sent_at?: string | null
@@ -3766,6 +3769,7 @@ export type Database = {
           source?: string | null
           status?: string
           sun_sign?: string | null
+          timezone?: string
           trial_days?: number
           trial_ends_on?: string | null
           trial_starts_on?: string | null
@@ -3777,6 +3781,7 @@ export type Database = {
           activated_at?: string | null
           activation_code?: string
           birth_date?: string | null
+          city?: string | null
           confirmation_attempts?: number
           confirmation_error?: string | null
           confirmation_sent_at?: string | null
@@ -3798,6 +3803,7 @@ export type Database = {
           source?: string | null
           status?: string
           sun_sign?: string | null
+          timezone?: string
           trial_days?: number
           trial_ends_on?: string | null
           trial_starts_on?: string | null
@@ -4031,6 +4037,7 @@ export type Database = {
           send_local_minute: number
           send_weekday: number | null
           sun_sign: string | null
+          timezone: string
           updated_at: string
           user_id: string
         }
@@ -4054,6 +4061,7 @@ export type Database = {
           send_local_minute?: number
           send_weekday?: number | null
           sun_sign?: string | null
+          timezone?: string
           updated_at?: string
           user_id: string
         }
@@ -4077,6 +4085,7 @@ export type Database = {
           send_local_minute?: number
           send_weekday?: number | null
           sun_sign?: string | null
+          timezone?: string
           updated_at?: string
           user_id?: string
         }
