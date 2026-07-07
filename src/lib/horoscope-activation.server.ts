@@ -197,7 +197,7 @@ export function extractMessageTimestampMs(payload: any): number | null {
 }
 
 export function buildActivationPatch(trialDays: number, now = new Date()): ActivationPatch {
-  const startsOn = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+  const startsOn = new Date(now.getTime());
   const endsOn = new Date(startsOn.getTime() + (trialDays - 1) * 24 * 60 * 60 * 1000);
   const iso = (d: Date) => d.toISOString().slice(0, 10);
   return {
@@ -208,6 +208,7 @@ export function buildActivationPatch(trialDays: number, now = new Date()): Activ
     trial_days: trialDays,
   };
 }
+
 
 /**
  * Tenta ativar o lead. Retorna true APENAS se este caller efetivamente mudou
