@@ -165,12 +165,27 @@ export const submitHoroscopeLead = createServerFn({ method: "POST" })
         ip = getRequestIP({ xForwardedFor: true }) ?? null;
       } catch {}
 
+      // Resolve fuso: cliente pode enviar tz explícito; senão tenta pelo nome da cidade;
+      // senão fica no default 'America/Sao_Paulo'.
+      let resolvedTz: string | null = data.timezone?.trim() || null;
+      if (!resolvedTz && data.city) {
+        const c = findCity(data.city);
+        if (c) resolvedTz = c.timezone;
+        else {
+          // "Cidade - UF"
+          const m = data.city.match(/-\s*([A-Za-z]{2})\s*$/);
+          if (m) resolvedTz = timezoneForUF(m[1]);
+        }
+      }
+
       const insertPayload = {
         full_name: data.full_name,
         email: data.email.toLowerCase(),
         phone_e164: data.phone_e164,
         birth_date: data.birth_date ?? null,
         sun_sign: sunSignFromBirthDate(data.birth_date ?? null),
+        city: data.city ?? null,
+        timezone: resolvedTz ?? "America/Sao_Paulo",
         consent_marketing: true,
         consent_text: settings.consent_text,
         consent_ip: ip,
