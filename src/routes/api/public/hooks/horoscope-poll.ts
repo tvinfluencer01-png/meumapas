@@ -67,6 +67,8 @@ async function handler({ request }: { request: Request }) {
     extractMessageRemoteJid,
     getWhatsAppJidCandidates,
     isIncomingWhatsappMessage,
+        isRecentLeadMessage,
+        isWhatsappLid,
     phoneMatches,
     sendConfirmationIfNeeded,
     textContainsActivationCode,
@@ -153,10 +155,11 @@ async function handler({ request }: { request: Request }) {
         const remoteJid = extractMessageRemoteJid(m);
         const phoneOk = !remoteJid || phoneMatches(remoteJid, lead.phone_e164);
         const t = extractIncomingText(m);
-        if (textContainsActivationCode(t, code)) return phoneOk || !remoteJid;
+        if (textContainsActivationCode(t, code)) {
+          return phoneOk || !remoteJid || (isWhatsappLid(remoteJid) && isRecentLeadMessage(m, lead.created_at, 10));
+        }
         if (!phoneOk || !textContainsActivationKeyword(t, keyword)) return false;
-        const ts = extractMessageTimestampMs(m);
-        return ts !== null && ts >= new Date(lead.created_at).getTime() - 2 * 60_000;
+        return isRecentLeadMessage(m, lead.created_at, 2);
       });
       if (!hit) {
         try {
