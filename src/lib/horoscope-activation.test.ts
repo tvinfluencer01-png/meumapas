@@ -36,6 +36,11 @@ function makeFakeSupabase(initialRow: Record<string, any>) {
           filters.push([col, val]);
           return chain;
         },
+        is(col: string, val: any) {
+          // simula NULL / NOT NULL check
+          filters.push([col, val]);
+          return chain;
+        },
         select(cols: string) {
           selectCols = cols;
           // Executa como um "thenable" (await na chain resolve aqui)
