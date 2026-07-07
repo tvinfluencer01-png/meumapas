@@ -49,6 +49,7 @@ const FormSchema = z.object({
     .trim()
     .regex(/^\+?[1-9]\d{7,14}$/, "Ex: +5511999998888"),
   birth_date: z.string().optional(),
+  city: z.string().trim().min(2, "Escolha sua cidade"),
   consent: z.literal(true, {
     errorMap: () => ({ message: "É necessário aceitar para continuar." }),
   }),
