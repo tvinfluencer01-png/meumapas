@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ProgramaAfiliadosRouteImport } from './routes/programa-afiliados'
 import { Route as ProfissionaisRouteImport } from './routes/profissionais'
+import { Route as HoroscopoGratisRouteImport } from './routes/horoscopo-gratis'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AtivacaoRouteImport } from './routes/ativacao'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
@@ -88,6 +89,11 @@ const ProgramaAfiliadosRoute = ProgramaAfiliadosRouteImport.update({
 const ProfissionaisRoute = ProfissionaisRouteImport.update({
   id: '/profissionais',
   path: '/profissionais',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HoroscopoGratisRoute = HoroscopoGratisRouteImport.update({
+  id: '/horoscopo-gratis',
+  path: '/horoscopo-gratis',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -427,6 +433,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/ativacao': typeof AtivacaoRoute
   '/auth': typeof AuthRoute
+  '/horoscopo-gratis': typeof HoroscopoGratisRoute
   '/profissionais': typeof ProfissionaisRoute
   '/programa-afiliados': typeof ProgramaAfiliadosRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -493,6 +500,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/ativacao': typeof AtivacaoRoute
   '/auth': typeof AuthRoute
+  '/horoscopo-gratis': typeof HoroscopoGratisRoute
   '/profissionais': typeof ProfissionaisRoute
   '/programa-afiliados': typeof ProgramaAfiliadosRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -561,6 +569,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/ativacao': typeof AtivacaoRoute
   '/auth': typeof AuthRoute
+  '/horoscopo-gratis': typeof HoroscopoGratisRoute
   '/profissionais': typeof ProfissionaisRoute
   '/programa-afiliados': typeof ProgramaAfiliadosRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -629,6 +638,7 @@ export interface FileRouteTypes {
     | '/'
     | '/ativacao'
     | '/auth'
+    | '/horoscopo-gratis'
     | '/profissionais'
     | '/programa-afiliados'
     | '/reset-password'
@@ -695,6 +705,7 @@ export interface FileRouteTypes {
     | '/'
     | '/ativacao'
     | '/auth'
+    | '/horoscopo-gratis'
     | '/profissionais'
     | '/programa-afiliados'
     | '/reset-password'
@@ -762,6 +773,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/ativacao'
     | '/auth'
+    | '/horoscopo-gratis'
     | '/profissionais'
     | '/programa-afiliados'
     | '/reset-password'
@@ -830,6 +842,7 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AtivacaoRoute: typeof AtivacaoRoute
   AuthRoute: typeof AuthRoute
+  HoroscopoGratisRoute: typeof HoroscopoGratisRoute
   ProfissionaisRoute: typeof ProfissionaisRoute
   ProgramaAfiliadosRoute: typeof ProgramaAfiliadosRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
@@ -895,6 +908,13 @@ declare module '@tanstack/react-router' {
       path: '/profissionais'
       fullPath: '/profissionais'
       preLoaderRoute: typeof ProfissionaisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/horoscopo-gratis': {
+      id: '/horoscopo-gratis'
+      path: '/horoscopo-gratis'
+      fullPath: '/horoscopo-gratis'
+      preLoaderRoute: typeof HoroscopoGratisRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -1397,6 +1417,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AtivacaoRoute: AtivacaoRoute,
   AuthRoute: AuthRoute,
+  HoroscopoGratisRoute: HoroscopoGratisRoute,
   ProfissionaisRoute: ProfissionaisRoute,
   ProgramaAfiliadosRoute: ProgramaAfiliadosRoute,
   ResetPasswordRoute: ResetPasswordRoute,
