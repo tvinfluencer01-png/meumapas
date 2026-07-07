@@ -135,6 +135,20 @@ function SettingsBlock() {
         </div>
 
         <div className="space-y-1.5">
+          <Label>Lembrete antes de expirar</Label>
+          <div className="flex items-center gap-2">
+            <Input
+              type="number" min={1} max={1440} className="w-28"
+              value={form.expiry_reminder_minutes_before ?? 60}
+              onChange={(e) => set("expiry_reminder_minutes_before", Math.max(1, Math.min(1440, Number(e.target.value) || 1)))}
+            />
+            <span className="text-xs text-muted-foreground">
+              min antes da janela de 24h expirar, enviamos um lembrete final no WhatsApp (uma única vez por lead).
+            </span>
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
           <Label>Título do hero</Label>
           <Input value={form.hero_title} onChange={(e) => set("hero_title", e.target.value)} />
         </div>

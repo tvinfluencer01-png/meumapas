@@ -29,25 +29,28 @@ async function handler({ request }: { request: Request }) {
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
   const { data: leads } = await (supabaseAdmin as any)
     .from("horoscope_free_leads")
-    .select("id, phone_e164, activation_code, trial_days, retry_count, last_retry_at, created_at")
+    .select("id, phone_e164, activation_code, trial_days, retry_count, last_retry_at, created_at, expiry_reminder_sent_at")
     .eq("status", "pending_confirmation")
     .gte("created_at", since)
     .limit(50);
-  if (!leads?.length) return Response.json({ ok: true, checked: 0, activated: 0, retried: 0 });
+  if (!leads?.length) return Response.json({ ok: true, checked: 0, activated: 0, retried: 0, reminded: 0 });
 
   const { data: settings } = await (supabaseAdmin as any)
     .from("horoscope_landing_settings")
-    .select("trial_days, confirmation_reply, retry_after_minutes, max_retries, whatsapp_number_e164, activation_keyword")
+    .select("trial_days, confirmation_reply, retry_after_minutes, max_retries, expiry_reminder_minutes_before, whatsapp_number_e164, activation_keyword")
     .eq("id", true).maybeSingle();
 
   const retryAfterMs = Math.max(1, Number(settings?.retry_after_minutes ?? 10)) * 60_000;
   const maxRetries = Math.max(0, Number(settings?.max_retries ?? 2));
+  const reminderBeforeMs = Math.max(1, Number(settings?.expiry_reminder_minutes_before ?? 60)) * 60_000;
   const keyword = String(settings?.activation_keyword ?? "ATIVAR").toUpperCase();
+  const EXPIRY_MS = 24 * 60 * 60 * 1000; // janela de 24h para confirmar
 
   const base = String(evo.base_url).replace(/\/+$/, "");
   const inst = encodeURIComponent(evo.instance_name);
   let activated = 0;
   let retried = 0;
+  let reminded = 0;
 
   for (const lead of leads) {
     const digits = String(lead.phone_e164).replace(/\D+/g, "");
@@ -120,7 +123,36 @@ async function handler({ request }: { request: Request }) {
     } catch {
       // continue
     }
+
+    // Lembrete final: X min antes da janela de 24h expirar, se ainda não enviado.
+    try {
+      if (!lead.expiry_reminder_sent_at) {
+        const createdMs = new Date(lead.created_at).getTime();
+        const msToExpiry = createdMs + EXPIRY_MS - Date.now();
+        if (msToExpiry > 0 && msToExpiry <= reminderBeforeMs) {
+          const minsLeft = Math.max(1, Math.round(msToExpiry / 60_000));
+          const msg = `⚠️ Seu cadastro no horóscopo grátis expira em ~${minsLeft} min. Envie *${keyword}-${lead.activation_code}* agora para garantir seus 7 dias grátis. ✨`;
+          const { data: marked } = await (supabaseAdmin as any)
+            .from("horoscope_free_leads")
+            .update({ expiry_reminder_sent_at: new Date().toISOString() })
+            .eq("id", lead.id)
+            .eq("status", "pending_confirmation")
+            .is("expiry_reminder_sent_at", null) // trava: só o primeiro concorrente envia
+            .select("id");
+          if (marked?.length) {
+            await fetch(`${base}/message/sendText/${inst}`, {
+              method: "POST",
+              headers: { apikey: evo.global_api_key, "Content-Type": "application/json" },
+              body: JSON.stringify({ number: digits, text: msg }),
+            }).catch(() => {});
+            reminded++;
+          }
+        }
+      }
+    } catch {
+      // continue
+    }
   }
 
-  return Response.json({ ok: true, checked: leads.length, activated, retried });
+  return Response.json({ ok: true, checked: leads.length, activated, retried, reminded });
 }
