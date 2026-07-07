@@ -158,7 +158,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:description", content: "Onde a inteligência artificial encontra o sagrado. Mapa astral, numerologia cabalística e IA espiritual em uma plataforma cinematográfica." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
+      
       { name: "twitter:title", content: "Código Cósmico — Mapa Astral, Numerologia e IA Espiritual" },
       { name: "twitter:description", content: "Onde a inteligência artificial encontra o sagrado. Mapa astral, numerologia cabalística e IA espiritual em uma plataforma cinematográfica." },
       { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/47934827-fe6d-497e-8a40-86af8d661e11" },
