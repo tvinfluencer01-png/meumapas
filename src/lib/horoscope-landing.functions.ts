@@ -383,3 +383,87 @@ export const adminConfigureEvolutionWebhook = createServerFn({ method: "POST" })
 
     return { ok: true, webhookUrl, instance: evo.instance_name };
   });
+
+/* ---------- ADMIN: test Evolution webhook end-to-end ---------- */
+
+const TestSchema = z.object({
+  phone_e164: z.string().trim().transform(normalizePhone).refine(
+    (v) => PHONE_REGEX.test(v),
+    { message: "Telefone em formato internacional, ex: +5511999998888" },
+  ),
+});
+
+export const adminTestEvolutionWebhook = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => TestSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context as any);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: evo } = await (supabaseAdmin as any)
+      .from("evolution_settings").select("*").eq("id", true).maybeSingle();
+    if (!evo?.enabled || !evo?.base_url || !evo?.global_api_key || !evo?.instance_name) {
+      throw new Error("Configure Evolution (base_url, api_key, instance) e ative antes.");
+    }
+
+    const base_url = String(evo.base_url).replace(/\/+$/, "");
+    const instance = encodeURIComponent(evo.instance_name);
+    const startedAt = new Date().toISOString();
+
+    // 1) Consulta configuração atual do webhook na Evolution
+    let webhookConfig: any = null;
+    let webhookFindError: string | null = null;
+    try {
+      const r = await fetch(`${base_url}/webhook/find/${instance}`, {
+        headers: { apikey: evo.global_api_key },
+      });
+      const txt = await r.text();
+      try { webhookConfig = JSON.parse(txt); } catch { webhookConfig = txt; }
+      if (!r.ok) webhookFindError = `HTTP ${r.status}: ${txt.slice(0, 180)}`;
+    } catch (e: any) {
+      webhookFindError = String(e?.message ?? e);
+    }
+
+    // 2) Envia mensagem de teste para o número informado
+    const marker = "TESTE-" + Math.random().toString(36).slice(2, 8).toUpperCase();
+    const text = `🧪 Teste Cosmic ${marker}\nSe você receber isso no WhatsApp, a instância "${evo.instance_name}" está enviando corretamente.`;
+    let sendOk = false;
+    let sendError: string | null = null;
+    try {
+      const r = await fetch(`${base_url}/message/sendText/${instance}`, {
+        method: "POST",
+        headers: { apikey: evo.global_api_key, "Content-Type": "application/json" },
+        body: JSON.stringify({ number: data.phone_e164.replace(/\D+/g, ""), text }),
+      });
+      sendOk = r.ok;
+      if (!r.ok) sendError = `HTTP ${r.status}: ${(await r.text().catch(() => "")).slice(0, 180)}`;
+    } catch (e: any) {
+      sendError = String(e?.message ?? e);
+    }
+
+    // 3) Poll app_logs por evento 'evo_webhook_received' após startedAt (até ~15s)
+    let webhookHit: any = null;
+    for (let i = 0; i < 15 && !webhookHit; i++) {
+      await new Promise((res) => setTimeout(res, 1000));
+      const { data: rows } = await (supabaseAdmin as any)
+        .from("app_logs")
+        .select("id, event, payload, created_at")
+        .eq("event", "evo_webhook_received")
+        .gte("created_at", startedAt)
+        .order("created_at", { ascending: false })
+        .limit(1);
+      if (rows?.length) webhookHit = rows[0];
+    }
+
+    return {
+      ok: sendOk,
+      startedAt,
+      marker,
+      webhookConfig,
+      webhookFindError,
+      send: { ok: sendOk, error: sendError, to: data.phone_e164 },
+      webhookHit,
+      hint: webhookHit
+        ? "Webhook está recebendo eventos MESSAGES_UPSERT ✅"
+        : "Mensagem enviada, mas nenhum evento chegou ao webhook em 15s. Verifique se a Evolution está configurada para enviar MESSAGES_UPSERT para o URL do endpoint.",
+    };
+  });
