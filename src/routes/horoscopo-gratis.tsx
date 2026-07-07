@@ -107,6 +107,8 @@ function HoroscopoGratisPage() {
           email: parsed.data.email,
           phone_e164: parsed.data.phone_e164,
           birth_date: parsed.data.birth_date && parsed.data.birth_date.length === 10 ? parsed.data.birth_date : null,
+          city: parsed.data.city,
+          timezone: browserTz,
           consent_marketing: true,
           source: "landing_horoscopo_gratis",
         },
