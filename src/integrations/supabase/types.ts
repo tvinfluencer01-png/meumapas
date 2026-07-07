@@ -4673,6 +4673,36 @@ export type Database = {
           },
         ]
       }
+      pwa_install_events: {
+        Row: {
+          created_at: string
+          event: string
+          hint_mode: string | null
+          id: string
+          path: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event: string
+          hint_mode?: string | null
+          id?: string
+          path: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event?: string
+          hint_mode?: string | null
+          id?: string
+          path?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       pwa_settings: {
         Row: {
           background_color: string
