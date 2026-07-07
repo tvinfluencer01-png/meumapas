@@ -71,24 +71,10 @@ async function handler({ request }: { request: Request }) {
       if (!hit) continue;
 
       const trialDays = Number(settings?.trial_days ?? lead.trial_days ?? 7);
-      const startsOn = new Date(Date.now() + 24 * 60 * 60 * 1000);
-      const endsOn = new Date(startsOn.getTime() + (trialDays - 1) * 24 * 60 * 60 * 1000);
-      const iso = (d: Date) => d.toISOString().slice(0, 10);
+      const { buildActivationPatch, tryActivateLead } = await import("@/lib/horoscope-activation.server");
+      const didActivate = await tryActivateLead(supabaseAdmin, lead.id, buildActivationPatch(trialDays));
+      if (!didActivate) continue; // já ativado por webhook concorrente
 
-      const { data: updated } = await (supabaseAdmin as any)
-        .from("horoscope_free_leads")
-        .update({
-          status: "active",
-          activated_at: new Date().toISOString(),
-          trial_starts_on: iso(startsOn),
-          trial_ends_on: iso(endsOn),
-          trial_days: trialDays,
-        })
-        .eq("id", lead.id)
-        .eq("status", "pending_confirmation")
-        .select("id");
-
-      if (!updated?.length) continue; // já ativado por webhook concorrente
 
       const reply = settings?.confirmation_reply ??
         `✨ Cadastro confirmado! A partir de amanhã, você receberá seu horóscopo por ${trialDays} dias.`;
