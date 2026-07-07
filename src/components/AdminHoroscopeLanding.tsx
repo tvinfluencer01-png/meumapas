@@ -17,6 +17,7 @@ import {
   adminActivateHoroscopeLead,
   adminDeleteHoroscopeLead,
   adminConfigureEvolutionWebhook,
+  adminTestEvolutionWebhook,
 } from "@/lib/horoscope-landing.functions";
 
 export function AdminHoroscopeLanding() {
@@ -176,6 +177,60 @@ function EvolutionWebhookBlock() {
           Configurar agora
         </Button>
       </div>
+      <TestWebhookInline />
+    </div>
+  );
+}
+
+function TestWebhookInline() {
+  const testFn = useServerFn(adminTestEvolutionWebhook);
+  const [phone, setPhone] = useState("");
+  const [result, setResult] = useState<any>(null);
+  const m = useMutation({
+    mutationFn: (p: string) => testFn({ data: { phone_e164: p } }),
+    onSuccess: (r) => {
+      setResult(r);
+      if (r.webhookHit) toast.success("Webhook recebeu evento MESSAGES_UPSERT ✅");
+      else toast.warning("Mensagem enviada. Nenhum evento chegou em 15s.");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  return (
+    <div className="mt-3 border-t border-emerald-500/20 pt-3 space-y-2">
+      <Label className="text-sm">Testar webhook (envia mensagem + confirma recebimento)</Label>
+      <div className="flex gap-2">
+        <Input
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          placeholder="+5511999998888"
+          className="flex-1"
+        />
+        <Button
+          onClick={() => m.mutate(phone)}
+          disabled={m.isPending || !phone}
+          variant="outline"
+          className="gap-2"
+        >
+          {m.isPending ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
+          Enviar teste
+        </Button>
+      </div>
+      {result && (
+        <div className="rounded-md bg-background/60 border border-border p-2 text-xs space-y-1 font-mono">
+          <div>Marker: <span className="text-gold">{result.marker}</span></div>
+          <div>Envio: {result.send?.ok ? "✅ ok" : `❌ ${result.send?.error ?? "falhou"}`}</div>
+          <div>
+            Webhook configurado na Evolution:{" "}
+            {result.webhookConfig?.webhook?.url || result.webhookConfig?.url || "—"}
+          </div>
+          <div>
+            Recebimento: {result.webhookHit
+              ? `✅ ${result.webhookHit.payload?.event_type ?? "evento"} em ${new Date(result.webhookHit.created_at).toLocaleTimeString()}`
+              : "⚠️ nenhum evento em 15s"}
+          </div>
+          <div className="text-muted-foreground">{result.hint}</div>
+        </div>
+      )}
     </div>
   );
 }

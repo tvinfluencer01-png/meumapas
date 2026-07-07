@@ -43,6 +43,20 @@ async function handler({ request }: { request: Request }) {
   }
   if (!body) return Response.json({ ok: false, reason: "empty body" }, { status: 400 });
 
+  // Log de todo webhook recebido — usado pelo botão de "Testar webhook" no admin.
+  try {
+    await (supabaseAdmin as any).from("app_logs").insert({
+      event: "evo_webhook_received",
+      payload: {
+        event_type: body?.event ?? body?.type ?? null,
+        instance: body?.instance ?? null,
+        raw_from: body?.From ?? body?.data?.key?.remoteJid ?? body?.phone ?? null,
+        raw_text: (body?.text ?? body?.Body ?? body?.data?.message?.conversation ?? body?.data?.message?.extendedTextMessage?.text ?? "").toString().slice(0, 300),
+        received_at: new Date().toISOString(),
+      },
+    });
+  } catch {}
+
   // Extrair telefone + texto de vários formatos
   const text: string =
     body.text ??
