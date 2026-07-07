@@ -482,28 +482,37 @@ async function handler({ request }: { request: Request }) {
 
     for (const lead of (leads ?? [])) {
       try {
-        // Trial expirou?
-        if (lead.trial_ends_on && lead.trial_ends_on < today) {
+        // Contexto local do lead (fuso salvo, default Sao Paulo).
+        const leadCtx = localContextFor(lead.timezone, now);
+        const leadToday = leadCtx.today;
+
+        // Já enviado hoje no fuso local do lead? pula.
+        if (!force && lead.last_sent_on && lead.last_sent_on >= leadToday) continue;
+        // Ainda não deu o horário no fuso local do lead? pula.
+        if (!force && leadCtx.currentMinutesOfDay < scheduledMinutes) continue;
+
+        // Trial expirou? (avaliado no fuso local do lead)
+        if (lead.trial_ends_on && lead.trial_ends_on < leadToday) {
           const endMsg = (settings?.trial_end_message ?? "🌟 Seus dias grátis terminaram. Continue assinando o Código Cósmico.")
             + (settings?.trial_end_link ? `\n\n👉 ${settings.trial_end_link}` : "");
           await sendWA(lead.phone_e164, endMsg).catch(() => {});
           await (supabaseAdmin as any)
             .from("horoscope_free_leads")
-            .update({ status: "expired", last_sent_on: today })
+            .update({ status: "expired", last_sent_on: leadToday })
             .eq("id", lead.id);
           freeExpired += 1;
           continue;
         }
 
         const sign = lead.sun_sign || "seu signo";
-        const lucky = computeLuckyForDay(lead.birth_date ?? null, sign, today);
+        const lucky = computeLuckyForDay(lead.birth_date ?? null, sign, leadToday);
         const prompt = promptOverride
           ? promptOverride
               .replace(/\{\{sign\}\}/gi, sign)
-              .replace(/\{\{date\}\}/gi, today)
+              .replace(/\{\{date\}\}/gi, leadToday)
               .replace(/\{\{lucky_number\}\}/gi, String(lucky.number))
               .replace(/\{\{lucky_color\}\}/gi, lucky.color)
-          : buildHoroscopePrompt(sign, today, lucky);
+          : buildHoroscopePrompt(sign, leadToday, lucky);
 
         let body = "";
         for (const modelName of modelCandidates) {
@@ -522,7 +531,7 @@ async function handler({ request }: { request: Request }) {
           freeDelivered += 1;
           await (supabaseAdmin as any)
             .from("horoscope_free_leads")
-            .update({ last_sent_on: today })
+            .update({ last_sent_on: leadToday })
             .eq("id", lead.id);
         }
       } catch {}
