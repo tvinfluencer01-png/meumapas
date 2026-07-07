@@ -49,11 +49,17 @@ export function phoneMatches(a: string, b: string): boolean {
 
 export function extractIncomingText(payload: any): string {
   const message = payload?.message ?? payload?.data?.message ?? {};
+  const data = payload?.data ?? {};
   const nested = message?.ephemeralMessage?.message ?? message?.viewOnceMessage?.message ?? {};
   const texts = [
     payload?.text,
     payload?.Body,
     payload?.body,
+    payload?.caption,
+    data?.text,
+    data?.body,
+    data?.caption,
+    data?.message?.text,
     payload?.message?.text,
     message?.conversation,
     message?.extendedTextMessage?.text,
@@ -68,6 +74,51 @@ export function extractIncomingText(payload: any): string {
     nested?.extendedTextMessage?.text,
   ];
   return texts.find((value) => typeof value === "string" && value.trim())?.toString() ?? "";
+}
+
+export function extractMessageRemoteJid(payload: any): string {
+  return String(
+    payload?.key?.remoteJid ??
+      payload?.remoteJid ??
+      payload?.chatId ??
+      payload?.jid ??
+      payload?.from ??
+      payload?.sender ??
+      payload?.data?.key?.remoteJid ??
+      payload?.data?.remoteJid ??
+      "",
+  );
+}
+
+export function isIncomingWhatsappMessage(payload: any): boolean {
+  const fromMe =
+    payload?.key?.fromMe ??
+    payload?.fromMe ??
+    payload?.data?.key?.fromMe ??
+    payload?.data?.fromMe;
+  return fromMe !== true;
+}
+
+export function collectWhatsappMessageRecords(payload: any): any[] {
+  const seen = new Set<any>();
+  const out: any[] = [];
+  const visit = (value: any, depth = 0) => {
+    if (!value || depth > 6) return;
+    if (Array.isArray(value)) {
+      for (const item of value) visit(item, depth + 1);
+      return;
+    }
+    if (typeof value !== "object" || seen.has(value)) return;
+    seen.add(value);
+
+    if (extractIncomingText(value) || extractMessageRemoteJid(value)) out.push(value);
+
+    for (const key of ["messages", "records", "data", "rows", "items", "result", "results", "response"]) {
+      visit(value[key], depth + 1);
+    }
+  };
+  visit(payload);
+  return out;
 }
 
 export function extractActivationCodes(text: string): string[] {

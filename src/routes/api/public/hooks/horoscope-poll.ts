@@ -61,14 +61,19 @@ async function handler({ request }: { request: Request }) {
   const inst = encodeURIComponent(evo.instance_name);
   const {
     buildActivationPatch,
+    collectWhatsappMessageRecords,
     extractIncomingText,
+    extractMessageRemoteJid,
     getWhatsAppJidCandidates,
+    isIncomingWhatsappMessage,
+    phoneMatches,
     sendConfirmationIfNeeded,
     tryActivateLead,
   } = await import("@/lib/horoscope-activation.server");
   let activated = 0;
   let retried = 0;
   let reminded = 0;
+  let inspectedMessages = 0;
 
   for (const lead of leads) {
     const digits = String(lead.phone_e164).replace(/\D+/g, "");
@@ -97,24 +102,54 @@ async function handler({ request }: { request: Request }) {
 
       // Evolution v2: POST chat/findMessages/{instance}
       const arr: any[] = [];
+      const queryBodies = (jid: string) => [
+        { where: { key: { remoteJid: jid } }, limit: 50 },
+        { where: { remoteJid: jid }, limit: 50 },
+        { where: { key: { remoteJid: jid, fromMe: false } }, limit: 50 },
+      ];
       for (const jid of getWhatsAppJidCandidates(lead.phone_e164)) {
-        const r = await fetch(`${base}/chat/findMessages/${inst}`, {
-          method: "POST",
-          headers: { apikey: evo.global_api_key, "Content-Type": "application/json" },
-          body: JSON.stringify({ where: { key: { remoteJid: jid } }, limit: 50 }),
-        });
-        if (!r.ok) continue;
-        const json: any = await r.json().catch(() => null);
-        const records: any[] = Array.isArray(json) ? json : (json?.messages?.records ?? json?.records ?? json?.messages ?? []);
-        arr.push(...records);
+        for (const body of queryBodies(jid)) {
+          const r = await fetch(`${base}/chat/findMessages/${inst}`, {
+            method: "POST",
+            headers: { apikey: evo.global_api_key, "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          });
+          if (!r.ok) continue;
+          const json: any = await r.json().catch(() => null);
+          arr.push(...collectWhatsappMessageRecords(json));
+        }
       }
       const code = String(lead.activation_code).toUpperCase();
+      inspectedMessages += arr.length;
       const hit = arr.find((m) => {
-        if (m?.key?.fromMe) return false;
+        if (!isIncomingWhatsappMessage(m)) return false;
+        const remoteJid = extractMessageRemoteJid(m);
+        if (remoteJid && !phoneMatches(remoteJid, lead.phone_e164)) return false;
         const t = extractIncomingText(m).toUpperCase();
         return t.includes(code);
       });
-      if (!hit) continue;
+      if (!hit) {
+        try {
+          await (supabaseAdmin as any).from("app_logs").insert({
+            event: "horoscope_poll_no_activation",
+            payload: {
+              lead_id: lead.id,
+              code,
+              phone: lead.phone_e164,
+              candidates: getWhatsAppJidCandidates(lead.phone_e164),
+              messages_found: arr.length,
+              incoming_found: arr.filter(isIncomingWhatsappMessage).length,
+              sample: arr.slice(0, 3).map((m) => ({
+                remoteJid: extractMessageRemoteJid(m),
+                fromMe: m?.key?.fromMe ?? m?.fromMe ?? m?.data?.key?.fromMe ?? null,
+                text: extractIncomingText(m).slice(0, 120),
+              })),
+              at: new Date().toISOString(),
+            },
+          });
+        } catch {}
+        continue;
+      }
 
       const trialDays = Number(settings?.trial_days ?? lead.trial_days ?? 7);
       const didActivate = await tryActivateLead(supabaseAdmin, lead.id, buildActivationPatch(trialDays));
@@ -207,5 +242,5 @@ async function handler({ request }: { request: Request }) {
     }
   }
 
-  return Response.json({ ok: true, checked: leads.length, activated, retried, reminded });
+  return Response.json({ ok: true, checked: leads.length, activated, retried, reminded, inspectedMessages });
 }
