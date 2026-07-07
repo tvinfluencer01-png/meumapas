@@ -8,6 +8,7 @@
 import { describe, expect, test } from "bun:test";
 import {
   buildActivationPatch,
+  tryClaimConfirmationSend,
   tryActivateLead,
   tryClaimRetry,
   tryClaimExpiryReminder,
@@ -226,5 +227,43 @@ describe("tryClaimExpiryReminder — lembrete final enviado apenas 1 vez", () =>
     await claimAndSend(supabase, "lead-e2", () => tryClaimExpiryReminder(supabase, "lead-e2"), send);
 
     expect(sends).toBe(1);
+  });
+});
+
+describe("tryClaimConfirmationSend — confirmação não duplica e pode tentar de novo", () => {
+  test("webhook e poll concorrentes → 1 claim, 1 envio de confirmação", async () => {
+    const supabase = makeFakeSupabase({
+      id: "lead-c1",
+      status: "active",
+      confirmation_attempts: 0,
+      confirmation_sent_at: null,
+    });
+    let sends = 0;
+    const send = async () => { sends++; };
+
+    const [a, b] = await Promise.all([
+      claimAndSend(supabase, "lead-c1", () => tryClaimConfirmationSend(supabase, "lead-c1", 0), send),
+      claimAndSend(supabase, "lead-c1", () => tryClaimConfirmationSend(supabase, "lead-c1", 0), send),
+    ]);
+
+    expect([a, b].filter(Boolean).length).toBe(1);
+    expect(sends).toBe(1);
+    expect(supabase.__rows.get("lead-c1")!.confirmation_attempts).toBe(1);
+  });
+
+  test("se a tentativa anterior falhou, a próxima execução pode reivindicar novo envio", async () => {
+    const supabase = makeFakeSupabase({
+      id: "lead-c2",
+      status: "active",
+      confirmation_attempts: 1,
+      confirmation_sent_at: null,
+      confirmation_error: "Evolution HTTP 500",
+    });
+
+    const claimed = await tryClaimConfirmationSend(supabase, "lead-c2", 1);
+
+    expect(claimed).toBe(true);
+    expect(supabase.__rows.get("lead-c2")!.confirmation_attempts).toBe(2);
+    expect(supabase.__rows.get("lead-c2")!.confirmation_error).toBeNull();
   });
 });
