@@ -4,6 +4,7 @@
  *
  * Roda com: `bun test` (nenhuma dep extra).
  */
+// @ts-expect-error — bun:test types not bundled; runtime is provided by `bun test`
 import { describe, expect, test } from "bun:test";
 import { buildActivationPatch, tryActivateLead } from "./horoscope-activation.server";
 
