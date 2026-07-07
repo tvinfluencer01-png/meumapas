@@ -125,3 +125,106 @@ describe("tryActivateLead — idempotência", () => {
     expect(supabase.__rows.get("lead-3")!.status).toBe("active");
   });
 });
+
+/**
+ * Simula o loop do poll: claim atômico → só quem venceu envia WhatsApp.
+ * Isso replica exatamente o padrão usado em src/routes/api/public/hooks/horoscope-poll.ts.
+ */
+async function claimAndSend(
+  supabase: any,
+  leadId: string,
+  claim: () => Promise<boolean>,
+  send: () => Promise<void>,
+) {
+  const won = await claim();
+  if (won) await send();
+  return won;
+}
+
+describe("tryClaimRetry — WhatsApp reenviado apenas 1 vez", () => {
+  test("webhook e poll concorrentes → 1 claim, 1 envio", async () => {
+    const supabase = makeFakeSupabase({
+      id: "lead-r1",
+      status: "pending_confirmation",
+      retry_count: 0,
+    });
+    let sends = 0;
+    const send = async () => { sends++; };
+
+    const [a, b] = await Promise.all([
+      claimAndSend(supabase, "lead-r1", () => tryClaimRetry(supabase, "lead-r1", 0), send),
+      claimAndSend(supabase, "lead-r1", () => tryClaimRetry(supabase, "lead-r1", 0), send),
+    ]);
+
+    expect([a, b].filter(Boolean).length).toBe(1);
+    expect(sends).toBe(1);
+    expect(supabase.__rows.get("lead-r1")!.retry_count).toBe(1);
+  });
+
+  test("5 chamadas paralelas → 1 envio; próxima janela (retry_count=1) permite +1", async () => {
+    const supabase = makeFakeSupabase({
+      id: "lead-r2",
+      status: "pending_confirmation",
+      retry_count: 0,
+    });
+    let sends = 0;
+    const send = async () => { sends++; };
+
+    // Rajada 1: todos tentam com retry_count=0
+    const wave1 = await Promise.all(
+      Array.from({ length: 5 }, () =>
+        claimAndSend(supabase, "lead-r2", () => tryClaimRetry(supabase, "lead-r2", 0), send),
+      ),
+    );
+    expect(wave1.filter(Boolean).length).toBe(1);
+    expect(sends).toBe(1);
+
+    // Rajada 2 (nova janela de tempo): agora leem retry_count=1
+    const wave2 = await Promise.all(
+      Array.from({ length: 5 }, () =>
+        claimAndSend(supabase, "lead-r2", () => tryClaimRetry(supabase, "lead-r2", 1), send),
+      ),
+    );
+    expect(wave2.filter(Boolean).length).toBe(1);
+    expect(sends).toBe(2);
+    expect(supabase.__rows.get("lead-r2")!.retry_count).toBe(2);
+  });
+});
+
+describe("tryClaimExpiryReminder — lembrete final enviado apenas 1 vez", () => {
+  test("webhook e poll concorrentes → 1 claim, 1 envio", async () => {
+    const supabase = makeFakeSupabase({
+      id: "lead-e1",
+      status: "pending_confirmation",
+      expiry_reminder_sent_at: null,
+    });
+    let sends = 0;
+    const send = async () => { sends++; };
+
+    const [a, b, c] = await Promise.all([
+      claimAndSend(supabase, "lead-e1", () => tryClaimExpiryReminder(supabase, "lead-e1"), send),
+      claimAndSend(supabase, "lead-e1", () => tryClaimExpiryReminder(supabase, "lead-e1"), send),
+      claimAndSend(supabase, "lead-e1", () => tryClaimExpiryReminder(supabase, "lead-e1"), send),
+    ]);
+
+    expect([a, b, c].filter(Boolean).length).toBe(1);
+    expect(sends).toBe(1);
+    expect(supabase.__rows.get("lead-e1")!.expiry_reminder_sent_at).not.toBeNull();
+  });
+
+  test("execução subsequente após lembrete enviado → no-op, sem novo envio", async () => {
+    const supabase = makeFakeSupabase({
+      id: "lead-e2",
+      status: "pending_confirmation",
+      expiry_reminder_sent_at: null,
+    });
+    let sends = 0;
+    const send = async () => { sends++; };
+
+    await claimAndSend(supabase, "lead-e2", () => tryClaimExpiryReminder(supabase, "lead-e2"), send);
+    await claimAndSend(supabase, "lead-e2", () => tryClaimExpiryReminder(supabase, "lead-e2"), send);
+    await claimAndSend(supabase, "lead-e2", () => tryClaimExpiryReminder(supabase, "lead-e2"), send);
+
+    expect(sends).toBe(1);
+  });
+});
