@@ -1,0 +1,329 @@
+import { createServerFn } from "@tanstack/react-start";
+import { getRequestHeader, getRequestIP } from "@tanstack/react-start/server";
+import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { sunSignFromBirthDate } from "@/lib/horoscope.functions";
+
+
+const PHONE_REGEX = /^\+?[1-9]\d{7,14}$/;
+
+/* ---------- Helpers ---------- */
+
+function normalizePhone(raw: string): string {
+  const digits = raw.replace(/\D+/g, "");
+  if (!digits) return "";
+  return "+" + digits;
+}
+
+function genActivationCode(): string {
+  // 6 chars alphanumeric maiúsculos, sem 0/O/1/I para não confundir.
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let out = "";
+  const bytes = crypto.getRandomValues(new Uint8Array(6));
+  for (let i = 0; i < 6; i++) out += alphabet[bytes[i] % alphabet.length];
+  return out;
+}
+
+function buildWhatsAppUrl(numberE164: string, keyword: string, code: string): string {
+  const num = numberE164.replace(/\D+/g, "");
+  const text = encodeURIComponent(`${keyword} ${code}`);
+  return `https://wa.me/${num}?text=${text}`;
+}
+
+/* ---------- PUBLIC: read landing settings (safe fields) ---------- */
+
+export const getHoroscopeLandingSettings = createServerFn({ method: "GET" }).handler(
+  async () => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data } = await (supabaseAdmin as any)
+      .from("horoscope_landing_settings")
+      .select(
+        "enabled, trial_days, whatsapp_number_e164, activation_keyword, hero_title, hero_subtitle, consent_text, success_message, cta_button_label",
+      )
+      .eq("id", true)
+      .maybeSingle();
+
+    return {
+      settings: data ?? {
+        enabled: true,
+        trial_days: 7,
+        whatsapp_number_e164: "",
+        activation_keyword: "ATIVAR",
+        hero_title: "Receba seu Horóscopo Diário no WhatsApp — 7 dias grátis",
+        hero_subtitle:
+          "Toda manhã, uma leitura astrológica personalizada do seu signo direto no seu celular.",
+        consent_text:
+          "Concordo em receber mensagens diárias do meu horóscopo por WhatsApp e e-mail.",
+        success_message:
+          "Falta só um passo: envie a mensagem no WhatsApp para confirmar seu cadastro.",
+        cta_button_label: "Concluir cadastro no WhatsApp",
+      },
+    };
+  },
+);
+
+/* ---------- PUBLIC: submit lead ---------- */
+
+const SubmitSchema = z.object({
+  full_name: z.string().trim().min(2).max(120),
+  email: z.string().trim().email().max(255),
+  phone_e164: z
+    .string()
+    .trim()
+    .transform(normalizePhone)
+    .refine((v) => PHONE_REGEX.test(v), {
+      message: "Telefone em formato internacional, ex: +5511999998888",
+    }),
+  birth_date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Data em formato AAAA-MM-DD")
+    .nullable()
+    .optional(),
+  consent_marketing: z.literal(true, {
+    errorMap: () => ({
+      message: "É necessário aceitar receber mensagens para continuar.",
+    }),
+  }),
+  source: z.string().max(64).nullable().optional(),
+  utm: z.record(z.string()).nullable().optional(),
+});
+
+export const submitHoroscopeLead = createServerFn({ method: "POST" })
+  .inputValidator((d) => SubmitSchema.parse(d))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: settings } = await (supabaseAdmin as any)
+      .from("horoscope_landing_settings")
+      .select("*")
+      .eq("id", true)
+      .maybeSingle();
+
+    if (!settings?.enabled) {
+      throw new Error("A promoção de 7 dias grátis está temporariamente pausada.");
+    }
+    if (!settings.whatsapp_number_e164) {
+      throw new Error(
+        "O número de WhatsApp da promoção ainda não está configurado. Tente novamente em instantes.",
+      );
+    }
+
+    // Anti-abuso simples: no máx 3 leads por telefone em 24h
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const { count: recentCount } = await (supabaseAdmin as any)
+      .from("horoscope_free_leads")
+      .select("id", { count: "exact", head: true })
+      .eq("phone_e164", data.phone_e164)
+      .gte("created_at", since);
+    if ((recentCount ?? 0) >= 3) {
+      throw new Error("Já registramos várias tentativas para este número. Tente amanhã.");
+    }
+
+    // Se já existe um lead ATIVO para o telefone, reusa
+    const { data: existingActive } = await (supabaseAdmin as any)
+      .from("horoscope_free_leads")
+      .select("id, activation_code, status")
+      .eq("phone_e164", data.phone_e164)
+      .in("status", ["pending_confirmation", "active"])
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    let activationCode: string;
+    let leadId: string;
+
+    if (existingActive) {
+      activationCode = existingActive.activation_code;
+      leadId = existingActive.id;
+    } else {
+      activationCode = genActivationCode();
+      const ua = getRequestHeader("user-agent") ?? null;
+      let ip: string | null = null;
+      try {
+        ip = getRequestIP({ xForwardedFor: true }) ?? null;
+      } catch {}
+
+      const insertPayload = {
+        full_name: data.full_name,
+        email: data.email.toLowerCase(),
+        phone_e164: data.phone_e164,
+        birth_date: data.birth_date ?? null,
+        sun_sign: sunSignFromBirthDate(data.birth_date ?? null),
+        consent_marketing: true,
+        consent_text: settings.consent_text,
+        consent_ip: ip,
+        consent_user_agent: ua,
+        consent_at: new Date().toISOString(),
+        status: "pending_confirmation",
+        activation_code: activationCode,
+        trial_days: Number(settings.trial_days) || 7,
+        source: data.source ?? "landing",
+        utm: data.utm ?? null,
+      };
+
+      const { data: inserted, error } = await (supabaseAdmin as any)
+        .from("horoscope_free_leads")
+        .insert(insertPayload)
+        .select("id")
+        .single();
+      if (error) throw new Error(error.message);
+      leadId = inserted.id;
+    }
+
+    const whatsappUrl = buildWhatsAppUrl(
+      settings.whatsapp_number_e164,
+      settings.activation_keyword,
+      activationCode,
+    );
+
+    return {
+      leadId,
+      activationCode,
+      whatsappUrl,
+      keyword: settings.activation_keyword,
+      whatsappNumber: settings.whatsapp_number_e164,
+      successMessage: settings.success_message,
+      ctaLabel: settings.cta_button_label,
+    };
+  });
+
+/* ---------- ADMIN: settings ---------- */
+
+const SettingsSchema = z.object({
+  enabled: z.boolean(),
+  trial_days: z.number().int().min(1).max(60),
+  whatsapp_number_e164: z.string().trim().transform(normalizePhone).refine(
+    (v) => v === "" || PHONE_REGEX.test(v),
+    { message: "Número em formato internacional, ex: +5511999998888" },
+  ),
+  activation_keyword: z.string().trim().min(2).max(24),
+  hero_title: z.string().trim().min(3).max(160),
+  hero_subtitle: z.string().trim().min(3).max(400),
+  consent_text: z.string().trim().min(10).max(800),
+  confirmation_reply: z.string().trim().min(5).max(800),
+  success_message: z.string().trim().min(5).max(400),
+  cta_button_label: z.string().trim().min(2).max(80),
+  trial_end_message: z.string().trim().min(5).max(600),
+  trial_end_link: z.string().trim().url().or(z.literal("")),
+});
+
+async function assertAdmin(context: { supabase: any; userId: string }) {
+  const { data, error } = await context.supabase.rpc("has_role", {
+    _user_id: context.userId,
+    _role: "admin",
+  });
+  if (error || data !== true) throw new Error("Acesso restrito.");
+}
+
+export const adminGetHoroscopeLandingSettings = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context as any);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data } = await (supabaseAdmin as any)
+      .from("horoscope_landing_settings")
+      .select("*")
+      .eq("id", true)
+      .maybeSingle();
+    return { settings: data };
+  });
+
+export const adminUpdateHoroscopeLandingSettings = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => SettingsSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context as any);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await (supabaseAdmin as any)
+      .from("horoscope_landing_settings")
+      .update(data)
+      .eq("id", true);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/* ---------- ADMIN: list leads ---------- */
+
+const ListSchema = z.object({
+  page: z.number().int().min(1).default(1),
+  status: z.string().nullable().optional(),
+  search: z.string().nullable().optional(),
+});
+
+export const adminListHoroscopeLeads = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => ListSchema.parse(d ?? {}))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context as any);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const pageSize = 25;
+    const from = (data.page - 1) * pageSize;
+    const to = from + pageSize - 1;
+
+    let q = (supabaseAdmin as any)
+      .from("horoscope_free_leads")
+      .select("*", { count: "exact" })
+      .order("created_at", { ascending: false })
+      .range(from, to);
+    if (data.status) q = q.eq("status", data.status);
+    if (data.search) {
+      const s = `%${data.search}%`;
+      q = q.or(`full_name.ilike.${s},email.ilike.${s},phone_e164.ilike.${s},activation_code.ilike.${s}`);
+    }
+    const { data: rows, count, error } = await q;
+    if (error) throw new Error(error.message);
+
+    return {
+      rows: rows ?? [],
+      total: count ?? 0,
+      page: data.page,
+      pageSize,
+    };
+  });
+
+/* ---------- ADMIN: manually activate / delete ---------- */
+
+export const adminActivateHoroscopeLead = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context as any);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: lead } = await (supabaseAdmin as any)
+      .from("horoscope_free_leads")
+      .select("*")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (!lead) throw new Error("Lead não encontrado.");
+
+    const trialDays = Number(lead.trial_days) || 7;
+    const startsOn = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    const endsOn = new Date(startsOn.getTime() + (trialDays - 1) * 24 * 60 * 60 * 1000);
+    const iso = (d: Date) => d.toISOString().slice(0, 10);
+
+    const { error } = await (supabaseAdmin as any)
+      .from("horoscope_free_leads")
+      .update({
+        status: "active",
+        activated_at: new Date().toISOString(),
+        trial_starts_on: iso(startsOn),
+        trial_ends_on: iso(endsOn),
+      })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const adminDeleteHoroscopeLead = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context as any);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await (supabaseAdmin as any)
+      .from("horoscope_free_leads")
+      .delete()
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });

@@ -3708,6 +3708,135 @@ export type Database = {
         }
         Relationships: []
       }
+      horoscope_free_leads: {
+        Row: {
+          activated_at: string | null
+          activation_code: string
+          birth_date: string | null
+          consent_at: string | null
+          consent_ip: string | null
+          consent_marketing: boolean
+          consent_text: string | null
+          consent_user_agent: string | null
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          last_sent_on: string | null
+          phone_e164: string
+          source: string | null
+          status: string
+          sun_sign: string | null
+          trial_days: number
+          trial_ends_on: string | null
+          trial_starts_on: string | null
+          unsubscribed_at: string | null
+          updated_at: string
+          utm: Json | null
+        }
+        Insert: {
+          activated_at?: string | null
+          activation_code: string
+          birth_date?: string | null
+          consent_at?: string | null
+          consent_ip?: string | null
+          consent_marketing?: boolean
+          consent_text?: string | null
+          consent_user_agent?: string | null
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          last_sent_on?: string | null
+          phone_e164: string
+          source?: string | null
+          status?: string
+          sun_sign?: string | null
+          trial_days?: number
+          trial_ends_on?: string | null
+          trial_starts_on?: string | null
+          unsubscribed_at?: string | null
+          updated_at?: string
+          utm?: Json | null
+        }
+        Update: {
+          activated_at?: string | null
+          activation_code?: string
+          birth_date?: string | null
+          consent_at?: string | null
+          consent_ip?: string | null
+          consent_marketing?: boolean
+          consent_text?: string | null
+          consent_user_agent?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          last_sent_on?: string | null
+          phone_e164?: string
+          source?: string | null
+          status?: string
+          sun_sign?: string | null
+          trial_days?: number
+          trial_ends_on?: string | null
+          trial_starts_on?: string | null
+          unsubscribed_at?: string | null
+          updated_at?: string
+          utm?: Json | null
+        }
+        Relationships: []
+      }
+      horoscope_landing_settings: {
+        Row: {
+          activation_keyword: string
+          confirmation_reply: string
+          consent_text: string
+          cta_button_label: string
+          enabled: boolean
+          hero_subtitle: string
+          hero_title: string
+          id: boolean
+          success_message: string
+          trial_days: number
+          trial_end_link: string
+          trial_end_message: string
+          updated_at: string
+          whatsapp_number_e164: string
+        }
+        Insert: {
+          activation_keyword?: string
+          confirmation_reply?: string
+          consent_text?: string
+          cta_button_label?: string
+          enabled?: boolean
+          hero_subtitle?: string
+          hero_title?: string
+          id?: boolean
+          success_message?: string
+          trial_days?: number
+          trial_end_link?: string
+          trial_end_message?: string
+          updated_at?: string
+          whatsapp_number_e164?: string
+        }
+        Update: {
+          activation_keyword?: string
+          confirmation_reply?: string
+          consent_text?: string
+          cta_button_label?: string
+          enabled?: boolean
+          hero_subtitle?: string
+          hero_title?: string
+          id?: boolean
+          success_message?: string
+          trial_days?: number
+          trial_end_link?: string
+          trial_end_message?: string
+          updated_at?: string
+          whatsapp_number_e164?: string
+        }
+        Relationships: []
+      }
       horoscope_log: {
         Row: {
           channel: string

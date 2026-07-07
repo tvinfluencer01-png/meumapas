@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ProgramaAfiliadosRouteImport } from './routes/programa-afiliados'
 import { Route as ProfissionaisRouteImport } from './routes/profissionais'
+import { Route as HoroscopoGratisRouteImport } from './routes/horoscopo-gratis'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AtivacaoRouteImport } from './routes/ativacao'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
@@ -56,6 +57,7 @@ import { Route as AuthenticatedAdminIlustracoesRouteImport } from './routes/_aut
 import { Route as ApiPublicManifestWebmanifestRouteImport } from './routes/api/public/manifest.webmanifest'
 import { Route as ApiPublicManifestIconRouteImport } from './routes/api/public/manifest.icon'
 import { Route as ApiPublicHooksMercadopagoRouteImport } from './routes/api/public/hooks/mercadopago'
+import { Route as ApiPublicHooksHoroscopeActivationRouteImport } from './routes/api/public/hooks/horoscope-activation'
 import { Route as ApiPublicHooksDispatchOrdersRouteImport } from './routes/api/public/hooks/dispatch-orders'
 import { Route as ApiPublicHooksDailyHoroscopeRouteImport } from './routes/api/public/hooks/daily-horoscope'
 import { Route as ApiPublicHooksCrmFollowupsRouteImport } from './routes/api/public/hooks/crm-followups'
@@ -88,6 +90,11 @@ const ProgramaAfiliadosRoute = ProgramaAfiliadosRouteImport.update({
 const ProfissionaisRoute = ProfissionaisRouteImport.update({
   id: '/profissionais',
   path: '/profissionais',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HoroscopoGratisRoute = HoroscopoGratisRouteImport.update({
+  id: '/horoscopo-gratis',
+  path: '/horoscopo-gratis',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -316,6 +323,12 @@ const ApiPublicHooksMercadopagoRoute =
     path: '/api/public/hooks/mercadopago',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksHoroscopeActivationRoute =
+  ApiPublicHooksHoroscopeActivationRouteImport.update({
+    id: '/api/public/hooks/horoscope-activation',
+    path: '/api/public/hooks/horoscope-activation',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksDispatchOrdersRoute =
   ApiPublicHooksDispatchOrdersRouteImport.update({
     id: '/api/public/hooks/dispatch-orders',
@@ -427,6 +440,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/ativacao': typeof AtivacaoRoute
   '/auth': typeof AuthRoute
+  '/horoscopo-gratis': typeof HoroscopoGratisRoute
   '/profissionais': typeof ProfissionaisRoute
   '/programa-afiliados': typeof ProgramaAfiliadosRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -474,6 +488,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/crm-followups': typeof ApiPublicHooksCrmFollowupsRoute
   '/api/public/hooks/daily-horoscope': typeof ApiPublicHooksDailyHoroscopeRoute
   '/api/public/hooks/dispatch-orders': typeof ApiPublicHooksDispatchOrdersRoute
+  '/api/public/hooks/horoscope-activation': typeof ApiPublicHooksHoroscopeActivationRoute
   '/api/public/hooks/mercadopago': typeof ApiPublicHooksMercadopagoRoute
   '/api/public/manifest/icon': typeof ApiPublicManifestIconRoute
   '/api/public/manifest/webmanifest': typeof ApiPublicManifestWebmanifestRoute
@@ -493,6 +508,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/ativacao': typeof AtivacaoRoute
   '/auth': typeof AuthRoute
+  '/horoscopo-gratis': typeof HoroscopoGratisRoute
   '/profissionais': typeof ProfissionaisRoute
   '/programa-afiliados': typeof ProgramaAfiliadosRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -540,6 +556,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/crm-followups': typeof ApiPublicHooksCrmFollowupsRoute
   '/api/public/hooks/daily-horoscope': typeof ApiPublicHooksDailyHoroscopeRoute
   '/api/public/hooks/dispatch-orders': typeof ApiPublicHooksDispatchOrdersRoute
+  '/api/public/hooks/horoscope-activation': typeof ApiPublicHooksHoroscopeActivationRoute
   '/api/public/hooks/mercadopago': typeof ApiPublicHooksMercadopagoRoute
   '/api/public/manifest/icon': typeof ApiPublicManifestIconRoute
   '/api/public/manifest/webmanifest': typeof ApiPublicManifestWebmanifestRoute
@@ -561,6 +578,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/ativacao': typeof AtivacaoRoute
   '/auth': typeof AuthRoute
+  '/horoscopo-gratis': typeof HoroscopoGratisRoute
   '/profissionais': typeof ProfissionaisRoute
   '/programa-afiliados': typeof ProgramaAfiliadosRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -608,6 +626,7 @@ export interface FileRoutesById {
   '/api/public/hooks/crm-followups': typeof ApiPublicHooksCrmFollowupsRoute
   '/api/public/hooks/daily-horoscope': typeof ApiPublicHooksDailyHoroscopeRoute
   '/api/public/hooks/dispatch-orders': typeof ApiPublicHooksDispatchOrdersRoute
+  '/api/public/hooks/horoscope-activation': typeof ApiPublicHooksHoroscopeActivationRoute
   '/api/public/hooks/mercadopago': typeof ApiPublicHooksMercadopagoRoute
   '/api/public/manifest/icon': typeof ApiPublicManifestIconRoute
   '/api/public/manifest/webmanifest': typeof ApiPublicManifestWebmanifestRoute
@@ -629,6 +648,7 @@ export interface FileRouteTypes {
     | '/'
     | '/ativacao'
     | '/auth'
+    | '/horoscopo-gratis'
     | '/profissionais'
     | '/programa-afiliados'
     | '/reset-password'
@@ -676,6 +696,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/crm-followups'
     | '/api/public/hooks/daily-horoscope'
     | '/api/public/hooks/dispatch-orders'
+    | '/api/public/hooks/horoscope-activation'
     | '/api/public/hooks/mercadopago'
     | '/api/public/manifest/icon'
     | '/api/public/manifest/webmanifest'
@@ -695,6 +716,7 @@ export interface FileRouteTypes {
     | '/'
     | '/ativacao'
     | '/auth'
+    | '/horoscopo-gratis'
     | '/profissionais'
     | '/programa-afiliados'
     | '/reset-password'
@@ -742,6 +764,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/crm-followups'
     | '/api/public/hooks/daily-horoscope'
     | '/api/public/hooks/dispatch-orders'
+    | '/api/public/hooks/horoscope-activation'
     | '/api/public/hooks/mercadopago'
     | '/api/public/manifest/icon'
     | '/api/public/manifest/webmanifest'
@@ -762,6 +785,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/ativacao'
     | '/auth'
+    | '/horoscopo-gratis'
     | '/profissionais'
     | '/programa-afiliados'
     | '/reset-password'
@@ -809,6 +833,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/crm-followups'
     | '/api/public/hooks/daily-horoscope'
     | '/api/public/hooks/dispatch-orders'
+    | '/api/public/hooks/horoscope-activation'
     | '/api/public/hooks/mercadopago'
     | '/api/public/manifest/icon'
     | '/api/public/manifest/webmanifest'
@@ -830,6 +855,7 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AtivacaoRoute: typeof AtivacaoRoute
   AuthRoute: typeof AuthRoute
+  HoroscopoGratisRoute: typeof HoroscopoGratisRoute
   ProfissionaisRoute: typeof ProfissionaisRoute
   ProgramaAfiliadosRoute: typeof ProgramaAfiliadosRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
@@ -858,6 +884,7 @@ export interface RootRouteChildren {
   ApiPublicHooksCrmFollowupsRoute: typeof ApiPublicHooksCrmFollowupsRoute
   ApiPublicHooksDailyHoroscopeRoute: typeof ApiPublicHooksDailyHoroscopeRoute
   ApiPublicHooksDispatchOrdersRoute: typeof ApiPublicHooksDispatchOrdersRoute
+  ApiPublicHooksHoroscopeActivationRoute: typeof ApiPublicHooksHoroscopeActivationRoute
   ApiPublicHooksMercadopagoRoute: typeof ApiPublicHooksMercadopagoRoute
   ApiPublicManifestIconRoute: typeof ApiPublicManifestIconRoute
   ApiPublicManifestWebmanifestRoute: typeof ApiPublicManifestWebmanifestRoute
@@ -895,6 +922,13 @@ declare module '@tanstack/react-router' {
       path: '/profissionais'
       fullPath: '/profissionais'
       preLoaderRoute: typeof ProfissionaisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/horoscopo-gratis': {
+      id: '/horoscopo-gratis'
+      path: '/horoscopo-gratis'
+      fullPath: '/horoscopo-gratis'
+      preLoaderRoute: typeof HoroscopoGratisRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -1205,6 +1239,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksMercadopagoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/horoscope-activation': {
+      id: '/api/public/hooks/horoscope-activation'
+      path: '/api/public/hooks/horoscope-activation'
+      fullPath: '/api/public/hooks/horoscope-activation'
+      preLoaderRoute: typeof ApiPublicHooksHoroscopeActivationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/dispatch-orders': {
       id: '/api/public/hooks/dispatch-orders'
       path: '/api/public/hooks/dispatch-orders'
@@ -1397,6 +1438,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AtivacaoRoute: AtivacaoRoute,
   AuthRoute: AuthRoute,
+  HoroscopoGratisRoute: HoroscopoGratisRoute,
   ProfissionaisRoute: ProfissionaisRoute,
   ProgramaAfiliadosRoute: ProgramaAfiliadosRoute,
   ResetPasswordRoute: ResetPasswordRoute,
@@ -1425,6 +1467,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksCrmFollowupsRoute: ApiPublicHooksCrmFollowupsRoute,
   ApiPublicHooksDailyHoroscopeRoute: ApiPublicHooksDailyHoroscopeRoute,
   ApiPublicHooksDispatchOrdersRoute: ApiPublicHooksDispatchOrdersRoute,
+  ApiPublicHooksHoroscopeActivationRoute:
+    ApiPublicHooksHoroscopeActivationRoute,
   ApiPublicHooksMercadopagoRoute: ApiPublicHooksMercadopagoRoute,
   ApiPublicManifestIconRoute: ApiPublicManifestIconRoute,
   ApiPublicManifestWebmanifestRoute: ApiPublicManifestWebmanifestRoute,
@@ -1446,13 +1490,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

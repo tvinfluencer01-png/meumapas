@@ -430,6 +430,102 @@ async function handler({ request }: { request: Request }) {
 
   await Promise.allSettled((subs ?? []).map((s) => processOne(s).catch(() => {})));
 
+  // ------- Free trial leads da landing "Horóscopo Grátis" -------
+  let freeProcessed = 0;
+  let freeDelivered = 0;
+  let freeExpired = 0;
+  try {
+    const { data: settings } = await (supabaseAdmin as any)
+      .from("horoscope_landing_settings").select("trial_end_message, trial_end_link").eq("id", true).maybeSingle();
+    const { data: leads } = await (supabaseAdmin as any)
+      .from("horoscope_free_leads")
+      .select("*")
+      .eq("status", "active")
+      .or(force ? "id.not.is.null" : `last_sent_on.is.null,last_sent_on.lt.${today}`)
+      .lte("trial_starts_on", today)
+      .limit(2000);
 
-  return Response.json({ ok: true, processed, delivered, retriesScheduled, givenUp });
+    const sendWA = async (to: string, msg: string) => {
+      if (evoReady) {
+        const base = String(evo.base_url).replace(/\/+$/, "");
+        const url = `${base}/message/sendText/${encodeURIComponent(evo.instance_name)}`;
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { apikey: evo.global_api_key, "Content-Type": "application/json" },
+          body: JSON.stringify({ number: to.replace(/\D+/g, ""), text: msg }),
+        });
+        return res.ok;
+      }
+      if (twilio?.enabled && twilio.account_sid && twilio.auth_token && twilio.whatsapp_from) {
+        const form = new URLSearchParams();
+        form.set("From", `whatsapp:${twilio.whatsapp_from}`);
+        form.set("To", `whatsapp:${to}`);
+        form.set("Body", msg);
+        const res = await fetch(
+          `https://api.twilio.com/2010-04-01/Accounts/${twilio.account_sid}/Messages.json`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: "Basic " + btoa(`${twilio.account_sid}:${twilio.auth_token}`),
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: form.toString(),
+          },
+        );
+        return res.ok;
+      }
+      return false;
+    };
+
+    for (const lead of (leads ?? [])) {
+      try {
+        // Trial expirou?
+        if (lead.trial_ends_on && lead.trial_ends_on < today) {
+          const endMsg = (settings?.trial_end_message ?? "🌟 Seus dias grátis terminaram. Continue assinando o Código Cósmico.")
+            + (settings?.trial_end_link ? `\n\n👉 ${settings.trial_end_link}` : "");
+          await sendWA(lead.phone_e164, endMsg).catch(() => {});
+          await (supabaseAdmin as any)
+            .from("horoscope_free_leads")
+            .update({ status: "expired", last_sent_on: today })
+            .eq("id", lead.id);
+          freeExpired += 1;
+          continue;
+        }
+
+        const sign = lead.sun_sign || "seu signo";
+        const lucky = computeLuckyForDay(lead.birth_date ?? null, sign, today);
+        const prompt = promptOverride
+          ? promptOverride
+              .replace(/\{\{sign\}\}/gi, sign)
+              .replace(/\{\{date\}\}/gi, today)
+              .replace(/\{\{lucky_number\}\}/gi, String(lucky.number))
+              .replace(/\{\{lucky_color\}\}/gi, lucky.color)
+          : buildHoroscopePrompt(sign, today, lucky);
+
+        let body = "";
+        for (const modelName of modelCandidates) {
+          try {
+            const { text } = await generateText({ model: (provider as any)(modelName), prompt, temperature: 1.0, topP: 0.95 });
+            body = text.trim();
+            break;
+          } catch {}
+        }
+        if (!body) continue;
+
+        const message = `🌌 Horóscopo de hoje — ${sign}\n\n${body}\n\n— Código Cósmico (trial grátis)`;
+        freeProcessed += 1;
+        const ok = await sendWA(lead.phone_e164, message);
+        if (ok) {
+          freeDelivered += 1;
+          await (supabaseAdmin as any)
+            .from("horoscope_free_leads")
+            .update({ last_sent_on: today })
+            .eq("id", lead.id);
+        }
+      } catch {}
+    }
+  } catch {}
+
+  return Response.json({ ok: true, processed, delivered, retriesScheduled, givenUp, freeProcessed, freeDelivered, freeExpired });
 }
+
