@@ -348,7 +348,7 @@ export const adminConfigureEvolutionWebhook = createServerFn({ method: "POST" })
     }
 
     const anonKey = process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.SUPABASE_ANON_KEY ?? "";
-    const webhookUrl = "https://meumapas.lovable.app/api/public/hooks/horoscope-activation";
+    const webhookUrl = "https://codigocosmico.com.br/api/public/hooks/horoscope-activation";
 
     const base_url = String(evo.base_url).replace(/\/+$/, "");
     const instance = encodeURIComponent(evo.instance_name);
