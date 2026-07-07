@@ -58,33 +58,41 @@ async function handler({ request }: { request: Request }) {
 
   const base = String(evo.base_url).replace(/\/+$/, "");
   const inst = encodeURIComponent(evo.instance_name);
+  const {
+    buildActivationPatch,
+    extractIncomingText,
+    getWhatsAppJidCandidates,
+    tryActivateLead,
+  } = await import("@/lib/horoscope-activation.server");
   let activated = 0;
   let retried = 0;
   let reminded = 0;
 
   for (const lead of leads) {
     const digits = String(lead.phone_e164).replace(/\D+/g, "");
-    const jid = `${digits}@s.whatsapp.net`;
     try {
       // Evolution v2: POST chat/findMessages/{instance}
-      const r = await fetch(`${base}/chat/findMessages/${inst}`, {
-        method: "POST",
-        headers: { apikey: evo.global_api_key, "Content-Type": "application/json" },
-        body: JSON.stringify({ where: { key: { remoteJid: jid } }, limit: 20 }),
-      });
-      if (!r.ok) continue;
-      const json: any = await r.json().catch(() => null);
-      const arr: any[] = Array.isArray(json) ? json : (json?.messages?.records ?? json?.records ?? json?.messages ?? []);
+      const arr: any[] = [];
+      for (const jid of getWhatsAppJidCandidates(lead.phone_e164)) {
+        const r = await fetch(`${base}/chat/findMessages/${inst}`, {
+          method: "POST",
+          headers: { apikey: evo.global_api_key, "Content-Type": "application/json" },
+          body: JSON.stringify({ where: { key: { remoteJid: jid } }, limit: 50 }),
+        });
+        if (!r.ok) continue;
+        const json: any = await r.json().catch(() => null);
+        const records: any[] = Array.isArray(json) ? json : (json?.messages?.records ?? json?.records ?? json?.messages ?? []);
+        arr.push(...records);
+      }
       const code = String(lead.activation_code).toUpperCase();
       const hit = arr.find((m) => {
         if (m?.key?.fromMe) return false;
-        const t = (m?.message?.conversation ?? m?.message?.extendedTextMessage?.text ?? m?.body ?? "").toString().toUpperCase();
+        const t = extractIncomingText(m).toUpperCase();
         return t.includes(code);
       });
       if (!hit) continue;
 
       const trialDays = Number(settings?.trial_days ?? lead.trial_days ?? 7);
-      const { buildActivationPatch, tryActivateLead } = await import("@/lib/horoscope-activation.server");
       const didActivate = await tryActivateLead(supabaseAdmin, lead.id, buildActivationPatch(trialDays));
       if (!didActivate) continue; // já ativado por webhook concorrente
 
