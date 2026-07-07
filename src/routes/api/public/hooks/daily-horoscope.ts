@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { generateText } from "ai";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway";
 import { buildHoroscopePrompt, computeLuckyForDay, loadChartSummaryForHoroscope, themesForDay } from "@/lib/horoscope.functions";
+import { localContextFor } from "@/lib/tz-context";
 
 /**
  * Daily horoscope cron handler.
@@ -41,24 +42,16 @@ async function handler({ request }: { request: Request }) {
 
   const now = new Date();
   // Fonte de verdade: America/Sao_Paulo (mesmo fuso exibido no Super Admin).
-  const spParts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/Sao_Paulo",
-    year: "numeric", month: "2-digit", day: "2-digit",
-    hour: "2-digit", minute: "2-digit", second: "2-digit",
-    hour12: false, weekday: "short",
-  }).formatToParts(now).reduce<Record<string, string>>((a, p) => (a[p.type] = p.value, a), {});
-  const today = `${spParts.year}-${spParts.month}-${spParts.day}`;
-  const currentLocalHour = Number(spParts.hour) % 24;
-  const currentLocalMinute = Number(spParts.minute) % 60;
-  const currentMinutesOfDay = currentLocalHour * 60 + currentLocalMinute;
-  const dowMap: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
-  const localDow = dowMap[spParts.weekday] ?? 0;
+  // Contexto local padrão (Sao Paulo) — usado apenas para pré-filtro amplo do banco.
+  // A janela de envio real é avaliada por assinante no fuso configurado.
+  const spCtx = localContextFor("America/Sao_Paulo", now);
+  const today = spCtx.today;
 
   const { data: allSubs, error } = await supabaseAdmin
     .from("horoscope_subscriptions")
     .select("*")
     .eq("enabled", true)
-    .or(force ? "id.not.is.null" : `last_sent_on.is.null,last_sent_on.lt.${today},next_retry_at.lte.${now.toISOString()}`)
+    .or(force ? "id.not.is.null" : `last_sent_on.is.null,next_retry_at.lte.${now.toISOString()}`)
     .limit(2000);
   if (error) return new Response(error.message, { status: 500 });
 
@@ -69,23 +62,25 @@ async function handler({ request }: { request: Request }) {
     if (s.next_retry_at) {
       return new Date(s.next_retry_at).getTime() <= now.getTime();
     }
-    // Compara em horário local de São Paulo (com precisão de minutos).
+    // Avalia janela no fuso do assinante.
+    const ctx = localContextFor(s.timezone, now);
+    // Filtro "não enviado hoje" precisa usar o hoje local do assinante.
+    if (s.last_sent_on && s.last_sent_on >= ctx.today) return false;
+
     const scheduledLocalHour = s.send_local_hour != null
       ? Number(s.send_local_hour)
       : (s.send_hour_utc != null ? (Number(s.send_hour_utc) - 3 + 24) % 24 : 7);
     const scheduledLocalMinute = s.send_local_minute != null ? Number(s.send_local_minute) : 0;
     const scheduledMinutesOfDay = scheduledLocalHour * 60 + scheduledLocalMinute;
-    if (currentMinutesOfDay < scheduledMinutesOfDay) return false;
+    if (ctx.currentMinutesOfDay < scheduledMinutesOfDay) return false;
     const freq = s.frequency ?? "daily";
     if (freq === "weekly") {
-      return s.send_weekday != null && s.send_weekday === localDow;
+      return s.send_weekday != null && s.send_weekday === ctx.localDow;
     }
-
-
     if (freq === "alternate") {
       if (!s.last_sent_on) return true;
       const last = new Date(s.last_sent_on + "T00:00:00Z").getTime();
-      const diffDays = Math.floor((Date.parse(today + "T00:00:00Z") - last) / 86400000);
+      const diffDays = Math.floor((Date.parse(ctx.today + "T00:00:00Z") - last) / 86400000);
       return diffDays >= 2;
     }
     return true;
@@ -438,19 +433,20 @@ async function handler({ request }: { request: Request }) {
     const { data: settings } = await (supabaseAdmin as any)
       .from("horoscope_landing_settings").select("trial_end_message, trial_end_link, send_local_hour, send_local_minute").eq("id", true).maybeSingle();
 
-    // Gate por horário local (America/São_Paulo) definido nas configurações da landing.
+    // Gate por horário configurado — avaliado por lead no fuso do próprio lead.
     const scheduledH = Number(settings?.send_local_hour ?? 7);
     const scheduledM = Number(settings?.send_local_minute ?? 0);
     const scheduledMinutes = scheduledH * 60 + scheduledM;
-    const withinWindow = force || currentMinutesOfDay >= scheduledMinutes;
 
-    const { data: leads } = withinWindow ? await (supabaseAdmin as any)
+    // Busca ampla: fuso de menor deslocamento (Noronha) já passou do horário?
+    // Filtramos por-lead abaixo usando o fuso salvo.
+    const { data: leads } = await (supabaseAdmin as any)
       .from("horoscope_free_leads")
       .select("*")
       .eq("status", "active")
-      .or(force ? "id.not.is.null" : `last_sent_on.is.null,last_sent_on.lt.${today}`)
+      .or(force ? "id.not.is.null" : "last_sent_on.is.null,last_sent_on.lt." + today)
       .lte("trial_starts_on", today)
-      .limit(2000) : { data: [] };
+      .limit(2000);
 
     const sendWA = async (to: string, msg: string) => {
       if (evoReady) {
@@ -486,28 +482,37 @@ async function handler({ request }: { request: Request }) {
 
     for (const lead of (leads ?? [])) {
       try {
-        // Trial expirou?
-        if (lead.trial_ends_on && lead.trial_ends_on < today) {
+        // Contexto local do lead (fuso salvo, default Sao Paulo).
+        const leadCtx = localContextFor(lead.timezone, now);
+        const leadToday = leadCtx.today;
+
+        // Já enviado hoje no fuso local do lead? pula.
+        if (!force && lead.last_sent_on && lead.last_sent_on >= leadToday) continue;
+        // Ainda não deu o horário no fuso local do lead? pula.
+        if (!force && leadCtx.currentMinutesOfDay < scheduledMinutes) continue;
+
+        // Trial expirou? (avaliado no fuso local do lead)
+        if (lead.trial_ends_on && lead.trial_ends_on < leadToday) {
           const endMsg = (settings?.trial_end_message ?? "🌟 Seus dias grátis terminaram. Continue assinando o Código Cósmico.")
             + (settings?.trial_end_link ? `\n\n👉 ${settings.trial_end_link}` : "");
           await sendWA(lead.phone_e164, endMsg).catch(() => {});
           await (supabaseAdmin as any)
             .from("horoscope_free_leads")
-            .update({ status: "expired", last_sent_on: today })
+            .update({ status: "expired", last_sent_on: leadToday })
             .eq("id", lead.id);
           freeExpired += 1;
           continue;
         }
 
         const sign = lead.sun_sign || "seu signo";
-        const lucky = computeLuckyForDay(lead.birth_date ?? null, sign, today);
+        const lucky = computeLuckyForDay(lead.birth_date ?? null, sign, leadToday);
         const prompt = promptOverride
           ? promptOverride
               .replace(/\{\{sign\}\}/gi, sign)
-              .replace(/\{\{date\}\}/gi, today)
+              .replace(/\{\{date\}\}/gi, leadToday)
               .replace(/\{\{lucky_number\}\}/gi, String(lucky.number))
               .replace(/\{\{lucky_color\}\}/gi, lucky.color)
-          : buildHoroscopePrompt(sign, today, lucky);
+          : buildHoroscopePrompt(sign, leadToday, lucky);
 
         let body = "";
         for (const modelName of modelCandidates) {
@@ -526,7 +531,7 @@ async function handler({ request }: { request: Request }) {
           freeDelivered += 1;
           await (supabaseAdmin as any)
             .from("horoscope_free_leads")
-            .update({ last_sent_on: today })
+            .update({ last_sent_on: leadToday })
             .eq("id", lead.id);
         }
       } catch {}

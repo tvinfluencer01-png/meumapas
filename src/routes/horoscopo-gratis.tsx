@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { Sun, Sparkles, ShieldCheck, MessageCircle, ArrowRight, Check, Star, Loader2 } from "lucide-react";
@@ -11,11 +11,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   getHoroscopeLandingSettings,
   submitHoroscopeLead,
 } from "@/lib/horoscope-landing.functions";
 import { HoroscopeTrialUsedDialog } from "@/components/HoroscopeTrialUsedDialog";
+import { BR_CITIES } from "@/lib/br-cities";
 
 export const Route = createFileRoute("/horoscopo-gratis")({
   head: () => ({
@@ -47,6 +49,7 @@ const FormSchema = z.object({
     .trim()
     .regex(/^\+?[1-9]\d{7,14}$/, "Ex: +5511999998888"),
   birth_date: z.string().optional(),
+  city: z.string().trim().min(2, "Escolha sua cidade"),
   consent: z.literal(true, {
     errorMap: () => ({ message: "É necessário aceitar para continuar." }),
   }),
@@ -78,8 +81,12 @@ function HoroscopoGratisPage() {
     email: "",
     phone_e164: "+55",
     birth_date: "",
+    city: "São Paulo - SP",
     consent: false,
   });
+  const browserTz = useMemo(() => {
+    try { return Intl.DateTimeFormat().resolvedOptions().timeZone || null; } catch { return null; }
+  }, []);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [success, setSuccess] = useState<SuccessInfo | null>(null);
   const [trialBlocked, setTrialBlocked] = useState(false);
@@ -100,6 +107,8 @@ function HoroscopoGratisPage() {
           email: parsed.data.email,
           phone_e164: parsed.data.phone_e164,
           birth_date: parsed.data.birth_date && parsed.data.birth_date.length === 10 ? parsed.data.birth_date : null,
+          city: parsed.data.city,
+          timezone: browserTz,
           consent_marketing: true,
           source: "landing_horoscopo_gratis",
         },
@@ -271,6 +280,23 @@ function HoroscopoGratisPage() {
                     onChange={(e) => setForm((f) => ({ ...f, birth_date: e.target.value }))}
                   />
                 </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="city">Sua cidade <span className="text-muted-foreground">(para acertar o fuso do envio)</span></Label>
+                  <Select value={form.city} onValueChange={(v) => setForm((f) => ({ ...f, city: v }))}>
+                    <SelectTrigger id="city"><SelectValue placeholder="Selecione sua cidade" /></SelectTrigger>
+                    <SelectContent className="max-h-72">
+                      {BR_CITIES.map((c) => (
+                        <SelectItem key={`${c.name}-${c.state}`} value={`${c.name} - ${c.state}`}>
+                          {c.name} - {c.state}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.city && <p className="text-xs text-destructive">{errors.city}</p>}
+                </div>
+
+
 
                 <label className="flex gap-3 items-start pt-2 cursor-pointer">
                   <Checkbox

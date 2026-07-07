@@ -1,9 +1,9 @@
 import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
-import { CheckCircle2, Loader2, Clock, Calendar, Sparkles } from "lucide-react";
+import { CheckCircle2, Loader2, Clock, Calendar, Sparkles, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -14,6 +14,7 @@ import {
   getMyHoroscopeSubscription,
   saveHoroscopeSubscriptionPreference,
 } from "@/lib/horoscope-plans.functions";
+import { BR_CITIES } from "@/lib/br-cities";
 
 type Search = { sid?: string; status?: string };
 
@@ -56,6 +57,10 @@ function PreferenciaPage() {
   const [hour, setHour] = useState(8);
   const [minute, setMinute] = useState(30);
   const [weekday, setWeekday] = useState(1);
+  const [city, setCity] = useState("São Paulo - SP");
+  const browserTz = useMemo(() => {
+    try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch { return ""; }
+  }, []);
 
   const save = useMutation({
     mutationFn: () =>
@@ -65,6 +70,8 @@ function PreferenciaPage() {
           send_local_hour: hour,
           send_local_minute: minute,
           send_weekday: frequency === "weekly" ? weekday : null,
+          city,
+          timezone: browserTz || undefined,
         },
       }),
     onSuccess: () => {
@@ -165,6 +172,23 @@ function PreferenciaPage() {
                 </Select>
               </div>
             )}
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="flex items-center gap-1.5"><MapPin className="size-4" /> Sua cidade (define o fuso do envio)</Label>
+            <Select value={city} onValueChange={setCity}>
+              <SelectTrigger><SelectValue placeholder="Selecione sua cidade" /></SelectTrigger>
+              <SelectContent className="max-h-72">
+                {BR_CITIES.map((c) => (
+                  <SelectItem key={`${c.name}-${c.state}`} value={`${c.name} - ${c.state}`}>
+                    {c.name} - {c.state}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-[11px] text-muted-foreground">
+              O horário acima é aplicado no fuso da cidade escolhida.
+            </p>
           </div>
 
           <div className="flex gap-3">

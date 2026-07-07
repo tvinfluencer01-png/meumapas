@@ -3,6 +3,7 @@ import { getRequestHeader, getRequestIP } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { sunSignFromBirthDate } from "@/lib/horoscope.functions";
+import { findCity, timezoneForUF } from "@/lib/br-cities";
 
 
 const PHONE_REGEX = /^\+?[1-9]\d{7,14}$/;
@@ -79,6 +80,8 @@ const SubmitSchema = z.object({
     .regex(/^\d{4}-\d{2}-\d{2}$/, "Data em formato AAAA-MM-DD")
     .nullable()
     .optional(),
+  city: z.string().trim().max(120).nullable().optional(),
+  timezone: z.string().trim().max(64).nullable().optional(),
   consent_marketing: z.literal(true, {
     errorMap: () => ({
       message: "É necessário aceitar receber mensagens para continuar.",
@@ -162,12 +165,27 @@ export const submitHoroscopeLead = createServerFn({ method: "POST" })
         ip = getRequestIP({ xForwardedFor: true }) ?? null;
       } catch {}
 
+      // Resolve fuso: cliente pode enviar tz explícito; senão tenta pelo nome da cidade;
+      // senão fica no default 'America/Sao_Paulo'.
+      let resolvedTz: string | null = data.timezone?.trim() || null;
+      if (!resolvedTz && data.city) {
+        const c = findCity(data.city);
+        if (c) resolvedTz = c.timezone;
+        else {
+          // "Cidade - UF"
+          const m = data.city.match(/-\s*([A-Za-z]{2})\s*$/);
+          if (m) resolvedTz = timezoneForUF(m[1]);
+        }
+      }
+
       const insertPayload = {
         full_name: data.full_name,
         email: data.email.toLowerCase(),
         phone_e164: data.phone_e164,
         birth_date: data.birth_date ?? null,
         sun_sign: sunSignFromBirthDate(data.birth_date ?? null),
+        city: data.city ?? null,
+        timezone: resolvedTz ?? "America/Sao_Paulo",
         consent_marketing: true,
         consent_text: settings.consent_text,
         consent_ip: ip,
