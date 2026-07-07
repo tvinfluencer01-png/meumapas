@@ -47,6 +47,9 @@ async function handler({ request }: { request: Request }) {
     buildActivationPatch,
     extractActivationCodes,
     extractIncomingText,
+    extractMessageRemoteJid,
+    isRecentLeadMessage,
+    isWhatsappLid,
     phoneMatches,
     sendConfirmationIfNeeded,
     tryActivateLead,
@@ -98,7 +101,10 @@ async function handler({ request }: { request: Request }) {
     .order("created_at", { ascending: false })
     .limit(10);
 
-  const lead = (leads ?? []).find((row: any) => phoneMatches(phone, row.phone_e164));
+  const lead = (leads ?? []).find((row: any) => phoneMatches(phone, row.phone_e164)) ??
+    ((leads ?? []).length === 1 && isWhatsappLid(extractMessageRemoteJid(body)) && isRecentLeadMessage(body, (leads ?? [])[0].created_at, 10)
+      ? (leads ?? [])[0]
+      : null);
 
   if (!lead) {
     return Response.json({ ok: false, reason: "code not found or phone mismatch" });
