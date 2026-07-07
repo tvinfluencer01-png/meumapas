@@ -81,8 +81,12 @@ function HoroscopoGratisPage() {
     email: "",
     phone_e164: "+55",
     birth_date: "",
+    city: "São Paulo - SP",
     consent: false,
   });
+  const browserTz = useMemo(() => {
+    try { return Intl.DateTimeFormat().resolvedOptions().timeZone || null; } catch { return null; }
+  }, []);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [success, setSuccess] = useState<SuccessInfo | null>(null);
   const [trialBlocked, setTrialBlocked] = useState(false);
