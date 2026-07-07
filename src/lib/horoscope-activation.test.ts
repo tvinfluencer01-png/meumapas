@@ -49,7 +49,10 @@ function makeFakeSupabase(initialRow: Record<string, any>) {
               updateCallCount++;
               const results: any[] = [];
               for (const [id, row] of rows) {
-                const match = filters.every(([c, v]) => row[c] === v);
+                const match = filters.every(([c, v]) => {
+                  if (v === null) return row[c] === null || row[c] === undefined;
+                  return row[c] === v;
+                });
                 if (match) {
                   Object.assign(row, patch);
                   results.push({ id: row.id });
