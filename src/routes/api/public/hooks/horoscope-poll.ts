@@ -7,13 +7,13 @@
  * Autenticação: apikey = SUPABASE_PUBLISHABLE_KEY.
  */
 import { createFileRoute } from "@tanstack/react-router";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export const Route = createFileRoute("/api/public/hooks/horoscope-poll")({
   server: { handlers: { POST: handler, GET: handler } },
 });
 
 async function handler({ request }: { request: Request }) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const apikey = request.headers.get("apikey");
   const authorized =
     apikey === process.env.SUPABASE_PUBLISHABLE_KEY ||
@@ -29,9 +29,10 @@ async function handler({ request }: { request: Request }) {
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
   const { data: leads } = await (supabaseAdmin as any)
     .from("horoscope_free_leads")
-    .select("id, full_name, phone_e164, activation_code, trial_days, retry_count, last_retry_at, created_at, expiry_reminder_sent_at")
-    .eq("status", "pending_confirmation")
+    .select("id, full_name, phone_e164, activation_code, status, trial_days, retry_count, last_retry_at, created_at, expiry_reminder_sent_at, confirmation_sent_at, confirmation_attempts")
+    .in("status", ["pending_confirmation", "active"])
     .gte("created_at", since)
+    .or("status.eq.pending_confirmation,and(status.eq.active,confirmation_sent_at.is.null)")
     .limit(50);
   if (!leads?.length) return Response.json({ ok: true, checked: 0, activated: 0, retried: 0, reminded: 0 });
 
@@ -62,6 +63,7 @@ async function handler({ request }: { request: Request }) {
     buildActivationPatch,
     extractIncomingText,
     getWhatsAppJidCandidates,
+    sendConfirmationIfNeeded,
     tryActivateLead,
   } = await import("@/lib/horoscope-activation.server");
   let activated = 0;
@@ -71,6 +73,28 @@ async function handler({ request }: { request: Request }) {
   for (const lead of leads) {
     const digits = String(lead.phone_e164).replace(/\D+/g, "");
     try {
+      if (lead.status === "active") {
+        const trialDays = Number(settings?.trial_days ?? lead.trial_days ?? 7);
+        const reply = settings?.confirmation_reply ??
+          `✨ Cadastro confirmado! A partir de amanhã, você receberá seu horóscopo por ${trialDays} dias.`;
+        const confirmation = await sendConfirmationIfNeeded(supabaseAdmin, lead, reply);
+        if (confirmation.claimed) {
+          await (supabaseAdmin as any).from("app_logs").insert({
+            event: "horoscope_confirmation_attempt",
+            payload: {
+              lead_id: lead.id,
+              action: "retry_active_missing_confirmation",
+              ok: confirmation.result?.ok ?? null,
+              provider: confirmation.result?.provider ?? null,
+              status: confirmation.result?.status ?? null,
+              error: confirmation.result?.error ?? null,
+              at: new Date().toISOString(),
+            },
+          });
+        }
+        continue;
+      }
+
       // Evolution v2: POST chat/findMessages/{instance}
       const arr: any[] = [];
       for (const jid of getWhatsAppJidCandidates(lead.phone_e164)) {
@@ -99,11 +123,24 @@ async function handler({ request }: { request: Request }) {
 
       const reply = settings?.confirmation_reply ??
         `✨ Cadastro confirmado! A partir de amanhã, você receberá seu horóscopo por ${trialDays} dias.`;
-      await fetch(`${base}/message/sendText/${inst}`, {
-        method: "POST",
-        headers: { apikey: evo.global_api_key, "Content-Type": "application/json" },
-        body: JSON.stringify({ number: digits, text: reply }),
-      }).catch(() => {});
+      const confirmation = await sendConfirmationIfNeeded(supabaseAdmin, {
+        ...lead,
+        status: "active",
+      }, reply);
+      if (confirmation.claimed) {
+        await (supabaseAdmin as any).from("app_logs").insert({
+          event: "horoscope_confirmation_attempt",
+          payload: {
+            lead_id: lead.id,
+            action: "activated_by_poll",
+            ok: confirmation.result?.ok ?? null,
+            provider: confirmation.result?.provider ?? null,
+            status: confirmation.result?.status ?? null,
+            error: confirmation.result?.error ?? null,
+            at: new Date().toISOString(),
+          },
+        });
+      }
 
       activated++;
     } catch {
