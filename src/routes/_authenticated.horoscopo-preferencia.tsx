@@ -174,6 +174,23 @@ function PreferenciaPage() {
             )}
           </div>
 
+          <div className="space-y-1.5">
+            <Label className="flex items-center gap-1.5"><MapPin className="size-4" /> Sua cidade (define o fuso do envio)</Label>
+            <Select value={city} onValueChange={setCity}>
+              <SelectTrigger><SelectValue placeholder="Selecione sua cidade" /></SelectTrigger>
+              <SelectContent className="max-h-72">
+                {BR_CITIES.map((c) => (
+                  <SelectItem key={`${c.name}-${c.state}`} value={`${c.name} - ${c.state}`}>
+                    {c.name} - {c.state}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-[11px] text-muted-foreground">
+              O horário acima é aplicado no fuso da cidade escolhida.
+            </p>
+          </div>
+
           <div className="flex gap-3">
             <Button
               size="lg"
