@@ -92,6 +92,7 @@ const ADMIN_MENU: { value: string; label: string; icon: typeof SettingsIcon }[] 
   { value: "cron", label: "Cron Jobs", icon: Clock },
   { value: "horoscope-status", label: "Horóscopo Status", icon: Sparkles },
   { value: "horoscope-landing", label: "Horóscopo Grátis (Landing)", icon: Sparkles },
+  { value: "horoscope-plans", label: "Horóscopo Planos Pagos", icon: Sparkles },
 
   { value: "backup", label: "Backup", icon: Database },
   { value: "global", label: "Landing Page", icon: Phone },
