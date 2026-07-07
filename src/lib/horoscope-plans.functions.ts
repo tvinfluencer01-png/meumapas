@@ -280,3 +280,63 @@ export const adminDeleteHoroscopePlan = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true, deleted: true };
   });
+
+/* ---------- Authenticated: list my paid subscriptions ---------- */
+
+export const listMyHoroscopePaidSubscriptions = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data } = await (supabaseAdmin as any)
+      .from("horoscope_paid_subscriptions")
+      .select("*, plan:horoscope_plans(name, slug, billing_cycle, interval_months, price_cents)")
+      .eq("user_id", context.userId)
+      .order("created_at", { ascending: false });
+    return { subscriptions: data ?? [] };
+  });
+
+/* ---------- Authenticated: cancel my paid subscription ---------- */
+
+const CancelSchema = z.object({
+  id: z.string().uuid(),
+  immediate: z.boolean().optional(),
+  reason: z.string().trim().max(240).optional(),
+});
+
+export const cancelMyHoroscopePaidSubscription = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => CancelSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: sub } = await (supabaseAdmin as any)
+      .from("horoscope_paid_subscriptions")
+      .select("id, user_id")
+      .eq("id", data.id)
+      .eq("user_id", context.userId)
+      .maybeSingle();
+    if (!sub) throw new Error("Assinatura não encontrada.");
+    const { cancelHoroscopePaidSubscription } = await import(
+      "@/lib/horoscope-subscription-lifecycle.server"
+    );
+    return cancelHoroscopePaidSubscription(data.id, {
+      immediate: data.immediate,
+      reason: data.reason ?? "user_request",
+    });
+  });
+
+/* ---------- ADMIN: cancel any paid subscription ---------- */
+
+export const adminCancelHoroscopePaidSubscription = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => CancelSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context as any);
+    const { cancelHoroscopePaidSubscription } = await import(
+      "@/lib/horoscope-subscription-lifecycle.server"
+    );
+    return cancelHoroscopePaidSubscription(data.id, {
+      immediate: data.immediate ?? true,
+      reason: data.reason ?? "admin_action",
+    });
+  });
+
