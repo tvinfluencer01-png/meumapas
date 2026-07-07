@@ -59,6 +59,7 @@ import { Route as AuthenticatedAdminIlustracoesRouteImport } from './routes/_aut
 import { Route as ApiPublicManifestWebmanifestRouteImport } from './routes/api/public/manifest.webmanifest'
 import { Route as ApiPublicManifestIconRouteImport } from './routes/api/public/manifest.icon'
 import { Route as ApiPublicHooksMercadopagoRouteImport } from './routes/api/public/hooks/mercadopago'
+import { Route as ApiPublicHooksHoroscopeSubscriptionExpiryRouteImport } from './routes/api/public/hooks/horoscope-subscription-expiry'
 import { Route as ApiPublicHooksHoroscopePollRouteImport } from './routes/api/public/hooks/horoscope-poll'
 import { Route as ApiPublicHooksHoroscopeActivationRouteImport } from './routes/api/public/hooks/horoscope-activation'
 import { Route as ApiPublicHooksDispatchOrdersRouteImport } from './routes/api/public/hooks/dispatch-orders'
@@ -337,6 +338,12 @@ const ApiPublicHooksMercadopagoRoute =
     path: '/api/public/hooks/mercadopago',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksHoroscopeSubscriptionExpiryRoute =
+  ApiPublicHooksHoroscopeSubscriptionExpiryRouteImport.update({
+    id: '/api/public/hooks/horoscope-subscription-expiry',
+    path: '/api/public/hooks/horoscope-subscription-expiry',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksHoroscopePollRoute =
   ApiPublicHooksHoroscopePollRouteImport.update({
     id: '/api/public/hooks/horoscope-poll',
@@ -512,6 +519,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/dispatch-orders': typeof ApiPublicHooksDispatchOrdersRoute
   '/api/public/hooks/horoscope-activation': typeof ApiPublicHooksHoroscopeActivationRoute
   '/api/public/hooks/horoscope-poll': typeof ApiPublicHooksHoroscopePollRoute
+  '/api/public/hooks/horoscope-subscription-expiry': typeof ApiPublicHooksHoroscopeSubscriptionExpiryRoute
   '/api/public/hooks/mercadopago': typeof ApiPublicHooksMercadopagoRoute
   '/api/public/manifest/icon': typeof ApiPublicManifestIconRoute
   '/api/public/manifest/webmanifest': typeof ApiPublicManifestWebmanifestRoute
@@ -583,6 +591,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/dispatch-orders': typeof ApiPublicHooksDispatchOrdersRoute
   '/api/public/hooks/horoscope-activation': typeof ApiPublicHooksHoroscopeActivationRoute
   '/api/public/hooks/horoscope-poll': typeof ApiPublicHooksHoroscopePollRoute
+  '/api/public/hooks/horoscope-subscription-expiry': typeof ApiPublicHooksHoroscopeSubscriptionExpiryRoute
   '/api/public/hooks/mercadopago': typeof ApiPublicHooksMercadopagoRoute
   '/api/public/manifest/icon': typeof ApiPublicManifestIconRoute
   '/api/public/manifest/webmanifest': typeof ApiPublicManifestWebmanifestRoute
@@ -656,6 +665,7 @@ export interface FileRoutesById {
   '/api/public/hooks/dispatch-orders': typeof ApiPublicHooksDispatchOrdersRoute
   '/api/public/hooks/horoscope-activation': typeof ApiPublicHooksHoroscopeActivationRoute
   '/api/public/hooks/horoscope-poll': typeof ApiPublicHooksHoroscopePollRoute
+  '/api/public/hooks/horoscope-subscription-expiry': typeof ApiPublicHooksHoroscopeSubscriptionExpiryRoute
   '/api/public/hooks/mercadopago': typeof ApiPublicHooksMercadopagoRoute
   '/api/public/manifest/icon': typeof ApiPublicManifestIconRoute
   '/api/public/manifest/webmanifest': typeof ApiPublicManifestWebmanifestRoute
@@ -729,6 +739,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/dispatch-orders'
     | '/api/public/hooks/horoscope-activation'
     | '/api/public/hooks/horoscope-poll'
+    | '/api/public/hooks/horoscope-subscription-expiry'
     | '/api/public/hooks/mercadopago'
     | '/api/public/manifest/icon'
     | '/api/public/manifest/webmanifest'
@@ -800,6 +811,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/dispatch-orders'
     | '/api/public/hooks/horoscope-activation'
     | '/api/public/hooks/horoscope-poll'
+    | '/api/public/hooks/horoscope-subscription-expiry'
     | '/api/public/hooks/mercadopago'
     | '/api/public/manifest/icon'
     | '/api/public/manifest/webmanifest'
@@ -872,6 +884,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/dispatch-orders'
     | '/api/public/hooks/horoscope-activation'
     | '/api/public/hooks/horoscope-poll'
+    | '/api/public/hooks/horoscope-subscription-expiry'
     | '/api/public/hooks/mercadopago'
     | '/api/public/manifest/icon'
     | '/api/public/manifest/webmanifest'
@@ -925,6 +938,7 @@ export interface RootRouteChildren {
   ApiPublicHooksDispatchOrdersRoute: typeof ApiPublicHooksDispatchOrdersRoute
   ApiPublicHooksHoroscopeActivationRoute: typeof ApiPublicHooksHoroscopeActivationRoute
   ApiPublicHooksHoroscopePollRoute: typeof ApiPublicHooksHoroscopePollRoute
+  ApiPublicHooksHoroscopeSubscriptionExpiryRoute: typeof ApiPublicHooksHoroscopeSubscriptionExpiryRoute
   ApiPublicHooksMercadopagoRoute: typeof ApiPublicHooksMercadopagoRoute
   ApiPublicManifestIconRoute: typeof ApiPublicManifestIconRoute
   ApiPublicManifestWebmanifestRoute: typeof ApiPublicManifestWebmanifestRoute
@@ -1293,6 +1307,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksMercadopagoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/horoscope-subscription-expiry': {
+      id: '/api/public/hooks/horoscope-subscription-expiry'
+      path: '/api/public/hooks/horoscope-subscription-expiry'
+      fullPath: '/api/public/hooks/horoscope-subscription-expiry'
+      preLoaderRoute: typeof ApiPublicHooksHoroscopeSubscriptionExpiryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/horoscope-poll': {
       id: '/api/public/hooks/horoscope-poll'
       path: '/api/public/hooks/horoscope-poll'
@@ -1535,6 +1556,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksHoroscopeActivationRoute:
     ApiPublicHooksHoroscopeActivationRoute,
   ApiPublicHooksHoroscopePollRoute: ApiPublicHooksHoroscopePollRoute,
+  ApiPublicHooksHoroscopeSubscriptionExpiryRoute:
+    ApiPublicHooksHoroscopeSubscriptionExpiryRoute,
   ApiPublicHooksMercadopagoRoute: ApiPublicHooksMercadopagoRoute,
   ApiPublicManifestIconRoute: ApiPublicManifestIconRoute,
   ApiPublicManifestWebmanifestRoute: ApiPublicManifestWebmanifestRoute,
