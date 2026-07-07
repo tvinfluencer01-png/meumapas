@@ -12,6 +12,70 @@ export type ActivationPatch = {
   trial_days: number;
 };
 
+export function getWhatsAppJidCandidates(phoneE164: string): string[] {
+  const digits = String(phoneE164 ?? "").replace(/\D+/g, "");
+  const candidates = new Set<string>();
+
+  if (digits) candidates.add(digits);
+
+  // WhatsApp/Brazil can store mobile JIDs with or without the ninth digit
+  // after country code + DDD. Query both forms so polling finds replies.
+  if (digits.startsWith("55") && digits.length === 13 && digits[4] === "9") {
+    candidates.add(digits.slice(0, 4) + digits.slice(5));
+  }
+  if (digits.startsWith("55") && digits.length === 12) {
+    candidates.add(digits.slice(0, 4) + "9" + digits.slice(4));
+  }
+
+  return Array.from(candidates).map((d) => `${d}@s.whatsapp.net`);
+}
+
+export function phoneMatches(a: string, b: string): boolean {
+  const ad = String(a ?? "").replace(/\D+/g, "");
+  const bd = String(b ?? "").replace(/\D+/g, "");
+  if (!ad || !bd) return false;
+  if (ad === bd) return true;
+  if (ad.endsWith(bd.slice(-8)) || bd.endsWith(ad.slice(-8))) return true;
+
+  const normalizeBrazilNinthDigit = (digits: string) => {
+    if (digits.startsWith("55") && digits.length === 13 && digits[4] === "9") {
+      return digits.slice(0, 4) + digits.slice(5);
+    }
+    return digits;
+  };
+
+  return normalizeBrazilNinthDigit(ad) === normalizeBrazilNinthDigit(bd);
+}
+
+export function extractIncomingText(payload: any): string {
+  const message = payload?.message ?? payload?.data?.message ?? {};
+  const nested = message?.ephemeralMessage?.message ?? message?.viewOnceMessage?.message ?? {};
+  const texts = [
+    payload?.text,
+    payload?.Body,
+    payload?.body,
+    payload?.message?.text,
+    message?.conversation,
+    message?.extendedTextMessage?.text,
+    message?.imageMessage?.caption,
+    message?.videoMessage?.caption,
+    message?.buttonsResponseMessage?.selectedDisplayText,
+    message?.buttonsResponseMessage?.selectedButtonId,
+    message?.listResponseMessage?.title,
+    message?.listResponseMessage?.singleSelectReply?.selectedRowId,
+    message?.templateButtonReplyMessage?.selectedDisplayText,
+    nested?.conversation,
+    nested?.extendedTextMessage?.text,
+  ];
+  return texts.find((value) => typeof value === "string" && value.trim())?.toString() ?? "";
+}
+
+export function extractActivationCodes(text: string): string[] {
+  return Array.from(
+    new Set(String(text ?? "").toUpperCase().match(/[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}/g) ?? []),
+  );
+}
+
 export function buildActivationPatch(trialDays: number, now = new Date()): ActivationPatch {
   const startsOn = new Date(now.getTime() + 24 * 60 * 60 * 1000);
   const endsOn = new Date(startsOn.getTime() + (trialDays - 1) * 24 * 60 * 60 * 1000);
