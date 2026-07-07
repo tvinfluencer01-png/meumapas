@@ -61,14 +61,14 @@ async function handler({ request }: { request: Request }) {
   const inst = encodeURIComponent(evo.instance_name);
   const {
     buildActivationPatch,
-    collectWhatsappMessageRecords,
+        collectWhatsappMessageRecords,
         extractMessageTimestampMs,
     extractIncomingText,
     extractMessageRemoteJid,
     getWhatsAppJidCandidates,
     isIncomingWhatsappMessage,
     phoneMatches,
-    sendConfirmationIfNeeded,
+        sendConfirmationIfNeeded,
         textContainsActivationCode,
         textContainsActivationKeyword,
     tryActivateLead,
