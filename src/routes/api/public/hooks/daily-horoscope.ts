@@ -436,14 +436,21 @@ async function handler({ request }: { request: Request }) {
   let freeExpired = 0;
   try {
     const { data: settings } = await (supabaseAdmin as any)
-      .from("horoscope_landing_settings").select("trial_end_message, trial_end_link").eq("id", true).maybeSingle();
-    const { data: leads } = await (supabaseAdmin as any)
+      .from("horoscope_landing_settings").select("trial_end_message, trial_end_link, send_local_hour, send_local_minute").eq("id", true).maybeSingle();
+
+    // Gate por horário local (America/São_Paulo) definido nas configurações da landing.
+    const scheduledH = Number(settings?.send_local_hour ?? 7);
+    const scheduledM = Number(settings?.send_local_minute ?? 0);
+    const scheduledMinutes = scheduledH * 60 + scheduledM;
+    const withinWindow = force || currentMinutesOfDay >= scheduledMinutes;
+
+    const { data: leads } = withinWindow ? await (supabaseAdmin as any)
       .from("horoscope_free_leads")
       .select("*")
       .eq("status", "active")
       .or(force ? "id.not.is.null" : `last_sent_on.is.null,last_sent_on.lt.${today}`)
       .lte("trial_starts_on", today)
-      .limit(2000);
+      .limit(2000) : { data: [] };
 
     const sendWA = async (to: string, msg: string) => {
       if (evoReady) {

@@ -3796,6 +3796,8 @@ export type Database = {
           hero_subtitle: string
           hero_title: string
           id: boolean
+          send_local_hour: number
+          send_local_minute: number
           success_message: string
           trial_days: number
           trial_end_link: string
@@ -3812,6 +3814,8 @@ export type Database = {
           hero_subtitle?: string
           hero_title?: string
           id?: boolean
+          send_local_hour?: number
+          send_local_minute?: number
           success_message?: string
           trial_days?: number
           trial_end_link?: string
@@ -3828,6 +3832,8 @@ export type Database = {
           hero_subtitle?: string
           hero_title?: string
           id?: boolean
+          send_local_hour?: number
+          send_local_minute?: number
           success_message?: string
           trial_days?: number
           trial_end_link?: string

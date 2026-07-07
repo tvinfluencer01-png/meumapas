@@ -95,6 +95,26 @@ function SettingsBlock() {
         </div>
 
         <div className="space-y-1.5">
+          <Label>Horário de envio diário (America/São_Paulo)</Label>
+          <div className="flex items-center gap-2">
+            <Input
+              type="number" min={0} max={23} className="w-24"
+              value={form.send_local_hour ?? 7}
+              onChange={(e) => set("send_local_hour", Math.max(0, Math.min(23, Number(e.target.value) || 0)))}
+            />
+            <span className="text-muted-foreground">:</span>
+            <Input
+              type="number" min={0} max={59} step={5} className="w-24"
+              value={form.send_local_minute ?? 0}
+              onChange={(e) => set("send_local_minute", Math.max(0, Math.min(59, Number(e.target.value) || 0)))}
+            />
+            <span className="text-xs text-muted-foreground">
+              Todos os leads (existentes e novos) receberão o horóscopo neste horário, a partir do próximo dia útil do cron.
+            </span>
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
           <Label>Título do hero</Label>
           <Input value={form.hero_title} onChange={(e) => set("hero_title", e.target.value)} />
         </div>
