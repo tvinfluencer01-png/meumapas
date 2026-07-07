@@ -12,7 +12,6 @@
  */
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { extractActivationCodes, extractIncomingText, phoneMatches } from "@/lib/horoscope-activation.server";
 
 export const Route = createFileRoute("/api/public/hooks/horoscope-activation")({
   server: {
@@ -43,6 +42,14 @@ async function handler({ request }: { request: Request }) {
     }
   }
   if (!body) return Response.json({ ok: false, reason: "empty body" }, { status: 400 });
+
+  const {
+    buildActivationPatch,
+    extractActivationCodes,
+    extractIncomingText,
+    phoneMatches,
+    tryActivateLead,
+  } = await import("@/lib/horoscope-activation.server");
 
   // Log de todo webhook recebido — usado pelo botão de "Testar webhook" no admin.
   try {
@@ -114,7 +121,6 @@ async function handler({ request }: { request: Request }) {
     .maybeSingle();
 
   const trialDays = Number(settings?.trial_days ?? lead.trial_days ?? 7);
-  const { buildActivationPatch, tryActivateLead } = await import("@/lib/horoscope-activation.server");
   const patch = buildActivationPatch(trialDays);
 
   // Idempotência: só ativa (e responde) se a linha ainda estiver pendente.
