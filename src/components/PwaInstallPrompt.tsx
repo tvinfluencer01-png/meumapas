@@ -55,6 +55,9 @@ export function PwaInstallPrompt() {
     if (typeof window === "undefined") return;
     if (isStandalone()) return;
     if (isInPreviewOrIframe()) return;
+    // Don't show on product landing pages or the free horoscope landing
+    const path = window.location.pathname;
+    if (path.startsWith("/p/") || path.startsWith("/horoscopo-gratis")) return;
 
     const dismissed = Number(localStorage.getItem(DISMISS_KEY) || 0);
     if (dismissed && Date.now() - dismissed < DISMISS_TTL_MS) return;
