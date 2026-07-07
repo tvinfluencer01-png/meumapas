@@ -69,80 +69,51 @@ function LandingPage() {
   );
 }
 
-/* ---------------- REPORTS GALLERY (novos relatórios com capas) ---------------- */
-const REPORT_SHOWCASE: Array<{
-  slug: string;
-  title: string;
-  tag: string;
-  hook: string;
-  img: string;
-}> = [
-  {
-    slug: "mapa-astral-completo",
-    title: "Mapa Astral Completo",
-    tag: "O retrato da alma",
-    hook: "Planetas, casas e aspectos decifrados em linguagem que atravessa o coração.",
-    img: "/__l5e/assets-v1/e73ccb6a-0db9-4efc-9b08-09640de0a093/credits-pacote-estelar.png",
-  },
-  {
-    slug: "mapa-do-amor",
-    title: "Mapa do Amor",
-    tag: "Vênus, Marte & Casa 7",
-    hook: "Descubra por que você ama assim — e como reescrever o padrão.",
-    img: "/__l5e/assets-v1/e9dbf0cc-bef1-4049-aed6-39419663a59f/plan-galactico.png",
-  },
-  {
-    slug: "sinastria-amorosa",
-    title: "Sinastria Amorosa",
-    tag: "Dois mapas · uma dança",
-    hook: "A geometria invisível que une (ou tensiona) o seu vínculo.",
-    img: "/__l5e/assets-v1/9b2c4dc2-2391-40c8-9853-74144554f434/plan-estelar.png",
-  },
-  {
-    slug: "previsao-anual",
-    title: "Previsão Anual",
-    tag: "Trânsitos & Revolução Solar",
-    hook: "Os próximos 12 meses mapa a mapa — janelas de plantar, colher e recuar.",
-    img: "/__l5e/assets-v1/3ed803e1-5530-45fb-9d17-f38df6a0e9cc/report-previsao-anual.png",
-  },
-  {
-    slug: "tarot-dos-caminhos",
-    title: "Tarot dos Caminhos",
-    tag: "Passado · Presente · Futuro",
-    hook: "Cartas lidas pela IA com base no seu momento astrológico exato.",
-    img: "/__l5e/assets-v1/d1699126-32b5-4757-ae54-365b9991ff40/plan-cosmico.png",
-  },
-  {
-    slug: "numerologia-cabalistica",
-    title: "Numerologia Cabalística",
-    tag: "Gematria & Árvore da Vida",
-    hook: "A matemática mística do seu nome — decifrada pela tradição cabalística.",
-    img: "/__l5e/assets-v1/0d659f35-03a5-4d3c-b1ac-e55ca96af2a3/credits-pacote-omnisciente.png",
-  },
-  {
-    slug: "numerologia-do-casal",
-    title: "Numerologia do Casal",
-    tag: "Vibrações compartilhadas",
-    hook: "Onde vocês vibram juntos — e o número que precisa ser trabalhado.",
-    img: "/__l5e/assets-v1/23510d25-c96a-4035-9fe2-ce28bd76762d/credits-pacote-universal.png",
-  },
-  {
-    slug: "cabala-pessoal",
-    title: "Cabala Pessoal",
-    tag: "Sua árvore, sua sefirá",
-    hook: "A trilha das 10 Sefirot desenhada só para o seu caminho de alma.",
-    img: "/__l5e/assets-v1/70751772-821c-46ed-90a1-b0f63755e8a3/plan-mistico.png",
-  },
-  {
-    slug: "mapa-empresarial",
-    title: "Mapa Empresarial",
-    tag: "Para fundadores & sócios",
-    hook: "Ciclos, sinastria societária e plano estratégico para os 12 meses.",
-    img: "/__l5e/assets-v1/0351239e-c209-43a9-9bd4-0552c61bbf83/plan-profissional.png",
-  },
-];
+/* ---------------- REPORTS GALLERY (todos os relatórios do sistema) ---------------- */
+const REPORT_META: Record<string, { tag: string; hook: string; title?: string }> = {
+  "mapa-astral-completo": { tag: "O retrato da alma", hook: "Planetas, casas e aspectos decifrados em linguagem que atravessa o coração.", title: "Mapa Astral Completo" },
+  "mapa-do-amor": { tag: "Vênus, Marte & Casa 7", hook: "Descubra por que você ama assim — e como reescrever o padrão.", title: "Mapa do Amor" },
+  "sinastria-amorosa": { tag: "Dois mapas · uma dança", hook: "A geometria invisível que une (ou tensiona) o seu vínculo.", title: "Sinastria Amorosa" },
+  "previsao-anual": { tag: "Trânsitos & Revolução Solar", hook: "Os próximos 12 meses mapa a mapa — janelas de plantar, colher e recuar.", title: "Previsão Anual" },
+  "tarot-dos-caminhos": { tag: "Passado · Presente · Futuro", hook: "Cartas lidas pela IA com base no seu momento astrológico exato.", title: "Tarot dos Caminhos" },
+  "numerologia-cabalistica": { tag: "Gematria & Árvore da Vida", hook: "A matemática mística do seu nome — decifrada pela tradição cabalística.", title: "Numerologia Cabalística" },
+  "numerologia-do-casal": { tag: "Vibrações compartilhadas", hook: "Onde vocês vibram juntos — e o número que precisa ser trabalhado.", title: "Numerologia do Casal" },
+  "cabala-pessoal": { tag: "Sua árvore, sua sefirá", hook: "A trilha das 10 Sefirot desenhada só para o seu caminho de alma.", title: "Cabala Pessoal" },
+  "mapa-empresarial": { tag: "Para fundadores & sócios", hook: "Ciclos, sinastria societária e plano estratégico para os 12 meses.", title: "Mapa Empresarial" },
+  "mapa-espiritual": { tag: "A jornada da alma", hook: "O propósito encarnacional revelado por astrologia, numerologia e cabala.", title: "Mapa Espiritual" },
+  "mapa-vocacao-carreira": { tag: "Meio-do-Céu & talentos", hook: "O chamado que sua alma veio realizar — e como monetizá-lo sem trair sua essência.", title: "Mapa da Vocação & Carreira" },
+  "mapa-prosperidade-financeira": { tag: "Casa 2, 8 & Júpiter", hook: "Seu roteiro de abundância: bloqueios ancestrais, ciclos e janelas de expansão.", title: "Mapa da Prosperidade" },
+  "mapa-familiar-ancestral": { tag: "Cura de linhagem", hook: "Padrões herdados, contratos de alma e a chave para libertar a árvore genealógica.", title: "Mapa Familiar & Ancestral" },
+  "mapa-saude-integrativa": { tag: "Corpo · mente · espírito", hook: "Vulnerabilidades astrológicas e caminhos de equilíbrio para o seu corpo.", title: "Mapa da Saúde Integrativa" },
+  "mapa-das-amizades": { tag: "Casa 11 & círculo social", hook: "As pessoas certas para o seu momento — e as que precisam ser soltas com amor.", title: "Mapa das Amizades" },
+  "mapa-da-personalidade": { tag: "Numerologia essencial", hook: "Quem você é sob todas as máscaras — e como habitar sua verdade sem culpa.", title: "Mapa da Personalidade" },
+  "meditacao-cabalistica-personalizada": { tag: "72 Nomes de Deus", hook: "Uma meditação escrita e narrada para a sua sefirá pessoal — áudio + PDF.", title: "Meditação Cabalística" },
+};
+
+type ReportRow = { slug: string; title: string; hero_image_url: string | null };
 
 function ReportsGallery() {
+  const { data: reports } = useQuery({
+    queryKey: ["landing", "product_landings", "gallery"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("product_landings")
+        .select("slug,title,hero_image_url")
+        .eq("active", true)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as ReportRow[];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const items = (reports ?? [])
+    .filter((r) => r.hero_image_url)
+    .map((r) => {
+      const meta = REPORT_META[r.slug] ?? { tag: "Relatório cósmico", hook: r.title };
+      return { slug: r.slug, title: meta.title ?? r.title, tag: meta.tag, hook: meta.hook, img: r.hero_image_url! };
+    });
+
   return (
     <section id="relatorios" className="relative overflow-hidden py-32 nebula-bg">
       <Starfield count={40} />
@@ -150,7 +121,7 @@ function ReportsGallery() {
         <div className="mb-16 flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
           <div className="max-w-2xl">
             <span className="mb-4 block text-xs uppercase tracking-[0.4em] text-gold/70">
-              Biblioteca Cósmica · Relatórios cinematográficos
+              Biblioteca Cósmica · {items.length} relatórios cinematográficos
             </span>
             <h2 className="font-serif text-5xl italic leading-tight">
               Cada relatório é um <span className="text-gold">portal</span>.
@@ -170,7 +141,7 @@ function ReportsGallery() {
         </div>
 
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {REPORT_SHOWCASE.map((r) => (
+          {items.map((r) => (
             <Link
               key={r.slug}
               to="/p/$slug"
@@ -202,14 +173,11 @@ function ReportsGallery() {
             </Link>
           ))}
         </div>
-
-        <p className="mt-12 text-center text-xs uppercase tracking-[0.3em] text-muted-foreground">
-          + Meditação Cabalística · Mapa Vocacional · Prosperidade Financeira · Vida Familiar · Saúde · Amizades · Personalidade
-        </p>
       </div>
     </section>
   );
 }
+
 
 function DynamicWhatsAppFloat() {
   const { data } = useQuery({
