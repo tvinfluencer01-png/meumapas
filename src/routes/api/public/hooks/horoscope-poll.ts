@@ -99,18 +99,10 @@ async function handler({ request }: { request: Request }) {
           ? new Date(lead.last_retry_at).getTime()
           : new Date(lead.created_at).getTime();
         if (Date.now() - lastMs >= retryAfterMs) {
-          const msg = `⏳ Ainda não recebemos sua confirmação. Envie *${keyword}-${lead.activation_code}* para ativar seu horóscopo grátis.`;
-          const { data: bumped } = await (supabaseAdmin as any)
-            .from("horoscope_free_leads")
-            .update({
-              retry_count: (lead.retry_count ?? 0) + 1,
-              last_retry_at: new Date().toISOString(),
-            })
-            .eq("id", lead.id)
-            .eq("status", "pending_confirmation")
-            .eq("retry_count", lead.retry_count ?? 0) // trava otimista
-            .select("id");
-          if (bumped?.length) {
+          const { tryClaimRetry } = await import("@/lib/horoscope-activation.server");
+          const claimed = await tryClaimRetry(supabaseAdmin, lead.id, lead.retry_count ?? 0);
+          if (claimed) {
+            const msg = `⏳ Ainda não recebemos sua confirmação. Envie *${keyword}-${lead.activation_code}* para ativar seu horóscopo grátis.`;
             await fetch(`${base}/message/sendText/${inst}`, {
               method: "POST",
               headers: { apikey: evo.global_api_key, "Content-Type": "application/json" },
@@ -130,16 +122,11 @@ async function handler({ request }: { request: Request }) {
         const createdMs = new Date(lead.created_at).getTime();
         const msToExpiry = createdMs + EXPIRY_MS - Date.now();
         if (msToExpiry > 0 && msToExpiry <= reminderBeforeMs) {
-          const minsLeft = Math.max(1, Math.round(msToExpiry / 60_000));
-          const msg = `⚠️ Seu cadastro no horóscopo grátis expira em ~${minsLeft} min. Envie *${keyword}-${lead.activation_code}* agora para garantir seus 7 dias grátis. ✨`;
-          const { data: marked } = await (supabaseAdmin as any)
-            .from("horoscope_free_leads")
-            .update({ expiry_reminder_sent_at: new Date().toISOString() })
-            .eq("id", lead.id)
-            .eq("status", "pending_confirmation")
-            .is("expiry_reminder_sent_at", null) // trava: só o primeiro concorrente envia
-            .select("id");
-          if (marked?.length) {
+          const { tryClaimExpiryReminder } = await import("@/lib/horoscope-activation.server");
+          const claimed = await tryClaimExpiryReminder(supabaseAdmin, lead.id);
+          if (claimed) {
+            const minsLeft = Math.max(1, Math.round(msToExpiry / 60_000));
+            const msg = `⚠️ Seu cadastro no horóscopo grátis expira em ~${minsLeft} min. Envie *${keyword}-${lead.activation_code}* agora para garantir seus 7 dias grátis. ✨`;
             await fetch(`${base}/message/sendText/${inst}`, {
               method: "POST",
               headers: { apikey: evo.global_api_key, "Content-Type": "application/json" },
