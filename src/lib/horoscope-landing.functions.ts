@@ -205,6 +205,8 @@ const SettingsSchema = z.object({
   cta_button_label: z.string().trim().min(2).max(80),
   trial_end_message: z.string().trim().min(5).max(600),
   trial_end_link: z.string().trim().url().or(z.literal("")),
+  send_local_hour: z.number().int().min(0).max(23),
+  send_local_minute: z.number().int().min(0).max(59),
 });
 
 async function assertAdmin(context: { supabase: any; userId: string }) {
