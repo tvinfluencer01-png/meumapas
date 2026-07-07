@@ -152,6 +152,34 @@ function SettingsBlock() {
   );
 }
 
+function EvolutionWebhookBlock() {
+  const configureFn = useServerFn(adminConfigureEvolutionWebhook);
+  const m = useMutation({
+    mutationFn: () => configureFn(),
+    onSuccess: (r: any) => toast.success(`Webhook configurado: ${r.webhookUrl}`),
+    onError: (e: Error) => toast.error(e.message),
+  });
+  return (
+    <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3 space-y-2">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <Label className="text-base flex items-center gap-2">
+            <MessageCircle className="size-4 text-emerald-400" />
+            Configurar webhook Evolution automaticamente
+          </Label>
+          <p className="text-xs text-muted-foreground">
+            Aponta a instância configurada em "Evolution API" para o endpoint de ativação. Use após alterar a instância ou URL da API.
+          </p>
+        </div>
+        <Button onClick={() => m.mutate()} disabled={m.isPending} variant="secondary" className="gap-2">
+          {m.isPending ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle2 className="size-4" />}
+          Configurar agora
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 const STATUS_LABEL: Record<string, { label: string; className: string }> = {
   pending_confirmation: { label: "aguardando", className: "bg-amber-500/15 text-amber-300 border-amber-500/30" },
   active: { label: "ativo (trial)", className: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30" },
