@@ -149,6 +149,26 @@ function SettingsBlock() {
         </div>
 
         <div className="space-y-1.5">
+          <Label>Mensagem do lembrete (WhatsApp)</Label>
+          <Textarea
+            rows={4}
+            value={form.expiry_reminder_template ?? ""}
+            onChange={(e) => set("expiry_reminder_template", e.target.value)}
+            placeholder="⚠️ Olá {{name}}, seu cadastro expira em ~{{minutes_left}} min. Envie *{{keyword}}-{{code}}* agora."
+          />
+          <p className="text-xs text-muted-foreground">
+            Variáveis disponíveis:{" "}
+            <code className="text-gold">{"{{name}}"}</code>,{" "}
+            <code className="text-gold">{"{{full_name}}"}</code>,{" "}
+            <code className="text-gold">{"{{code}}"}</code>,{" "}
+            <code className="text-gold">{"{{keyword}}"}</code>,{" "}
+            <code className="text-gold">{"{{minutes_left}}"}</code>,{" "}
+            <code className="text-gold">{"{{trial_days}}"}</code>,{" "}
+            <code className="text-gold">{"{{expires_at}}"}</code>.
+          </p>
+        </div>
+
+        <div className="space-y-1.5">
           <Label>Título do hero</Label>
           <Input value={form.hero_title} onChange={(e) => set("hero_title", e.target.value)} />
         </div>
