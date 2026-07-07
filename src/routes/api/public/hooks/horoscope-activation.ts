@@ -12,6 +12,7 @@
  */
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { extractActivationCodes, extractIncomingText, phoneMatches } from "@/lib/horoscope-activation.server";
 
 export const Route = createFileRoute("/api/public/hooks/horoscope-activation")({
   server: {
@@ -51,20 +52,14 @@ async function handler({ request }: { request: Request }) {
         event_type: body?.event ?? body?.type ?? null,
         instance: body?.instance ?? null,
         raw_from: body?.From ?? body?.data?.key?.remoteJid ?? body?.phone ?? null,
-        raw_text: (body?.text ?? body?.Body ?? body?.data?.message?.conversation ?? body?.data?.message?.extendedTextMessage?.text ?? "").toString().slice(0, 300),
+        raw_text: extractIncomingText(body).slice(0, 300),
         received_at: new Date().toISOString(),
       },
     });
   } catch {}
 
   // Extrair telefone + texto de vários formatos
-  const text: string =
-    body.text ??
-    body.Body ??
-    body?.data?.message?.conversation ??
-    body?.data?.message?.extendedTextMessage?.text ??
-    body?.message?.text ??
-    "";
+  const text = extractIncomingText(body);
   let phone: string =
     body.phone ??
     body.From ??
@@ -80,30 +75,25 @@ async function handler({ request }: { request: Request }) {
   }
 
   // Extrai código de 6 chars (A-Z0-9 sem 0/O/1/I) do texto
-  const codeMatch = String(text).toUpperCase().match(/[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}/);
-  if (!codeMatch) {
+  const codes = extractActivationCodes(text);
+  if (!codes.length) {
     return Response.json({ ok: false, reason: "no activation code in text" });
   }
-  const code = codeMatch[0];
 
   // Detecta comando SAIR/CANCELAR
   const wantsCancel = /\b(SAIR|CANCELAR|STOP|PARAR)\b/i.test(text);
 
-  const { data: lead } = await (supabaseAdmin as any)
+  const { data: leads } = await (supabaseAdmin as any)
     .from("horoscope_free_leads")
     .select("*")
-    .eq("activation_code", code)
-    .maybeSingle();
+    .in("activation_code", codes)
+    .order("created_at", { ascending: false })
+    .limit(10);
+
+  const lead = (leads ?? []).find((row: any) => phoneMatches(phone, row.phone_e164));
 
   if (!lead) {
-    return Response.json({ ok: false, reason: "code not found" });
-  }
-
-  // Segurança: telefone precisa bater
-  const leadDigits = String(lead.phone_e164).replace(/\D+/g, "");
-  const senderDigits = phone.replace(/\D+/g, "");
-  if (!senderDigits.endsWith(leadDigits.slice(-8)) && !leadDigits.endsWith(senderDigits.slice(-8))) {
-    return Response.json({ ok: false, reason: "phone mismatch" });
+    return Response.json({ ok: false, reason: "code not found or phone mismatch" });
   }
 
   if (wantsCancel) {
