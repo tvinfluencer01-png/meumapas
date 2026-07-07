@@ -3713,6 +3713,9 @@ export type Database = {
           activated_at: string | null
           activation_code: string
           birth_date: string | null
+          confirmation_attempts: number
+          confirmation_error: string | null
+          confirmation_sent_at: string | null
           consent_at: string | null
           consent_ip: string | null
           consent_marketing: boolean
@@ -3723,6 +3726,7 @@ export type Database = {
           expiry_reminder_sent_at: string | null
           full_name: string
           id: string
+          last_confirmation_attempt_at: string | null
           last_retry_at: string | null
           last_sent_on: string | null
           phone_e164: string
@@ -3741,6 +3745,9 @@ export type Database = {
           activated_at?: string | null
           activation_code: string
           birth_date?: string | null
+          confirmation_attempts?: number
+          confirmation_error?: string | null
+          confirmation_sent_at?: string | null
           consent_at?: string | null
           consent_ip?: string | null
           consent_marketing?: boolean
@@ -3751,6 +3758,7 @@ export type Database = {
           expiry_reminder_sent_at?: string | null
           full_name: string
           id?: string
+          last_confirmation_attempt_at?: string | null
           last_retry_at?: string | null
           last_sent_on?: string | null
           phone_e164: string
@@ -3769,6 +3777,9 @@ export type Database = {
           activated_at?: string | null
           activation_code?: string
           birth_date?: string | null
+          confirmation_attempts?: number
+          confirmation_error?: string | null
+          confirmation_sent_at?: string | null
           consent_at?: string | null
           consent_ip?: string | null
           consent_marketing?: boolean
@@ -3779,6 +3790,7 @@ export type Database = {
           expiry_reminder_sent_at?: string | null
           full_name?: string
           id?: string
+          last_confirmation_attempt_at?: string | null
           last_retry_at?: string | null
           last_sent_on?: string | null
           phone_e164?: string
