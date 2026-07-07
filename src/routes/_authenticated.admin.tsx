@@ -369,6 +369,7 @@ function AdminTabContent({ tab }: { tab: string }) {
     case "cron": return <AdminCronStatus />;
     case "horoscope-status": return <AdminHoroscopeStatus />;
     case "horoscope-landing": return <AdminHoroscopeLanding />;
+    case "horoscope-plans": return <AdminHoroscopePlans />;
 
     case "backup": return <BackupAdmin />;
     case "global": return <AdminGlobalSettings />;
