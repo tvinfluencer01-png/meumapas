@@ -42,24 +42,16 @@ async function handler({ request }: { request: Request }) {
 
   const now = new Date();
   // Fonte de verdade: America/Sao_Paulo (mesmo fuso exibido no Super Admin).
-  const spParts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/Sao_Paulo",
-    year: "numeric", month: "2-digit", day: "2-digit",
-    hour: "2-digit", minute: "2-digit", second: "2-digit",
-    hour12: false, weekday: "short",
-  }).formatToParts(now).reduce<Record<string, string>>((a, p) => (a[p.type] = p.value, a), {});
-  const today = `${spParts.year}-${spParts.month}-${spParts.day}`;
-  const currentLocalHour = Number(spParts.hour) % 24;
-  const currentLocalMinute = Number(spParts.minute) % 60;
-  const currentMinutesOfDay = currentLocalHour * 60 + currentLocalMinute;
-  const dowMap: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
-  const localDow = dowMap[spParts.weekday] ?? 0;
+  // Contexto local padrão (Sao Paulo) — usado apenas para pré-filtro amplo do banco.
+  // A janela de envio real é avaliada por assinante no fuso configurado.
+  const spCtx = localContextFor("America/Sao_Paulo", now);
+  const today = spCtx.today;
 
   const { data: allSubs, error } = await supabaseAdmin
     .from("horoscope_subscriptions")
     .select("*")
     .eq("enabled", true)
-    .or(force ? "id.not.is.null" : `last_sent_on.is.null,last_sent_on.lt.${today},next_retry_at.lte.${now.toISOString()}`)
+    .or(force ? "id.not.is.null" : `last_sent_on.is.null,next_retry_at.lte.${now.toISOString()}`)
     .limit(2000);
   if (error) return new Response(error.message, { status: 500 });
 
