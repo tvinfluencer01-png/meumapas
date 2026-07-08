@@ -18,7 +18,7 @@
     "check:types": "node scripts/check.mjs --types",
     "check:lint": "node scripts/check.mjs --lint",
     "check:format": "node scripts/check.mjs --format",
-    "predev": "node scripts/check.mjs --syntax --lint || true",
+    "predev": "node scripts/check.mjs --syntax --lint || true"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
