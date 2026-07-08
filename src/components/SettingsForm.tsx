@@ -557,6 +557,7 @@ export function SettingsForm() {
                         {!enabled && <span className="ml-2 text-[10px] uppercase tracking-wider text-muted-foreground">desativado</span>}
                         {enabled && (
                           <span
+                            title={checking ? "Verificando conexão…" : status ? status.message : online ? "Configurado" : "Clique em Testar para verificar"}
                             className={`ml-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wider ${
                               checking
                                 ? "bg-muted text-muted-foreground"
@@ -813,6 +814,7 @@ export function SettingsForm() {
                         {!enabled && <span className="ml-1 text-[10px] uppercase tracking-wider text-muted-foreground">desativado</span>}
                         {enabled && (
                           <span
+                            title={checking ? "Verificando conexão…" : status ? status.message : hasKey ? "Configurado" : "Clique em Testar para verificar"}
                             className={`ml-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wider ${
                               checking
                                 ? "bg-muted text-muted-foreground"
