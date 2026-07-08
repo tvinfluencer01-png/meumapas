@@ -1,8 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { createLovableAiGatewayProvider } from "@/lib/ai-gateway";
-import { generateText } from "ai";
 import * as Astro from "astronomy-engine";
 import { resolveActiveSubject } from "@/lib/active-subject";
 
@@ -114,11 +112,8 @@ export const getEnergyCalendar = createServerFn({ method: "POST" })
 
     type DayInsight = { emotions: string; actions: string; alert: string };
     let insights: Record<string, DayInsight> = {};
-    const apiKey = process.env.LOVABLE_API_KEY;
-    if (apiKey && upcoming.length > 0) {
+    if (upcoming.length > 0) {
       try {
-        const gateway = createLovableAiGatewayProvider(apiKey);
-        const model = gateway("google/gemini-3-flash-preview");
         const prompt = `Você é um astrólogo e numerólogo cabalístico. Para cada dia abaixo, gere 3 mensagens curtas, humanizadas e personalizadas em português:
 - "emotions": clima emocional esperado (1 frase, máx 20 palavras, tom acolhedor)
 - "actions": 1 ou 2 ações práticas recomendadas (máx 22 palavras, verbos no imperativo suave)
@@ -130,7 +125,8 @@ Sem comentários, sem markdown, sem texto antes ou depois.
 
 ${upcoming.map((u) => `- ${u.date}: número pessoal ${u.personal_day ?? "?"}, ${u.moon.label}`).join("\n")}`;
 
-        const { text } = await generateText({ model, prompt });
+        const { generateWithFallback } = await import("./ai-fallback.server");
+        const { text } = await generateWithFallback(supabase, userId, prompt);
         const match = text.match(/\{[\s\S]*\}/);
         if (match) {
           try { insights = JSON.parse(match[0]); } catch { /* ignore */ }

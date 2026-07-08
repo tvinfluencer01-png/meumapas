@@ -1,7 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { createLovableAiGatewayProvider } from "@/lib/ai-gateway";
-import { generateText } from "ai";
 import { SIGN_GUIDANCE } from "@/lib/astro-meanings";
 import { computeNumerology, NUMBER_MEANINGS } from "@/lib/numerology";
 import { applyActiveChartFilter, resolveActiveSubject } from "@/lib/active-subject";
@@ -144,8 +142,7 @@ export const getAIInsights = createServerFn({ method: "POST" })
       generatedAt: new Date().toISOString(),
     });
 
-    const apiKey = process.env.LOVABLE_API_KEY;
-    if (!apiKey || !birth) return fallback();
+    if (!birth) return fallback();
 
     const sunG = sunSign ? SIGN_GUIDANCE[sunSign] : null;
     const moonG = moonSign ? SIGN_GUIDANCE[moonSign] : null;
@@ -187,9 +184,8 @@ Regras:
 - Português brasileiro.`;
 
     try {
-      const gateway = createLovableAiGatewayProvider(apiKey);
-      const model = gateway("google/gemini-3-flash-preview");
-      const { text } = await generateText({ model, prompt });
+      const { generateWithFallback } = await import("./ai-fallback.server");
+      const { text } = await generateWithFallback(supabase, userId, prompt);
       const raw = text.trim().replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```$/i, "").trim();
       const parsed = JSON.parse(raw) as {
         intro: string;
