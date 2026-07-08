@@ -595,9 +595,15 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
     }
 
     try {
-      // Garante que existem previsões; gera se não houver
+      // Garante que existem previsões no formato NOVO (com synthesis + áreas).
+      // Previsões antigas (sem esses campos) são regeneradas para evitar
+      // blocos com texto indefinido no PDF.
       let forecast = chart.forecast as AstroForecast | null;
-      if (!forecast) {
+      const isLegacy =
+        !forecast ||
+        typeof (forecast as any).synthesis !== "string" ||
+        !(forecast as any).love;
+      if (isLegacy) {
         forecast = await buildForecastWithAI({
           planets: chart.planets as any,
           ascendant: chart.ascendant as number | null,
@@ -610,6 +616,7 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
           .update({ forecast, forecast_generated_at: forecast.generatedAt })
           .eq("id", chart.id);
       }
+
 
       const planets = (chart.planets ?? []) as { name: string; sign: string; degree: number }[];
       const aspects = (chart.aspects ?? []) as { a: string; b: string; aspect: string; orb: number }[];
