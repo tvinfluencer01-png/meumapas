@@ -45,6 +45,19 @@ export function AdminGlobalSettings() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const testMut = useMutation({
+    mutationFn: () => sendTestFn({ data: { severity } }),
+    onSuccess: (res) => {
+      setLastTest(res);
+      const parts: string[] = [];
+      if (res.email.attempted) parts.push(`Email: ${res.email.ok ? "enviado" : "falhou"}`);
+      if (res.whatsapp.attempted) parts.push(`WhatsApp: ${res.whatsapp.ok ? "enviado" : "falhou"}`);
+      const anyOk = res.email.ok || res.whatsapp.ok;
+      (anyOk ? toast.success : toast.error)(`Teste de alerta — ${parts.join(" · ") || "nenhum canal configurado"}`);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   return (
     <div className="space-y-6">
       <Card>
