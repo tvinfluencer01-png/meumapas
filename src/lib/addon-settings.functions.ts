@@ -115,6 +115,7 @@ export type AddonOverride = {
   price_cents: number | null;
   prompt: string | null;
   enabled: boolean;
+  require_user_key: boolean;
   updated_at: string | null;
 };
 
@@ -139,6 +140,7 @@ export type AddonRow = {
     price_cents: number;
     prompt: string | null;
     enabled: boolean;
+    require_user_key: boolean;
   };
 };
 
@@ -167,6 +169,7 @@ export const listAdminAddons = createServerFn({ method: "GET" })
             price_cents: r.price_cents,
             prompt: r.prompt,
             enabled: r.enabled,
+            require_user_key: r.require_user_key ?? false,
             updated_at: r.updated_at,
           }
         : null;
@@ -194,6 +197,7 @@ export const listAdminAddons = createServerFn({ method: "GET" })
           price_cents: override?.price_cents ?? d.price_cents,
           prompt: override?.prompt ?? def?.template ?? null,
           enabled: override?.enabled ?? true,
+          require_user_key: override?.require_user_key ?? false,
         },
       };
     });
@@ -224,6 +228,7 @@ export const listAdminAddons = createServerFn({ method: "GET" })
             price_cents: r.price_cents,
             prompt: r.prompt,
             enabled: r.enabled,
+            require_user_key: r.require_user_key ?? false,
             updated_at: r.updated_at,
           },
           effective: {
@@ -233,6 +238,7 @@ export const listAdminAddons = createServerFn({ method: "GET" })
             price_cents: r.price_cents || 0,
             prompt: r.prompt,
             enabled: r.enabled,
+            require_user_key: r.require_user_key ?? false,
           }
         };
       });
@@ -248,6 +254,7 @@ const UpsertSchema = z.object({
   price_cents: z.number().int().min(0).max(10_000_000).nullable().optional(),
   prompt: z.string().trim().max(8000).nullable().optional(),
   enabled: z.boolean().optional(),
+  require_user_key: z.boolean().optional(),
   is_custom: z.boolean().optional(),
 });
 
@@ -268,6 +275,7 @@ export const upsertAdminAddon = createServerFn({ method: "POST" })
     if (data.price_cents !== undefined) payload.price_cents = data.price_cents;
     if (data.prompt !== undefined) payload.prompt = data.prompt;
     if (data.enabled !== undefined) payload.enabled = data.enabled;
+    if (data.require_user_key !== undefined) payload.require_user_key = data.require_user_key;
 
     const { error } = await supabaseAdmin
       .from("addon_settings")
