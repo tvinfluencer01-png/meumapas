@@ -396,38 +396,83 @@ export function SettingsForm() {
                       <ArrowDown className="size-4" />
                     </Button>
                   </div>
-                  {expanded && id !== "lovable" && (
-                    <div className="border-t border-border/50 p-3 grid grid-cols-1 md:grid-cols-2 gap-2">
-                      <div>
-                        <Label className="text-stardust text-xs">Modelo</Label>
-                        <Input
-                          value={cfg.model ?? ""}
-                          onChange={(e) => updateCfg({ model: e.target.value })}
-                          onKeyDown={(e) => e.stopPropagation()}
-                          className="mt-1 bg-input border-border h-8 text-xs"
-                          placeholder={
-                            id === "openai" ? "gpt-5.5" :
-                            id === "anthropic" ? "claude-3-5-sonnet-latest" :
-                            "gemini-2.5-flash"
-                          }
-                        />
+                  {expanded && (
+                    <div className="border-t border-border/50 p-3 space-y-3">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        <div>
+                          <div className="flex items-center justify-between">
+                            <Label className="text-stardust text-xs">Modelo</Label>
+                            <button
+                              type="button"
+                              onClick={() => loadModels(id, cfg.key)}
+                              disabled={providerBusy[id] === "listing"}
+                              className="text-[10px] text-gold hover:underline disabled:opacity-40 inline-flex items-center gap-1"
+                            >
+                              <RefreshCw className={`size-3 ${providerBusy[id] === "listing" ? "animate-spin" : ""}`} />
+                              Puxar modelos
+                            </button>
+                          </div>
+                          {providerModels[id]?.length ? (
+                            <Select value={cfg.model ?? ""} onValueChange={(v) => updateCfg({ model: v })}>
+                              <SelectTrigger className="mt-1 bg-input border-border h-8 text-xs">
+                                <SelectValue placeholder="Selecione um modelo" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {providerModels[id].map((m) => (
+                                  <SelectItem key={m} value={m} className="text-xs">{m}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <Input
+                              value={cfg.model ?? ""}
+                              onChange={(e) => updateCfg({ model: e.target.value })}
+                              onKeyDown={(e) => e.stopPropagation()}
+                              className="mt-1 bg-input border-border h-8 text-xs"
+                              placeholder={
+                                id === "openai" ? "gpt-5.5" :
+                                id === "anthropic" ? "claude-3-5-sonnet-latest" :
+                                id === "google" ? "gemini-2.5-flash" :
+                                "google/gemini-3-flash-preview"
+                              }
+                            />
+                          )}
+                        </div>
+                        {id !== "lovable" && (
+                          <div>
+                            <Label className="text-stardust text-xs">API Key</Label>
+                            <Input
+                              type="password"
+                              value={cfg.key ?? ""}
+                              onChange={(e) => updateCfg({ key: e.target.value })}
+                              onKeyDown={(e) => e.stopPropagation()}
+                              className="mt-1 bg-input border-border h-8 text-xs"
+                              placeholder="sk-..."
+                            />
+                          </div>
+                        )}
                       </div>
-                      <div>
-                        <Label className="text-stardust text-xs">API Key</Label>
-                        <Input
-                          type="password"
-                          value={cfg.key ?? ""}
-                          onChange={(e) => updateCfg({ key: e.target.value })}
-                          onKeyDown={(e) => e.stopPropagation()}
-                          className="mt-1 bg-input border-border h-8 text-xs"
-                          placeholder="sk-..."
-                        />
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="text-[11px]">
+                          {providerStatus[id] && (
+                            <span className={`inline-flex items-center gap-1 ${providerStatus[id]?.ok ? "text-emerald-500" : "text-destructive"}`}>
+                              {providerStatus[id]?.ok ? <CheckCircle2 className="size-3" /> : <AlertTriangle className="size-3" />}
+                              {providerStatus[id]?.message}
+                            </span>
+                          )}
+                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          disabled={providerBusy[id] === "testing"}
+                          onClick={() => runTest(id, cfg.key, cfg.model)}
+                          className="gap-1.5 border-gold/30 hover:bg-gold/10 h-7 text-xs"
+                        >
+                          <Zap className={`size-3 ${providerBusy[id] === "testing" ? "animate-pulse" : ""}`} />
+                          {providerBusy[id] === "testing" ? "Testando..." : "Testar"}
+                        </Button>
                       </div>
-                    </div>
-                  )}
-                  {expanded && id === "lovable" && (
-                    <div className="border-t border-border/50 p-3 text-[11px] text-muted-foreground">
-                      Gerenciado pela Lovable. Ative/desative para incluir ou remover do fallback.
                     </div>
                   )}
                 </li>
