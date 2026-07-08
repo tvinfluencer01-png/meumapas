@@ -74,33 +74,63 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPage,
 });
 
-const ADMIN_MENU: { value: string; label: string; icon: typeof SettingsIcon }[] = [
-  { value: "pedidos", label: "Pedidos", icon: ShoppingCart },
-  { value: "crm", label: "CRM Leads", icon: Mail },
-  { value: "affiliate", label: "Affiliate Center", icon: Users },
-  { value: "settings", label: "Configurações", icon: SettingsIcon },
-  { value: "users", label: "Usuários", icon: Users },
-  { value: "costs", label: "Custos por ação", icon: CoinsIcon },
-  { value: "audit", label: "Histórico", icon: History },
-  { value: "twilio", label: "Twilio", icon: MessageSquare },
-  { value: "evolution", label: "Evolution API", icon: Zap },
-  { value: "mercadopago", label: "Mercado Pago", icon: Wallet },
-  { value: "credits", label: "Créditos/Pacotes", icon: Coins },
-  { value: "packages", label: "Pacotes", icon: Layers },
-  { value: "addons", label: "Add-ons", icon: Package },
-  { value: "migration", label: "Migração", icon: ArrowRightLeft },
-  { value: "cron", label: "Cron Jobs", icon: Clock },
-  { value: "horoscope-status", label: "Horóscopo Status", icon: Sparkles },
-  { value: "horoscope-landing", label: "Horóscopo Grátis (Landing)", icon: Sparkles },
-  { value: "horoscope-plans", label: "Horóscopo Planos Pagos", icon: Sparkles },
+type AdminMenuItem = { value: string; label: string; icon: typeof SettingsIcon };
+type AdminMenuGroup = { group: string; items: AdminMenuItem[] };
 
-  { value: "backup", label: "Backup", icon: Database },
-  { value: "global", label: "Notificações & Alertas", icon: AlertTriangle },
-  { value: "marketing", label: "Marketing", icon: Megaphone },
-  { value: "smtp", label: "E-mail SMTP", icon: Mail },
-  { value: "pwa", label: "PWA", icon: Smartphone },
-  { value: "product-landings", label: "Landings Produtos", icon: FileText },
+const ADMIN_MENU_GROUPS: AdminMenuGroup[] = [
+  {
+    group: "Operação",
+    items: [
+      { value: "pedidos", label: "Pedidos", icon: ShoppingCart },
+      { value: "crm", label: "CRM Leads", icon: Mail },
+      { value: "users", label: "Usuários", icon: Users },
+      { value: "audit", label: "Histórico", icon: History },
+    ],
+  },
+  {
+    group: "Financeiro",
+    items: [
+      { value: "mercadopago", label: "Mercado Pago", icon: Wallet },
+      { value: "credits", label: "Créditos/Pacotes", icon: Coins },
+      { value: "packages", label: "Pacotes", icon: Layers },
+      { value: "addons", label: "Add-ons", icon: Package },
+      { value: "costs", label: "Custos por ação", icon: CoinsIcon },
+    ],
+  },
+  {
+    group: "Conteúdo & Marketing",
+    items: [
+      { value: "product-landings", label: "Landings Produtos", icon: FileText },
+      { value: "horoscope-landing", label: "Horóscopo Grátis (Landing)", icon: Sparkles },
+      { value: "horoscope-plans", label: "Horóscopo Planos Pagos", icon: Sparkles },
+      { value: "horoscope-status", label: "Horóscopo Status", icon: Sparkles },
+      { value: "marketing", label: "Marketing", icon: Megaphone },
+    ],
+  },
+  {
+    group: "Integrações & Comunicação",
+    items: [
+      { value: "twilio", label: "Twilio", icon: MessageSquare },
+      { value: "evolution", label: "Evolution API", icon: Zap },
+      { value: "smtp", label: "E-mail SMTP", icon: Mail },
+      { value: "pwa", label: "PWA", icon: Smartphone },
+    ],
+  },
+  {
+    group: "Sistema",
+    items: [
+      { value: "settings", label: "Configurações", icon: SettingsIcon },
+      { value: "global", label: "Notificações & Alertas", icon: AlertTriangle },
+      { value: "affiliate", label: "Affiliate Center", icon: Users },
+      { value: "cron", label: "Cron Jobs", icon: Clock },
+      { value: "migration", label: "Migração", icon: ArrowRightLeft },
+      { value: "backup", label: "Backup", icon: Database },
+    ],
+  },
 ];
+
+const ADMIN_MENU: AdminMenuItem[] = ADMIN_MENU_GROUPS.flatMap((g) => g.items);
+
 
 
 function AdminPage() {
