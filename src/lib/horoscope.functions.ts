@@ -516,10 +516,8 @@ export const sendTestHoroscopeWhatsapp = createServerFn({ method: "POST" })
       throw new Error("Nenhum provedor WhatsApp configurado (Evolution ou Twilio).");
     }
 
-    const apiKey = process.env.LOVABLE_API_KEY;
-    if (!apiKey) throw new Error("LOVABLE_API_KEY ausente.");
-    const provider = createLovableAiGatewayProvider(apiKey);
-    const model = provider.chatModel("google/gemini-2.5-flash");
+    const { model: makeModel } = await getConfiguredProvider(supabaseAdmin, userId);
+    const model = makeModel("google/gemini-2.5-flash");
 
     const { getAddonPromptOverride } = await import("./addon-settings.functions");
     const override = await getAddonPromptOverride("sub_daily_horoscope");
