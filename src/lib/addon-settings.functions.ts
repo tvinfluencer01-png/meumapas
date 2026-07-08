@@ -376,7 +376,18 @@ export async function getEffectiveAddon(addon_id: string) {
     price_cents: (r as any)?.price_cents ?? def.price_cents,
     prompt: ((r as any)?.prompt as string | null) ?? null,
     enabled: (r as any)?.enabled ?? true,
+    require_user_key: (r as any)?.require_user_key ?? false,
   };
+}
+
+/** True when subscribers of this addon must use their own AI key (BYOK). */
+export async function addonRequiresUserKey(addon_id: string): Promise<boolean> {
+  const { data } = await supabaseAdmin
+    .from("addon_settings")
+    .select("require_user_key")
+    .eq("addon_id", addon_id)
+    .maybeSingle();
+  return Boolean((data as any)?.require_user_key);
 }
 
 /** Returns the override prompt for an addon, or null when unset. */
