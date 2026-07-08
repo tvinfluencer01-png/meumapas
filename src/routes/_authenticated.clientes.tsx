@@ -31,6 +31,7 @@ import { BR_CITIES, findCity, timezoneForUF, type BRCity } from "@/lib/br-cities
 import {
   listClientProfiles, upsertClientProfile, deleteClientProfile, setActiveClientProfile,
 } from "@/lib/client-profiles.functions";
+import { getAddonByokRequired } from "@/lib/addon-settings.functions";
 
 export const Route = createFileRoute("/_authenticated/clientes")({
   head: () => ({ meta: [{ title: "Clientes — Código Cósmico" }] }),
@@ -66,6 +67,12 @@ function ClientesPage() {
     queryKey: ["client-profiles"],
     queryFn: () => listFn(),
   });
+  const byokFn = useServerFn(getAddonByokRequired);
+  const { data: byok } = useQuery({
+    queryKey: ["byok-required", "sub_astrologer_numerologist"],
+    queryFn: () => byokFn({ data: { addon_id: "sub_astrologer_numerologist" } }),
+  });
+  const byokEnabled = !!byok?.required;
 
   const [editing, setEditing] = useState<ClientProfile | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -142,7 +149,7 @@ function ClientesPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {hasAddon && (
+          {hasAddon && byokEnabled && (
             <Button asChild variant="outline" className="gap-2">
               <Link to="/configuracoes" search={{ tab: "ia" }}>
                 <Settings className="size-4" /> Configurações

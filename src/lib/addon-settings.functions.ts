@@ -390,6 +390,15 @@ export async function addonRequiresUserKey(addon_id: string): Promise<boolean> {
   return Boolean((data as any)?.require_user_key);
 }
 
+/** Client-callable: returns whether an addon currently requires BYOK. */
+export const getAddonByokRequired = createServerFn({ method: "GET" })
+  .inputValidator((d) => z.object({ addon_id: z.string() }).parse(d))
+  .handler(async ({ data }) => {
+    const required = await addonRequiresUserKey(data.addon_id);
+    return { required };
+  });
+
+
 /** Returns the override prompt for an addon, or null when unset. */
 export async function getAddonPromptOverride(addon_id: string): Promise<string | null> {
   const { data } = await supabaseAdmin
