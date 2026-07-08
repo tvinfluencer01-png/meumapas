@@ -102,14 +102,13 @@ Devolva APENAS um JSON válido (sem markdown, sem comentários) com esta estrutu
   "summary": "300+ caracteres sintetizando o eixo central da personalidade de ${firstName}"
 }`;
 
-  const gateway = createLovableAiGatewayProvider(apiKey);
   const models = ["google/gemini-2.5-flash", "google/gemini-3-flash-preview"];
 
   let parsed: Report | null = null;
   for (const modelId of models) {
     try {
       const { text } = await generateText({
-        model: gateway(modelId),
+        model: makeModel(modelId),
         system,
         prompt,
         abortSignal: AbortSignal.timeout(90_000),
