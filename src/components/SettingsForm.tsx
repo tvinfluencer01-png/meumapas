@@ -66,7 +66,7 @@ export function SettingsForm() {
   async function loadModels(id: string, key?: string) {
     setProviderBusy((b) => ({ ...b, [id]: "listing" }));
     try {
-      const res = await listModelsFn({ data: { provider: id as "openai" | "anthropic" | "google" | "lovable", key: key ?? null } });
+      const res = await listModelsFn({ data: { provider: id as "openai" | "anthropic" | "google", key: key ?? null } });
       if (res.ok) setProviderModels((m) => ({ ...m, [id]: res.models }));
       else toast.error(`Modelos ${id}: ${res.error}`);
     } finally {
@@ -78,7 +78,7 @@ export function SettingsForm() {
     setProviderBusy((b) => ({ ...b, [id]: "testing" }));
     setProviderStatus((s) => ({ ...s, [id]: null }));
     try {
-      const res = await testProviderFn({ data: { provider: id as "openai" | "anthropic" | "google" | "lovable", key: key ?? null, model: model ?? null } });
+      const res = await testProviderFn({ data: { provider: id as "openai" | "anthropic" | "google", key: key ?? null, model: model ?? null } });
       setProviderStatus((s) => ({ ...s, [id]: { ok: res.ok, message: res.message } }));
       res.ok ? toast.success(`${id}: ${res.message}`) : toast.error(`${id}: ${res.message}`);
     } finally {
@@ -93,7 +93,7 @@ export function SettingsForm() {
         if (cfg.enabled === false) return;
         setProviderBusy((b) => ({ ...b, [id]: "testing" }));
         try {
-          const res = await testProviderFn({ data: { provider: id as "openai" | "anthropic" | "google" | "lovable", key: cfg.key ?? null, model: cfg.model ?? null } });
+          const res = await testProviderFn({ data: { provider: id as "openai" | "anthropic" | "google", key: cfg.key ?? null, model: cfg.model ?? null } });
           setProviderStatus((s) => ({ ...s, [id]: { ok: res.ok, message: res.message } }));
         } catch {
           setProviderStatus((s) => ({ ...s, [id]: { ok: false, message: "erro" } }));
@@ -317,7 +317,7 @@ export function SettingsForm() {
           <div>
             <h2 className="font-serif text-xl text-gold">Inteligência Espiritual (IA)</h2>
             <p className="text-sm text-muted-foreground mt-1">
-              Padrão: <strong>Lovable AI Gateway</strong> (Gemini/GPT integrados). Ou traga sua própria chave.
+              Configure ao menos uma chave (OpenAI, Anthropic ou Google) abaixo. O sistema usa a primeira disponível e cai para as demais em fallback.
             </p>
           </div>
           {providerOnline && <OnlineBadge />}
