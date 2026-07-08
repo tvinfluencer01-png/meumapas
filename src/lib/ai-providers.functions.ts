@@ -70,6 +70,18 @@ export const listProviderModels = createServerFn({ method: "POST" })
           .sort();
         return { ok: true as const, models };
       }
+      if (data.provider === "groq" || data.provider === "mistral" || data.provider === "openrouter") {
+        const baseURL =
+          data.provider === "groq" ? "https://api.groq.com/openai/v1" :
+          data.provider === "mistral" ? "https://api.mistral.ai/v1" :
+          "https://openrouter.ai/api/v1";
+        const res = await fetch(`${baseURL}/models`, {
+          headers: { Authorization: `Bearer ${key}` },
+        });
+        if (!res.ok) return { ok: false as const, error: `${data.provider} ${res.status}`, models: [] };
+        const json = (await res.json()) as { data?: Array<{ id: string }> };
+        return { ok: true as const, models: (json.data ?? []).map((m) => m.id).sort() };
+      }
     } catch (e) {
       return { ok: false as const, error: e instanceof Error ? e.message : "Erro desconhecido", models: [] };
     }
