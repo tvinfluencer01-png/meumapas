@@ -54,8 +54,10 @@ export async function buildAiPersonalityNumerologyBlocks(
   const headline =
     `Caminho ${numLabel(num.life_path)} · Destino ${numLabel(num.destiny)} · Alma ${numLabel(num.soul_urge)} · Personalidade ${numLabel(num.personality)}`;
 
-  const apiKey = process.env.LOVABLE_API_KEY;
-  if (!apiKey) {
+  let makeModel: (hint?: string | null) => any;
+  try {
+    ({ model: makeModel } = await getConfiguredProvider(null, null));
+  } catch {
     return buildPersonalityNumerologyBlocks(fullName, birthDate);
   }
 
