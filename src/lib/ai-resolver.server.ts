@@ -52,7 +52,9 @@ export type ResolvedProvider = {
 export async function getConfiguredProvider(
   supabase: SupabaseClient | null,
   userId: string | null,
+  options?: { requireUserKey?: boolean },
 ): Promise<ResolvedProvider> {
+  const requireUserKey = options?.requireUserKey === true;
   let order: ConfiguredProviderId[] = DEFAULT_ORDER;
   let cfgMap: Record<string, { enabled?: boolean; key?: string; model?: string }> = {};
   let legacyKey: string | null = null;
@@ -91,10 +93,11 @@ export async function getConfiguredProvider(
   for (const p of order) {
     const cfg = cfgMap[p] ?? {};
     if (cfg.enabled === false) continue;
-    const key =
+    const userKey =
       (cfg.key && cfg.key.trim()) ||
       (p === defaultProvider ? legacyKey : null) ||
-      envKey(p);
+      null;
+    const key = userKey || (requireUserKey ? null : envKey(p));
     if (!key) continue;
     const perProviderModel =
       (cfg.model && cfg.model.trim()) ||
@@ -110,7 +113,9 @@ export async function getConfiguredProvider(
   }
 
   throw new Error(
-    "Nenhum provedor de IA configurado. Adicione uma chave de OpenAI, Anthropic ou Google em Configurações → IA.",
+    requireUserKey
+      ? "Este recurso requer sua própria chave de IA. Adicione uma chave (OpenAI, Anthropic ou Google) em Configurações → IA."
+      : "Nenhum provedor de IA configurado. Adicione uma chave de OpenAI, Anthropic ou Google em Configurações → IA.",
   );
 }
 
