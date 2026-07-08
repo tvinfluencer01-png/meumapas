@@ -34,7 +34,7 @@ export function SettingsForm() {
     preferred_engine: "swiss_ephemeris",
     astrology_api_user_id: "",
     astrology_api_key: "",
-    ai_provider: "lovable",
+    ai_provider: "openai",
     custom_ai_key: "",
     custom_ai_model: "openai/gpt-5.5",
   });
@@ -63,7 +63,7 @@ export function SettingsForm() {
         preferred_engine: data.preferred_engine ?? "swiss_ephemeris",
         astrology_api_user_id: data.astrology_api_user_id ?? "",
         astrology_api_key: data.astrology_api_key ?? "",
-        ai_provider: data.ai_provider ?? "lovable",
+        ai_provider: data.ai_provider ?? "openai",
         custom_ai_key: data.custom_ai_key ?? "",
         custom_ai_model: data.custom_ai_model ?? "openai/gpt-5.5",
       });
