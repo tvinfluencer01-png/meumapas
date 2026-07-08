@@ -765,7 +765,7 @@ export const generateAstroForecast = createServerFn({ method: "POST" })
         midheaven: chart.midheaven as number | null,
         aspects: chart.aspects as any,
         summary: chart.summary,
-      });
+      }, userId);
       await supabaseAdmin
         .from("astro_charts")
         .update({ forecast, forecast_generated_at: forecast.generatedAt })
