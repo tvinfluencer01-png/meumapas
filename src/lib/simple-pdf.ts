@@ -794,7 +794,11 @@ export async function buildSimplePdf(data: SimplePdfData): Promise<Uint8Array> {
   }
 
   for (const block of data.blocks) {
-    if (block.type === "h2") drawHeading(block.text, 22, { newPage: !data.flowing });
+    if (block.type === "page-break") {
+      cursor = newPage(cursor.pageNumber + 1);
+      isFirstHeading = true;
+    }
+    else if (block.type === "h2") drawHeading(block.text, 22, { newPage: block.pageBreak ?? !data.flowing });
     else if (block.type === "h3") drawSubHeading(block.text);
     else if (block.type === "p") drawParagraph(block.text);
     else if (block.type === "quote") drawQuote(block.text);
@@ -805,6 +809,7 @@ export async function buildSimplePdf(data: SimplePdfData): Promise<Uint8Array> {
     else if (block.type === "hebrew-row") drawHebrewRow(block);
     else if (block.type === "hebrew-name") drawHebrewName(block);
   }
+
 
   // assinatura final
   ensureSpace(60);
