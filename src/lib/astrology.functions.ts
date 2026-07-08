@@ -283,8 +283,12 @@ async function buildHoroscopeReading(params: {
   try {
     const gateway = createLovableAiGatewayProvider(apiKey);
     const model = gateway("google/gemini-3-flash-preview");
-    const prompt = `Você é um astrólogo experiente escrevendo uma leitura horoscópica APROFUNDADA em português brasileiro, tom acolhedor e prático, dirigida em segunda pessoa ("você"). Escreva em prosa contínua (SEM listas, sem títulos, sem markdown, sem emojis), com 6 a 8 parágrafos e no mínimo 550 palavras. Cubra: (1) o clima geral da semana de ${weekRange.start} a ${weekRange.end} no mês de ${monthLabel}, integrando Sol em ${sunSign ?? "—"}, Lua em ${moonSign ?? "—"} e Ascendente em ${ascSign ?? "—"}; (2) como isso afeta amor e relações; (3) trabalho, carreira e dinheiro; (4) saúde, corpo e emoções; (5) espiritualidade e intuição; (6) uma orientação central concreta e um cuidado a manter; (7) um convite de ação executável nesta semana. Cite dias específicos da semana quando fizer sentido. Nunca prometa eventos certos — use "tende a", "convida", "pede".`;
-    const { text } = await generateText({ model, prompt });
+    const prompt = `Escreva uma leitura horoscópica em português brasileiro, tom acolhedor e prático, em segunda pessoa ("você"), em 3 a 4 parágrafos curtos (máx. 250 palavras). Semana de ${weekRange.start} a ${weekRange.end} em ${monthLabel}. Integre Sol em ${sunSign ?? "—"}, Lua em ${moonSign ?? "—"} e Ascendente em ${ascSign ?? "—"}. Cubra clima geral, amor, trabalho e um cuidado. Sem listas, sem markdown, sem emojis. Nunca prometa eventos certos.`;
+    // Timeout curto — se a IA travar, cai no fallback e o PDF sai.
+    const { text } = await Promise.race([
+      generateText({ model, prompt }),
+      new Promise<never>((_, rej) => setTimeout(() => rej(new Error("horoscope timeout")), 12_000)),
+    ]);
     const cleaned = text.trim();
     return cleaned.length > 40 ? cleaned : fallback;
   } catch (err) {
@@ -292,6 +296,7 @@ async function buildHoroscopeReading(params: {
     return fallback;
   }
 }
+
 
 // --- helpers --------------------------------------------------------------
 const SIGNS = [
