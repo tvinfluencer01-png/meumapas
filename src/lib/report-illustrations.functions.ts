@@ -386,9 +386,9 @@ const THEME_BY_KIND: Record<string, string> = {
   personal_kabbalah: "cabala",
 };
 
-async function generateOne(theme: string, report_kind: string, userId: string, openaiKey: string, variantIndex = 0) {
+async function generateOne(theme: string, report_kind: string, userId: string, supabase: SupabaseClient, variantIndex = 0) {
   const prompt = themePrompt(theme, undefined, variantIndex);
-  const bytes = await generateImageBytes(prompt, openaiKey);
+  const bytes = await generateImageBytes(prompt, supabase, userId);
   if (!bytes) throw new Error(`Sem imagem utilizável para ${report_kind}`);
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const path = `${report_kind}/${crypto.randomUUID()}.png`;
