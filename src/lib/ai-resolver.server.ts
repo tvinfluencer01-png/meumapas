@@ -52,9 +52,32 @@ export type ResolvedProvider = {
 export async function getConfiguredProvider(
   supabase: SupabaseClient | null,
   userId: string | null,
-  options?: { requireUserKey?: boolean },
+  options?: { requireUserKey?: boolean; addonId?: string | null },
 ): Promise<ResolvedProvider> {
-  const requireUserKey = options?.requireUserKey === true;
+  let requireUserKey = options?.requireUserKey === true;
+
+  // If an addonId is given and the user has that addon active AND the admin
+  // marked the addon as "require user key" (BYOK), enforce user key.
+  if (!requireUserKey && options?.addonId && supabase && userId) {
+    try {
+      const [{ data: addon }, { data: hasIt }] = await Promise.all([
+        supabase
+          .from("addon_settings")
+          .select("require_user_key")
+          .eq("addon_id", options.addonId)
+          .maybeSingle(),
+        supabase.rpc("has_active_addon", {
+          _user_id: userId,
+          _addon_id: options.addonId,
+        }),
+      ]);
+      if ((addon as { require_user_key?: boolean } | null)?.require_user_key && hasIt) {
+        requireUserKey = true;
+      }
+    } catch {
+      // ignore lookup failures — default behavior applies
+    }
+  }
   let order: ConfiguredProviderId[] = DEFAULT_ORDER;
   let cfgMap: Record<string, { enabled?: boolean; key?: string; model?: string }> = {};
   let legacyKey: string | null = null;
