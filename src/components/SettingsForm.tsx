@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { CheckCircle2, ExternalLink, Eye, EyeOff, Save, Sparkles, RefreshCw, AlertTriangle, ArrowUp, ArrowDown, Star, ChevronDown, ChevronRight } from "lucide-react";
+import { CheckCircle2, ExternalLink, Eye, EyeOff, Save, Sparkles, RefreshCw, AlertTriangle, ArrowUp, ArrowDown, Star, ChevronDown, ChevronRight, Zap } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getLovableApiKeyStatus, testAstrologyCredentials } from "@/lib/admin.functions";
+import { listProviderModels, testProvider } from "@/lib/ai-providers.functions";
 
 const AI_PROVIDER_LABELS: Record<string, string> = {
   openai: "OpenAI (BYO key)",
