@@ -282,7 +282,7 @@ async function buildHoroscopeReading(params: {
   try {
     const gateway = createLovableAiGatewayProvider(apiKey);
     const model = gateway("google/gemini-3-flash-preview");
-    const prompt = `Você é um astrólogo experiente. Escreva uma leitura horoscópica em português, em prosa contínua (sem listas), entre 90 e 130 palavras, poética e prática, dirigida diretamente ao leitor ("você"). Mencione a semana atual (${weekRange.start} a ${weekRange.end}) e o mês de ${monthLabel}. Integre o trio Sol em ${sunSign ?? "—"}, Lua em ${moonSign ?? "—"} e Ascendente em ${ascSign ?? "—"}. Traga uma orientação central, um cuidado emocional e um convite de ação concreto. Não use títulos, asteriscos ou emojis.`;
+    const prompt = `Você é um astrólogo experiente escrevendo uma leitura horoscópica APROFUNDADA em português brasileiro, tom acolhedor e prático, dirigida em segunda pessoa ("você"). Escreva em prosa contínua (SEM listas, sem títulos, sem markdown, sem emojis), com 6 a 8 parágrafos e no mínimo 550 palavras. Cubra: (1) o clima geral da semana de ${weekRange.start} a ${weekRange.end} no mês de ${monthLabel}, integrando Sol em ${sunSign ?? "—"}, Lua em ${moonSign ?? "—"} e Ascendente em ${ascSign ?? "—"}; (2) como isso afeta amor e relações; (3) trabalho, carreira e dinheiro; (4) saúde, corpo e emoções; (5) espiritualidade e intuição; (6) uma orientação central concreta e um cuidado a manter; (7) um convite de ação executável nesta semana. Cite dias específicos da semana quando fizer sentido. Nunca prometa eventos certos — use "tende a", "convida", "pede".`;
     const { text } = await generateText({ model, prompt });
     const cleaned = text.trim();
     return cleaned.length > 40 ? cleaned : fallback;
