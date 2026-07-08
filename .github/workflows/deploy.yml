@@ -36,7 +36,7 @@ jobs:
 
             # Build
             echo "🏗️  Build..."
-            npm run build
+            NODE_OPTIONS="--max-old-space-size=4096" npm run build
 
             # Preparar para Docker
             echo "📦 Preparando build para Docker..."
