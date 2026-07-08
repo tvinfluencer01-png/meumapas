@@ -113,8 +113,12 @@ export async function buildAiOrderReportBlocks(
   landingTitle: string,
   customerData: CD,
 ): Promise<SimplePdfBlock[] | null> {
-  const apiKey = process.env.LOVABLE_API_KEY;
-  if (!apiKey) return null;
+  let makeModel: (hint?: string | null) => any;
+  try {
+    ({ model: makeModel } = await getConfiguredProvider(null, null));
+  } catch {
+    return null;
+  }
 
   const meta = TYPE_META[reportType] ?? {
     title: landingTitle || "Relatório Personalizado",
