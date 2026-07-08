@@ -539,13 +539,16 @@ async function handler({ request }: { request: Request }) {
           : buildHoroscopePrompt(sign, leadToday, lucky);
 
         let body = "";
-        for (const modelName of modelCandidates) {
-          try {
-            const { text } = await generateText({ model: (provider as any)(modelName), prompt, temperature: 1.0, topP: 0.95 });
-            body = text.trim();
-            break;
-          } catch {}
-        }
+        try {
+          const { model: makeModel } = await getConfiguredProvider(supabaseAdmin, null);
+          for (const modelName of modelCandidates) {
+            try {
+              const { text } = await generateText({ model: makeModel(modelName), prompt, temperature: 1.0, topP: 0.95 });
+              body = text.trim();
+              break;
+            } catch {}
+          }
+        } catch {}
         if (!body) continue;
 
         const message = `🌌 Horóscopo de hoje — ${sign}\n\n${body}\n\n— Código Cósmico (trial grátis)`;
