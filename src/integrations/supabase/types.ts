@@ -5212,6 +5212,8 @@ export type Database = {
       }
       system_settings: {
         Row: {
+          alert_email: string | null
+          alert_whatsapp: string | null
           credit_value_cents: number
           id: string
           mp_webhook_logs_retention_days: number
@@ -5220,6 +5222,8 @@ export type Database = {
           whatsapp_number: string | null
         }
         Insert: {
+          alert_email?: string | null
+          alert_whatsapp?: string | null
           credit_value_cents?: number
           id?: string
           mp_webhook_logs_retention_days?: number
@@ -5228,6 +5232,8 @@ export type Database = {
           whatsapp_number?: string | null
         }
         Update: {
+          alert_email?: string | null
+          alert_whatsapp?: string | null
           credit_value_cents?: number
           id?: string
           mp_webhook_logs_retention_days?: number
