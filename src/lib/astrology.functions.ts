@@ -334,11 +334,30 @@ export const computeNatalChart = createServerFn({ method: "POST" })
  * Previsões astrais (próximos dias, semana, mês, ano) via IA
  * ============================================================ */
 
+type DeepArea = {
+  title: string;
+  reading: string;    // interpretação profunda (várias parágrafos)
+  opportunities: string; // oportunidades específicas do mapa nessa área
+  tips: string[];     // ações práticas concretas (>=5)
+  avoid: string[];    // armadilhas a evitar (>=3)
+};
+
 type AstroForecast = {
+  synthesis: string;   // síntese inicial cinematográfica
+  love: DeepArea;
+  money: DeepArea;
+  health: DeepArea;
+  purpose: DeepArea;
+  business: DeepArea;
+  family: DeepArea;
+  spirituality: DeepArea;
+  relationships: DeepArea; // amizades e vínculos sociais
+  shadows: DeepArea;   // sombras, feridas kármicas, padrões a curar
   nextDays: string;
   week: string;
   month: string;
   year: string;
+  closing: string;     // fechamento inspirador
   generatedAt: string;
 };
 
@@ -351,7 +370,8 @@ async function buildForecastWithAI(chart: {
 }): Promise<AstroForecast> {
   const apiKey = process.env.LOVABLE_API_KEY;
   if (!apiKey) throw new Error("LOVABLE_API_KEY ausente");
-  const model = createLovableAiGatewayProvider(apiKey)("google/gemini-2.5-flash");
+  // Modelo mais robusto para gerar leitura extensa e profunda (~40 páginas)
+  const model = createLovableAiGatewayProvider(apiKey)("openai/gpt-5.5");
 
   const ascSign = chart.ascendant != null ? SIGNS[Math.floor(chart.ascendant / 30)] : "—";
   const mcSign = chart.midheaven != null ? SIGNS[Math.floor(chart.midheaven / 30)] : "—";
@@ -359,7 +379,7 @@ async function buildForecastWithAI(chart: {
     .map((p) => `${p.name} em ${p.sign} (${p.degree.toFixed(1)}°)`)
     .join("\n");
   const aspectsBlock = chart.aspects
-    .slice(0, 10)
+    .slice(0, 20)
     .map((a) => `${a.a} ${a.aspect} ${a.b} (orbe ${a.orb}°)`)
     .join("\n");
 
@@ -369,17 +389,19 @@ async function buildForecastWithAI(chart: {
   const monthLabel = formatMonthLabel(today);
   const yearLabel = formatYearLabel(today);
 
-  const system = `Você é o **Oráculo Cósmico de Astrologia**, astrólogo profissional.
-Escreve em PT-BR, tom acolhedor, claro, prático e poético. Nunca prevê eventos certos — oferece tendências e direções.
-Sem markdown, sem emojis, apenas texto corrido em parágrafos separados por linha em branco.`;
+  // ============================================================
+  // PROMPT MASTER — Interpretação profunda do Mapa Astral
+  // ============================================================
+  const system = `Você é o **Oráculo Cósmico**, astrólogo profissional com formação em astrologia psicológica (Jung, Liz Greene, Steven Forrest), evolutiva e cabalística.
+Escreve em português brasileiro, tom acolhedor, íntimo, poético e profundamente prático. Nunca prevê eventos certos — mostra tendências, arquétipos e caminhos.
+Fala diretamente ao leitor em segunda pessoa ("você"), como um mentor que já leu a alma da pessoa.
+NUNCA use markdown, títulos com #, asteriscos, listas com - ou emojis. Apenas texto corrido em parágrafos separados por linha em branco.
+Cite planetas, signos, casas e aspectos ESPECÍFICOS do mapa em cada leitura — não escreva genéricos que caberiam a qualquer pessoa.
+Cada tip deve ser uma AÇÃO CONCRETA e executável hoje ou nesta semana (ex: "Reserve 20 min toda manhã para escrever 3 páginas sem filtro"), nunca conselho vago.`;
 
-  const prompt = `Data de referência: ${todayStr}.
+  const prompt = `Data de referência: ${todayStr} · Semana: ${week.start} a ${week.end} · Mês: ${monthLabel} · Ano: ${yearLabel}.
 
-Semana atual: ${week.start} a ${week.end} (${week.monthLabel}).
-Mês atual: ${monthLabel}.
-Ano atual: ${yearLabel}.
-
-Mapa natal do consulente:
+MAPA NATAL DO CONSULENTE
 Ascendente: ${ascSign}
 Meio do Céu: ${mcSign}
 Planetas:
@@ -388,19 +410,108 @@ ${planetsBlock}
 Aspectos principais:
 ${aspectsBlock}
 
-Com base nesse mapa e na fase atual do céu, escreva previsões em PT-BR.
-Responda APENAS com JSON válido (sem cercas de código):
+Resumo interno: ${chart.summary ?? "—"}
+
+MISSÃO
+Gere uma interpretação PROFUNDA e EXTENSA do mapa, com foco em oportunidades e ações práticas em cada área da vida. O texto final vai virar um relatório de ~40 páginas.
+Cite o Sol, Lua, Ascendente, Mercúrio, Vênus, Marte, Júpiter, Saturno e aspectos relevantes em cada seção, mostrando POR QUE esta pessoa vive cada tema desse jeito.
+
+FORMATO — RESPONDA EXCLUSIVAMENTE COM JSON VÁLIDO (sem markdown, sem cercas, sem texto fora do JSON):
 {
-  "nextDays": "2 a 3 parágrafos sobre tendências para os próximos 5 a 7 dias a partir de ${todayStr}, com sugestões práticas. Mencione explicitamente os dias e o mês.",
-  "week": "2 a 3 parágrafos sobre a semana atual (${week.start} a ${week.end}, ${week.monthLabel}): emoções, foco, relacionamentos, trabalho. Comece mencionando o período exato.",
-  "month": "2 a 3 parágrafos sobre o mês atual (${monthLabel}): oportunidades, cuidados, tema central. Comece mencionando o mês e o ano.",
-  "year": "3 a 4 parágrafos sobre o ano ${yearLabel}: grandes ciclos, áreas de crescimento, riscos a evitar. Comece mencionando o ano."
-}`;
+  "synthesis": "3 a 4 parágrafos (mín. 500 palavras) — abertura cinematográfica costurando Sol/Lua/Asc/MC, arquétipo dominante, missão desta encarnação e clima do momento atual (${monthLabel}).",
+
+  "love": {
+    "title": "Amor e Vínculo Afetivo",
+    "reading": "4 a 6 parágrafos (mín. 650 palavras) — como esta pessoa ama, atrai, sabota e floresce no amor à luz de Vênus, Marte, Lua, Casa 5 e 7. Fale sobre o tipo de vínculo que a alma dela busca, o parceiro/a que a complementa, feridas de rejeição e o padrão que ela repete.",
+    "opportunities": "2 parágrafos (mín. 200 palavras) — oportunidades reais no amor que este mapa está abrindo AGORA e nos próximos meses.",
+    "tips": ["6 a 8 ações concretas e específicas para viver o amor com maturidade (ex: 'Marque um encontro semanal só de silêncio e contato com seu par')"],
+    "avoid": ["4 armadilhas específicas a evitar"]
+  },
+
+  "money": {
+    "title": "Dinheiro, Prosperidade e Abundância",
+    "reading": "4 a 6 parágrafos (mín. 650 palavras) — relação com dinheiro à luz de Vênus, Júpiter, Saturno, Casa 2 e 8. Crenças herdadas, talentos monetizáveis, ciclos de escassez/abundância, estilo de gastar e receber.",
+    "opportunities": "2 parágrafos (mín. 200 palavras) — janelas de prosperidade que o mapa mostra para o próximo ciclo.",
+    "tips": ["6 a 8 ações concretas de gestão financeira, mentalidade e monetização alinhadas ao mapa"],
+    "avoid": ["4 armadilhas financeiras"]
+  },
+
+  "health": {
+    "title": "Saúde, Corpo e Vitalidade",
+    "reading": "4 a 5 parágrafos (mín. 550 palavras) — vitalidade, pontos sensíveis do corpo à luz de Sol, Marte, Saturno, Casa 6. Padrões emocionais que impactam o corpo, ritmo ideal, abordagens integrativas. NUNCA dar diagnóstico clínico.",
+    "opportunities": "1 a 2 parágrafos (mín. 180 palavras) — oportunidades de cura e regeneração.",
+    "tips": ["6 a 8 práticas de saúde integrativa (sono, alimentação, movimento, terapias)"],
+    "avoid": ["4 hábitos a rever, sempre reforçando que não substitui acompanhamento médico"]
+  },
+
+  "purpose": {
+    "title": "Propósito de Vida e Missão da Alma",
+    "reading": "4 a 6 parágrafos (mín. 650 palavras) — missão à luz do MC, Sol, Nodos, Casa 10. Dom central que o mundo precisa dessa pessoa, ferida iniciática, chamado kármico.",
+    "opportunities": "2 parágrafos (mín. 200 palavras) — sinais concretos de que o propósito está sendo ativado agora.",
+    "tips": ["6 a 8 movimentos práticos para encarnar a missão"],
+    "avoid": ["4 fugas típicas do propósito"]
+  },
+
+  "business": {
+    "title": "Negócios, Carreira e Empreendimentos",
+    "reading": "4 a 6 parágrafos (mín. 650 palavras) — vocação profissional à luz de MC, Casa 10, Saturno, Marte, Júpiter. Tipo de liderança, nicho, modelo de negócio que combina, sócios ideais.",
+    "opportunities": "2 parágrafos (mín. 220 palavras) — oportunidades de carreira e negócio abrindo no próximo ciclo.",
+    "tips": ["6 a 8 ações estratégicas para carreira/empreendedorismo"],
+    "avoid": ["4 armadilhas profissionais"]
+  },
+
+  "family": {
+    "title": "Família, Raízes e Ancestralidade",
+    "reading": "3 a 5 parágrafos (mín. 500 palavras) — dinâmica com pai, mãe, irmãos, filhos à luz de Casa 4, 10, Lua, Saturno. Padrão herdado, ferida ancestral, papel no clã.",
+    "opportunities": "1 a 2 parágrafos (mín. 180 palavras) — caminhos de cura familiar.",
+    "tips": ["5 a 7 práticas de harmonização familiar e ancestral"],
+    "avoid": ["3 padrões familiares a interromper"]
+  },
+
+  "spirituality": {
+    "title": "Espiritualidade, Fé e Conexão com o Sagrado",
+    "reading": "3 a 5 parágrafos (mín. 500 palavras) — via espiritual à luz de Netuno, Plutão, Júpiter, Casa 9 e 12. Tradições e práticas que ressoam com a alma, dons mediúnicos, caminho de despertar.",
+    "opportunities": "1 a 2 parágrafos (mín. 180 palavras) — portais espirituais que se abrem no ciclo atual.",
+    "tips": ["5 a 7 práticas espirituais concretas (meditação, ritual, estudo)"],
+    "avoid": ["3 desvios espirituais típicos"]
+  },
+
+  "relationships": {
+    "title": "Amizades e Círculos Sociais",
+    "reading": "3 a 4 parágrafos (mín. 400 palavras) — como esta pessoa faz amigos, tipo de círculo saudável, papel em grupo à luz de Mercúrio, Casa 11.",
+    "opportunities": "1 parágrafo (mín. 130 palavras) — encontros e círculos que estão chegando.",
+    "tips": ["5 práticas de cultivo de vínculo"],
+    "avoid": ["3 padrões sociais a rever"]
+  },
+
+  "shadows": {
+    "title": "Sombras, Feridas e Padrões a Curar",
+    "reading": "4 a 5 parágrafos (mín. 550 palavras) — sombra jungiana à luz de Plutão, Lilith, quadraturas e oposições. Ferida central, mecanismo de defesa, o que projeta no outro.",
+    "opportunities": "1 a 2 parágrafos (mín. 180 palavras) — o que está pronto para ser integrado agora.",
+    "tips": ["5 a 7 práticas de trabalho com a sombra (terapia, escrita, ritual)"],
+    "avoid": ["3 fugas da sombra"]
+  },
+
+  "nextDays": "3 a 4 parágrafos (mín. 400 palavras) — tendências para os próximos 5 a 7 dias a partir de ${todayStr}. Mencione dias e mês.",
+  "week": "3 a 4 parágrafos (mín. 400 palavras) — semana atual (${week.start} a ${week.end}): emoções, foco, relacionamentos, trabalho.",
+  "month": "3 a 4 parágrafos (mín. 450 palavras) — mês (${monthLabel}): tema central, oportunidades, cuidados.",
+  "year": "4 a 6 parágrafos (mín. 600 palavras) — ano ${yearLabel}: grandes ciclos, áreas de crescimento, decisões importantes.",
+
+  "closing": "2 parágrafos (mín. 250 palavras) — fechamento inspirador, síntese viva, chamado à ação, benção final."
+}
+
+REGRAS ABSOLUTAS
+1. Cite planetas/signos/aspectos ESPECÍFICOS do mapa em cada seção — nada de leitura genérica.
+2. Cumpra o mínimo de palavras de cada campo. Se ficar curto, expanda com exemplos concretos e cenas cotidianas.
+3. Cada "tip" começa com um verbo no imperativo suave e é executável em até 30 dias.
+4. Nunca prometa evento certo. Use "tende a", "convida", "pede", "abre espaço para".
+5. Português brasileiro. Sem markdown. Sem emojis. Sem cabeçalhos.`;
 
   const { text } = await generateText({ model, system, prompt });
   const parsed = safeParseLlmJson<Omit<AstroForecast, "generatedAt">>(text);
   return { ...parsed, generatedAt: new Date().toISOString() };
 }
+
 
 export const generateAstroForecast = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
