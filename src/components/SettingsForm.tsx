@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { CheckCircle2, ExternalLink, Eye, EyeOff, Save, Sparkles, RefreshCw, AlertTriangle } from "lucide-react";
+import { CheckCircle2, ExternalLink, Eye, EyeOff, Save, Sparkles, RefreshCw, AlertTriangle, ArrowUp, ArrowDown, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,31 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getLovableApiKeyStatus, testAstrologyCredentials } from "@/lib/admin.functions";
+
+const AI_PROVIDER_LABELS: Record<string, string> = {
+  openai: "OpenAI (BYO key)",
+  lovable: "Lovable AI Gateway",
+  anthropic: "Anthropic Claude (BYO key)",
+  google: "Google Gemini (BYO key)",
+};
+const DEFAULT_ORDER = ["openai", "lovable", "anthropic", "google"];
+
+function normalizeOrder(order: string[] | null | undefined, current?: string): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  const source = [
+    ...(current ? [current] : []),
+    ...(order ?? []),
+    ...DEFAULT_ORDER,
+  ];
+  for (const id of source) {
+    if (AI_PROVIDER_LABELS[id] && !seen.has(id)) {
+      seen.add(id);
+      out.push(id);
+    }
+  }
+  return out;
+}
 
 
 
