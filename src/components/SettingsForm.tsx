@@ -13,25 +13,144 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { testAstrologyCredentials } from "@/lib/admin.functions";
 import { listProviderModels, testProvider } from "@/lib/ai-providers.functions";
 
-const AI_PROVIDER_LABELS: Record<string, string> = {
-  openai: "OpenAI (BYO key)",
-  anthropic: "Anthropic Claude (BYO key)",
-  google: "Google Gemini (BYO key)",
-};
-const DEFAULT_ORDER = ["openai", "anthropic", "google"];
+type ChatProviderId = "openai" | "anthropic" | "google" | "groq" | "mistral" | "openrouter";
 
-function normalizeOrder(order: string[] | null | undefined, current?: string): string[] {
+const AI_PROVIDER_LABELS: Record<ChatProviderId, string> = {
+  openai: "OpenAI (BYO key) — pago",
+  anthropic: "Anthropic Claude (BYO key) — pago",
+  google: "Google Gemini (BYO key) — grátis",
+  groq: "Groq — Llama/Mixtral (grátis)",
+  mistral: "Mistral AI (grátis)",
+  openrouter: "OpenRouter — Llama/Gemini free (grátis)",
+};
+
+const AI_PROVIDER_LINKS: Record<ChatProviderId, { url: string; label: string; tutorial: string }> = {
+  openai: {
+    url: "https://platform.openai.com/api-keys",
+    label: "Obter chave OpenAI",
+    tutorial: "1) Crie conta em platform.openai.com  2) Adicione crédito em Billing  3) Vá em API Keys → Create new secret key  4) Cole aqui.",
+  },
+  anthropic: {
+    url: "https://console.anthropic.com/settings/keys",
+    label: "Obter chave Anthropic",
+    tutorial: "1) Crie conta em console.anthropic.com  2) Adicione crédito em Plans & Billing  3) Settings → API Keys → Create Key  4) Cole aqui.",
+  },
+  google: {
+    url: "https://aistudio.google.com/app/apikey",
+    label: "Obter chave Google AI",
+    tutorial: "1) Acesse aistudio.google.com/app/apikey  2) Create API key  3) Escolha um projeto  4) Copie e cole aqui. Tier gratuito generoso.",
+  },
+  groq: {
+    url: "https://console.groq.com/keys",
+    label: "Obter chave Groq (grátis)",
+    tutorial: "1) Crie conta em console.groq.com  2) API Keys → Create API Key  3) Cole aqui. Ultra-rápido, gratuito com limite diário.",
+  },
+  mistral: {
+    url: "https://console.mistral.ai/api-keys",
+    label: "Obter chave Mistral (grátis)",
+    tutorial: "1) Crie conta em console.mistral.ai  2) API Keys → Create new key  3) Ative o plano Experiment (grátis)  4) Cole aqui.",
+  },
+  openrouter: {
+    url: "https://openrouter.ai/keys",
+    label: "Obter chave OpenRouter (grátis)",
+    tutorial: "1) Crie conta em openrouter.ai  2) Keys → Create Key  3) Cole aqui. Modelos com sufixo :free são gratuitos.",
+  },
+};
+
+const DEFAULT_ORDER: ChatProviderId[] = ["openai", "anthropic", "google", "groq", "mistral", "openrouter"];
+
+type ImageProviderId =
+  | "img_pollinations"
+  | "img_huggingface"
+  | "img_together"
+  | "img_openai"
+  | "img_stability"
+  | "img_replicate";
+
+const IMAGE_PROVIDERS: Array<{
+  id: ImageProviderId;
+  label: string;
+  tier: "grátis" | "pago";
+  keyRequired: boolean;
+  url: string;
+  linkLabel: string;
+  tutorial: string;
+  placeholder: string;
+}> = [
+  {
+    id: "img_pollinations",
+    label: "Pollinations.ai",
+    tier: "grátis",
+    keyRequired: false,
+    url: "https://pollinations.ai",
+    linkLabel: "Saiba mais",
+    tutorial: "Sem chave. Gere imagens via URL pública: https://image.pollinations.ai/prompt/{seu-prompt}",
+    placeholder: "Não requer chave",
+  },
+  {
+    id: "img_huggingface",
+    label: "Hugging Face (SDXL/FLUX)",
+    tier: "grátis",
+    keyRequired: true,
+    url: "https://huggingface.co/settings/tokens",
+    linkLabel: "Obter token HF (grátis)",
+    tutorial: "1) Crie conta em huggingface.co  2) Settings → Access Tokens → New token (role: read)  3) Cole aqui. Inference API grátis com fila.",
+    placeholder: "hf_...",
+  },
+  {
+    id: "img_together",
+    label: "Together AI (FLUX schnell)",
+    tier: "grátis",
+    keyRequired: true,
+    url: "https://api.together.ai/settings/api-keys",
+    linkLabel: "Obter chave Together",
+    tutorial: "1) Crie conta em together.ai (ganha US$5 grátis)  2) Settings → API Keys → Create key  3) Cole aqui.",
+    placeholder: "tgp_...",
+  },
+  {
+    id: "img_openai",
+    label: "OpenAI (gpt-image-1 / DALL·E 3)",
+    tier: "pago",
+    keyRequired: true,
+    url: "https://platform.openai.com/api-keys",
+    linkLabel: "Obter chave OpenAI",
+    tutorial: "Mesma chave da OpenAI Chat. Modelos gpt-image-1 e dall-e-3 consomem crédito por imagem.",
+    placeholder: "sk-...",
+  },
+  {
+    id: "img_stability",
+    label: "Stability AI (SD3 / SDXL)",
+    tier: "pago",
+    keyRequired: true,
+    url: "https://platform.stability.ai/account/keys",
+    linkLabel: "Obter chave Stability",
+    tutorial: "1) Crie conta em platform.stability.ai  2) Adicione créditos  3) Account → Keys → Create API Key  4) Cole aqui.",
+    placeholder: "sk-...",
+  },
+  {
+    id: "img_replicate",
+    label: "Replicate (FLUX pro / Ideogram)",
+    tier: "pago",
+    keyRequired: true,
+    url: "https://replicate.com/account/api-tokens",
+    linkLabel: "Obter token Replicate",
+    tutorial: "1) Crie conta em replicate.com  2) Adicione método de pagamento  3) Account → API tokens → Create token  4) Cole aqui.",
+    placeholder: "r8_...",
+  },
+];
+
+function normalizeOrder(order: string[] | null | undefined, current?: string): ChatProviderId[] {
   const seen = new Set<string>();
-  const out: string[] = [];
-  const source = [
+  const out: ChatProviderId[] = [];
+  const source: string[] = [
     ...(current ? [current] : []),
     ...(order ?? []),
     ...DEFAULT_ORDER,
   ];
   for (const id of source) {
-    if (AI_PROVIDER_LABELS[id] && !seen.has(id)) {
+    if ((id in AI_PROVIDER_LABELS) && !seen.has(id)) {
       seen.add(id);
-      out.push(id);
+      out.push(id as ChatProviderId);
     }
   }
   return out;
@@ -66,7 +185,7 @@ export function SettingsForm() {
   async function loadModels(id: string, key?: string) {
     setProviderBusy((b) => ({ ...b, [id]: "listing" }));
     try {
-      const res = await listModelsFn({ data: { provider: id as "openai" | "anthropic" | "google", key: key ?? null } });
+      const res = await listModelsFn({ data: { provider: id as ChatProviderId, key: key ?? null } });
       if (res.ok) setProviderModels((m) => ({ ...m, [id]: res.models }));
       else toast.error(`Modelos ${id}: ${res.error}`);
     } finally {
@@ -78,7 +197,7 @@ export function SettingsForm() {
     setProviderBusy((b) => ({ ...b, [id]: "testing" }));
     setProviderStatus((s) => ({ ...s, [id]: null }));
     try {
-      const res = await testProviderFn({ data: { provider: id as "openai" | "anthropic" | "google", key: key ?? null, model: model ?? null } });
+      const res = await testProviderFn({ data: { provider: id as ChatProviderId, key: key ?? null, model: model ?? null } });
       setProviderStatus((s) => ({ ...s, [id]: { ok: res.ok, message: res.message } }));
       res.ok ? toast.success(`${id}: ${res.message}`) : toast.error(`${id}: ${res.message}`);
     } finally {
@@ -93,7 +212,7 @@ export function SettingsForm() {
         if (cfg.enabled === false) return;
         setProviderBusy((b) => ({ ...b, [id]: "testing" }));
         try {
-          const res = await testProviderFn({ data: { provider: id as "openai" | "anthropic" | "google", key: cfg.key ?? null, model: cfg.model ?? null } });
+          const res = await testProviderFn({ data: { provider: id as ChatProviderId, key: cfg.key ?? null, model: cfg.model ?? null } });
           setProviderStatus((s) => ({ ...s, [id]: { ok: res.ok, message: res.message } }));
         } catch {
           setProviderStatus((s) => ({ ...s, [id]: { ok: false, message: "erro" } }));
@@ -108,7 +227,7 @@ export function SettingsForm() {
     astrology_api_user_id: "",
     astrology_api_key: "",
     ai_provider: "openai",
-    ai_provider_order: DEFAULT_ORDER,
+    ai_provider_order: DEFAULT_ORDER as ChatProviderId[],
     custom_ai_key: "",
     custom_ai_model: "openai/gpt-5.5",
     ai_providers_config: {} as Record<string, { enabled?: boolean; key?: string; model?: string }>,
@@ -479,6 +598,13 @@ export function SettingsForm() {
                           />
                         </div>
                       </div>
+                      {AI_PROVIDER_LINKS[id] && (
+                        <div className="rounded-md border border-border/50 bg-background/40 p-2 text-[11px] text-muted-foreground space-y-1">
+                          <div className="text-stardust font-medium">Como configurar</div>
+                          <div>{AI_PROVIDER_LINKS[id].tutorial}</div>
+                          <ExtLink href={AI_PROVIDER_LINKS[id].url}>{AI_PROVIDER_LINKS[id].label}</ExtLink>
+                        </div>
+                      )}
                       <div className="flex items-center justify-between gap-2">
                         <div className="text-[11px]">
                           {providerStatus[id] && (
@@ -537,11 +663,82 @@ export function SettingsForm() {
         </div>
         <div className="text-xs text-muted-foreground">
           Links rápidos:{" "}
-          <ExtLink href="https://platform.openai.com/api-keys">OpenAI keys</ExtLink>{" · "}
-          <ExtLink href="https://console.anthropic.com/settings/keys">Anthropic keys</ExtLink>{" · "}
-          <ExtLink href="https://aistudio.google.com/app/apikey">Google AI keys</ExtLink>
+          <ExtLink href={AI_PROVIDER_LINKS.openai.url}>OpenAI</ExtLink>{" · "}
+          <ExtLink href={AI_PROVIDER_LINKS.anthropic.url}>Anthropic</ExtLink>{" · "}
+          <ExtLink href={AI_PROVIDER_LINKS.google.url}>Google</ExtLink>{" · "}
+          <ExtLink href={AI_PROVIDER_LINKS.groq.url}>Groq (grátis)</ExtLink>{" · "}
+          <ExtLink href={AI_PROVIDER_LINKS.mistral.url}>Mistral (grátis)</ExtLink>{" · "}
+          <ExtLink href={AI_PROVIDER_LINKS.openrouter.url}>OpenRouter (grátis)</ExtLink>
         </div>
       </section>
+
+      {/* Image generation providers */}
+      <section className="glass-card rounded-2xl p-6 space-y-4">
+        <div>
+          <h2 className="font-serif text-xl text-gold">Geração de Imagens (IA)</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Configure provedores para gerar ilustrações. Free ou pagos — a chave salva aqui será usada quando o
+            recurso de imagens for acionado. Cada provedor tem seu tutorial rápido e link para pegar a API.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {IMAGE_PROVIDERS.map((p) => {
+            const cfg = form.ai_providers_config[p.id] ?? {};
+            const enabled = cfg.enabled !== false;
+            const updateCfg = (patch: Partial<{ enabled: boolean; key: string; model: string }>) => {
+              setForm({
+                ...form,
+                ai_providers_config: {
+                  ...form.ai_providers_config,
+                  [p.id]: { ...cfg, ...patch },
+                },
+              });
+            };
+            return (
+              <div
+                key={p.id}
+                className={`rounded-lg border p-3 space-y-2 ${
+                  p.tier === "grátis" ? "border-emerald-500/30 bg-emerald-500/5" : "border-gold/30 bg-gold/5"
+                } ${!enabled ? "opacity-60" : ""}`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="text-sm text-stardust font-medium flex items-center gap-2">
+                      {p.label}
+                      <span className={`text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded ${
+                        p.tier === "grátis" ? "bg-emerald-600/80 text-white" : "bg-gold/80 text-primary-foreground"
+                      }`}>
+                        {p.tier}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mt-1">{p.tutorial}</p>
+                  </div>
+                  <Switch
+                    checked={enabled}
+                    onCheckedChange={(v) => updateCfg({ enabled: v })}
+                    aria-label="Ativar provedor de imagem"
+                  />
+                </div>
+                {p.keyRequired && (
+                  <Input
+                    type="password"
+                    value={cfg.key ?? ""}
+                    onChange={(e) => updateCfg({ key: e.target.value })}
+                    onKeyDown={(e) => e.stopPropagation()}
+                    className="bg-input border-border h-8 text-xs"
+                    placeholder={p.placeholder}
+                  />
+                )}
+                <div className="text-[11px]">
+                  <ExtLink href={p.url}>{p.linkLabel}</ExtLink>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
 
       <Button onClick={save} disabled={saving}
         className="bg-gold text-primary-foreground hover:bg-gold-glow">

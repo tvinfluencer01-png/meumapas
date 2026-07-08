@@ -2,7 +2,14 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const ProviderIdSchema = z.enum(["openai", "anthropic", "google"]);
+const ProviderIdSchema = z.enum([
+  "openai",
+  "anthropic",
+  "google",
+  "groq",
+  "mistral",
+  "openrouter",
+]);
 
 async function resolveKey(
   provider: z.infer<typeof ProviderIdSchema>,
@@ -14,6 +21,9 @@ async function resolveKey(
     case "openai": return process.env.OPENAI_API_KEY ?? null;
     case "anthropic": return process.env.ANTHROPIC_API_KEY ?? null;
     case "google": return process.env.GEMINI_API_KEY ?? process.env.GOOGLE_API_KEY ?? null;
+    case "groq": return process.env.GROQ_API_KEY ?? null;
+    case "mistral": return process.env.MISTRAL_API_KEY ?? null;
+    case "openrouter": return process.env.OPENROUTER_API_KEY ?? null;
   }
 }
 
@@ -60,6 +70,18 @@ export const listProviderModels = createServerFn({ method: "POST" })
           .sort();
         return { ok: true as const, models };
       }
+      if (data.provider === "groq" || data.provider === "mistral" || data.provider === "openrouter") {
+        const baseURL =
+          data.provider === "groq" ? "https://api.groq.com/openai/v1" :
+          data.provider === "mistral" ? "https://api.mistral.ai/v1" :
+          "https://openrouter.ai/api/v1";
+        const res = await fetch(`${baseURL}/models`, {
+          headers: { Authorization: `Bearer ${key}` },
+        });
+        if (!res.ok) return { ok: false as const, error: `${data.provider} ${res.status}`, models: [] };
+        const json = (await res.json()) as { data?: Array<{ id: string }> };
+        return { ok: true as const, models: (json.data ?? []).map((m) => m.id).sort() };
+      }
     } catch (e) {
       return { ok: false as const, error: e instanceof Error ? e.message : "Erro desconhecido", models: [] };
     }
@@ -86,13 +108,21 @@ export const testProvider = createServerFn({ method: "POST" })
         createOpenAIProvider,
         createAnthropicProvider,
         createGeminiProvider,
+        createGroqProvider,
+        createMistralProvider,
+        createOpenRouterProvider,
       } = await import("@/lib/ai-gateway");
-      let model;
-      switch (data.provider) {
-        case "openai": model = createOpenAIProvider(key)(data.model || "gpt-4o-mini"); break;
-        case "anthropic": model = createAnthropicProvider(key)(data.model || "claude-3-5-sonnet-latest"); break;
-        case "google": model = createGeminiProvider(key)(data.model || "gemini-2.5-flash"); break;
-      }
+      const buildModel = () => {
+        switch (data.provider) {
+          case "openai": return createOpenAIProvider(key)(data.model || "gpt-4o-mini");
+          case "anthropic": return createAnthropicProvider(key)(data.model || "claude-3-5-sonnet-latest");
+          case "google": return createGeminiProvider(key)(data.model || "gemini-2.5-flash");
+          case "groq": return createGroqProvider(key)(data.model || "llama-3.3-70b-versatile");
+          case "mistral": return createMistralProvider(key)(data.model || "mistral-small-latest");
+          case "openrouter": return createOpenRouterProvider(key)(data.model || "google/gemini-2.0-flash-exp:free");
+        }
+      };
+      const model = buildModel()!;
       const { text } = await Promise.race([
         generateText({ model, prompt: "Responda apenas: OK" }),
         new Promise<never>((_, rej) => setTimeout(() => rej(new Error("timeout 15s")), 15_000)),
