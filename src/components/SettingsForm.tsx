@@ -125,7 +125,7 @@ export function SettingsForm() {
 
   const testAstroFn = useServerFn(testAstrologyCredentials);
 
-  const lovableKeyStatus: { configured: boolean; key: string | null } | undefined = undefined;
+  
 
   useEffect(() => {
     if (data) {
