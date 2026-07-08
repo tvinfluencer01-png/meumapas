@@ -31,6 +31,7 @@ import { BR_CITIES, findCity, timezoneForUF, type BRCity } from "@/lib/br-cities
 import {
   listClientProfiles, upsertClientProfile, deleteClientProfile, setActiveClientProfile,
 } from "@/lib/client-profiles.functions";
+import { getAddonByokRequired } from "@/lib/addon-settings.functions";
 
 export const Route = createFileRoute("/_authenticated/clientes")({
   head: () => ({ meta: [{ title: "Clientes — Código Cósmico" }] }),
