@@ -595,28 +595,54 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
     }
 
     try {
-      // Previsões antigas (sem synthesis/áreas) NÃO são regeneradas aqui:
-      // a chamada da IA para o novo formato leva mais tempo que o limite do
-      // worker e provocaria "sandbox proxy failed". O usuário deve clicar em
-      // "Gerar previsões" antes de exportar o PDF.
-      const forecast = chart.forecast as AstroForecast | null;
-      const isLegacy =
-        !forecast ||
-        typeof (forecast as any).synthesis !== "string" ||
-        !(forecast as any).love;
-      if (isLegacy) {
+      const rawForecast = chart.forecast as Partial<AstroForecast> | null;
+      if (!rawForecast || Object.keys(rawForecast).length === 0) {
         if (charged) {
           await refundCredits(userId, action, {
-            reason: "PDF cancelado: previsões desatualizadas",
+            reason: "PDF cancelado: previsões ausentes",
             actorLabel: "system:astro",
             originalReference: `PDF mapa ${chart.id}`,
           }).catch(() => {});
         }
         throw new Error(
-          'Gere as previsões novamente antes de exportar o PDF. Clique em "Gerar previsões" no seu mapa e tente exportar de novo.',
+          'Gere as previsões antes de exportar o PDF. Clique em "Gerar previsões" no seu mapa.',
         );
       }
-      if (!forecast) throw new Error("Falha ao gerar previsões do mapa.");
+
+      // Tolera previsões parciais/legadas preenchendo campos faltantes com
+      // fallback seguro — evita refazer a chamada de IA (que estoura o
+      // timeout do worker) e permite exportar mesmo se a IA devolveu JSON
+      // incompleto.
+      const fallbackArea = (title: string): DeepArea => ({
+        title,
+        reading:
+          "Interpretação não disponível nesta versão da previsão. Gere novamente para receber o conteúdo profundo desta área.",
+        opportunities: "—",
+        tips: [],
+        avoid: [],
+      });
+      const forecast: AstroForecast = {
+        synthesis:
+          typeof rawForecast.synthesis === "string" && rawForecast.synthesis.trim()
+            ? rawForecast.synthesis
+            : chart.summary ?? "Síntese não disponível nesta versão da previsão.",
+        love: rawForecast.love ?? fallbackArea("Amor e Vínculo Afetivo"),
+        money: rawForecast.money ?? fallbackArea("Dinheiro, Prosperidade e Abundância"),
+        health: rawForecast.health ?? fallbackArea("Saúde, Corpo e Vitalidade"),
+        purpose: rawForecast.purpose ?? fallbackArea("Propósito de Vida e Missão da Alma"),
+        business: rawForecast.business ?? fallbackArea("Negócios, Carreira e Empreendimentos"),
+        family: rawForecast.family ?? fallbackArea("Família, Raízes e Ancestralidade"),
+        spirituality: rawForecast.spirituality ?? fallbackArea("Espiritualidade e Sagrado"),
+        relationships: rawForecast.relationships ?? fallbackArea("Amizades e Círculos Sociais"),
+        shadows: rawForecast.shadows ?? fallbackArea("Sombras e Padrões a Curar"),
+        nextDays: rawForecast.nextDays ?? "—",
+        week: rawForecast.week ?? "—",
+        month: rawForecast.month ?? "—",
+        year: rawForecast.year ?? "—",
+        closing:
+          rawForecast.closing ?? "Que este mapa ilumine seus próximos passos.",
+        generatedAt: rawForecast.generatedAt ?? new Date().toISOString(),
+      };
 
 
 
