@@ -144,7 +144,7 @@ function ClientesPage() {
         <div className="flex items-center gap-2">
           {hasAddon && (
             <Button asChild variant="outline" className="gap-2">
-              <Link to="/configuracoes">
+              <Link to="/configuracoes" search={{ tab: "ia" }}>
                 <Settings className="size-4" /> Configurações
               </Link>
             </Button>
