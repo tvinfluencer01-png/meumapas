@@ -820,31 +820,12 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
           ? (chart.forecast as Partial<AstroForecast>)
           : {};
 
-      // Se as previsões temporais estão faltando/inválidas, tenta gerar tudo
-      // agora (o usuário pediu que já venha completo). Falha silenciosa cai
-      // no fallback abaixo.
-      const forecastIncomplete =
-        !rawForecast.nextDays || !rawForecast.week ||
-        !rawForecast.month || !rawForecast.year ||
-        !rawForecast.love || !rawForecast.money;
-      if (forecastIncomplete) {
-        try {
-          const fresh = await buildForecastWithAI({
-            planets: chart.planets as any,
-            ascendant: chart.ascendant as number | null,
-            midheaven: chart.midheaven as number | null,
-            aspects: chart.aspects as any,
-            summary: chart.summary,
-          });
-          rawForecast = fresh;
-          await supabaseAdmin
-            .from("astro_charts")
-            .update({ forecast: fresh, forecast_generated_at: fresh.generatedAt })
-            .eq("id", chart.id);
-        } catch (regenErr) {
-          console.error("[exportAstroPdf] regeneration failed", regenErr);
-        }
-      }
+      // NOTA: NÃO regeneramos previsões dentro do export do PDF. A chamada
+      // de IA é extensa (~40 páginas) e estoura o timeout do worker,
+      // deixando o botão "girando". Se as previsões estiverem incompletas,
+      // usamos os fallbacks abaixo e o usuário pode acionar
+      // `generateAstroForecast` (botão dedicado) para gerar/atualizar.
+
 
 
 
