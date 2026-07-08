@@ -227,7 +227,7 @@ export function SettingsForm() {
     astrology_api_user_id: "",
     astrology_api_key: "",
     ai_provider: "openai",
-    ai_provider_order: DEFAULT_ORDER,
+    ai_provider_order: DEFAULT_ORDER as ChatProviderId[],
     custom_ai_key: "",
     custom_ai_model: "openai/gpt-5.5",
     ai_providers_config: {} as Record<string, { enabled?: boolean; key?: string; model?: string }>,
