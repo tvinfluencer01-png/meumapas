@@ -149,7 +149,7 @@ function ClientesPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {hasAddon && (
+          {hasAddon && byokEnabled && (
             <Button asChild variant="outline" className="gap-2">
               <Link to="/configuracoes" search={{ tab: "ia" }}>
                 <Settings className="size-4" /> Configurações
