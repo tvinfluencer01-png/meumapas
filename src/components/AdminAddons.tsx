@@ -15,8 +15,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Save, Package, Sparkles, Undo2, Plus, Trash2 } from "lucide-react";
+import { Save, Package, Sparkles, Plus, Trash2, KeyRound, Settings2 } from "lucide-react";
 import { formatBRL } from "@/lib/addons.catalog";
 import { confirmDialog } from "@/components/system-feedback";
 
