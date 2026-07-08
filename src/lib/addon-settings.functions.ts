@@ -315,14 +315,11 @@ export const improveAddonPrompt = createServerFn({ method: "POST" })
     await assertAdmin(context.userId);
     const addon = SUBSCRIPTION_ADDONS.find((a) => a.id === data.addon_id);
     if (!addon) throw new Error("Add-on inválido.");
-    const apiKey = process.env.LOVABLE_API_KEY;
-    if (!apiKey) throw new Error("LOVABLE_API_KEY ausente.");
-
     const def = ADDON_PROMPT_DEFAULTS[data.addon_id];
     const vars = (def?.vars ?? []).join(", ") || "(nenhuma)";
 
-    const provider = createLovableAiGatewayProvider(apiKey);
-    const model = provider.chatModel("google/gemini-2.5-flash");
+    const { model: makeModel } = await getConfiguredProvider(context.supabase, context.userId);
+    const model = makeModel("google/gemini-2.5-flash");
 
     const system = `Você é especialista em engenharia de prompts para LLMs em português (pt-BR).
 Aprimore o prompt abaixo para que produza saídas mais ricas, específicas, claras e acionáveis,
