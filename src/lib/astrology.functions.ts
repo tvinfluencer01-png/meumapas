@@ -844,7 +844,7 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
         meta: [`Gerado em ${new Date().toLocaleString("pt-BR")}`],
         blocks,
         accentHex: "#d4af37",
-        flowing: false,
+        flowing: true,
         branding,
       });
 
