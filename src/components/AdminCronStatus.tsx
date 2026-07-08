@@ -175,6 +175,16 @@ function CronJobItem({ job }: { job: CronJobStatus }) {
               >
                 <Play className="size-3.5" />
               </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className={`size-8 ${job.active ? "text-muted-foreground hover:text-amber-500" : "text-emerald-500 hover:text-emerald-400"} ${toggleMut.isPending ? "animate-pulse" : ""}`}
+                onClick={() => toggleMut.mutate()}
+                disabled={toggleMut.isPending}
+                title={job.active ? "Desativar (pausar)" : "Ativar"}
+              >
+                {job.active ? <Pause className="size-3.5" /> : <Power className="size-3.5" />}
+              </Button>
             </div>
           </div>
           <div className="text-xs text-muted-foreground font-mono">{job.schedule}</div>
