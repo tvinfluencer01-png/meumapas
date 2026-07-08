@@ -184,21 +184,72 @@ export async function generateImageWithConfigured(
     }
   }
   const errors: string[] = [];
-  for (const p of order) {
+  const attempts: Array<{ provider: ImageProviderId; ok: boolean; reason?: string }> = [];
 
+  const isRetryable = (msg: string): boolean => {
+    const s = msg.toLowerCase();
+    // Offline / rate limit / auth / network → try next provider
+    return (
+      s.includes("http 429") ||
+      s.includes("http 5") || // 500-599
+      s.includes("http 401") ||
+      s.includes("http 403") ||
+      s.includes("http 408") ||
+      s.includes("timeout") ||
+      s.includes("rate") ||
+      s.includes("quota") ||
+      s.includes("limit") ||
+      s.includes("unavail") ||
+      s.includes("fetch") ||
+      s.includes("network") ||
+      s.includes("econnrefused") ||
+      s.includes("enotfound")
+    );
+  };
+
+  for (const p of order) {
     const cfg = cfgMap[p] ?? {};
-    if (cfg.enabled === false) continue;
+    if (cfg.enabled === false) {
+      attempts.push({ provider: p, ok: false, reason: "disabled" });
+      continue;
+    }
     const key = (cfg.key && cfg.key.trim()) || envKey(p);
-    if (!key) continue;
+    if (!key) {
+      attempts.push({ provider: p, ok: false, reason: "no key" });
+      continue;
+    }
     try {
       const bytes = await callProvider(p, key, prompt, size);
-      if (bytes && bytes.byteLength > 512) return bytes;
-      errors.push(`${p}: resposta vazia`);
+      if (bytes && bytes.byteLength > 512) {
+        attempts.push({ provider: p, ok: true });
+        console.info(
+          `[image-resolver] success using ${p} (${bytes.byteLength} bytes) — trail: ${attempts
+            .map((a) => `${a.provider}${a.ok ? "✓" : `✗(${a.reason})`}`)
+            .join(" → ")}`,
+        );
+        return bytes;
+      }
+      const reason = "empty response";
+      attempts.push({ provider: p, ok: false, reason });
+      errors.push(`${p}: ${reason}`);
+      // empty response is treated as offline → continue fallback
     } catch (e) {
-      errors.push(`${p}: ${(e as Error)?.message ?? String(e)}`);
+      const msg = (e as Error)?.message ?? String(e);
+      attempts.push({ provider: p, ok: false, reason: msg });
+      errors.push(`${p}: ${msg}`);
+      if (!isRetryable(msg)) {
+        console.warn(
+          `[image-resolver] non-retryable error on ${p}: ${msg} — aborting fallback`,
+        );
+        throw new Error(`Falha em ${p}: ${msg}`);
+      }
+      console.warn(
+        `[image-resolver] ${p} offline/limit (${msg}) — tentando próximo provedor`,
+      );
     }
   }
   throw new Error(
     `Nenhum provedor de imagem disponível. Ative pelo menos um em Configurações → IA (Geração de Imagens). ${errors.join(" | ")}`,
   );
 }
+
