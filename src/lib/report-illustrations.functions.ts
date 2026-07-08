@@ -214,15 +214,12 @@ export const generateReportIllustration = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await ensureAdmin(context);
-    const openaiKey = await getConfiguredProviderKey(context.supabase, context.userId, "openai");
-    if (!openaiKey) throw new Error("Configure uma chave OpenAI em Configurações → IA para gerar ilustrações.");
-
     const n = data.count ?? 1;
     const created: Array<{ id: string; theme: string }> = [];
 
     for (let i = 0; i < n; i++) {
       const prompt = themePrompt(data.theme, data.customPrompt, i);
-      const bytes = await generateImageBytes(prompt, openaiKey);
+      const bytes = await generateImageBytes(prompt, context.supabase, context.userId);
       if (!bytes) throw new Error("Resposta da IA sem imagem utilizável.");
 
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
