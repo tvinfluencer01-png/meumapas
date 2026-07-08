@@ -392,7 +392,13 @@ export function SettingsForm() {
                         {AI_PROVIDER_LABELS[id]}
                         {isDefault && <span className="ml-2 text-[10px] uppercase tracking-wider text-gold">padrão</span>}
                         {!enabled && <span className="ml-2 text-[10px] uppercase tracking-wider text-muted-foreground">desativado</span>}
-                        {enabled && online && <span className="ml-2 text-[10px] uppercase tracking-wider text-emerald-500">online</span>}
+                        {enabled && checking && <span className="ml-2 text-[10px] uppercase tracking-wider text-muted-foreground">verificando…</span>}
+                        {enabled && !checking && status && (
+                          <span className={`ml-2 text-[10px] uppercase tracking-wider ${status.ok ? "text-emerald-500" : "text-destructive"}`}>
+                            {status.ok ? "online" : "offline"}
+                          </span>
+                        )}
+                        {enabled && !checking && !status && online && <span className="ml-2 text-[10px] uppercase tracking-wider text-emerald-500">online</span>}
                       </div>
                       <div className="text-[11px] text-muted-foreground pl-4">
                         {isDefault ? "Usado primeiro" : `Fallback ${idx}`}
