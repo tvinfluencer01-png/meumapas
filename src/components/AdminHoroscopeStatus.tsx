@@ -16,10 +16,14 @@ function fmt(ts: string | null) {
 
 export function AdminHoroscopeStatus() {
   const fn = useServerFn(getHoroscopeStatus);
-  const { data, isLoading, isFetching, refetch, error } = useQuery({
+  const hasPending = (d: typeof data) => !!d && d.users.some((u) => u.pending);
+  const { data, isLoading, isFetching, refetch, error, dataUpdatedAt } = useQuery({
     queryKey: ["admin-horoscope-status"],
     queryFn: () => fn(),
-    refetchInterval: 60_000,
+    // Poll faster when há pendências, mais devagar quando tudo está resolvido.
+    refetchInterval: (q) => (hasPending(q.state.data) ? 15_000 : 60_000),
+    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: true,
   });
 
   const [page, setPage] = useState(1);
