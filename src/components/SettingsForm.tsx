@@ -194,11 +194,8 @@ export function SettingsForm() {
     form.preferred_engine === "swiss_ephemeris" ||
     (form.preferred_engine === "astrology_api" && astroStatus?.ok);
 
-  const lovableConfigured = !!lovableKeyStatus?.configured;
   const customConfigured = !!form.custom_ai_key && !!form.custom_ai_model;
-
-  const providerOnline =
-    form.ai_provider === "lovable" ? lovableConfigured : customConfigured;
+  const providerOnline = customConfigured;
 
   function maskKey(k: string) {
     if (!k) return "";
