@@ -229,33 +229,15 @@ export const generateReportIllustration = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await ensureAdmin(context);
-    const key = process.env.LOVABLE_API_KEY;
-    if (!key) throw new Error("LOVABLE_API_KEY ausente");
+    const openaiKey = await getConfiguredProviderKey(context.supabase, context.userId, "openai");
+    if (!openaiKey) throw new Error("Configure uma chave OpenAI em Configurações → IA para gerar ilustrações.");
 
     const n = data.count ?? 1;
     const created: Array<{ id: string; theme: string }> = [];
 
     for (let i = 0; i < n; i++) {
       const prompt = themePrompt(data.theme, data.customPrompt, i);
-      const res = await fetch("https://ai.gateway.lovable.dev/v1/images/generations", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "openai/gpt-image-2",
-          prompt,
-          size: "1536x1024",
-          quality: "low",
-          n: 1,
-        }),
-      });
-      if (!res.ok) {
-        const txt = await res.text().catch(() => "");
-        if (res.status === 429) throw new Error("Limite de geração atingido. Tente novamente em instantes.");
-        if (res.status === 402) throw new Error("Créditos de IA esgotados na workspace.");
-        throw new Error(`Falha na geração (${res.status}): ${txt.slice(0, 200)}`);
-      }
-      const json = await res.json();
-      const bytes = await extractImageBytes(json);
+      const bytes = await generateImageBytes(prompt, openaiKey);
       if (!bytes) throw new Error("Resposta da IA sem imagem utilizável.");
 
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
