@@ -590,9 +590,17 @@ async function handler({ request }: { request: Request }) {
         payload: { severity, processed, delivered, retriesScheduled, givenUp, freeProcessed, freeDelivered, freeExpired, eligible_subs: subs?.length ?? 0, at: nowIso },
       }).then(() => {}, () => {});
 
-      // 2) Email para o super admin via SMTP configurado
-      const adminEmail = process.env.SUPER_ADMIN_EMAIL;
-      if (adminEmail && smtp?.enabled && smtp.host && smtp.username && smtp.password && smtp.from_email) {
+      // Destinos configurados no painel admin (Configurações do Sistema → Alertas)
+      const { data: globalSettings } = await (supabaseAdmin as any)
+        .from("system_settings")
+        .select("alert_email, alert_whatsapp")
+        .eq("id", "global")
+        .maybeSingle();
+      const alertEmail = (globalSettings?.alert_email as string | null) || process.env.SUPER_ADMIN_EMAIL || null;
+      const alertWhatsapp = (globalSettings?.alert_whatsapp as string | null) || null;
+
+      // 2) Email
+      if (alertEmail && smtp?.enabled && smtp.host && smtp.username && smtp.password && smtp.from_email) {
         try {
           const nodemailer = (await import("nodemailer")).default;
           const transporter = nodemailer.createTransport({
@@ -604,11 +612,44 @@ async function handler({ request }: { request: Request }) {
           const html = `<div style="font-family:Arial,sans-serif;color:#222"><h2 style="color:#b00020">⚠️ Alerta: Horóscopo diário sem entregas</h2><p>${summary}</p><p style="color:#666;font-size:12px">Timestamp: ${nowIso}</p></div>`;
           await transporter.sendMail({
             from: `"${smtp.from_name || smtp.from_email}" <${smtp.from_email}>`,
-            to: adminEmail,
+            to: alertEmail,
             subject: `[${severity.toUpperCase()}] send-daily-horoscope: processed=${processed} delivered=${delivered}`,
             text: summary,
             html,
           });
+        } catch {}
+      }
+
+      // 3) WhatsApp (Evolution API → fallback Twilio)
+      if (alertWhatsapp) {
+        const waMsg = `⚠️ [${severity.toUpperCase()}] Código Cósmico\n\n${summary}\n\n${nowIso}`;
+        try {
+          const to = alertWhatsapp.replace(/\D+/g, "");
+          if (evoReady) {
+            const base = String(evo.base_url).replace(/\/+$/, "");
+            const url = `${base}/message/sendText/${encodeURIComponent(evo.instance_name)}`;
+            await fetch(url, {
+              method: "POST",
+              headers: { apikey: evo.global_api_key, "Content-Type": "application/json" },
+              body: JSON.stringify({ number: to, text: waMsg }),
+            });
+          } else if (twilio?.enabled && twilio.account_sid && twilio.auth_token && twilio.whatsapp_from) {
+            const form = new URLSearchParams();
+            form.set("From", `whatsapp:${twilio.whatsapp_from}`);
+            form.set("To", `whatsapp:+${to}`);
+            form.set("Body", waMsg);
+            await fetch(
+              `https://api.twilio.com/2010-04-01/Accounts/${twilio.account_sid}/Messages.json`,
+              {
+                method: "POST",
+                headers: {
+                  Authorization: "Basic " + btoa(`${twilio.account_sid}:${twilio.auth_token}`),
+                  "Content-Type": "application/x-www-form-urlencoded",
+                },
+                body: form.toString(),
+              },
+            );
+          }
         } catch {}
       }
     }
