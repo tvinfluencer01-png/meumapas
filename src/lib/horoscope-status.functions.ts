@@ -159,6 +159,23 @@ export const getHoroscopeStatus = createServerFn({ method: "GET" })
       const ready = issues.length === 0;
       if (ready) readyCount += 1;
 
+      let pending_reason: string | null = null;
+      if (isPending) {
+        if (issues.length > 0) {
+          pending_reason = `Bloqueado: ${issues.join(" · ")}`;
+        } else if (last?.status === "error" || last?.status === "failed") {
+          pending_reason = `Última tentativa falhou: ${last.detail ?? "sem detalhe"}`;
+        } else if (!lastCronRun) {
+          pending_reason = "Cron do horóscopo nunca executou (verifique o agendamento).";
+        } else if (lastCronRun.status === "failed") {
+          pending_reason = `Última execução do cron falhou: ${lastCronRun.message ?? "sem mensagem"}`;
+        } else if (!lastCronRun.started || String(lastCronRun.started).slice(0, 10) < today) {
+          pending_reason = "Cron ainda não rodou hoje — aguardando próximo ciclo.";
+        } else {
+          pending_reason = "Aguardando processamento no próximo ciclo do cron.";
+        }
+      }
+
       return {
         user_id: s.user_id,
         email: s.email,
@@ -174,6 +191,7 @@ export const getHoroscopeStatus = createServerFn({ method: "GET" })
         last_detail: last?.detail ?? null,
         ready,
         issues,
+        pending_reason,
       };
     });
 
