@@ -86,6 +86,24 @@ export function SettingsForm() {
       setProviderBusy((b) => ({ ...b, [id]: null }));
     }
   }
+
+  async function checkAllProviders(providers: string[], cfgMap: Record<string, { enabled?: boolean; key?: string; model?: string }>) {
+    await Promise.all(
+      providers.map(async (id) => {
+        const cfg = cfgMap[id] ?? {};
+        if (cfg.enabled === false) return;
+        setProviderBusy((b) => ({ ...b, [id]: "testing" }));
+        try {
+          const res = await testProviderFn({ data: { provider: id as "openai" | "anthropic" | "google" | "lovable", key: cfg.key ?? null, model: cfg.model ?? null } });
+          setProviderStatus((s) => ({ ...s, [id]: { ok: res.ok, message: res.message } }));
+        } catch {
+          setProviderStatus((s) => ({ ...s, [id]: { ok: false, message: "erro" } }));
+        } finally {
+          setProviderBusy((b) => ({ ...b, [id]: null }));
+        }
+      })
+    );
+  }
   const [form, setForm] = useState({
     preferred_engine: "swiss_ephemeris",
     astrology_api_user_id: "",
