@@ -246,10 +246,16 @@ async function handler({ request }: { request: Request }) {
       const seedHash = Array.from(`${s.user_id}|${today}`).reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 2166136261) >>> 0;
       const seedNum = seedHash % 2147483647;
       let lastErr: any = null;
+      let makeModel: ((h?: string | null) => any) | null = null;
+      try {
+        ({ model: makeModel } = await getConfiguredProvider(supabaseAdmin, s.user_id));
+      } catch (e) {
+        throw e;
+      }
       for (const modelName of modelCandidates) {
         try {
           const { text } = await generateText({
-            model: (provider as any)(modelName), prompt, temperature: 1.0, topP: 0.95, seed: seedNum,
+            model: makeModel!(modelName), prompt, temperature: 1.0, topP: 0.95, seed: seedNum,
           });
           body = text.trim();
           lastErr = null;
