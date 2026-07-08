@@ -4278,6 +4278,63 @@ export type Database = {
         }
         Relationships: []
       }
+      mp_webhook_logs: {
+        Row: {
+          duration_ms: number | null
+          error_message: string | null
+          event_type: string | null
+          headers: Json | null
+          id: string
+          metadata_kind: string | null
+          method: string
+          mp_status: string | null
+          order_id: string | null
+          payment_id: string | null
+          received_at: string
+          request_payload: Json | null
+          response_body: Json | null
+          response_status: number | null
+          result: Json | null
+          url: string
+        }
+        Insert: {
+          duration_ms?: number | null
+          error_message?: string | null
+          event_type?: string | null
+          headers?: Json | null
+          id?: string
+          metadata_kind?: string | null
+          method: string
+          mp_status?: string | null
+          order_id?: string | null
+          payment_id?: string | null
+          received_at?: string
+          request_payload?: Json | null
+          response_body?: Json | null
+          response_status?: number | null
+          result?: Json | null
+          url: string
+        }
+        Update: {
+          duration_ms?: number | null
+          error_message?: string | null
+          event_type?: string | null
+          headers?: Json | null
+          id?: string
+          metadata_kind?: string | null
+          method?: string
+          mp_status?: string | null
+          order_id?: string | null
+          payment_id?: string | null
+          received_at?: string
+          request_payload?: Json | null
+          response_body?: Json | null
+          response_status?: number | null
+          result?: Json | null
+          url?: string
+        }
+        Relationships: []
+      }
       notification_log: {
         Row: {
           channel: string
