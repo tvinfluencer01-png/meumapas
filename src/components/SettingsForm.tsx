@@ -10,16 +10,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getLovableApiKeyStatus, testAstrologyCredentials } from "@/lib/admin.functions";
+import { testAstrologyCredentials } from "@/lib/admin.functions";
 import { listProviderModels, testProvider } from "@/lib/ai-providers.functions";
 
 const AI_PROVIDER_LABELS: Record<string, string> = {
   openai: "OpenAI (BYO key)",
-  lovable: "Lovable AI Gateway",
   anthropic: "Anthropic Claude (BYO key)",
   google: "Google Gemini (BYO key)",
 };
-const DEFAULT_ORDER = ["openai", "lovable", "anthropic", "google"];
+const DEFAULT_ORDER = ["openai", "anthropic", "google"];
 
 function normalizeOrder(order: string[] | null | undefined, current?: string): string[] {
   const seen = new Set<string>();
