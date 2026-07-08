@@ -340,8 +340,11 @@ export function SettingsForm() {
           <ul className="mt-2 space-y-2">
             {form.ai_provider_order.map((id, idx) => {
               const isDefault = idx === 0;
-              const online =
-                id === "lovable" ? lovableConfigured : (form.ai_provider === id && customConfigured);
+              const status = providerStatus[id];
+              const checking = providerBusy[id] === "testing";
+              const online = status
+                ? status.ok
+                : id === "lovable" ? lovableConfigured : (form.ai_provider === id && customConfigured);
               const move = (dir: -1 | 1) => {
                 const next = [...form.ai_provider_order];
                 const j = idx + dir;
