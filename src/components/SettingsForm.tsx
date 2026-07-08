@@ -598,6 +598,13 @@ export function SettingsForm() {
                           />
                         </div>
                       </div>
+                      {AI_PROVIDER_LINKS[id] && (
+                        <div className="rounded-md border border-border/50 bg-background/40 p-2 text-[11px] text-muted-foreground space-y-1">
+                          <div className="text-stardust font-medium">Como configurar</div>
+                          <div>{AI_PROVIDER_LINKS[id].tutorial}</div>
+                          <ExtLink href={AI_PROVIDER_LINKS[id].url}>{AI_PROVIDER_LINKS[id].label}</ExtLink>
+                        </div>
+                      )}
                       <div className="flex items-center justify-between gap-2">
                         <div className="text-[11px]">
                           {providerStatus[id] && (
