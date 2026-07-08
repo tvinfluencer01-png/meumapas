@@ -280,25 +280,73 @@ export function SettingsForm() {
         </div>
 
         <div>
-          <Label className="text-stardust">Provedor</Label>
-          <Select value={form.ai_provider} onValueChange={(v) => setForm({ ...form, ai_provider: v })}>
-            <SelectTrigger className="mt-1 bg-input border-border"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="lovable">
-                Lovable AI (padrão){lovableConfigured ? " · online" : ""}
-              </SelectItem>
-              <SelectItem value="openai">
-                OpenAI (BYO key){form.ai_provider === "openai" && customConfigured ? " · online" : ""}
-              </SelectItem>
-              <SelectItem value="anthropic">
-                Anthropic Claude (BYO key){form.ai_provider === "anthropic" && customConfigured ? " · online" : ""}
-              </SelectItem>
-              <SelectItem value="google">
-                Google Gemini (BYO key){form.ai_provider === "google" && customConfigured ? " · online" : ""}
-              </SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex items-center justify-between gap-3">
+            <Label className="text-stardust">Ordem dos provedores</Label>
+            <span className="text-[11px] text-muted-foreground">1º = padrão · demais = fallback em caso de falha</span>
+          </div>
+          <ul className="mt-2 space-y-2">
+            {form.ai_provider_order.map((id, idx) => {
+              const isDefault = idx === 0;
+              const online =
+                id === "lovable" ? lovableConfigured : (form.ai_provider === id && customConfigured);
+              const move = (dir: -1 | 1) => {
+                const next = [...form.ai_provider_order];
+                const j = idx + dir;
+                if (j < 0 || j >= next.length) return;
+                [next[idx], next[j]] = [next[j], next[idx]];
+                setForm({ ...form, ai_provider_order: next, ai_provider: next[0] });
+              };
+              const setAsDefault = () => {
+                if (isDefault) return;
+                const next = [id, ...form.ai_provider_order.filter((p) => p !== id)];
+                setForm({ ...form, ai_provider_order: next, ai_provider: next[0] });
+              };
+              return (
+                <li
+                  key={id}
+                  className={`flex items-center gap-2 rounded-lg border p-2.5 ${
+                    isDefault ? "border-gold/50 bg-gold/10" : "border-border bg-input/40"
+                  }`}
+                >
+                  <span className={`inline-flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
+                    isDefault ? "bg-gold text-primary-foreground" : "bg-secondary text-stardust"
+                  }`}>
+                    {idx + 1}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm text-stardust truncate">
+                      {AI_PROVIDER_LABELS[id]}
+                      {isDefault && <span className="ml-2 text-[10px] uppercase tracking-wider text-gold">padrão</span>}
+                      {online && <span className="ml-2 text-[10px] uppercase tracking-wider text-emerald-500">online</span>}
+                    </div>
+                    <div className="text-[11px] text-muted-foreground">
+                      {isDefault ? "Usado primeiro" : `Fallback ${idx}`}
+                    </div>
+                  </div>
+                  <Button type="button" size="sm" variant="ghost" onClick={setAsDefault}
+                    disabled={isDefault}
+                    className="h-8 px-2 text-gold hover:bg-gold/10 disabled:opacity-40"
+                    title="Definir como padrão">
+                    <Star className={`size-4 ${isDefault ? "fill-gold" : ""}`} />
+                  </Button>
+                  <Button type="button" size="sm" variant="ghost" onClick={() => move(-1)}
+                    disabled={idx === 0} className="h-8 px-2 disabled:opacity-40" title="Subir">
+                    <ArrowUp className="size-4" />
+                  </Button>
+                  <Button type="button" size="sm" variant="ghost" onClick={() => move(1)}
+                    disabled={idx === form.ai_provider_order.length - 1}
+                    className="h-8 px-2 disabled:opacity-40" title="Descer">
+                    <ArrowDown className="size-4" />
+                  </Button>
+                </li>
+              );
+            })}
+          </ul>
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            Se o provedor padrão falhar, o sistema tenta o próximo da lista automaticamente.
+          </p>
         </div>
+
 
         {form.ai_provider === "lovable" && (
           <div className="rounded-xl border border-emerald-600/30 bg-emerald-600/5 p-4 space-y-3">
