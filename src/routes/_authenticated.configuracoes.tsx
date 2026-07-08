@@ -1,9 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Settings as SettingsIcon } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { PdfBrandingForm } from "@/components/PdfBrandingForm";
 import { SettingsForm } from "@/components/SettingsForm";
 import { SectionLamp } from "@/components/SectionLamp";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { getAddonByokRequired } from "@/lib/addon-settings.functions";
 
 export const Route = createFileRoute("/_authenticated/configuracoes")({
   component: ConfiguracoesPage,
@@ -16,6 +19,14 @@ export const Route = createFileRoute("/_authenticated/configuracoes")({
 function ConfiguracoesPage() {
   const { tab } = Route.useSearch();
   const navigate = Route.useNavigate();
+  const byokFn = useServerFn(getAddonByokRequired);
+  const { data: byok } = useQuery({
+    queryKey: ["byok-required", "sub_astrologer_numerologist"],
+    queryFn: () => byokFn({ data: { addon_id: "sub_astrologer_numerologist" } }),
+  });
+  const byokEnabled = !!byok?.required;
+  const activeTab = byokEnabled ? tab : "conta";
+
   return (
     <div className="space-y-8">
       <header>
@@ -25,34 +36,38 @@ function ConfiguracoesPage() {
           <SectionLamp
             sectionKey="configuracoes"
             title="Configurações"
-            why="Aqui você ajusta a identidade dos seus PDFs, provedores de IA e ativa só os add-ons que deseja usar."
-            how="Personalize logo/marca dos relatórios e configure suas chaves de IA (OpenAI, Anthropic, Google) na aba IA."
-            purpose="Manter o sistema do seu jeito, com sua identidade e seus provedores de IA."
+            why="Aqui você ajusta a identidade dos seus PDFs e, quando o administrador exigir, suas próprias chaves de IA (BYOK)."
+            how="Personalize logo/marca dos relatórios. A aba IA (BYOK) só aparece quando o administrador ativou a exigência de chave própria."
+            purpose="Manter o sistema do seu jeito — quando BYOK está desligado, o sistema usa as credenciais globais automaticamente."
           />
         </h1>
         <p className="mt-2 text-muted-foreground max-w-2xl">
-          Personalize a experiência do Código Cósmico. Add-ons ficam desativados por
-          padrão — ative apenas o que você quiser usar.
+          {byokEnabled
+            ? "O administrador ativou BYOK para o seu plano — configure suas chaves de IA na aba IA (BYOK)."
+            : "As chaves de IA são gerenciadas pelo sistema. Você não precisa configurar nada."}
         </p>
       </header>
 
       <Tabs
-        value={tab}
+        value={activeTab}
         onValueChange={(v) => navigate({ search: { tab: v as "conta" | "ia" } })}
         className="w-full"
       >
         <TabsList>
           <TabsTrigger value="conta">Conta & PDF</TabsTrigger>
-          <TabsTrigger value="ia">IA (BYOK)</TabsTrigger>
+          {byokEnabled && <TabsTrigger value="ia">IA (BYOK)</TabsTrigger>}
         </TabsList>
         <TabsContent value="conta" className="pt-6">
           <PdfBrandingForm />
         </TabsContent>
-        <TabsContent value="ia" className="pt-6">
-          <SettingsForm />
-        </TabsContent>
+        {byokEnabled && (
+          <TabsContent value="ia" className="pt-6">
+            <SettingsForm />
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );
 }
+
 
