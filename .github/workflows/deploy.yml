@@ -20,33 +20,28 @@ jobs:
             echo "🚀 Deploy iniciado em $(date)"
             cd /opt/apps/meumapas-source
 
-            # Salvar env atual
             cp .env .env.backup 2>/dev/null || true
 
-            # Pull do codigo
             echo "📥 Pull do GitHub..."
             git pull origin main
 
-            # Restaurar env
             cp .env.backup .env 2>/dev/null || true
 
-            # Instalar dependencias
             echo "📦 Instalando dependencias..."
             npm install --legacy-peer-deps
 
-            # Build
             echo "🏗️  Build..."
             NODE_OPTIONS="--max-old-space-size=4096" npm run build
 
-            # Preparar para Docker
             echo "📦 Preparando build para Docker..."
             rm -rf /opt/apps/meumapas/build/.output
             rm -rf /opt/apps/meumapas/build/public
             cp -r .output /opt/apps/meumapas/build/.output
             cp -r public /opt/apps/meumapas/build/public
             cp package.json /opt/apps/meumapas/build/package.json
+            cp package-lock.json /opt/apps/meumapas/build/package-lock.json 2>/dev/null || true
+            cp bun.lock /opt/apps/meumapas/build/bun.lock 2>/dev/null || true
 
-            # Rebuild e restart Docker
             echo "🐳 Rebuild Docker..."
             cd /opt/apps/meumapas
             docker compose build --no-cache
