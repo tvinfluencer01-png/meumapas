@@ -68,7 +68,7 @@ export const updateFavoriteNote = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-import { createLovableAiGatewayProvider } from "@/lib/ai-gateway";
+import { getConfiguredProvider } from "@/lib/ai-resolver.server";
 import { generateText } from "ai";
 import * as Astro from "astronomy-engine";
 
