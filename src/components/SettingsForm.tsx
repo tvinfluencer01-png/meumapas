@@ -86,6 +86,24 @@ export function SettingsForm() {
       setProviderBusy((b) => ({ ...b, [id]: null }));
     }
   }
+
+  async function checkAllProviders(providers: string[], cfgMap: Record<string, { enabled?: boolean; key?: string; model?: string }>) {
+    await Promise.all(
+      providers.map(async (id) => {
+        const cfg = cfgMap[id] ?? {};
+        if (cfg.enabled === false) return;
+        setProviderBusy((b) => ({ ...b, [id]: "testing" }));
+        try {
+          const res = await testProviderFn({ data: { provider: id as "openai" | "anthropic" | "google" | "lovable", key: cfg.key ?? null, model: cfg.model ?? null } });
+          setProviderStatus((s) => ({ ...s, [id]: { ok: res.ok, message: res.message } }));
+        } catch {
+          setProviderStatus((s) => ({ ...s, [id]: { ok: false, message: "erro" } }));
+        } finally {
+          setProviderBusy((b) => ({ ...b, [id]: null }));
+        }
+      })
+    );
+  }
   const [form, setForm] = useState({
     preferred_engine: "swiss_ephemeris",
     astrology_api_user_id: "",
@@ -128,6 +146,8 @@ export function SettingsForm() {
         custom_ai_model: data.custom_ai_model ?? "openai/gpt-5.5",
         ai_providers_config: ((data as { ai_providers_config?: Record<string, { enabled?: boolean; key?: string; model?: string }> }).ai_providers_config) ?? {},
       });
+      const cfgMap = ((data as { ai_providers_config?: Record<string, { enabled?: boolean; key?: string; model?: string }> }).ai_providers_config) ?? {};
+      void checkAllProviders(order, cfgMap);
     }
   }, [data]);
 
@@ -315,13 +335,25 @@ export function SettingsForm() {
         <div>
           <div className="flex items-center justify-between gap-3">
             <Label className="text-stardust">Ordem dos provedores</Label>
-            <span className="text-[11px] text-muted-foreground">1º = padrão · demais = fallback em caso de falha</span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => checkAllProviders(form.ai_provider_order, form.ai_providers_config)}
+                className="text-[11px] text-gold hover:underline"
+              >
+                Verificar status
+              </button>
+              <span className="text-[11px] text-muted-foreground">1º = padrão · demais = fallback</span>
+            </div>
           </div>
           <ul className="mt-2 space-y-2">
             {form.ai_provider_order.map((id, idx) => {
               const isDefault = idx === 0;
-              const online =
-                id === "lovable" ? lovableConfigured : (form.ai_provider === id && customConfigured);
+              const status = providerStatus[id];
+              const checking = providerBusy[id] === "testing";
+              const online = status
+                ? status.ok
+                : id === "lovable" ? lovableConfigured : (form.ai_provider === id && customConfigured);
               const move = (dir: -1 | 1) => {
                 const next = [...form.ai_provider_order];
                 const j = idx + dir;
@@ -369,7 +401,13 @@ export function SettingsForm() {
                         {AI_PROVIDER_LABELS[id]}
                         {isDefault && <span className="ml-2 text-[10px] uppercase tracking-wider text-gold">padrão</span>}
                         {!enabled && <span className="ml-2 text-[10px] uppercase tracking-wider text-muted-foreground">desativado</span>}
-                        {enabled && online && <span className="ml-2 text-[10px] uppercase tracking-wider text-emerald-500">online</span>}
+                        {enabled && checking && <span className="ml-2 text-[10px] uppercase tracking-wider text-muted-foreground">verificando…</span>}
+                        {enabled && !checking && status && (
+                          <span className={`ml-2 text-[10px] uppercase tracking-wider ${status.ok ? "text-emerald-500" : "text-destructive"}`}>
+                            {status.ok ? "online" : "offline"}
+                          </span>
+                        )}
+                        {enabled && !checking && !status && online && <span className="ml-2 text-[10px] uppercase tracking-wider text-emerald-500">online</span>}
                       </div>
                       <div className="text-[11px] text-muted-foreground pl-4">
                         {isDefault ? "Usado primeiro" : `Fallback ${idx}`}
