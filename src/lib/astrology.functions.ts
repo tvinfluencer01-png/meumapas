@@ -554,6 +554,32 @@ type AstroForecast = {
   generatedAt: string;
 };
 
+// Coerce forecast time-window fields (nextDays/week/month/year) into readable
+// text. The LLM sometimes returns a string, sometimes an object shaped like a
+// DeepArea, sometimes an empty string. Handle all cases so the PDF is never
+// blank.
+function coerceForecastText(value: unknown, period: string): string {
+  if (typeof value === "string") {
+    const t = value.trim();
+    if (t && t !== "—") return t;
+  }
+  if (value && typeof value === "object") {
+    const v = value as Record<string, unknown>;
+    const parts: string[] = [];
+    for (const key of ["reading", "text", "summary", "description", "content", "opportunities"]) {
+      const s = v[key];
+      if (typeof s === "string" && s.trim()) parts.push(s.trim());
+    }
+    const tips = v.tips;
+    if (Array.isArray(tips)) {
+      const list = tips.filter((t) => typeof t === "string" && t.trim()).map((t) => `• ${t}`).join("\n");
+      if (list) parts.push(list);
+    }
+    if (parts.length) return parts.join("\n\n");
+  }
+  return `Previsões para ${period} indisponíveis nesta geração. Gere as previsões novamente para obter uma leitura detalhada deste período.`;
+}
+
 async function buildForecastWithAI(chart: {
   planets: { name: string; sign: string; degree: number }[];
   ascendant: number | null;
