@@ -60,7 +60,19 @@ function buildModel(
   }
 }
 
-export type FallbackResult = { text: string; providerUsed: AiProviderId };
+export type FallbackAttempt = {
+  provider: AiProviderId;
+  attempt: number; // 1-based index (1 = 1ª tentativa, 2 = 2ª, ...)
+  ok: boolean;
+  error?: string;
+};
+
+export type FallbackResult = {
+  text: string;
+  providerUsed: AiProviderId;
+  attemptIndex: number; // 1-based: 1 = padrão, 2 = 1º fallback, ...
+  attempts: FallbackAttempt[]; // histórico de todas as tentativas
+};
 
 /**
  * Try each configured AI provider in order; return first success.
@@ -85,17 +97,18 @@ export async function generateWithFallback(
   const order = normalizeOrder(withDefault);
   const defaultProvider = order[0];
 
-  const errors: string[] = [];
+  const attempts: FallbackAttempt[] = [];
 
-  for (const provider of order) {
-    // custom key applies only to the provider currently selected as user's default
+  for (let i = 0; i < order.length; i++) {
+    const provider = order[i];
+    const attemptIndex = i + 1;
     const useCustom = provider === defaultProvider && settings?.custom_ai_key;
     const model = buildModel(provider, {
       customKey: useCustom ? settings?.custom_ai_key : null,
       customModel: useCustom ? settings?.custom_ai_model : null,
     });
     if (!model) {
-      errors.push(`${provider}: not configured`);
+      attempts.push({ provider, attempt: attemptIndex, ok: false, error: "not configured" });
       continue;
     }
     try {
@@ -106,14 +119,20 @@ export async function generateWithFallback(
         ),
       ]);
       if (!text || !text.trim()) throw new Error("empty response");
-      return { text, providerUsed: provider };
+      attempts.push({ provider, attempt: attemptIndex, ok: true });
+      console.info(
+        `[ai-fallback] success on attempt ${attemptIndex}/${order.length} using ${provider}`,
+      );
+      return { text, providerUsed: provider, attemptIndex, attempts };
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      console.warn(`[ai-fallback] ${provider} failed:`, msg);
-      errors.push(`${provider}: ${msg}`);
+      console.warn(`[ai-fallback] attempt ${attemptIndex} (${provider}) failed:`, msg);
+      attempts.push({ provider, attempt: attemptIndex, ok: false, error: msg });
       continue;
     }
   }
 
-  throw new Error(`All AI providers failed. ${errors.join(" | ")}`);
+  const summary = attempts.map((a) => `#${a.attempt} ${a.provider}: ${a.error}`).join(" | ");
+  throw new Error(`All AI providers failed. ${summary}`);
 }
+
