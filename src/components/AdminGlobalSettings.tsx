@@ -14,6 +14,9 @@ export function AdminGlobalSettings() {
   const qc = useQueryClient();
   const getSettingsFn = useServerFn(getSystemGlobalSettings);
   const saveSettingsFn = useServerFn(saveSystemGlobalSettings);
+  const sendTestFn = useServerFn(sendSystemAlertTest);
+  const [severity, setSeverity] = useState<"critical" | "warning" | "info">("warning");
+  const [lastTest, setLastTest] = useState<Awaited<ReturnType<typeof sendSystemAlertTest>> | null>(null);
 
   const [whatsapp, setWhatsapp] = useState("");
   const [alertEmail, setAlertEmail] = useState("");
