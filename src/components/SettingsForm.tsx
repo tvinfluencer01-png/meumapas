@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { testAstrologyCredentials } from "@/lib/admin.functions";
-import { listProviderModels, testProvider } from "@/lib/ai-providers.functions";
+import { listProviderModels, testProvider, testImageProvider } from "@/lib/ai-providers.functions";
 
 type ChatProviderId = "openai" | "anthropic" | "google" | "groq" | "mistral" | "openrouter";
 
