@@ -142,8 +142,7 @@ export const getAIInsights = createServerFn({ method: "POST" })
       generatedAt: new Date().toISOString(),
     });
 
-    const apiKey = process.env.LOVABLE_API_KEY;
-    if (!apiKey || !birth) return fallback();
+    if (!birth) return fallback();
 
     const sunG = sunSign ? SIGN_GUIDANCE[sunSign] : null;
     const moonG = moonSign ? SIGN_GUIDANCE[moonSign] : null;
