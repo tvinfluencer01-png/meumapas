@@ -1,8 +1,10 @@
 // FASE 4C — Motor antifraude com IA (server-only).
 // Combina heurísticas determinísticas (velocity, IP repetido, UA suspeito)
-// com raciocínio LLM opcional via Lovable AI Gateway.
+// com raciocínio LLM opcional via provedores IA configurados no sistema.
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { getConfiguredProvider } from "@/lib/ai-resolver.server";
+import { generateText } from "ai";
 
 type Signal = { code: string; weight: number; detail?: string };
 
