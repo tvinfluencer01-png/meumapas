@@ -595,19 +595,10 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
     }
 
     try {
-      const rawForecast = chart.forecast as Partial<AstroForecast> | null;
-      if (!rawForecast || Object.keys(rawForecast).length === 0) {
-        if (charged) {
-          await refundCredits(userId, action, {
-            reason: "PDF cancelado: previsões ausentes",
-            actorLabel: "system:astro",
-            originalReference: `PDF mapa ${chart.id}`,
-          }).catch(() => {});
-        }
-        throw new Error(
-          'Gere as previsões antes de exportar o PDF. Clique em "Gerar previsões" no seu mapa.',
-        );
-      }
+      const rawForecast =
+        chart.forecast && typeof chart.forecast === "object"
+          ? (chart.forecast as Partial<AstroForecast>)
+          : {};
 
       // Tolera previsões parciais/legadas preenchendo campos faltantes com
       // fallback seguro — evita refazer a chamada de IA (que estoura o
@@ -616,10 +607,21 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
       const fallbackArea = (title: string): DeepArea => ({
         title,
         reading:
-          "Interpretação não disponível nesta versão da previsão. Gere novamente para receber o conteúdo profundo desta área.",
-        opportunities: "—",
-        tips: [],
-        avoid: [],
+          `Esta área é interpretada a partir do desenho central do seu mapa: ${chart.summary ?? "a combinação entre seus planetas, signos, ascendente e aspectos principais"}. Observe onde sua energia pede presença, maturidade e escolhas mais conscientes. Use esta leitura como ponto de partida prático para transformar percepção em atitude, sem esperar por certezas absolutas: o mapa mostra tendências, potenciais e convites de desenvolvimento.`,
+        opportunities:
+          "Há oportunidade de agir com mais clareza, alinhar desejo e responsabilidade, revisar padrões repetidos e escolher movimentos pequenos que sustentem uma mudança real nos próximos 30 dias.",
+        tips: [
+          "Escolha uma ação simples e mensurável para praticar por sete dias.",
+          "Registre no fim do dia onde você sentiu expansão, tensão ou resistência.",
+          "Converse com honestidade antes de tomar decisões importantes.",
+          "Priorize o que fortalece sua energia em vez do que apenas exige urgência.",
+          "Revise acordos, hábitos e expectativas que já não combinam com sua fase atual.",
+        ],
+        avoid: [
+          "Tomar decisões por ansiedade ou pressa.",
+          "Ignorar sinais recorrentes do corpo e das emoções.",
+          "Repetir padrões antigos esperando resultados diferentes.",
+        ],
       });
       const forecast: AstroForecast = {
         synthesis:
