@@ -595,28 +595,29 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
     }
 
     try {
-      // Garante que existem previsões no formato NOVO (com synthesis + áreas).
-      // Previsões antigas (sem esses campos) são regeneradas para evitar
-      // blocos com texto indefinido no PDF.
-      let forecast = chart.forecast as AstroForecast | null;
+      // Previsões antigas (sem synthesis/áreas) NÃO são regeneradas aqui:
+      // a chamada da IA para o novo formato leva mais tempo que o limite do
+      // worker e provocaria "sandbox proxy failed". O usuário deve clicar em
+      // "Gerar previsões" antes de exportar o PDF.
+      const forecast = chart.forecast as AstroForecast | null;
       const isLegacy =
         !forecast ||
         typeof (forecast as any).synthesis !== "string" ||
         !(forecast as any).love;
       if (isLegacy) {
-        forecast = await buildForecastWithAI({
-          planets: chart.planets as any,
-          ascendant: chart.ascendant as number | null,
-          midheaven: chart.midheaven as number | null,
-          aspects: chart.aspects as any,
-          summary: chart.summary,
-        });
-        await supabaseAdmin
-          .from("astro_charts")
-          .update({ forecast, forecast_generated_at: forecast.generatedAt })
-          .eq("id", chart.id);
+        if (charged) {
+          await refundCredits(userId, action, {
+            reason: "PDF cancelado: previsões desatualizadas",
+            actorLabel: "system:astro",
+            originalReference: `PDF mapa ${chart.id}`,
+          }).catch(() => {});
+        }
+        throw new Error(
+          'Gere as previsões novamente antes de exportar o PDF. Clique em "Gerar previsões" no seu mapa e tente exportar de novo.',
+        );
       }
       if (!forecast) throw new Error("Falha ao gerar previsões do mapa.");
+
 
 
 
