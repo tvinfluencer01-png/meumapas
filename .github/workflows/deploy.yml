@@ -32,7 +32,7 @@ jobs:
 
             # Instalar dependencias
             echo "📦 Instalando dependencias..."
-            npm ci --legacy-peer-deps
+            npm install --legacy-peer-deps
 
             # Build
             echo "🏗️  Build..."
