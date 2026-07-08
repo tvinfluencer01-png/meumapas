@@ -41,70 +41,166 @@ async function logFnError(
   }
 }
 
-// --- helpers de interpretação (prós/contras/dicas por signo e aspecto) ----
-const SIGN_STRENGTH: Record<string, string> = {
-  "Áries": "coragem para iniciar, iniciativa e franqueza",
-  "Touro": "estabilidade, presença sensorial e paciência para construir",
-  "Gêmeos": "curiosidade, agilidade mental e habilidade de conectar ideias",
-  "Câncer": "empatia, memória afetiva e capacidade de acolher",
-  "Leão": "presença, criatividade e generosidade",
-  "Virgem": "discernimento, cuidado com detalhes e senso prático",
-  "Libra": "diplomacia, senso estético e escuta relacional",
-  "Escorpião": "profundidade, foco e poder de transformação",
-  "Sagitário": "fé, visão ampla e entusiasmo",
-  "Capricórnio": "disciplina, ambição madura e responsabilidade",
-  "Aquário": "originalidade, visão coletiva e independência",
-  "Peixes": "sensibilidade, compaixão e intuição",
+// --- helpers de interpretação humanizada (por planeta, signo e aspecto) ----
+// Cada planeta rege uma área concreta da vida. O signo dá o "jeito" com que
+// essa área acontece. A combinação dos dois vira uma frase específica —
+// evita que a leitura fique repetitiva ou genérica.
+const PLANET_AREA: Record<string, string> = {
+  Sol: "sua vitalidade, autoestima e a forma como você quer ser visto",
+  Lua: "seu mundo emocional, o seu jeito de acolher e a sua vida familiar",
+  Mercúrio: "sua comunicação, seus estudos, contratos e a rotina de trabalho",
+  Vênus: "sua vida amorosa, seus prazeres, sua estética e o dinheiro que entra",
+  Marte: "sua coragem, seu desejo sexual e o modo como você briga pelo que quer",
+  Júpiter: "suas oportunidades, viagens, ensino e a sua fé no futuro",
+  Saturno: "sua carreira, disciplina, responsabilidades e o que exige maturidade",
+  Urano: "as mudanças bruscas, sua liberdade e onde a rotina precisa ser quebrada",
+  Netuno: "seus sonhos, sua espiritualidade, a arte e o que pede intuição",
+  Plutão: "suas transformações profundas, o seu poder pessoal e o que precisa morrer para renascer",
 };
-const SIGN_SHADOW: Record<string, string> = {
-  "Áries": "impulsividade, brigas por qualquer coisa e cansaço por começar tudo sozinho",
-  "Touro": "teimosia, apego e resistência a mudar mesmo quando é necessário",
-  "Gêmeos": "dispersão, superficialidade e ansiedade mental",
-  "Câncer": "carência, mágoa acumulada e evitar conflitos",
-  "Leão": "orgulho ferido, necessidade constante de reconhecimento",
-  "Virgem": "autocrítica dura, perfeccionismo paralisante e preocupação excessiva",
-  "Libra": "indecisão, evitar confronto e agradar demais",
-  "Escorpião": "controle, ciúmes e ressentimento silencioso",
-  "Sagitário": "excesso, promessa que não cumpre e fuga de responsabilidades",
-  "Capricórnio": "rigidez, frieza emocional e cobrança excessiva",
-  "Aquário": "distância afetiva, rebeldia sem causa e teimosia intelectual",
-  "Peixes": "fuga da realidade, vitimização e limites frágeis",
+const SIGN_TONE: Record<string, string> = {
+  "Áries": "com pressa, coragem e vontade de resolver tudo agora",
+  "Touro": "com calma, prazer sensorial e vontade de construir com segurança",
+  "Gêmeos": "com curiosidade, muitas ideias e conversas ao mesmo tempo",
+  "Câncer": "com sensibilidade, memória afetiva e cuidado com quem é da família",
+  "Leão": "com brilho, generosidade e vontade de ser reconhecido",
+  "Virgem": "com atenção aos detalhes, senso prático e vontade de melhorar tudo",
+  "Libra": "com diplomacia, estética e olhar constante para o outro",
+  "Escorpião": "com intensidade, profundidade e um pouco de segredo",
+  "Sagitário": "com entusiasmo, fé e vontade de expandir horizontes",
+  "Capricórnio": "com seriedade, ambição madura e responsabilidade",
+  "Aquário": "com originalidade, independência e visão de futuro",
+  "Peixes": "com sensibilidade, sonho e vontade de servir",
 };
-const SIGN_ADVICE: Record<string, string> = {
-  "Áries": "canalizar a energia em UM projeto por vez e aprender a esperar antes de reagir",
-  "Touro": "revisar o que já não serve e permitir uma pequena mudança de rotina",
-  "Gêmeos": "escolher menos frentes e aprofundar o que realmente importa",
-  "Câncer": "cuidar do próprio ninho antes de cuidar de todos e pedir ajuda quando precisar",
-  "Leão": "brilhar servindo algo maior que você mesmo",
-  "Virgem": "praticar o suficiente no lugar do perfeito e descansar sem culpa",
-  "Libra": "tomar decisões mesmo sem consenso e defender seu ponto de vista",
-  "Escorpião": "soltar o controle em uma área e confiar no processo",
-  "Sagitário": "aterrar a visão em ações concretas e cumprir o que promete",
-  "Capricórnio": "permitir prazer e vulnerabilidade dentro da disciplina",
-  "Aquário": "aproximar-se emocionalmente das pessoas que importam",
-  "Peixes": "criar estrutura, agenda e limites claros para proteger a sensibilidade",
+const SIGN_EVENTS: Record<string, string> = {
+  "Áries": "situações que exigem decisão rápida, novos começos, disputas e desafios que testam sua coragem",
+  "Touro": "movimentos financeiros lentos porém firmes, decisões sobre casa/corpo/dinheiro e pessoas pedindo segurança sua",
+  "Gêmeos": "conversas importantes, propostas por mensagem, viagens curtas e muita informação chegando ao mesmo tempo",
+  "Câncer": "temas de família, casa, mãe e cuidado com quem você ama voltando à tona",
+  "Leão": "convites para se expor, projetos criativos, chances de assumir a liderança e receber reconhecimento",
+  "Virgem": "revisão de rotina, saúde, trabalho e a necessidade de organizar detalhes que estavam pendentes",
+  "Libra": "questões de relacionamento, parcerias, contratos e a busca por acordos justos",
+  "Escorpião": "verdades vindo à tona, temas de intimidade, dinheiro compartilhado e transformações silenciosas",
+  "Sagitário": "oportunidades de estudo, viagens, publicação e conversas que ampliam sua visão",
+  "Capricórnio": "movimentos de carreira, cobranças de resultado e a chance de assumir mais responsabilidade",
+  "Aquário": "amizades novas, projetos coletivos, ideias fora da caixa e desejo de sair de um formato antigo",
+  "Peixes": "sinais sutis, sonhos reveladores, sensibilidade à flor da pele e momentos que pedem recolhimento",
 };
-function signStrength(sign: string) { return SIGN_STRENGTH[sign] ?? "clareza sobre suas necessidades e valores"; }
-function signShadow(sign: string) { return SIGN_SHADOW[sign] ?? "dispersão e reatividade emocional"; }
-function signAdvice(sign: string) { return SIGN_ADVICE[sign] ?? "observar seus padrões antes de agir"; }
+const SIGN_TIP: Record<string, string> = {
+  "Áries": "escolher UMA prioridade por vez e respirar três vezes antes de reagir",
+  "Touro": "planejar mudanças pequenas em passos concretos e cuidar do corpo e da carteira",
+  "Gêmeos": "escrever o que precisa decidir antes de conversar e filtrar o excesso de informação",
+  "Câncer": "cuidar primeiro do seu próprio ninho, colocar a casa em ordem e pedir ajuda quando precisar",
+  "Leão": "brilhar servindo algo maior que você e agradecer publicamente quem te ajudou",
+  "Virgem": "aceitar o bom no lugar do perfeito, organizar a agenda e reservar tempo para descansar sem culpa",
+  "Libra": "tomar decisões mesmo sem consenso, escrever contratos claros e escutar o próprio desejo",
+  "Escorpião": "conversar sobre o que dói antes que vire ressentimento e soltar o controle em uma área",
+  "Sagitário": "aterrar a visão em um cronograma real e cumprir o que promete, sem exageros",
+  "Capricórnio": "combinar disciplina com pausas de prazer e delegar o que você não precisa carregar sozinho",
+  "Aquário": "aproximar-se emocionalmente das pessoas importantes e traduzir suas ideias em passos práticos",
+  "Peixes": "criar estrutura (agenda, limites, horários) para proteger sua sensibilidade e sua energia",
+};
+const SIGN_WARN: Record<string, string> = {
+  "Áries": "decidir no impulso, brigar por qualquer coisa e começar mais do que consegue terminar",
+  "Touro": "teimosia, apego a situações que já deram o que tinham de dar e gastos por conforto",
+  "Gêmeos": "dispersão, promessas leves demais e conversas que não viram ação",
+  "Câncer": "carregar mágoa em silêncio, se anular pelo outro e evitar conflitos necessários",
+  "Leão": "levar tudo para o pessoal, brigar por reconhecimento e dramatizar",
+  "Virgem": "autocrítica dura, preocupação excessiva e paralisar por medo de errar",
+  "Libra": "adiar decisões, agradar demais e esconder o que sente para manter a paz",
+  "Escorpião": "controlar, cortar vínculos no calor e alimentar ciúme ou desconfiança",
+  "Sagitário": "prometer demais, gastar demais e fugir de responsabilidades chatas",
+  "Capricórnio": "endurecer, se cobrar em excesso e adiar o prazer para depois",
+  "Aquário": "esfriar quem te ama, discutir por teimosia e romper por reflexo",
+  "Peixes": "fugir da realidade, se colocar como vítima e deixar que passem por cima dos seus limites",
+};
 
-function aspectPro(aspect: string): string {
-  const a = aspect.toLowerCase();
-  if (a.includes("trígono") || a.includes("trigono")) return "fluxo natural e talento espontâneo entre essas energias.";
-  if (a.includes("sextil")) return "oportunidade concreta que aparece quando você toma iniciativa.";
-  if (a.includes("conjunção") || a.includes("conjuncao")) return "força concentrada — quando alinhado, vira marca pessoal.";
-  if (a.includes("quadratura")) return "tensão que empurra crescimento — resolver esse atrito destrava evolução real.";
-  if (a.includes("oposição") || a.includes("oposicao")) return "consciência via espelho — vínculos e situações mostram o que precisa integrar.";
-  return "conexão energética que enriquece a leitura do seu mapa.";
+function planetSignReading(planet: string, sign: string): {
+  what: string;
+  events: string;
+  tip: string;
+  warn: string;
+} {
+  const area = PLANET_AREA[planet] ?? "essa área da sua vida";
+  const tone = SIGN_TONE[sign] ?? "de um jeito muito particular seu";
+  return {
+    what: `Aqui está falando ${area}. Este posicionamento mostra que essa parte da sua vida tende a acontecer ${tone}.`,
+    events: `No dia a dia, isso aparece como: ${SIGN_EVENTS[sign] ?? "situações que colocam este tema em evidência"}.`,
+    tip: `Como aproveitar bem: ${SIGN_TIP[sign] ?? "escutar o que essa energia está pedindo e agir com consciência"}.`,
+    warn: `Cuidado para não: ${SIGN_WARN[sign] ?? "reagir no automático e repetir padrões antigos"}.`,
+  };
 }
-function aspectCon(aspect: string): string {
-  const a = aspect.toLowerCase();
-  if (a.includes("trígono") || a.includes("trigono")) return "acomodação — o talento vem fácil e por isso pode ser subutilizado.";
-  if (a.includes("sextil")) return "só floresce com ação — se você espera cair do céu, a chance passa.";
-  if (a.includes("conjunção") || a.includes("conjuncao")) return "excesso da mesma energia — cuidado para não ficar preso em um único registro.";
-  if (a.includes("quadratura")) return "frustração e sensação de esbarrar sempre nos mesmos temas até assumir a lição.";
-  if (a.includes("oposição") || a.includes("oposicao")) return "projeção nos outros — culpar quem está do outro lado ao invés de integrar.";
-  return "requer consciência para não polarizar em um só extremo.";
+
+// --- leitura contextual de aspecto (dois planetas + tipo) ------------------
+type AspectKind = {
+  vibe: string; // como o encontro acontece
+  events: string; // que tipo de situação tende a aparecer
+  tip: string; // como usar bem
+  warn: string; // o que evitar
+};
+const ASPECT_KIND: Record<string, AspectKind> = {
+  conjuncao: {
+    vibe: "faz essas duas energias funcionarem grudadas — onde uma aparece, a outra vem junto",
+    events: "essa dupla vira uma marca sua: as pessoas percebem esse tema com força, e situações que envolvem os dois assuntos costumam aparecer no mesmo momento",
+    tip: "aprender a usar essa força concentrada de propósito, escolhendo onde investir essa intensidade",
+    warn: "deixar essa dupla te dominar e viver só nesse registro, esquecendo outras áreas da vida",
+  },
+  trigono: {
+    vibe: "cria um fluxo natural — o que envolve esses dois temas costuma correr fácil para você",
+    events: "portas se abrem sem esforço nestes assuntos: ajuda chega, pessoas certas aparecem e caminhos parecem se encaixar",
+    tip: "usar esse talento de propósito, e não só quando a vida cobra — o que vem fácil precisa de intenção para virar realização",
+    warn: "achar que sempre vai vir de graça e desperdiçar o dom por acomodação",
+  },
+  sextil: {
+    vibe: "abre uma janela de oportunidade — o encontro dessas energias é positivo, mas depende de você dar o primeiro passo",
+    events: "convites, ideias e conexões concretas aparecem nessas áreas, mas costumam passar rápido se você não se mexer",
+    tip: "responder rápido quando a chance aparecer e transformar o convite em compromisso concreto",
+    warn: "esperar cair do céu — se você não agir, a oportunidade vai para outra pessoa",
+  },
+  quadratura: {
+    vibe: "cria uma tensão real entre essas duas partes — parece que uma sabota a outra até você tomar uma atitude",
+    events: "situações se repetem nessas áreas até você mudar de postura: mesmos tipos de conflito, mesmas pessoas parecidas, mesmo cansaço",
+    tip: "usar o incômodo como sinal de mudança: onde dá atrito é justamente onde está a maior evolução possível",
+    warn: "culpar os outros, forçar no automático ou desistir — o padrão volta até virar aprendizado",
+  },
+  oposicao: {
+    vibe: "coloca esses dois temas em polos opostos — vive-se um extremo de cada vez até aprender a integrar",
+    events: "os assuntos aparecem através de outras pessoas: parceiros, sócios ou situações que espelham o que você ainda não assumiu",
+    tip: "reconhecer o que o outro está te mostrando e buscar o meio-termo entre os dois extremos",
+    warn: "projetar o problema nos outros e virar réu ou vítima da relação",
+  },
+};
+function normalizeAspect(a: string): keyof typeof ASPECT_KIND | null {
+  const s = a.toLowerCase();
+  if (s.includes("conjun")) return "conjuncao";
+  if (s.includes("trig")) return "trigono";
+  if (s.includes("sext")) return "sextil";
+  if (s.includes("quadr")) return "quadratura";
+  if (s.includes("opos")) return "oposicao";
+  return null;
+}
+function aspectReading(a: { a: string; b: string; aspect: string }): {
+  narrative: string;
+  tip: string;
+  warn: string;
+} {
+  const A = PLANET_AREA[a.a] ?? `o tema de ${a.a}`;
+  const B = PLANET_AREA[a.b] ?? `o tema de ${a.b}`;
+  const k = normalizeAspect(a.aspect);
+  const kind = k ? ASPECT_KIND[k] : null;
+  if (!kind) {
+    return {
+      narrative: `Aqui ${A} conversa com ${B}, e essa conexão colore como esses dois assuntos aparecem na sua vida.`,
+      tip: "Observe onde esses dois temas se cruzam nas próximas semanas e aja com consciência.",
+      warn: "Não trate esses assuntos como se fossem separados — eles caminham juntos no seu mapa.",
+    };
+  }
+  return {
+    narrative:
+      `Aqui ${A} encontra ${B}. Esse encontro ${kind.vibe}. ` +
+      `Na prática: ${kind.events}.`,
+    tip: `Como usar bem: ${kind.tip}.`,
+    warn: `Cuidado para não: ${kind.warn}.`,
+  };
 }
 
 // --- número pessoal do dia (numerologia — mesma lógica do dashboard) -------
@@ -802,41 +898,31 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
         }
       }
 
-      // Planetas — explicação de cada um (para leigos, com prós e contras)
+      // Planetas — leitura humanizada por planeta + signo
       blocks.push({ type: "h2", text: "Cada planeta no seu mapa" });
       for (const p of planets) {
         const m = PLANET_MEANING[p.name];
-        const s = SIGN_MEANING[p.sign];
+        const reading = planetSignReading(p.name, p.sign);
         blocks.push({ type: "h3", text: `${m?.title ?? p.name} em ${p.sign} ${p.degree.toFixed(1)}°` });
         blocks.push({
           type: "p",
           text:
-            `O que representa: ${m?.short ?? "Uma dimensão da sua energia interna."}\n` +
-            `${s ? `Colorido por ${p.sign}: ${s.short}` : ""}\n\n` +
-            `Na prática, este posicionamento indica como você tende a expressar essa energia no dia a dia — nos vínculos, no trabalho, nas escolhas e nas reações emocionais. Observe onde esse tema aparece com força na sua vida.`,
-        });
-        blocks.push({
-          type: "kv",
-          rows: [
-            { k: "A favor (força)", v: `Quando bem canalizada, esta energia te dá ${signStrength(p.sign)}.` },
-            { k: "Contra (armadilha)", v: `Fora de equilíbrio, tende a gerar ${signShadow(p.sign)}.` },
-            { k: "Dica prática", v: `Use este mês para ${signAdvice(p.sign)}.` },
-          ],
+            `${reading.what}\n\n` +
+            `${reading.events}\n\n` +
+            `${reading.tip}\n\n` +
+            `${reading.warn}`,
         });
       }
 
-      // Aspectos principais
+      // Aspectos principais — leitura contextual planeta + planeta + tipo
       if (aspects.length) {
         blocks.push({ type: "h2", text: "Aspectos principais e o que significam" });
         for (const a of aspects.slice(0, 16)) {
+          const r = aspectReading(a);
           blocks.push({ type: "h3", text: `${a.a} ${a.aspect} ${a.b} · orbe ${a.orb}°` });
-          blocks.push({ type: "p", text: ASPECT_MEANING[a.aspect] ?? "Relação angular entre os astros." });
           blocks.push({
-            type: "kv",
-            rows: [
-              { k: "A favor", v: aspectPro(a.aspect) },
-              { k: "A cuidar", v: aspectCon(a.aspect) },
-            ],
+            type: "p",
+            text: `${r.narrative}\n\n${r.tip}\n\n${r.warn}`,
           });
         }
       }
