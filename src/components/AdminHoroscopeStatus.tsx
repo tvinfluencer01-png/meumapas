@@ -50,9 +50,14 @@ export function AdminHoroscopeStatus() {
               Última execução do cron e entregas do dia por usuário assinante.
             </CardDescription>
           </div>
-          <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching} className="gap-2">
-            <RefreshCw className={`size-4 ${isFetching ? "animate-spin" : ""}`} /> Atualizar
-          </Button>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-muted-foreground hidden sm:inline" title="Atualiza automaticamente">
+              {isFetching ? "atualizando…" : dataUpdatedAt ? `atualizado ${fmt(new Date(dataUpdatedAt).toISOString())}` : ""}
+            </span>
+            <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching} className="gap-2">
+              <RefreshCw className={`size-4 ${isFetching ? "animate-spin" : ""}`} /> Atualizar
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           {isLoading && <div className="text-sm text-muted-foreground">Carregando…</div>}
