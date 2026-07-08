@@ -3,7 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { generateText } from "ai";
-import { createLovableAiGatewayProvider } from "@/lib/ai-gateway";
+import { getConfiguredProvider } from "@/lib/ai-resolver.server";
 
 export const SUN_SIGNS = [
   "Áries", "Touro", "Gêmeos", "Câncer", "Leão", "Virgem",
