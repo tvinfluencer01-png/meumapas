@@ -55,7 +55,7 @@ export const generateKabbalahMeditation = createServerFn({ method: "POST" })
       const sef = findSefirah(data.sefirah);
       if (!sef) throw new Error("Sefirá inválida.");
 
-      const { model: makeModel } = await getConfiguredProvider(context.supabase, context.userId);
+      const { model: makeModel } = await getConfiguredProvider(context.supabase, context.userId, { addonId: "sub_astrologer_numerologist" });
       const model = makeModel("google/gemini-2.5-flash");
 
       const system = `Você é um **mestre cabalista contemporâneo** que guia meditações na Árvore da Vida.

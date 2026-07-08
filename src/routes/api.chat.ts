@@ -112,7 +112,7 @@ export const Route = createFileRoute("/api/chat")({
 
           // Choose provider (user-configured openai/anthropic/google, falling back to env keys)
           const customModel = (settings?.custom_ai_model as string | null) ?? null;
-          const { model: makeModel } = await getConfiguredProvider(userClient, userId);
+          const { model: makeModel } = await getConfiguredProvider(userClient, userId, { addonId: "sub_astrologer_numerologist" });
           const model = makeModel(customModel ?? "google/gemini-3-flash-preview");
 
           const { getAddonPromptOverride } = await import("@/lib/addon-settings.functions");

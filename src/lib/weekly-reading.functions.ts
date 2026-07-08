@@ -83,7 +83,7 @@ export const getWeeklyReading = createServerFn({ method: "POST" })
 
     let summary = "";
     try {
-      const { model: makeModel } = await getConfiguredProvider(supabase, userId);
+      const { model: makeModel } = await getConfiguredProvider(supabase, userId, { addonId: "sub_astrologer_numerologist" });
       const model = makeModel("google/gemini-3-flash-preview");
       const prompt = `Você é um astrólogo e numerólogo cabalístico. Escreva uma leitura semanal curta (3 a 4 frases, máx 70 palavras) em português, poética, prática e personalizada. Identifique o tema central da semana, o dia de maior potência e um conselho final. Não use listas, apenas prosa contínua.
 
