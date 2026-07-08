@@ -705,7 +705,7 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
         }
       }
 
-      // Planetas — explicação de cada um
+      // Planetas — explicação de cada um (para leigos, com prós e contras)
       blocks.push({ type: "h2", text: "Cada planeta no seu mapa" });
       for (const p of planets) {
         const m = PLANET_MEANING[p.name];
@@ -713,7 +713,18 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
         blocks.push({ type: "h3", text: `${m?.title ?? p.name} em ${p.sign} ${p.degree.toFixed(1)}°` });
         blocks.push({
           type: "p",
-          text: `${m?.short ?? ""} ${s ? `Em ${p.sign}: ${s.short}` : ""}`.trim(),
+          text:
+            `O que representa: ${m?.short ?? "Uma dimensão da sua energia interna."}\n` +
+            `${s ? `Colorido por ${p.sign}: ${s.short}` : ""}\n\n` +
+            `Na prática, este posicionamento indica como você tende a expressar essa energia no dia a dia — nos vínculos, no trabalho, nas escolhas e nas reações emocionais. Observe onde esse tema aparece com força na sua vida.`,
+        });
+        blocks.push({
+          type: "kv",
+          rows: [
+            { k: "A favor (força)", v: `Quando bem canalizada, esta energia te dá ${signStrength(p.sign)}.` },
+            { k: "Contra (armadilha)", v: `Fora de equilíbrio, tende a gerar ${signShadow(p.sign)}.` },
+            { k: "Dica prática", v: `Use este mês para ${signAdvice(p.sign)}.` },
+          ],
         });
       }
 
@@ -723,6 +734,13 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
         for (const a of aspects.slice(0, 16)) {
           blocks.push({ type: "h3", text: `${a.a} ${a.aspect} ${a.b} · orbe ${a.orb}°` });
           blocks.push({ type: "p", text: ASPECT_MEANING[a.aspect] ?? "Relação angular entre os astros." });
+          blocks.push({
+            type: "kv",
+            rows: [
+              { k: "A favor", v: aspectPro(a.aspect) },
+              { k: "A cuidar", v: aspectCon(a.aspect) },
+            ],
+          });
         }
       }
 
