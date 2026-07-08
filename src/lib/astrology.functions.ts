@@ -1018,6 +1018,7 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
         ascSign,
         weekRange: { start: week.start, end: week.end },
         monthLabel,
+        userId,
       });
       blocks.push({ type: "page-break" });
       blocks.push({ type: "h2", text: "Leitura horoscópica", pageBreak: false });
