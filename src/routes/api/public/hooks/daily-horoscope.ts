@@ -33,10 +33,12 @@ async function handler({ request }: { request: Request }) {
 
   const url = new URL(request.url);
   let force = url.searchParams.get("force") === "1";
-  if (!force && request.method === "POST") {
+  let backfill = url.searchParams.get("backfill") === "1";
+  if (request.method === "POST") {
     try {
       const b = await request.clone().json().catch(() => null) as any;
       if (b?.force) force = true;
+      if (b?.backfill) backfill = true;
     } catch {}
   }
 
@@ -58,6 +60,24 @@ async function handler({ request }: { request: Request }) {
   const nowIso = now.toISOString();
   const subs = (allSubs ?? []).filter((s: any) => {
     if (force) return true;
+    // Backfill: reenvia para quem ainda não recebeu no "hoje" local do assinante,
+    // ignorando o gate de horário agendado. Respeita retries agendados.
+    if (backfill) {
+      if (s.next_retry_at && new Date(s.next_retry_at).getTime() > now.getTime()) return false;
+      const ctx = localContextFor(s.timezone, now);
+      if (s.last_sent_on && s.last_sent_on >= ctx.today) return false;
+      const freq = s.frequency ?? "daily";
+      if (freq === "weekly") {
+        return s.send_weekday != null && s.send_weekday === ctx.localDow;
+      }
+      if (freq === "alternate") {
+        if (!s.last_sent_on) return true;
+        const last = new Date(s.last_sent_on + "T00:00:00Z").getTime();
+        const diffDays = Math.floor((Date.parse(ctx.today + "T00:00:00Z") - last) / 86400000);
+        return diffDays >= 2;
+      }
+      return true;
+    }
     // Se há um retry agendado no futuro, pula. Se já passou, roda mesmo antes do horário.
     if (s.next_retry_at) {
       return new Date(s.next_retry_at).getTime() <= now.getTime();
@@ -73,6 +93,7 @@ async function handler({ request }: { request: Request }) {
     const scheduledLocalMinute = s.send_local_minute != null ? Number(s.send_local_minute) : 0;
     const scheduledMinutesOfDay = scheduledLocalHour * 60 + scheduledLocalMinute;
     if (ctx.currentMinutesOfDay < scheduledMinutesOfDay) return false;
+
     const freq = s.frequency ?? "daily";
     if (freq === "weekly") {
       return s.send_weekday != null && s.send_weekday === ctx.localDow;
