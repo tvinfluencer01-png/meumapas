@@ -221,31 +221,14 @@ export const generateLandingHeroImage = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await ensureAdmin(context);
-    const key = process.env.OPENAI_API_KEY;
-    if (!key) throw new Error("OPENAI_API_KEY ausente. Configure no .env do servidor.");
-
-    const res = await fetch("https://api.openai.com/v1/images/generations", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "dall-e-3",
-        prompt: data.prompt,
-        size: "1024x1024",
-        quality: "standard",
-        n: 1,
-        response_format: "b64_json",
-      }),
-    });
-    if (!res.ok) {
-      const txt = await res.text().catch(() => "");
-      if (res.status === 429) throw new Error("Limite de geração atingido. Tente novamente em instantes.");
-      throw new Error(`Falha na geração (${res.status}): ${txt.slice(0, 200)}`);
-    }
-    const json = await res.json();
-    const b64 = json?.data?.[0]?.b64_json;
-    if (!b64) throw new Error("Resposta da IA sem imagem.");
-    const bytes = Buffer.from(b64, "base64");
-    const url = await storeAndSign(bytes, "png", "image/png");
+    const { generateImageWithConfigured } = await import("@/lib/image-resolver.server");
+    const bytes = await generateImageWithConfigured(
+      context.supabase,
+      context.userId,
+      data.prompt,
+      "1024x1024",
+    );
+    const url = await storeAndSign(Buffer.from(bytes), "png", "image/png");
     return { url };
   });
 

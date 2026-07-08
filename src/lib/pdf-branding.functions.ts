@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { getConfiguredProviderKey } from "@/lib/ai-resolver.server";
+
 
 const BUCKET = "pdf-branding";
 const MAX_BYTES = 500 * 1024; // 500KB
@@ -264,50 +264,16 @@ export const generateCoverImage = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { userId } = context;
-    const openaiKey = await getConfiguredProviderKey(context.supabase, userId, "openai");
-    if (!openaiKey) {
-      throw new Error(
-        "Geração de imagem requer chave OpenAI configurada em Configurações → IA (provedor OpenAI).",
-      );
-    }
 
     const sysPrompt =
       "Elegant, sophisticated, dark-tone abstract cover image for a premium spiritual report cover. Vertical A4 composition, dark/empty space in the center for title overlay. No text, no letters, no words. Mystical, painterly, cinematic.";
     const fullPrompt = `${sysPrompt}\n\nUser prompt: ${data.prompt}`;
 
-    const res = await fetch("https://api.openai.com/v1/images/generations", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${openaiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "gpt-image-1",
-        prompt: fullPrompt,
-        size: "1024x1536",
-        n: 1,
-      }),
-    });
-
-    if (!res.ok) {
-      const txt = await res.text().catch(() => "");
-      throw new Error(`Falha ao gerar imagem (${res.status}): ${txt.slice(0, 200)}`);
-    }
-
-    const json = (await res.json()) as {
-      data?: Array<{ b64_json?: string; url?: string }>;
-    };
-    const first = json.data?.[0];
-    let base64 = first?.b64_json ?? null;
-    if (!base64 && first?.url) {
-      const imgRes = await fetch(first.url);
-      if (!imgRes.ok) throw new Error(`Falha ao baixar imagem (${imgRes.status}).`);
-      const buf = Buffer.from(await imgRes.arrayBuffer());
-      base64 = buf.toString("base64");
-    }
-    if (!base64) throw new Error("Resposta sem imagem.");
+    const { generateImageWithConfigured } = await import("@/lib/image-resolver.server");
+    const bytes = Buffer.from(
+      await generateImageWithConfigured(context.supabase, userId, fullPrompt, "1024x1536"),
+    );
     const mime: "image/png" = "image/png";
-    const bytes = Buffer.from(base64, "base64");
 
     const ext = mime === "image/png" ? "png" : "jpg";
     const path = `${userId}/cover-${Date.now()}.${ext}`;
