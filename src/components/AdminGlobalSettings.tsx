@@ -210,6 +210,7 @@ export function AdminGlobalSettings() {
                   </div>
                 </div>
               )}
+            </div>
           )}
         </CardContent>
       </Card>
