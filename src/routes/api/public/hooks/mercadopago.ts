@@ -16,13 +16,134 @@ import { CREDIT_PACKAGES, SUBSCRIPTION_ADDONS } from "@/lib/addons.catalog";
 export const Route = createFileRoute("/api/public/hooks/mercadopago")({
   server: {
     handlers: {
-      POST: handler,
+      POST: (ctx: { request: Request }) => loggedHandler(ctx),
       GET: async () => new Response("ok"),
     },
   },
 });
 
-async function handler({ request }: { request: Request }) {
+type LogCtx = {
+  id?: string;
+  startedAt: number;
+  request_payload: any;
+  headers: Record<string, string>;
+  url: string;
+  method: string;
+  payment_id?: string | null;
+  event_type?: string | null;
+  mp_status?: string | null;
+  order_id?: string | null;
+  metadata_kind?: string | null;
+};
+
+async function insertInitialLog(ctx: LogCtx) {
+  try {
+    const { data } = await supabaseAdmin
+      .from("mp_webhook_logs" as any)
+      .insert({
+        method: ctx.method,
+        url: ctx.url,
+        headers: ctx.headers,
+        request_payload: ctx.request_payload,
+      })
+      .select("id")
+      .single();
+    ctx.id = (data as any)?.id;
+  } catch (e) {
+    console.error("[mp webhook] log insert failed", e);
+  }
+}
+
+async function finalizeLog(
+  ctx: LogCtx,
+  fields: {
+    result?: any;
+    response_status: number;
+    response_body?: any;
+    error_message?: string | null;
+  },
+) {
+  if (!ctx.id) return;
+  try {
+    await supabaseAdmin
+      .from("mp_webhook_logs" as any)
+      .update({
+        payment_id: ctx.payment_id ?? null,
+        event_type: ctx.event_type ?? null,
+        mp_status: ctx.mp_status ?? null,
+        order_id: ctx.order_id ?? null,
+        metadata_kind: ctx.metadata_kind ?? null,
+        result: fields.result ?? null,
+        response_status: fields.response_status,
+        response_body: fields.response_body ?? null,
+        error_message: fields.error_message ?? null,
+        duration_ms: Date.now() - ctx.startedAt,
+      })
+      .eq("id", ctx.id);
+  } catch (e) {
+    console.error("[mp webhook] log update failed", e);
+  }
+}
+
+async function loggedHandler({ request }: { request: Request }) {
+  const cloned = request.clone();
+  let raw = "";
+  try {
+    raw = await cloned.text();
+  } catch {
+    raw = "";
+  }
+  let request_payload: any = {};
+  try {
+    request_payload = raw ? JSON.parse(raw) : {};
+  } catch {
+    request_payload = { _raw: raw };
+  }
+  const headers: Record<string, string> = {};
+  request.headers.forEach((v, k) => {
+    headers[k] = /authorization|secret|token|signature/i.test(k) ? "***" : v;
+  });
+  const logCtx: LogCtx = {
+    startedAt: Date.now(),
+    request_payload,
+    headers,
+    url: request.url,
+    method: request.method,
+  };
+  await insertInitialLog(logCtx);
+
+  try {
+    const res = await handler({ request }, logCtx);
+    let bodyJson: any = null;
+    try {
+      bodyJson = await res.clone().json();
+    } catch {
+      bodyJson = null;
+    }
+    await finalizeLog(logCtx, {
+      result: bodyJson,
+      response_status: res.status,
+      response_body: bodyJson,
+    });
+    return res;
+  } catch (e: any) {
+    const msg = e?.message ?? String(e);
+    console.error("[mp webhook] unhandled error", e);
+    await finalizeLog(logCtx, {
+      response_status: 500,
+      error_message: msg,
+    });
+    return new Response(JSON.stringify({ ok: false, error: msg }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+}
+
+async function handler(
+  { request }: { request: Request },
+  logCtx?: LogCtx,
+) {
   const url = new URL(request.url);
   let payload: any = null;
   try {
@@ -39,6 +160,11 @@ async function handler({ request }: { request: Request }) {
     url.searchParams.get("id");
   const type =
     payload?.type ?? payload?.action ?? url.searchParams.get("type") ?? url.searchParams.get("topic");
+
+  if (logCtx) {
+    logCtx.payment_id = paymentId ? String(paymentId) : null;
+    logCtx.event_type = type ? String(type) : null;
+  }
 
   if (!paymentId || (type && !String(type).includes("payment"))) {
     return Response.json({ ignored: true, reason: "not a payment event" });
@@ -79,6 +205,13 @@ async function handler({ request }: { request: Request }) {
   const isHoroscopePlan =
     metadataKind === "horoscope_plan" ||
     String(pay?.external_reference ?? "").startsWith("horoscope_plan:");
+
+  if (logCtx) {
+    logCtx.mp_status = payStatus;
+    logCtx.order_id = orderId ?? null;
+    logCtx.metadata_kind = metadataKind ?? null;
+  }
+
 
   // ─── Assinatura do Horóscopo Diário: lida com approved/refunded/cancelled/charged_back ───
   if (isHoroscopePlan) {
