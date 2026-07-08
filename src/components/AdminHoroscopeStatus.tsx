@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { GradientStatCard } from "@/components/ui/gradient-stat-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getHoroscopeStatus } from "@/lib/horoscope-status.functions";
+import { getHoroscopeStatus, type HoroscopeStatusResult, type UserHoroscopeStatus } from "@/lib/horoscope-status.functions";
 
 function fmt(ts: string | null) {
   if (!ts) return "—";
@@ -16,10 +16,16 @@ function fmt(ts: string | null) {
 
 export function AdminHoroscopeStatus() {
   const fn = useServerFn(getHoroscopeStatus);
-  const { data, isLoading, isFetching, refetch, error } = useQuery({
+  const { data, isLoading, isFetching, refetch, error, dataUpdatedAt } = useQuery({
     queryKey: ["admin-horoscope-status"],
     queryFn: () => fn(),
-    refetchInterval: 60_000,
+    // Poll faster quando há pendências; mais devagar quando tudo está resolvido.
+    refetchInterval: (q): number => {
+      const d = q.state.data as HoroscopeStatusResult | undefined;
+      return d && d.users.some((u: UserHoroscopeStatus) => u.pending) ? 15_000 : 60_000;
+    },
+    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: true,
   });
 
   const [page, setPage] = useState(1);
@@ -44,9 +50,14 @@ export function AdminHoroscopeStatus() {
               Última execução do cron e entregas do dia por usuário assinante.
             </CardDescription>
           </div>
-          <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching} className="gap-2">
-            <RefreshCw className={`size-4 ${isFetching ? "animate-spin" : ""}`} /> Atualizar
-          </Button>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-muted-foreground hidden sm:inline" title="Atualiza automaticamente">
+              {isFetching ? "atualizando…" : dataUpdatedAt ? `atualizado ${fmt(new Date(dataUpdatedAt).toISOString())}` : ""}
+            </span>
+            <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching} className="gap-2">
+              <RefreshCw className={`size-4 ${isFetching ? "animate-spin" : ""}`} /> Atualizar
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           {isLoading && <div className="text-sm text-muted-foreground">Carregando…</div>}
