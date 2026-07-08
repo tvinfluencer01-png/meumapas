@@ -820,6 +820,27 @@ export function SettingsForm() {
                         <div>{meta.tutorial}</div>
                         <ExtLink href={meta.url}>{meta.linkLabel}</ExtLink>
                       </div>
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="text-[11px]">
+                          {providerStatus[id] && (
+                            <span className={`inline-flex items-center gap-1 ${providerStatus[id]?.ok ? "text-emerald-500" : "text-destructive"}`}>
+                              {providerStatus[id]?.ok ? <CheckCircle2 className="size-3" /> : <AlertTriangle className="size-3" />}
+                              {providerStatus[id]?.message}
+                            </span>
+                          )}
+                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          disabled={providerBusy[id] === "testing"}
+                          onClick={() => runImageTest(id, cfg.key)}
+                          className="gap-1.5 border-gold/30 hover:bg-gold/10 h-7 text-xs"
+                        >
+                          <Zap className={`size-3 ${providerBusy[id] === "testing" ? "animate-pulse" : ""}`} />
+                          {providerBusy[id] === "testing" ? "Testando..." : "Testar"}
+                        </Button>
+                      </div>
                     </div>
                   )}
                 </li>
