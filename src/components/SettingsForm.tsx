@@ -56,6 +56,7 @@ export function SettingsForm() {
   const [showLovableKey, setShowLovableKey] = useState(false);
   const [showCustomKey, setShowCustomKey] = useState(false);
   const [showAstroKey, setShowAstroKey] = useState(false);
+  const [expandedProvider, setExpandedProvider] = useState<string | null>(null);
   const [form, setForm] = useState({
     preferred_engine: "swiss_ephemeris",
     astrology_api_user_id: "",
@@ -64,6 +65,7 @@ export function SettingsForm() {
     ai_provider_order: DEFAULT_ORDER,
     custom_ai_key: "",
     custom_ai_model: "openai/gpt-5.5",
+    ai_providers_config: {} as Record<string, { enabled?: boolean; key?: string; model?: string }>,
   });
 
   const { data } = useQuery({
