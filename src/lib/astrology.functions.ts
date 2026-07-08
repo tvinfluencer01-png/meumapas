@@ -810,30 +810,46 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
       blocks.push({ type: "p", text: forecast.year });
 
       // ============================================================
-      // CALENDÁRIO ENERGÉTICO — 30 dias (fases da lua)
+      // CALENDÁRIO ENERGÉTICO — 30 dias (fase da Lua + número pessoal)
       // ============================================================
+      // Busca a data de nascimento para calcular o número pessoal do dia
+      // (mesma lógica do calendário do dashboard).
+      let birthISO: string | null = null;
+      if (chart.birth_data_id) {
+        const { data: bd } = await supabaseAdmin
+          .from("birth_data")
+          .select("birth_date")
+          .eq("id", chart.birth_data_id)
+          .maybeSingle();
+        birthISO = (bd?.birth_date as string | null) ?? null;
+      }
+
       blocks.push({ type: "h2", text: "Calendário energético dos próximos 30 dias" });
       blocks.push({
         type: "p",
         text:
-          "A fase da Lua a cada dia dá o tom da sua energia interna. Use esta agenda como bússola: dias de Lua Nova pedem intenção e recomeço; Crescente favorece ação e construção; Cheia intensifica emoções e revela verdades; Minguante convida a soltar, revisar e descansar.",
+          "Cada dia combina a fase da Lua (o clima emocional coletivo) com o seu número pessoal (a vibração numerológica do dia para você). Use esta agenda como bússola diária: alinhe compromissos importantes com dias de energia favorável e reserve os dias intensos ou de descanso para recolhimento.",
       });
       const moonRows: { k: string; v: string }[] = [];
       for (let i = 0; i < 30; i++) {
         const d = new Date();
         d.setDate(d.getDate() + i);
         const angle = Astro.MoonPhase(d);
-        let label = "Lua Nova";
-        if (angle < 45) label = "Lua Nova · intenção";
-        else if (angle < 90) label = "Crescente · plantar";
-        else if (angle < 135) label = "Quarto Crescente · ação";
-        else if (angle < 180) label = "Gibosa Crescente · ajuste";
-        else if (angle < 225) label = "Lua Cheia · colheita";
-        else if (angle < 270) label = "Gibosa Minguante · gratidão";
-        else if (angle < 315) label = "Quarto Minguante · liberar";
-        else label = "Minguante · descanso";
+        let moonLabel = "Lua Nova · intenção";
+        if (angle < 45) moonLabel = "Lua Nova · intenção";
+        else if (angle < 90) moonLabel = "Crescente · plantar";
+        else if (angle < 135) moonLabel = "Quarto Crescente · ação";
+        else if (angle < 180) moonLabel = "Gibosa Crescente · ajuste";
+        else if (angle < 225) moonLabel = "Lua Cheia · colheita";
+        else if (angle < 270) moonLabel = "Gibosa Minguante · gratidão";
+        else if (angle < 315) moonLabel = "Quarto Minguante · liberar";
+        else moonLabel = "Minguante · descanso";
+
+        const iso = d.toISOString().slice(0, 10);
+        const pd = birthISO ? personalDayNumber(iso, birthISO) : null;
+        const pdLabel = pd != null ? `nº ${pd} · ${personalDayVibe(pd)}` : "número pessoal indisponível";
         const dateStr = d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", weekday: "short" });
-        moonRows.push({ k: dateStr, v: label });
+        moonRows.push({ k: dateStr, v: `${moonLabel} · ${pdLabel}` });
       }
       blocks.push({ type: "kv", rows: moonRows });
 
