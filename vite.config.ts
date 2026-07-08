@@ -105,6 +105,8 @@ function parseErrorReporter(): Plugin {
 }
 
 export default defineConfig({
+  nitro: { preset: "node-server", serveStatic: true },
+
   tanstackStart: {
     server: { entry: "server" },
   },
