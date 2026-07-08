@@ -157,7 +157,12 @@ export function AdminHoroscopeStatus() {
                           ) : u.delivered_today > 0 ? (
                             <Badge className="bg-emerald-500/15 text-emerald-300 border-emerald-500/30">entregue</Badge>
                           ) : u.pending ? (
-                            <Badge className="bg-amber-500/15 text-amber-300 border-amber-500/30">pendente</Badge>
+                            <Badge
+                              className="bg-amber-500/15 text-amber-300 border-amber-500/30"
+                              title={u.pending_reason ?? "Aguardando processamento"}
+                            >
+                              pendente
+                            </Badge>
                           ) : (
                             <Badge variant="outline">—</Badge>
                           )}
@@ -165,6 +170,8 @@ export function AdminHoroscopeStatus() {
                         <td className="px-3 py-2 text-xs text-muted-foreground max-w-[320px]">
                           {u.issues.length > 0 ? (
                             <span className="text-amber-300" title={u.issues.join(" · ")}>{u.issues.join(" · ")}</span>
+                          ) : u.pending && u.pending_reason ? (
+                            <span className="text-amber-300/90" title={u.pending_reason}>{u.pending_reason}</span>
                           ) : (
                             <span className="truncate block" title={u.last_detail ?? ""}>{u.last_detail ?? "—"}</span>
                           )}
