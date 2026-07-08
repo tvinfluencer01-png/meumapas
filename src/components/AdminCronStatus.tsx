@@ -1,6 +1,6 @@
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, AlertTriangle, RefreshCw, Clock, Edit2, Save, X, Play } from "lucide-react";
+import { CheckCircle2, AlertTriangle, RefreshCw, Clock, Edit2, Save, X, Play, Pause, Power } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
