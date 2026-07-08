@@ -49,7 +49,7 @@ async function callProvider(
       prompt,
     )}?width=${w}&height=${h}&nologo=true&enhance=true`;
     const res = await fetch(url);
-    if (!res.ok) return null;
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return new Uint8Array(await res.arrayBuffer());
   }
 
@@ -59,14 +59,14 @@ async function callProvider(
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
       body: JSON.stringify({ model: "gpt-image-1", prompt, size, n: 1 }),
     });
-    if (!res.ok) return null;
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const j = (await res.json()) as { data?: Array<{ b64_json?: string; url?: string }> };
     const b64 = j?.data?.[0]?.b64_json;
     if (b64) return Buffer.from(b64, "base64");
     const url = j?.data?.[0]?.url;
     if (url) {
       const r = await fetch(url);
-      if (!r.ok) return null;
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
       return new Uint8Array(await r.arrayBuffer());
     }
     return null;
@@ -81,7 +81,7 @@ async function callProvider(
         body: JSON.stringify({ inputs: prompt, parameters: { width: w, height: h } }),
       },
     );
-    if (!res.ok) return null;
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return new Uint8Array(await res.arrayBuffer());
   }
 
@@ -98,7 +98,7 @@ async function callProvider(
         response_format: "b64_json",
       }),
     });
-    if (!res.ok) return null;
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const j = (await res.json()) as { data?: Array<{ b64_json?: string }> };
     const b64 = j?.data?.[0]?.b64_json;
     return b64 ? Buffer.from(b64, "base64") : null;
@@ -117,7 +117,7 @@ async function callProvider(
         body: form,
       },
     );
-    if (!res.ok) return null;
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return new Uint8Array(await res.arrayBuffer());
   }
 
@@ -134,12 +134,12 @@ async function callProvider(
         body: JSON.stringify({ input: { prompt, aspect_ratio: w === h ? "1:1" : w > h ? "3:2" : "2:3" } }),
       },
     );
-    if (!res.ok) return null;
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const j = (await res.json()) as { output?: string | string[] };
     const url = Array.isArray(j.output) ? j.output[0] : j.output;
     if (!url) return null;
     const r = await fetch(url);
-    if (!r.ok) return null;
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
     return new Uint8Array(await r.arrayBuffer());
   }
   return null;
