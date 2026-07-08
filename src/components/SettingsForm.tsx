@@ -656,11 +656,82 @@ export function SettingsForm() {
         </div>
         <div className="text-xs text-muted-foreground">
           Links rápidos:{" "}
-          <ExtLink href="https://platform.openai.com/api-keys">OpenAI keys</ExtLink>{" · "}
-          <ExtLink href="https://console.anthropic.com/settings/keys">Anthropic keys</ExtLink>{" · "}
-          <ExtLink href="https://aistudio.google.com/app/apikey">Google AI keys</ExtLink>
+          <ExtLink href={AI_PROVIDER_LINKS.openai.url}>OpenAI</ExtLink>{" · "}
+          <ExtLink href={AI_PROVIDER_LINKS.anthropic.url}>Anthropic</ExtLink>{" · "}
+          <ExtLink href={AI_PROVIDER_LINKS.google.url}>Google</ExtLink>{" · "}
+          <ExtLink href={AI_PROVIDER_LINKS.groq.url}>Groq (grátis)</ExtLink>{" · "}
+          <ExtLink href={AI_PROVIDER_LINKS.mistral.url}>Mistral (grátis)</ExtLink>{" · "}
+          <ExtLink href={AI_PROVIDER_LINKS.openrouter.url}>OpenRouter (grátis)</ExtLink>
         </div>
       </section>
+
+      {/* Image generation providers */}
+      <section className="glass-card rounded-2xl p-6 space-y-4">
+        <div>
+          <h2 className="font-serif text-xl text-gold">Geração de Imagens (IA)</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Configure provedores para gerar ilustrações. Free ou pagos — a chave salva aqui será usada quando o
+            recurso de imagens for acionado. Cada provedor tem seu tutorial rápido e link para pegar a API.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {IMAGE_PROVIDERS.map((p) => {
+            const cfg = form.ai_providers_config[p.id] ?? {};
+            const enabled = cfg.enabled !== false;
+            const updateCfg = (patch: Partial<{ enabled: boolean; key: string; model: string }>) => {
+              setForm({
+                ...form,
+                ai_providers_config: {
+                  ...form.ai_providers_config,
+                  [p.id]: { ...cfg, ...patch },
+                },
+              });
+            };
+            return (
+              <div
+                key={p.id}
+                className={`rounded-lg border p-3 space-y-2 ${
+                  p.tier === "grátis" ? "border-emerald-500/30 bg-emerald-500/5" : "border-gold/30 bg-gold/5"
+                } ${!enabled ? "opacity-60" : ""}`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="text-sm text-stardust font-medium flex items-center gap-2">
+                      {p.label}
+                      <span className={`text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded ${
+                        p.tier === "grátis" ? "bg-emerald-600/80 text-white" : "bg-gold/80 text-primary-foreground"
+                      }`}>
+                        {p.tier}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mt-1">{p.tutorial}</p>
+                  </div>
+                  <Switch
+                    checked={enabled}
+                    onCheckedChange={(v) => updateCfg({ enabled: v })}
+                    aria-label="Ativar provedor de imagem"
+                  />
+                </div>
+                {p.keyRequired && (
+                  <Input
+                    type="password"
+                    value={cfg.key ?? ""}
+                    onChange={(e) => updateCfg({ key: e.target.value })}
+                    onKeyDown={(e) => e.stopPropagation()}
+                    className="bg-input border-border h-8 text-xs"
+                    placeholder={p.placeholder}
+                  />
+                )}
+                <div className="text-[11px]">
+                  <ExtLink href={p.url}>{p.linkLabel}</ExtLink>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
 
       <Button onClick={save} disabled={saving}
         className="bg-gold text-primary-foreground hover:bg-gold-glow">
