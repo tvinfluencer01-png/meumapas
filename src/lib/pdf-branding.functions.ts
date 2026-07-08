@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { getConfiguredProviderKey } from "@/lib/ai-resolver.server";
 
 const BUCKET = "pdf-branding";
 const MAX_BYTES = 500 * 1024; // 500KB
