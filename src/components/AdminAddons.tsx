@@ -190,6 +190,7 @@ function AddonEditor({ row }: { row: AddonRow }) {
   );
   const [prompt, setPrompt] = useState(row.effective.prompt ?? "");
   const [enabled, setEnabled] = useState(row.effective.enabled);
+  const [requireUserKey, setRequireUserKey] = useState(row.effective.require_user_key);
   const [improveInstruction, setImproveInstruction] = useState("");
 
   useEffect(() => {
@@ -199,6 +200,7 @@ function AddonEditor({ row }: { row: AddonRow }) {
     setPriceReais((row.effective.price_cents / 100).toFixed(2).replace(".", ","));
     setPrompt(row.effective.prompt ?? "");
     setEnabled(row.effective.enabled);
+    setRequireUserKey(row.effective.require_user_key);
   }, [row]);
 
   const hasPromptDefault = !!row.defaults.prompt_template;
@@ -222,6 +224,7 @@ function AddonEditor({ row }: { row: AddonRow }) {
           price_cents: cents,
           prompt: hasPromptDefault ? (prompt.trim() || null) : undefined,
           enabled,
+          require_user_key: requireUserKey,
         },
       });
     },
