@@ -95,7 +95,7 @@ const ADMIN_MENU: { value: string; label: string; icon: typeof SettingsIcon }[] 
   { value: "horoscope-plans", label: "Horóscopo Planos Pagos", icon: Sparkles },
 
   { value: "backup", label: "Backup", icon: Database },
-  { value: "global", label: "Landing Page", icon: Phone },
+  { value: "global", label: "Notificações & Alertas", icon: AlertTriangle },
   { value: "marketing", label: "Marketing", icon: Megaphone },
   { value: "smtp", label: "E-mail SMTP", icon: Mail },
   { value: "pwa", label: "PWA", icon: Smartphone },
