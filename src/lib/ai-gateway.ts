@@ -12,7 +12,7 @@ export const createAnthropicProvider = (apiKey: string) =>
   createOpenAICompatible({
     name: "anthropic",
     baseURL: "https://api.anthropic.com/v1",
-    headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
+    headers: { Authorization: `Bearer ${apiKey}` },
   });
 
 export const createGeminiProvider = (apiKey: string) =>
