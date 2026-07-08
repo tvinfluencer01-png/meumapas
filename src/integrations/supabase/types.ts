@@ -5187,6 +5187,7 @@ export type Database = {
         Row: {
           credit_value_cents: number
           id: string
+          mp_webhook_logs_retention_days: number
           updated_at: string | null
           updated_by: string | null
           whatsapp_number: string | null
@@ -5194,6 +5195,7 @@ export type Database = {
         Insert: {
           credit_value_cents?: number
           id?: string
+          mp_webhook_logs_retention_days?: number
           updated_at?: string | null
           updated_by?: string | null
           whatsapp_number?: string | null
@@ -5201,6 +5203,7 @@ export type Database = {
         Update: {
           credit_value_cents?: number
           id?: string
+          mp_webhook_logs_retention_days?: number
           updated_at?: string | null
           updated_by?: string | null
           whatsapp_number?: string | null
@@ -5475,6 +5478,7 @@ export type Database = {
         Args: { _bucket: string; _limit: number; _window_seconds?: number }
         Returns: boolean
       }
+      cleanup_mp_webhook_logs: { Args: never; Returns: number }
       consume_credits: {
         Args: {
           _amount: number
