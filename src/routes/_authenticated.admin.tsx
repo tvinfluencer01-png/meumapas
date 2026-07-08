@@ -181,6 +181,14 @@ function AdminDashboard() {
       : "settings";
   const [tab, setTab] = useState(initialTab);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const activeGroup = ADMIN_MENU_GROUPS.find((g) => g.items.some((i) => i.value === tab))?.group;
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
+    activeGroup ? { [activeGroup]: true } : {}
+  );
+  useEffect(() => {
+    if (activeGroup) setOpenGroups((prev) => (prev[activeGroup] ? prev : { ...prev, [activeGroup]: true }));
+  }, [activeGroup]);
+  const toggleGroup = (g: string) => setOpenGroups((prev) => ({ ...prev, [g]: !prev[g] }));
   const unviewedFn = useServerFn(countUnviewedOrders);
   const { data: unviewed } = useQuery({
     queryKey: ["admin-unviewed-orders"],
