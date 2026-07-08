@@ -264,25 +264,28 @@ export const generateCoverImage = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { userId } = context;
-    const apiKey = process.env.LOVABLE_API_KEY;
-    if (!apiKey) throw new Error("LOVABLE_API_KEY não configurada.");
+    const openaiKey = await getConfiguredProviderKey(context.supabase, userId, "openai");
+    if (!openaiKey) {
+      throw new Error(
+        "Geração de imagem requer chave OpenAI configurada em Configurações → IA (provedor OpenAI).",
+      );
+    }
 
     const sysPrompt =
-      "Generate a single elegant, sophisticated, dark-tone abstract cover image suitable as the background of a premium spiritual report cover page. Vertical A4 composition, leave dark/empty space in the center for title overlay. No text, no letters, no words in the image. Mystical, painterly, cinematic.";
+      "Elegant, sophisticated, dark-tone abstract cover image for a premium spiritual report cover. Vertical A4 composition, dark/empty space in the center for title overlay. No text, no letters, no words. Mystical, painterly, cinematic.";
+    const fullPrompt = `${sysPrompt}\n\nUser prompt: ${data.prompt}`;
 
-    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const res = await fetch("https://api.openai.com/v1/images/generations", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${openaiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash-image-preview",
-        messages: [
-          { role: "system", content: sysPrompt },
-          { role: "user", content: data.prompt },
-        ],
-        modalities: ["image", "text"],
+        model: "gpt-image-1",
+        prompt: fullPrompt,
+        size: "1024x1536",
+        n: 1,
       }),
     });
 
@@ -292,21 +295,18 @@ export const generateCoverImage = createServerFn({ method: "POST" })
     }
 
     const json = (await res.json()) as {
-      choices?: Array<{
-        message?: {
-          images?: Array<{ image_url?: { url?: string } }>;
-        };
-      }>;
+      data?: Array<{ b64_json?: string; url?: string }>;
     };
-
-    const imageDataUrl = json.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-    if (!imageDataUrl) throw new Error("Resposta sem imagem.");
-
-    // Formato esperado: data:image/png;base64,XXXX
-    const match = imageDataUrl.match(/^data:(image\/(?:png|jpeg));base64,(.+)$/);
-    if (!match) throw new Error("Formato de imagem inesperado.");
-    const mime = match[1] as "image/png" | "image/jpeg";
-    const base64 = match[2];
+    const first = json.data?.[0];
+    let base64 = first?.b64_json ?? null;
+    if (!base64 && first?.url) {
+      const imgRes = await fetch(first.url);
+      if (!imgRes.ok) throw new Error(`Falha ao baixar imagem (${imgRes.status}).`);
+      const buf = Buffer.from(await imgRes.arrayBuffer());
+      base64 = buf.toString("base64");
+    }
+    if (!base64) throw new Error("Resposta sem imagem.");
+    const mime: "image/png" = "image/png";
     const bytes = Buffer.from(base64, "base64");
 
     const ext = mime === "image/png" ? "png" : "jpg";
