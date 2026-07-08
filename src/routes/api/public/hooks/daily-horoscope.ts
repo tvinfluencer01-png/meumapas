@@ -133,9 +133,6 @@ async function handler({ request }: { request: Request }) {
   const evoReady =
     evo?.enabled && evo?.base_url && evo?.global_api_key && evo?.instance_name;
 
-  const apiKey = process.env.LOVABLE_API_KEY;
-  if (!apiKey) return new Response("LOVABLE_API_KEY missing", { status: 500 });
-  const provider = createLovableAiGatewayProvider(apiKey);
   const modelCandidates = ["google/gemini-3-flash-preview", "google/gemini-2.5-flash"];
 
   const { getAddonPromptOverride } = await import("@/lib/addon-settings.functions");
