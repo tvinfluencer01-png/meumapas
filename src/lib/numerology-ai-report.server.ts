@@ -3,7 +3,7 @@
 // so guest product-order PDFs match the quality delivered to logged-in users.
 import { generateText } from "ai";
 import { z } from "zod";
-import { createLovableAiGatewayProvider } from "@/lib/ai-gateway";
+import { getConfiguredProvider } from "@/lib/ai-resolver.server";
 import { computeNumerology, numLabel, numTitle, formatBirthDateBR, NUMBER_MEANINGS } from "@/lib/numerology";
 import type { SimplePdfBlock } from "@/lib/simple-pdf";
 import { buildPersonalityNumerologyBlocks } from "@/lib/numerology-personality-report";
