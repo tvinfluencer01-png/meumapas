@@ -1004,7 +1004,8 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
       ];
       for (const [, area] of deepAreas) {
         if (!area) continue;
-        blocks.push({ type: "h2", text: area.title });
+        blocks.push({ type: "page-break" });
+        blocks.push({ type: "h2", text: area.title, pageBreak: false });
         blocks.push({ type: "p", text: area.reading });
         blocks.push({ type: "h3", text: "Oportunidades que o seu mapa está abrindo" });
         blocks.push({ type: "p", text: area.opportunities });
@@ -1031,27 +1032,30 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
         weekRange: { start: week.start, end: week.end },
         monthLabel,
       });
-      blocks.push({ type: "h2", text: "Leitura horoscópica" });
+      blocks.push({ type: "page-break" });
+      blocks.push({ type: "h2", text: "Leitura horoscópica", pageBreak: false });
       blocks.push({ type: "h3", text: `Semana de ${week.start} a ${week.end}` });
       blocks.push({ type: "p", text: horoscope });
 
-      blocks.push({ type: "h2", text: "Previsões para os próximos dias" });
+      blocks.push({ type: "page-break" });
+      blocks.push({ type: "h2", text: "Previsões para os próximos dias", pageBreak: false });
       blocks.push({ type: "p", text: forecast.nextDays });
-      blocks.push({ type: "h2", text: "Previsões para a semana" });
+      blocks.push({ type: "page-break" });
+      blocks.push({ type: "h2", text: "Previsões para a semana", pageBreak: false });
       blocks.push({ type: "h3", text: `${week.start} a ${week.end}` });
       blocks.push({ type: "p", text: forecast.week });
-      blocks.push({ type: "h2", text: "Previsões para o mês" });
+      blocks.push({ type: "page-break" });
+      blocks.push({ type: "h2", text: "Previsões para o mês", pageBreak: false });
       blocks.push({ type: "h3", text: monthLabel });
       blocks.push({ type: "p", text: forecast.month });
-      blocks.push({ type: "h2", text: "Previsões para o ano" });
+      blocks.push({ type: "page-break" });
+      blocks.push({ type: "h2", text: "Previsões para o ano", pageBreak: false });
       blocks.push({ type: "h3", text: yearLabel });
       blocks.push({ type: "p", text: forecast.year });
 
       // ============================================================
       // CALENDÁRIO ENERGÉTICO — 30 dias (fase da Lua + número pessoal)
       // ============================================================
-      // Busca a data de nascimento para calcular o número pessoal do dia
-      // (mesma lógica do calendário do dashboard).
       let birthISO: string | null = null;
       if (chart.birth_data_id) {
         const { data: bd } = await supabaseAdmin
@@ -1062,11 +1066,22 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
         birthISO = (bd?.birth_date as string | null) ?? null;
       }
 
-      blocks.push({ type: "h2", text: "Calendário energético dos próximos 30 dias" });
+      blocks.push({ type: "page-break" });
+      blocks.push({ type: "h2", text: "Calendário energético dos próximos 30 dias", pageBreak: false });
       blocks.push({
         type: "p",
         text:
-          "Cada dia combina a fase da Lua (o clima emocional coletivo) com o seu número pessoal (a vibração numerológica do dia para você). Use esta agenda como bússola diária: alinhe compromissos importantes com dias de energia favorável e reserve os dias intensos ou de descanso para recolhimento.",
+          "Este calendário é sua bússola diária para os próximos 30 dias. Cada linha combina a fase da Lua — o clima emocional coletivo que todos sentem — com o seu número pessoal, que é a vibração numerológica específica daquele dia para você. Você não precisa entender astrologia ou numerologia para usá-lo: basta ler o dia de hoje pela manhã e escolher UMA atitude alinhada com a energia do momento.",
+      });
+      blocks.push({
+        type: "p",
+        text:
+          "Como aproveitar cada orientação: nos dias de Lua Nova e número 1, plante intenções, comece projetos e tome iniciativas — o céu abre porta. Na Lua Crescente e nos números 2, 3 e 6, cultive parcerias, apresente ideias, converse com quem precisa e mostre o que criou. Na Lua Cheia e nos números 5 e 9, colha resultados, feche ciclos, celebre e libere o que já se cumpriu. Na Lua Minguante e nos números 4, 7 e 8, recolha-se, organize, revise contratos, cuide do corpo e reveja estratégias sem tomar decisões precipitadas.",
+      });
+      blocks.push({
+        type: "p",
+        text:
+          "Dica prática: antes de agendar reuniões importantes, envios de proposta, mudanças, conversas difíceis ou tratamentos de saúde, consulte a linha do dia. Se a energia for de expansão, avance com confiança; se for de recolhimento, adie 24–48 horas quando possível — a diferença de resultado costuma ser real. Marque no seu calendário pessoal os dias mais poderosos do ciclo (Lua Nova, Lua Cheia e números que se repetem para você) e reserve neles as decisões-chave. Aos poucos você vai perceber que fluir com a energia disponível é muito mais leve do que forçar contra ela.",
       });
       const moonRows: { k: string; v: string }[] = [];
       for (let i = 0; i < 30; i++) {
@@ -1092,10 +1107,34 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
       blocks.push({ type: "kv", rows: moonRows });
 
       // ============================================================
-      // FECHAMENTO
+      // FECHAMENTO — bênção final ampliada
       // ============================================================
-      blocks.push({ type: "h2", text: "Bênção final" });
+      blocks.push({ type: "page-break" });
+      blocks.push({ type: "h2", text: "Bênção final", pageBreak: false });
       blocks.push({ type: "p", text: forecast.closing });
+      blocks.push({
+        type: "p",
+        text:
+          "Que este mapa não fique apenas em palavras. Que ele vire hábito, escolha e coragem no seu dia a dia. Você não precisa mudar tudo de uma vez — basta dar UM passo alinhado com o que leu aqui e o universo se organiza para te sustentar. Cada trânsito passa, cada fase da Lua se renova, e você tem, dentro de si, tudo o que precisa para atravessar os próximos ciclos com mais clareza, presença e alegria.",
+      });
+      blocks.push({
+        type: "quote",
+        text:
+          "Você é semente e jardineiro do próprio destino. O céu apenas mostra o solo — o que planta e o que floresce é decisão sua, feita todos os dias, com amor e verdade.",
+      });
+
+      // ============================================================
+      // CROSS-PROMOÇÃO — rotaciona outro serviço nosso
+      // ============================================================
+      const promo = await pickCrossPromotionForReport("astro_map");
+      if (promo) {
+        blocks.push({ type: "page-break" });
+        blocks.push({ type: "h2", text: "Continue sua jornada com o Código Cósmico", pageBreak: false });
+        if (promo.title) blocks.push({ type: "h3", text: promo.title });
+        blocks.push({ type: "p", text: promo.body });
+      }
+
+
 
 
       // Branding opcional
