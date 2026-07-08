@@ -69,9 +69,9 @@ export function AdminAddons() {
           Nenhum plano configurado.
         </div>
       ) : (
-        <div className="grid gap-4">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {data.map((row) => (
-            <AddonEditor key={row.addon_id} row={row} />
+            <AddonCard key={row.addon_id} row={row} />
           ))}
         </div>
       )}
