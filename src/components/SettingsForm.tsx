@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { CheckCircle2, ExternalLink, Eye, EyeOff, Save, Sparkles, RefreshCw, AlertTriangle, ArrowUp, ArrowDown, Star } from "lucide-react";
+import { CheckCircle2, ExternalLink, Eye, EyeOff, Save, Sparkles, RefreshCw, AlertTriangle, ArrowUp, ArrowDown, Star, ChevronDown, ChevronRight } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -55,6 +56,7 @@ export function SettingsForm() {
   const [showLovableKey, setShowLovableKey] = useState(false);
   const [showCustomKey, setShowCustomKey] = useState(false);
   const [showAstroKey, setShowAstroKey] = useState(false);
+  const [expandedProvider, setExpandedProvider] = useState<string | null>(null);
   const [form, setForm] = useState({
     preferred_engine: "swiss_ephemeris",
     astrology_api_user_id: "",
@@ -63,6 +65,7 @@ export function SettingsForm() {
     ai_provider_order: DEFAULT_ORDER,
     custom_ai_key: "",
     custom_ai_model: "openai/gpt-5.5",
+    ai_providers_config: {} as Record<string, { enabled?: boolean; key?: string; model?: string }>,
   });
 
   const { data } = useQuery({
@@ -94,6 +97,7 @@ export function SettingsForm() {
         ai_provider_order: order,
         custom_ai_key: data.custom_ai_key ?? "",
         custom_ai_model: data.custom_ai_model ?? "openai/gpt-5.5",
+        ai_providers_config: ((data as { ai_providers_config?: Record<string, { enabled?: boolean; key?: string; model?: string }> }).ai_providers_config) ?? {},
       });
     }
   }, [data]);
@@ -301,43 +305,102 @@ export function SettingsForm() {
                 const next = [id, ...form.ai_provider_order.filter((p) => p !== id)];
                 setForm({ ...form, ai_provider_order: next, ai_provider: next[0] });
               };
+              const cfg = form.ai_providers_config[id] ?? {};
+              const enabled = cfg.enabled !== false;
+              const expanded = expandedProvider === id;
+              const updateCfg = (patch: Partial<{ enabled: boolean; key: string; model: string }>) => {
+                setForm({
+                  ...form,
+                  ai_providers_config: {
+                    ...form.ai_providers_config,
+                    [id]: { ...cfg, ...patch },
+                  },
+                });
+              };
               return (
                 <li
                   key={id}
-                  className={`flex items-center gap-2 rounded-lg border p-2.5 ${
+                  className={`rounded-lg border ${
                     isDefault ? "border-gold/50 bg-gold/10" : "border-border bg-input/40"
-                  }`}
+                  } ${!enabled ? "opacity-60" : ""}`}
                 >
-                  <span className={`inline-flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
-                    isDefault ? "bg-gold text-primary-foreground" : "bg-secondary text-stardust"
-                  }`}>
-                    {idx + 1}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm text-stardust truncate">
-                      {AI_PROVIDER_LABELS[id]}
-                      {isDefault && <span className="ml-2 text-[10px] uppercase tracking-wider text-gold">padrão</span>}
-                      {online && <span className="ml-2 text-[10px] uppercase tracking-wider text-emerald-500">online</span>}
-                    </div>
-                    <div className="text-[11px] text-muted-foreground">
-                      {isDefault ? "Usado primeiro" : `Fallback ${idx}`}
-                    </div>
+                  <div className="flex items-center gap-2 p-2.5">
+                    <span className={`inline-flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
+                      isDefault ? "bg-gold text-primary-foreground" : "bg-secondary text-stardust"
+                    }`}>
+                      {idx + 1}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setExpandedProvider(expanded ? null : id)}
+                      className="flex-1 min-w-0 text-left"
+                    >
+                      <div className="text-sm text-stardust truncate flex items-center gap-1">
+                        {expanded ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}
+                        {AI_PROVIDER_LABELS[id]}
+                        {isDefault && <span className="ml-2 text-[10px] uppercase tracking-wider text-gold">padrão</span>}
+                        {!enabled && <span className="ml-2 text-[10px] uppercase tracking-wider text-muted-foreground">desativado</span>}
+                        {enabled && online && <span className="ml-2 text-[10px] uppercase tracking-wider text-emerald-500">online</span>}
+                      </div>
+                      <div className="text-[11px] text-muted-foreground pl-4">
+                        {isDefault ? "Usado primeiro" : `Fallback ${idx}`}
+                      </div>
+                    </button>
+                    <Switch
+                      checked={enabled}
+                      onCheckedChange={(v) => updateCfg({ enabled: v })}
+                      aria-label="Ativar provedor"
+                    />
+                    <Button type="button" size="sm" variant="ghost" onClick={setAsDefault}
+                      disabled={isDefault}
+                      className="h-8 px-2 text-gold hover:bg-gold/10 disabled:opacity-40"
+                      title="Definir como padrão">
+                      <Star className={`size-4 ${isDefault ? "fill-gold" : ""}`} />
+                    </Button>
+                    <Button type="button" size="sm" variant="ghost" onClick={() => move(-1)}
+                      disabled={idx === 0} className="h-8 px-2 disabled:opacity-40" title="Subir">
+                      <ArrowUp className="size-4" />
+                    </Button>
+                    <Button type="button" size="sm" variant="ghost" onClick={() => move(1)}
+                      disabled={idx === form.ai_provider_order.length - 1}
+                      className="h-8 px-2 disabled:opacity-40" title="Descer">
+                      <ArrowDown className="size-4" />
+                    </Button>
                   </div>
-                  <Button type="button" size="sm" variant="ghost" onClick={setAsDefault}
-                    disabled={isDefault}
-                    className="h-8 px-2 text-gold hover:bg-gold/10 disabled:opacity-40"
-                    title="Definir como padrão">
-                    <Star className={`size-4 ${isDefault ? "fill-gold" : ""}`} />
-                  </Button>
-                  <Button type="button" size="sm" variant="ghost" onClick={() => move(-1)}
-                    disabled={idx === 0} className="h-8 px-2 disabled:opacity-40" title="Subir">
-                    <ArrowUp className="size-4" />
-                  </Button>
-                  <Button type="button" size="sm" variant="ghost" onClick={() => move(1)}
-                    disabled={idx === form.ai_provider_order.length - 1}
-                    className="h-8 px-2 disabled:opacity-40" title="Descer">
-                    <ArrowDown className="size-4" />
-                  </Button>
+                  {expanded && id !== "lovable" && (
+                    <div className="border-t border-border/50 p-3 grid grid-cols-1 md:grid-cols-2 gap-2">
+                      <div>
+                        <Label className="text-stardust text-xs">Modelo</Label>
+                        <Input
+                          value={cfg.model ?? ""}
+                          onChange={(e) => updateCfg({ model: e.target.value })}
+                          onKeyDown={(e) => e.stopPropagation()}
+                          className="mt-1 bg-input border-border h-8 text-xs"
+                          placeholder={
+                            id === "openai" ? "gpt-5.5" :
+                            id === "anthropic" ? "claude-3-5-sonnet-latest" :
+                            "gemini-2.5-flash"
+                          }
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-stardust text-xs">API Key</Label>
+                        <Input
+                          type="password"
+                          value={cfg.key ?? ""}
+                          onChange={(e) => updateCfg({ key: e.target.value })}
+                          onKeyDown={(e) => e.stopPropagation()}
+                          className="mt-1 bg-input border-border h-8 text-xs"
+                          placeholder="sk-..."
+                        />
+                      </div>
+                    </div>
+                  )}
+                  {expanded && id === "lovable" && (
+                    <div className="border-t border-border/50 p-3 text-[11px] text-muted-foreground">
+                      Gerenciado pela Lovable. Ative/desative para incluir ou remover do fallback.
+                    </div>
+                  )}
                 </li>
               );
             })}

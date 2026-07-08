@@ -18,6 +18,9 @@ const DEFAULT_MODELS: Record<AiProviderId, string> = {
 
 const DEFAULT_ORDER: AiProviderId[] = ["openai", "lovable", "anthropic", "google"];
 
+type ProviderConfig = { enabled?: boolean; key?: string | null; model?: string | null };
+type ProvidersConfig = Partial<Record<AiProviderId, ProviderConfig>>;
+
 function normalizeOrder(order: unknown): AiProviderId[] {
   const seen = new Set<string>();
   const out: AiProviderId[] = [];
@@ -40,7 +43,7 @@ function buildModel(
     case "lovable": {
       const key = process.env.LOVABLE_API_KEY;
       if (!key) return null;
-      return createLovableAiGatewayProvider(key)(DEFAULT_MODELS.lovable);
+      return createLovableAiGatewayProvider(key)(opts.customModel || DEFAULT_MODELS.lovable);
     }
     case "openai": {
       const key = opts.customKey || process.env.OPENAI_API_KEY;
@@ -62,7 +65,7 @@ function buildModel(
 
 export type FallbackAttempt = {
   provider: AiProviderId;
-  attempt: number; // 1-based index (1 = 1ª tentativa, 2 = 2ª, ...)
+  attempt: number;
   ok: boolean;
   error?: string;
 };
@@ -70,13 +73,13 @@ export type FallbackAttempt = {
 export type FallbackResult = {
   text: string;
   providerUsed: AiProviderId;
-  attemptIndex: number; // 1-based: 1 = padrão, 2 = 1º fallback, ...
-  attempts: FallbackAttempt[]; // histórico de todas as tentativas
+  attemptIndex: number;
+  attempts: FallbackAttempt[];
 };
 
 /**
- * Try each configured AI provider in order; return first success.
- * Falls back on timeout, network error, rate limits, or provider errors.
+ * Try each enabled AI provider in order; return first success.
+ * Providers marked `enabled: false` in ai_providers_config are skipped.
  */
 export async function generateWithFallback(
   supabase: SupabaseClient,
@@ -88,7 +91,7 @@ export async function generateWithFallback(
 
   const { data: settings } = await supabase
     .from("user_settings")
-    .select("ai_provider_order, ai_provider, custom_ai_key, custom_ai_model")
+    .select("ai_provider_order, ai_provider, custom_ai_key, custom_ai_model, ai_providers_config")
     .eq("user_id", userId)
     .maybeSingle();
 
@@ -96,16 +99,23 @@ export async function generateWithFallback(
   const withDefault = rawOrder ?? (settings?.ai_provider ? [settings.ai_provider] : []);
   const order = normalizeOrder(withDefault);
   const defaultProvider = order[0];
+  const config = ((settings?.ai_providers_config as ProvidersConfig | null) ?? {}) as ProvidersConfig;
 
   const attempts: FallbackAttempt[] = [];
 
   for (let i = 0; i < order.length; i++) {
     const provider = order[i];
     const attemptIndex = i + 1;
-    const useCustom = provider === defaultProvider && settings?.custom_ai_key;
+    const perProvider = config[provider] ?? {};
+    if (perProvider.enabled === false) {
+      attempts.push({ provider, attempt: attemptIndex, ok: false, error: "disabled" });
+      continue;
+    }
+    const legacyKey = provider === defaultProvider ? (settings?.custom_ai_key ?? null) : null;
+    const legacyModel = provider === defaultProvider ? (settings?.custom_ai_model ?? null) : null;
     const model = buildModel(provider, {
-      customKey: useCustom ? settings?.custom_ai_key : null,
-      customModel: useCustom ? settings?.custom_ai_model : null,
+      customKey: perProvider.key ?? legacyKey,
+      customModel: perProvider.model ?? legacyModel,
     });
     if (!model) {
       attempts.push({ provider, attempt: attemptIndex, ok: false, error: "not configured" });
@@ -114,15 +124,11 @@ export async function generateWithFallback(
     try {
       const { text } = await Promise.race([
         generateText({ model, prompt }),
-        new Promise<never>((_, rej) =>
-          setTimeout(() => rej(new Error("timeout")), timeoutMs),
-        ),
+        new Promise<never>((_, rej) => setTimeout(() => rej(new Error("timeout")), timeoutMs)),
       ]);
       if (!text || !text.trim()) throw new Error("empty response");
       attempts.push({ provider, attempt: attemptIndex, ok: true });
-      console.info(
-        `[ai-fallback] success on attempt ${attemptIndex}/${order.length} using ${provider}`,
-      );
+      console.info(`[ai-fallback] success on attempt ${attemptIndex}/${order.length} using ${provider}`);
       return { text, providerUsed: provider, attemptIndex, attempts };
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -135,4 +141,3 @@ export async function generateWithFallback(
   const summary = attempts.map((a) => `#${a.attempt} ${a.provider}: ${a.error}`).join(" | ");
   throw new Error(`All AI providers failed. ${summary}`);
 }
-
