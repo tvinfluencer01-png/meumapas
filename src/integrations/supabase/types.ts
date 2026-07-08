@@ -5396,6 +5396,7 @@ export type Database = {
         Row: {
           ai_provider: string
           ai_provider_order: string[]
+          ai_providers_config: Json
           astrology_api_key: string | null
           astrology_api_user_id: string | null
           custom_ai_key: string | null
@@ -5408,6 +5409,7 @@ export type Database = {
         Insert: {
           ai_provider?: string
           ai_provider_order?: string[]
+          ai_providers_config?: Json
           astrology_api_key?: string | null
           astrology_api_user_id?: string | null
           custom_ai_key?: string | null
@@ -5420,6 +5422,7 @@ export type Database = {
         Update: {
           ai_provider?: string
           ai_provider_order?: string[]
+          ai_providers_config?: Json
           astrology_api_key?: string | null
           astrology_api_user_id?: string | null
           custom_ai_key?: string | null
