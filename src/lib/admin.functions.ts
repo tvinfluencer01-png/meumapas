@@ -299,6 +299,137 @@ export const saveSystemGlobalSettings = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const sendSystemAlertTest = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({
+      severity: z.enum(["critical", "warning", "info"]).default("warning"),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+
+    const { data: gs } = await supabaseAdmin
+      .from("system_settings")
+      .select("alert_email, alert_whatsapp")
+      .eq("id", "global")
+      .maybeSingle();
+
+    const alertEmail = ((gs as any)?.alert_email as string | null) || process.env.SUPER_ADMIN_EMAIL || null;
+    const alertWhatsapp = ((gs as any)?.alert_whatsapp as string | null) || null;
+
+    const nowIso = new Date().toISOString();
+    const severity = data.severity;
+    const summary = `Teste de alerta [${severity.toUpperCase()}] disparado pelo painel admin em ${nowIso}. Se você recebeu esta mensagem, os canais estão funcionando corretamente.`;
+
+    const result = {
+      email: { attempted: false, ok: false, to: alertEmail, error: null as string | null },
+      whatsapp: { attempted: false, ok: false, to: alertWhatsapp, provider: null as string | null, error: null as string | null },
+    };
+
+    // ---- Email via SMTP ----
+    const { data: smtp } = await (supabaseAdmin as any)
+      .from("smtp_settings")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (alertEmail) {
+      result.email.attempted = true;
+      if (!smtp?.enabled || !smtp.host || !smtp.username || !smtp.password || !smtp.from_email) {
+        result.email.error = "SMTP não configurado ou desabilitado.";
+      } else {
+        try {
+          const nodemailer = (await import("nodemailer")).default;
+          const transporter = nodemailer.createTransport({
+            host: smtp.host,
+            port: smtp.port,
+            secure: !!smtp.secure,
+            auth: { user: smtp.username, pass: smtp.password },
+          });
+          const html = `<div style="font-family:Arial,sans-serif;color:#222"><h2 style="color:#b00020">✅ Teste de alerta [${severity.toUpperCase()}]</h2><p>${summary}</p><p style="color:#666;font-size:12px">Timestamp: ${nowIso}</p></div>`;
+          await transporter.sendMail({
+            from: `"${smtp.from_name || smtp.from_email}" <${smtp.from_email}>`,
+            to: alertEmail,
+            subject: `[TESTE ${severity.toUpperCase()}] Alerta do Sistema — Código Cósmico`,
+            text: summary,
+            html,
+          });
+          result.email.ok = true;
+        } catch (e: any) {
+          result.email.error = e?.message ?? String(e);
+        }
+      }
+    } else {
+      result.email.error = "E-mail de alerta não configurado.";
+    }
+
+    // ---- WhatsApp via Evolution → Twilio ----
+    if (alertWhatsapp) {
+      result.whatsapp.attempted = true;
+      const to = alertWhatsapp.replace(/\D+/g, "");
+      const waMsg = `✅ [TESTE ${severity.toUpperCase()}] Código Cósmico\n\n${summary}`;
+
+      const { data: evo } = await (supabaseAdmin as any)
+        .from("evolution_settings")
+        .select("*")
+        .eq("id", true)
+        .maybeSingle();
+      const { data: twilio } = await supabaseAdmin
+        .from("twilio_settings")
+        .select("*")
+        .eq("id", true)
+        .maybeSingle();
+
+      const evoReady = evo?.enabled && evo?.base_url && evo?.global_api_key && evo?.instance_name;
+
+      try {
+        if (evoReady) {
+          result.whatsapp.provider = "evolution";
+          const base = String(evo.base_url).replace(/\/+$/, "");
+          const url = `${base}/message/sendText/${encodeURIComponent(evo.instance_name)}`;
+          const res = await fetch(url, {
+            method: "POST",
+            headers: { apikey: evo.global_api_key, "Content-Type": "application/json" },
+            body: JSON.stringify({ number: to, text: waMsg }),
+          });
+          if (res.ok) result.whatsapp.ok = true;
+          else result.whatsapp.error = `Evolution HTTP ${res.status}: ${(await res.text()).slice(0, 300)}`;
+        } else if (twilio?.enabled && (twilio as any).account_sid && (twilio as any).auth_token && (twilio as any).whatsapp_from) {
+          result.whatsapp.provider = "twilio";
+          const t = twilio as any;
+          const form = new URLSearchParams();
+          form.set("From", `whatsapp:${t.whatsapp_from}`);
+          form.set("To", `whatsapp:+${to}`);
+          form.set("Body", waMsg);
+          const res = await fetch(
+            `https://api.twilio.com/2010-04-01/Accounts/${t.account_sid}/Messages.json`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: "Basic " + btoa(`${t.account_sid}:${t.auth_token}`),
+                "Content-Type": "application/x-www-form-urlencoded",
+              },
+              body: form.toString(),
+            },
+          );
+          if (res.ok) result.whatsapp.ok = true;
+          else result.whatsapp.error = `Twilio HTTP ${res.status}: ${(await res.text()).slice(0, 300)}`;
+        } else {
+          result.whatsapp.error = "Nenhum provedor de WhatsApp configurado (Evolution/Twilio).";
+        }
+      } catch (e: any) {
+        result.whatsapp.error = e?.message ?? String(e);
+      }
+    } else {
+      result.whatsapp.error = "WhatsApp de alerta não configurado.";
+    }
+
+    return { ok: true, severity, at: nowIso, summary, ...result };
+  });
+
+
 export const getPublicSystemSettings = createServerFn({ method: "GET" })
   .handler(async () => {
     const { data } = await supabaseAdmin
