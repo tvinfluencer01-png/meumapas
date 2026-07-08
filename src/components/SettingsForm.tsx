@@ -36,7 +36,7 @@ export function SettingsForm() {
     astrology_api_key: "",
     ai_provider: "lovable",
     custom_ai_key: "",
-    custom_ai_model: "openai/gpt-5",
+    custom_ai_model: "openai/gpt-5.5",
   });
 
   const { data } = useQuery({
@@ -65,7 +65,7 @@ export function SettingsForm() {
         astrology_api_key: data.astrology_api_key ?? "",
         ai_provider: data.ai_provider ?? "lovable",
         custom_ai_key: data.custom_ai_key ?? "",
-        custom_ai_model: data.custom_ai_model ?? "openai/gpt-5",
+        custom_ai_model: data.custom_ai_model ?? "openai/gpt-5.5",
       });
     }
   }, [data]);
