@@ -161,6 +161,11 @@ async function handler(
   const type =
     payload?.type ?? payload?.action ?? url.searchParams.get("type") ?? url.searchParams.get("topic");
 
+  if (logCtx) {
+    logCtx.payment_id = paymentId ? String(paymentId) : null;
+    logCtx.event_type = type ? String(type) : null;
+  }
+
   if (!paymentId || (type && !String(type).includes("payment"))) {
     return Response.json({ ignored: true, reason: "not a payment event" });
   }
@@ -200,6 +205,13 @@ async function handler(
   const isHoroscopePlan =
     metadataKind === "horoscope_plan" ||
     String(pay?.external_reference ?? "").startsWith("horoscope_plan:");
+
+  if (logCtx) {
+    logCtx.mp_status = payStatus;
+    logCtx.order_id = orderId ?? null;
+    logCtx.metadata_kind = metadataKind ?? null;
+  }
+
 
   // ─── Assinatura do Horóscopo Diário: lida com approved/refunded/cancelled/charged_back ───
   if (isHoroscopePlan) {
