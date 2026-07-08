@@ -1,6 +1,35 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { getConfiguredProviderKey } from "@/lib/ai-resolver.server";
+
+async function generateImageBytes(prompt: string, openaiKey: string): Promise<Uint8Array | null> {
+  const res = await fetch("https://api.openai.com/v1/images/generations", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${openaiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "gpt-image-1",
+      prompt,
+      size: "1536x1024",
+      n: 1,
+    }),
+  });
+  if (!res.ok) {
+    const txt = await res.text().catch(() => "");
+    if (res.status === 429) throw new Error("Limite de geração OpenAI atingido. Tente novamente em instantes.");
+    if (res.status === 401) throw new Error("Chave OpenAI inválida — verifique em Configurações → IA.");
+    throw new Error(`Falha na geração (${res.status}): ${txt.slice(0, 200)}`);
+  }
+  const json = (await res.json()) as { data?: Array<{ b64_json?: string; url?: string }> };
+  const first = json.data?.[0];
+  if (first?.b64_json) return Buffer.from(first.b64_json, "base64");
+  if (first?.url) {
+    const imgRes = await fetch(first.url);
+    if (!imgRes.ok) return null;
+    return new Uint8Array(await imgRes.arrayBuffer());
+  }
+  return null;
+}
 
 /**
  * Temas fixos que o sistema pode usar dentro dos relatórios.
