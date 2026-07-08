@@ -41,6 +41,103 @@ async function logFnError(
   }
 }
 
+// --- helpers de interpretação (prós/contras/dicas por signo e aspecto) ----
+const SIGN_STRENGTH: Record<string, string> = {
+  "Áries": "coragem para iniciar, iniciativa e franqueza",
+  "Touro": "estabilidade, presença sensorial e paciência para construir",
+  "Gêmeos": "curiosidade, agilidade mental e habilidade de conectar ideias",
+  "Câncer": "empatia, memória afetiva e capacidade de acolher",
+  "Leão": "presença, criatividade e generosidade",
+  "Virgem": "discernimento, cuidado com detalhes e senso prático",
+  "Libra": "diplomacia, senso estético e escuta relacional",
+  "Escorpião": "profundidade, foco e poder de transformação",
+  "Sagitário": "fé, visão ampla e entusiasmo",
+  "Capricórnio": "disciplina, ambição madura e responsabilidade",
+  "Aquário": "originalidade, visão coletiva e independência",
+  "Peixes": "sensibilidade, compaixão e intuição",
+};
+const SIGN_SHADOW: Record<string, string> = {
+  "Áries": "impulsividade, brigas por qualquer coisa e cansaço por começar tudo sozinho",
+  "Touro": "teimosia, apego e resistência a mudar mesmo quando é necessário",
+  "Gêmeos": "dispersão, superficialidade e ansiedade mental",
+  "Câncer": "carência, mágoa acumulada e evitar conflitos",
+  "Leão": "orgulho ferido, necessidade constante de reconhecimento",
+  "Virgem": "autocrítica dura, perfeccionismo paralisante e preocupação excessiva",
+  "Libra": "indecisão, evitar confronto e agradar demais",
+  "Escorpião": "controle, ciúmes e ressentimento silencioso",
+  "Sagitário": "excesso, promessa que não cumpre e fuga de responsabilidades",
+  "Capricórnio": "rigidez, frieza emocional e cobrança excessiva",
+  "Aquário": "distância afetiva, rebeldia sem causa e teimosia intelectual",
+  "Peixes": "fuga da realidade, vitimização e limites frágeis",
+};
+const SIGN_ADVICE: Record<string, string> = {
+  "Áries": "canalizar a energia em UM projeto por vez e aprender a esperar antes de reagir",
+  "Touro": "revisar o que já não serve e permitir uma pequena mudança de rotina",
+  "Gêmeos": "escolher menos frentes e aprofundar o que realmente importa",
+  "Câncer": "cuidar do próprio ninho antes de cuidar de todos e pedir ajuda quando precisar",
+  "Leão": "brilhar servindo algo maior que você mesmo",
+  "Virgem": "praticar o suficiente no lugar do perfeito e descansar sem culpa",
+  "Libra": "tomar decisões mesmo sem consenso e defender seu ponto de vista",
+  "Escorpião": "soltar o controle em uma área e confiar no processo",
+  "Sagitário": "aterrar a visão em ações concretas e cumprir o que promete",
+  "Capricórnio": "permitir prazer e vulnerabilidade dentro da disciplina",
+  "Aquário": "aproximar-se emocionalmente das pessoas que importam",
+  "Peixes": "criar estrutura, agenda e limites claros para proteger a sensibilidade",
+};
+function signStrength(sign: string) { return SIGN_STRENGTH[sign] ?? "clareza sobre suas necessidades e valores"; }
+function signShadow(sign: string) { return SIGN_SHADOW[sign] ?? "dispersão e reatividade emocional"; }
+function signAdvice(sign: string) { return SIGN_ADVICE[sign] ?? "observar seus padrões antes de agir"; }
+
+function aspectPro(aspect: string): string {
+  const a = aspect.toLowerCase();
+  if (a.includes("trígono") || a.includes("trigono")) return "fluxo natural e talento espontâneo entre essas energias.";
+  if (a.includes("sextil")) return "oportunidade concreta que aparece quando você toma iniciativa.";
+  if (a.includes("conjunção") || a.includes("conjuncao")) return "força concentrada — quando alinhado, vira marca pessoal.";
+  if (a.includes("quadratura")) return "tensão que empurra crescimento — resolver esse atrito destrava evolução real.";
+  if (a.includes("oposição") || a.includes("oposicao")) return "consciência via espelho — vínculos e situações mostram o que precisa integrar.";
+  return "conexão energética que enriquece a leitura do seu mapa.";
+}
+function aspectCon(aspect: string): string {
+  const a = aspect.toLowerCase();
+  if (a.includes("trígono") || a.includes("trigono")) return "acomodação — o talento vem fácil e por isso pode ser subutilizado.";
+  if (a.includes("sextil")) return "só floresce com ação — se você espera cair do céu, a chance passa.";
+  if (a.includes("conjunção") || a.includes("conjuncao")) return "excesso da mesma energia — cuidado para não ficar preso em um único registro.";
+  if (a.includes("quadratura")) return "frustração e sensação de esbarrar sempre nos mesmos temas até assumir a lição.";
+  if (a.includes("oposição") || a.includes("oposicao")) return "projeção nos outros — culpar quem está do outro lado ao invés de integrar.";
+  return "requer consciência para não polarizar em um só extremo.";
+}
+
+// --- número pessoal do dia (numerologia — mesma lógica do dashboard) -------
+function numReduce(n: number): number {
+  while (n > 9 && n !== 11 && n !== 22 && n !== 33) {
+    n = String(n).split("").reduce((a, b) => a + Number(b), 0);
+  }
+  return n;
+}
+function personalDayNumber(dateISO: string, birthISO: string): number {
+  const [by, bm, bd] = birthISO.split("-").map(Number);
+  const [y, m, d] = dateISO.split("-").map(Number);
+  const personalYear = numReduce(numReduce(bm) + numReduce(bd) + numReduce(y));
+  const personalMonth = numReduce(personalYear + numReduce(m));
+  return numReduce(personalMonth + numReduce(d));
+}
+const PERSONAL_DAY_VIBE: Record<number, string> = {
+  1: "recomeço · iniciar",
+  2: "vínculo · escutar",
+  3: "expressão · criar",
+  4: "estrutura · organizar",
+  5: "movimento · mudar",
+  6: "cuidado · nutrir",
+  7: "introspecção · estudar",
+  8: "poder · decidir",
+  9: "fechamento · soltar",
+  11: "intuição elevada · inspirar",
+  22: "grande construção · realizar",
+  33: "cura coletiva · servir",
+};
+function personalDayVibe(n: number): string { return PERSONAL_DAY_VIBE[n] ?? "equilíbrio"; }
+
+
 // --- date helpers ----------------------------------------------------------
 function getWeekRange(reference = new Date()) {
   const d = new Date(reference);
