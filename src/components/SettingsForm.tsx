@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { testAstrologyCredentials } from "@/lib/admin.functions";
-import { listProviderModels, testProvider } from "@/lib/ai-providers.functions";
+import { listProviderModels, testProvider, testImageProvider } from "@/lib/ai-providers.functions";
 
 type ChatProviderId = "openai" | "anthropic" | "google" | "groq" | "mistral" | "openrouter";
 
@@ -203,6 +203,19 @@ export function SettingsForm() {
   const [providerStatus, setProviderStatus] = useState<Record<string, { ok: boolean; message: string } | null>>({});
   const listModelsFn = useServerFn(listProviderModels);
   const testProviderFn = useServerFn(testProvider);
+  const testImageProviderFn = useServerFn(testImageProvider);
+
+  async function runImageTest(id: string, key?: string) {
+    setProviderBusy((b) => ({ ...b, [id]: "testing" }));
+    setProviderStatus((s) => ({ ...s, [id]: null }));
+    try {
+      const res = await testImageProviderFn({ data: { provider: id as "img_pollinations" | "img_huggingface" | "img_together" | "img_openai" | "img_stability" | "img_replicate", key: key ?? null } });
+      setProviderStatus((s) => ({ ...s, [id]: { ok: res.ok, message: res.message } }));
+      res.ok ? toast.success(`${id}: ${res.message}`) : toast.error(`${id}: ${res.message}`);
+    } finally {
+      setProviderBusy((b) => ({ ...b, [id]: null }));
+    }
+  }
 
   async function loadModels(id: string, key?: string) {
     setProviderBusy((b) => ({ ...b, [id]: "listing" }));
@@ -819,6 +832,27 @@ export function SettingsForm() {
                         <div className="text-stardust font-medium">Como configurar</div>
                         <div>{meta.tutorial}</div>
                         <ExtLink href={meta.url}>{meta.linkLabel}</ExtLink>
+                      </div>
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="text-[11px]">
+                          {providerStatus[id] && (
+                            <span className={`inline-flex items-center gap-1 ${providerStatus[id]?.ok ? "text-emerald-500" : "text-destructive"}`}>
+                              {providerStatus[id]?.ok ? <CheckCircle2 className="size-3" /> : <AlertTriangle className="size-3" />}
+                              {providerStatus[id]?.message}
+                            </span>
+                          )}
+                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          disabled={providerBusy[id] === "testing"}
+                          onClick={() => runImageTest(id, cfg.key)}
+                          className="gap-1.5 border-gold/30 hover:bg-gold/10 h-7 text-xs"
+                        >
+                          <Zap className={`size-3 ${providerBusy[id] === "testing" ? "animate-pulse" : ""}`} />
+                          {providerBusy[id] === "testing" ? "Testando..." : "Testar"}
+                        </Button>
                       </div>
                     </div>
                   )}

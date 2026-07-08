@@ -135,3 +135,103 @@ export const testProvider = createServerFn({ method: "POST" })
       return { ok: false as const, message: e instanceof Error ? e.message : "Erro desconhecido" };
     }
   });
+
+const ImageProviderIdSchema = z.enum([
+  "img_pollinations",
+  "img_huggingface",
+  "img_together",
+  "img_openai",
+  "img_stability",
+  "img_replicate",
+]);
+
+function resolveImageKey(
+  provider: z.infer<typeof ImageProviderIdSchema>,
+  supplied: string | null | undefined,
+): string | null {
+  const raw = supplied?.trim();
+  if (raw) return raw;
+  switch (provider) {
+    case "img_pollinations": return "public";
+    case "img_huggingface": return process.env.HUGGINGFACE_API_KEY ?? process.env.HF_API_KEY ?? null;
+    case "img_together": return process.env.TOGETHER_API_KEY ?? null;
+    case "img_openai": return process.env.OPENAI_API_KEY ?? null;
+    case "img_stability": return process.env.STABILITY_API_KEY ?? null;
+    case "img_replicate": return process.env.REPLICATE_API_TOKEN ?? null;
+  }
+}
+
+/** Test an image provider by generating a tiny image. */
+export const testImageProvider = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({
+      provider: ImageProviderIdSchema,
+      key: z.string().optional().nullable(),
+    }).parse(d),
+  )
+  .handler(async ({ data }) => {
+    const key = resolveImageKey(data.provider, data.key);
+    if (!key) return { ok: false as const, message: "Chave não configurada" };
+    const started = Date.now();
+    try {
+      const doCall = async (): Promise<{ ok: true; bytes: number } | { ok: false; msg: string }> => {
+        const prompt = "a small blue circle on white";
+        if (data.provider === "img_pollinations") {
+          const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=256&height=256&nologo=true`;
+          const r = await fetch(url);
+          if (!r.ok) return { ok: false, msg: `HTTP ${r.status}` };
+          const b = await r.arrayBuffer();
+          return { ok: true, bytes: b.byteLength };
+        }
+        if (data.provider === "img_openai") {
+          const r = await fetch("https://api.openai.com/v1/models", {
+            headers: { Authorization: `Bearer ${key}` },
+          });
+          if (!r.ok) return { ok: false, msg: `HTTP ${r.status}` };
+          return { ok: true, bytes: 0 };
+        }
+        if (data.provider === "img_huggingface") {
+          const r = await fetch("https://huggingface.co/api/whoami-v2", {
+            headers: { Authorization: `Bearer ${key}` },
+          });
+          if (!r.ok) return { ok: false, msg: `HTTP ${r.status}` };
+          return { ok: true, bytes: 0 };
+        }
+        if (data.provider === "img_together") {
+          const r = await fetch("https://api.together.xyz/v1/models", {
+            headers: { Authorization: `Bearer ${key}` },
+          });
+          if (!r.ok) return { ok: false, msg: `HTTP ${r.status}` };
+          return { ok: true, bytes: 0 };
+        }
+        if (data.provider === "img_stability") {
+          const r = await fetch("https://api.stability.ai/v1/user/account", {
+            headers: { Authorization: `Bearer ${key}` },
+          });
+          if (!r.ok) return { ok: false, msg: `HTTP ${r.status}` };
+          return { ok: true, bytes: 0 };
+        }
+        if (data.provider === "img_replicate") {
+          const r = await fetch("https://api.replicate.com/v1/account", {
+            headers: { Authorization: `Bearer ${key}` },
+          });
+          if (!r.ok) return { ok: false, msg: `HTTP ${r.status}` };
+          return { ok: true, bytes: 0 };
+        }
+        return { ok: false, msg: "Provedor desconhecido" };
+      };
+      const res = await Promise.race([
+        doCall(),
+        new Promise<{ ok: false; msg: string }>((resolve) =>
+          setTimeout(() => resolve({ ok: false, msg: "timeout 15s" }), 15_000),
+        ),
+      ]);
+      if (!res.ok) return { ok: false as const, message: res.msg };
+      const suffix = res.bytes ? ` (${res.bytes} bytes)` : "";
+      return { ok: true as const, message: `Autenticado em ${Date.now() - started}ms${suffix}` };
+    } catch (e) {
+      return { ok: false as const, message: e instanceof Error ? e.message : "Erro desconhecido" };
+    }
+  });
+
