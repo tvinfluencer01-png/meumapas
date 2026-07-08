@@ -146,6 +146,8 @@ export function SettingsForm() {
         custom_ai_model: data.custom_ai_model ?? "openai/gpt-5.5",
         ai_providers_config: ((data as { ai_providers_config?: Record<string, { enabled?: boolean; key?: string; model?: string }> }).ai_providers_config) ?? {},
       });
+      const cfgMap = ((data as { ai_providers_config?: Record<string, { enabled?: boolean; key?: string; model?: string }> }).ai_providers_config) ?? {};
+      void checkAllProviders(order, cfgMap);
     }
   }, [data]);
 
