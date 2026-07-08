@@ -19,7 +19,6 @@
     "check:lint": "node scripts/check.mjs --lint",
     "check:format": "node scripts/check.mjs --format",
     "predev": "node scripts/check.mjs --syntax --lint || true",
-    "prepare": "husky"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
