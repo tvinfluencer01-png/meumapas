@@ -266,6 +266,8 @@ export const getSystemGlobalSettings = createServerFn({ method: "GET" })
     return {
       whatsapp_number: data?.whatsapp_number ?? "",
       credit_value_cents: data?.credit_value_cents ?? 0,
+      alert_email: (data as any)?.alert_email ?? "",
+      alert_whatsapp: (data as any)?.alert_whatsapp ?? "",
     };
   });
 
@@ -275,22 +277,24 @@ export const saveSystemGlobalSettings = createServerFn({ method: "POST" })
     z.object({
       whatsapp_number: z.string().trim().max(30).optional(),
       credit_value_cents: z.number().int().min(0).optional(),
+      alert_email: z.string().trim().max(255).optional().nullable(),
+      alert_whatsapp: z.string().trim().max(30).optional().nullable(),
     }).parse(d),
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
+    const payload: Record<string, unknown> = {
+      id: "global",
+      updated_by: context.userId,
+      updated_at: new Date().toISOString(),
+    };
+    if (data.whatsapp_number !== undefined) payload.whatsapp_number = data.whatsapp_number;
+    if (data.credit_value_cents !== undefined) payload.credit_value_cents = data.credit_value_cents;
+    if (data.alert_email !== undefined) payload.alert_email = data.alert_email || null;
+    if (data.alert_whatsapp !== undefined) payload.alert_whatsapp = data.alert_whatsapp || null;
     const { error } = await supabaseAdmin
       .from("system_settings")
-      .upsert(
-        {
-          id: "global",
-          whatsapp_number: data.whatsapp_number,
-          credit_value_cents: data.credit_value_cents,
-          updated_by: context.userId,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "id" }
-      );
+      .upsert(payload as any, { onConflict: "id" });
     if (error) throw new Error(error.message);
     return { ok: true };
   });
