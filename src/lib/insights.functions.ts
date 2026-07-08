@@ -184,9 +184,8 @@ Regras:
 - Português brasileiro.`;
 
     try {
-      const gateway = createLovableAiGatewayProvider(apiKey);
-      const model = gateway("google/gemini-3-flash-preview");
-      const { text } = await generateText({ model, prompt });
+      const { generateWithFallback } = await import("./ai-fallback.server");
+      const { text } = await generateWithFallback(supabase, userId, prompt);
       const raw = text.trim().replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```$/i, "").trim();
       const parsed = JSON.parse(raw) as {
         intro: string;
