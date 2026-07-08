@@ -154,20 +154,62 @@ export function AdminGlobalSettings() {
                 </p>
               </div>
 
-              <Button
-                onClick={() =>
-                  saveMut.mutate({
-                    alert_email: alertEmail || null,
-                    alert_whatsapp: alertWhatsapp || null,
-                  })
-                }
-                disabled={saveMut.isPending}
-                className="bg-gold text-primary-foreground hover:bg-gold-glow"
-              >
-                {saveMut.isPending ? <Loader2 className="size-4 animate-spin mr-2" /> : <Save className="size-4 mr-2" />}
-                Salvar destinos de alertas
-              </Button>
-            </div>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  onClick={() =>
+                    saveMut.mutate({
+                      alert_email: alertEmail || null,
+                      alert_whatsapp: alertWhatsapp || null,
+                    })
+                  }
+                  disabled={saveMut.isPending}
+                  className="bg-gold text-primary-foreground hover:bg-gold-glow"
+                >
+                  {saveMut.isPending ? <Loader2 className="size-4 animate-spin mr-2" /> : <Save className="size-4 mr-2" />}
+                  Salvar destinos
+                </Button>
+
+                <div className="flex items-center gap-2">
+                  <Select value={severity} onValueChange={(v) => setSeverity(v as "critical" | "warning" | "info")}>
+                    <SelectTrigger className="w-[140px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="info">Info</SelectItem>
+                      <SelectItem value="warning">Warning</SelectItem>
+                      <SelectItem value="critical">Critical</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    variant="outline"
+                    onClick={() => testMut.mutate()}
+                    disabled={testMut.isPending || (!alertEmail && !alertWhatsapp)}
+                  >
+                    {testMut.isPending ? <Loader2 className="size-4 animate-spin mr-2" /> : <Send className="size-4 mr-2" />}
+                    Testar alertas
+                  </Button>
+                </div>
+              </div>
+
+              {lastTest && (
+                <div className="rounded-md border border-border bg-card/40 p-3 space-y-2 text-xs">
+                  <div className="font-medium">Resultado do último teste ({lastTest.severity.toUpperCase()})</div>
+                  <div className="flex items-start gap-2">
+                    {lastTest.email.ok ? <CheckCircle2 className="size-4 text-emerald-400 mt-0.5" /> : <XCircle className="size-4 text-destructive mt-0.5" />}
+                    <div>
+                      <div>Email → {lastTest.email.to || "—"}</div>
+                      {lastTest.email.error && <div className="text-destructive">{lastTest.email.error}</div>}
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    {lastTest.whatsapp.ok ? <CheckCircle2 className="size-4 text-emerald-400 mt-0.5" /> : <XCircle className="size-4 text-destructive mt-0.5" />}
+                    <div>
+                      <div>WhatsApp → {lastTest.whatsapp.to || "—"} {lastTest.whatsapp.provider ? `(${lastTest.whatsapp.provider})` : ""}</div>
+                      {lastTest.whatsapp.error && <div className="text-destructive">{lastTest.whatsapp.error}</div>}
+                    </div>
+                  </div>
+                </div>
+              )}
           )}
         </CardContent>
       </Card>
