@@ -97,6 +97,7 @@ export function SettingsForm() {
         ai_provider_order: order,
         custom_ai_key: data.custom_ai_key ?? "",
         custom_ai_model: data.custom_ai_model ?? "openai/gpt-5.5",
+        ai_providers_config: ((data as { ai_providers_config?: Record<string, { enabled?: boolean; key?: string; model?: string }> }).ai_providers_config) ?? {},
       });
     }
   }, [data]);
