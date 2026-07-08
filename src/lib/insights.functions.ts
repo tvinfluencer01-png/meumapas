@@ -1,7 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { createLovableAiGatewayProvider } from "@/lib/ai-gateway";
-import { generateText } from "ai";
 import { SIGN_GUIDANCE } from "@/lib/astro-meanings";
 import { computeNumerology, NUMBER_MEANINGS } from "@/lib/numerology";
 import { applyActiveChartFilter, resolveActiveSubject } from "@/lib/active-subject";
