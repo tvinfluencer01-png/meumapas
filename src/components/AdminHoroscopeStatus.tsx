@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { GradientStatCard } from "@/components/ui/gradient-stat-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getHoroscopeStatus } from "@/lib/horoscope-status.functions";
+import { getHoroscopeStatus, type HoroscopeStatusResult, type UserHoroscopeStatus } from "@/lib/horoscope-status.functions";
 
 function fmt(ts: string | null) {
   if (!ts) return "—";
