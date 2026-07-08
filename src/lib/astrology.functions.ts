@@ -590,11 +590,10 @@ async function buildForecastWithAI(chart: {
   midheaven: number | null;
   aspects: { a: string; b: string; aspect: string; orb: number }[];
   summary: string | null;
-}): Promise<AstroForecast> {
-  const apiKey = process.env.LOVABLE_API_KEY;
-  if (!apiKey) throw new Error("LOVABLE_API_KEY ausente");
+}, userId?: string | null): Promise<AstroForecast> {
+  const { model: makeModel } = await getConfiguredProvider(supabaseAdmin, userId ?? null);
   // Modelo mais robusto para gerar leitura extensa e profunda (~40 páginas)
-  const model = createLovableAiGatewayProvider(apiKey)("openai/gpt-5.5");
+  const model = makeModel("openai/gpt-5.5");
 
   const ascSign = chart.ascendant != null ? SIGNS[Math.floor(chart.ascendant / 30)] : "—";
   const mcSign = chart.midheaven != null ? SIGNS[Math.floor(chart.midheaven / 30)] : "—";
