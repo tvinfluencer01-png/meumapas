@@ -156,20 +156,36 @@ export async function generateImageWithConfigured(
   size = "1024x1024",
 ): Promise<Uint8Array> {
   let cfgMap: Record<string, { enabled?: boolean; key?: string }> = {};
+  let order: ImageProviderId[] = DEFAULT_ORDER;
   if (supabase && userId) {
     const { data } = await supabase
       .from("user_settings")
       .select("ai_providers_config")
       .eq("user_id", userId)
       .maybeSingle();
-    cfgMap =
+    const raw =
       ((data?.ai_providers_config as Record<
         string,
-        { enabled?: boolean; key?: string }
+        { enabled?: boolean; key?: string } | string[] | undefined
       > | null) ?? {});
+    cfgMap = raw as Record<string, { enabled?: boolean; key?: string }>;
+    const savedOrder = raw["__image_order"] as unknown;
+    if (Array.isArray(savedOrder)) {
+      const seen = new Set<string>();
+      const filtered: ImageProviderId[] = [];
+      for (const id of [...(savedOrder as string[]), ...DEFAULT_ORDER]) {
+        if (typeof id !== "string") continue;
+        if (!DEFAULT_ORDER.includes(id as ImageProviderId)) continue;
+        if (seen.has(id)) continue;
+        seen.add(id);
+        filtered.push(id as ImageProviderId);
+      }
+      if (filtered.length) order = filtered;
+    }
   }
   const errors: string[] = [];
-  for (const p of DEFAULT_ORDER) {
+  for (const p of order) {
+
     const cfg = cfgMap[p] ?? {};
     if (cfg.enabled === false) continue;
     const key = (cfg.key && cfg.key.trim()) || envKey(p);
