@@ -217,11 +217,45 @@ export function SettingsForm() {
     }
   }
 
+  function pickBestGeminiModel(models: string[]): string | null {
+    const candidates = models
+      .map((m) => m.replace(/^models\//, ""))
+      .filter((m) => /gemini/i.test(m) && !/(embed|aqa|vision-legacy|image|tts|audio)/i.test(m));
+    if (!candidates.length) return null;
+    const score = (m: string): number => {
+      let s = 0;
+      const v = parseFloat((m.match(/gemini-(\d+(?:\.\d+)?)/i) ?? [])[1] ?? "0");
+      s += v * 100;
+      if (/pro/i.test(m)) s += 40;
+      else if (/flash(?!-lite)/i.test(m)) s += 30;
+      else if (/flash-lite/i.test(m)) s += 20;
+      if (/preview|exp|latest/i.test(m)) s -= 5;
+      if (/-\d{3,}/.test(m)) s -= 10;
+      return s;
+    };
+    return candidates.sort((a, b) => score(b) - score(a))[0] ?? null;
+  }
+
   async function loadModels(id: string, key?: string) {
     setProviderBusy((b) => ({ ...b, [id]: "listing" }));
     try {
       const res = await listModelsFn({ data: { provider: id as ChatProviderId, key: key ?? null } });
-      if (res.ok) setProviderModels((m) => ({ ...m, [id]: res.models }));
+      if (res.ok) {
+        setProviderModels((m) => ({ ...m, [id]: res.models }));
+        if (id === "google") {
+          const best = pickBestGeminiModel(res.models);
+          if (best) {
+            setForm((f) => ({
+              ...f,
+              ai_providers_config: {
+                ...f.ai_providers_config,
+                google: { ...(f.ai_providers_config.google ?? {}), model: best },
+              },
+            }));
+            toast.success(`Gemini: modelo recomendado selecionado (${best})`);
+          }
+        }
+      }
       else toast.error(`Modelos ${id}: ${res.error}`);
     } finally {
       setProviderBusy((b) => ({ ...b, [id]: null }));
