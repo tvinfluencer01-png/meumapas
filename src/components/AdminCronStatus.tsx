@@ -84,6 +84,16 @@ function CronJobItem({ job }: { job: CronJobStatus }) {
     onError: (e: Error) => toast.error(`Erro ao disparar teste: ${e.message}`),
   });
 
+  const toggleMut = useMutation({
+    mutationFn: () =>
+      updateFn({ data: { jobid: job.jobid, schedule: job.schedule, command: job.command, active: !job.active } }),
+    onSuccess: () => {
+      toast.success(job.active ? "Cron job desativado." : "Cron job ativado.");
+      qc.invalidateQueries({ queryKey: ["admin-cron-status"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const failed = job.last_status === "failed";
   const httpBad = job.last_http_status !== null && (job.last_http_status < 200 || job.last_http_status >= 300);
 
