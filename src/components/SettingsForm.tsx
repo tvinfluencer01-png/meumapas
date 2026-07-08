@@ -53,7 +53,7 @@ export function SettingsForm() {
   const [saving, setSaving] = useState(false);
   const [testingAstro, setTestingAstro] = useState(false);
   const [astroStatus, setAstroStatus] = useState<{ ok: boolean; message: string } | null>(null);
-  const [showLovableKey, setShowLovableKey] = useState(false);
+  
   const [showCustomKey, setShowCustomKey] = useState(false);
   const [showAstroKey, setShowAstroKey] = useState(false);
   const [expandedProvider, setExpandedProvider] = useState<string | null>(null);
