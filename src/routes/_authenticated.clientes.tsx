@@ -141,9 +141,18 @@ function ClientesPage() {
             </p>
           </div>
         </div>
-        <Button onClick={openCreate} className="gap-2">
-          <Plus className="size-4" /> Novo cliente
-        </Button>
+        <div className="flex items-center gap-2">
+          {hasAddon && (
+            <Button asChild variant="outline" className="gap-2">
+              <Link to="/configuracoes">
+                <Settings className="size-4" /> Configurações
+              </Link>
+            </Button>
+          )}
+          <Button onClick={openCreate} className="gap-2">
+            <Plus className="size-4" /> Novo cliente
+          </Button>
+        </div>
       </header>
 
       {!hasAddon && (
