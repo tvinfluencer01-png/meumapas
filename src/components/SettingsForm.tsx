@@ -123,14 +123,9 @@ export function SettingsForm() {
     },
   });
 
-  const fetchLovableKey = useServerFn(getLovableApiKeyStatus);
   const testAstroFn = useServerFn(testAstrologyCredentials);
 
-  const { data: lovableKeyStatus } = useQuery({
-    queryKey: ["lovable-api-key-status"],
-    queryFn: () => fetchLovableKey(),
-    retry: false,
-  });
+  const lovableKeyStatus: { configured: boolean; key: string | null } | undefined = undefined;
 
   useEffect(() => {
     if (data) {
