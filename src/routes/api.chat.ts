@@ -2,12 +2,7 @@ import "@tanstack/react-start";
 import { createFileRoute } from "@tanstack/react-router";
 import { convertToModelMessages, streamText, type UIMessage } from "ai";
 import { createClient } from "@supabase/supabase-js";
-import {
-  createLovableAiGatewayProvider,
-  createOpenAIProvider,
-  createAnthropicProvider,
-  createGeminiProvider,
-} from "@/lib/ai-gateway";
+import { getConfiguredProvider } from "@/lib/ai-resolver.server";
 import { computeNumerology, formatBirthDateBR, numLabel, numTitle } from "@/lib/numerology";
 import { applyActiveChartFilter, resolveActiveSubject } from "@/lib/active-subject";
 
