@@ -759,6 +759,9 @@ export function SettingsForm() {
               const cfg = form.ai_providers_config[id] ?? {};
               const enabled = cfg.enabled !== false;
               const expanded = expandedProvider === id;
+              const status = providerStatus[id];
+              const checking = providerBusy[id] === "testing";
+              const hasKey = !meta.keyRequired || !!(cfg.key && cfg.key.trim());
               const move = (dir: -1 | 1) => {
                 const next = [...form.image_provider_order];
                 const j = idx + dir;
