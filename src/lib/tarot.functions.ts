@@ -64,7 +64,7 @@ export const generateTarotReading = createServerFn({ method: "POST" })
       const draw = drawSpread(data.spread);
       const spread = SPREADS[data.spread];
 
-      const { model: makeModel } = await getConfiguredProvider(context.supabase, context.userId);
+      const { model: makeModel } = await getConfiguredProvider(context.supabase, context.userId, { addonId: "sub_astrologer_numerologist" });
       const model = makeModel("google/gemini-2.5-flash");
 
       const cardsBlock = draw

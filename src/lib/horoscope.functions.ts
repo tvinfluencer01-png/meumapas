@@ -516,7 +516,7 @@ export const sendTestHoroscopeWhatsapp = createServerFn({ method: "POST" })
       throw new Error("Nenhum provedor WhatsApp configurado (Evolution ou Twilio).");
     }
 
-    const { model: makeModel } = await getConfiguredProvider(supabaseAdmin, userId);
+    const { model: makeModel } = await getConfiguredProvider(supabaseAdmin, userId, { addonId: "sub_astrologer_numerologist" });
     const model = makeModel("google/gemini-2.5-flash");
 
     const { getAddonPromptOverride } = await import("./addon-settings.functions");
