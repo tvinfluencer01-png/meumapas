@@ -139,18 +139,18 @@ const IMAGE_PROVIDERS: Array<{
   },
 ];
 
-function normalizeOrder(order: string[] | null | undefined, current?: string): string[] {
+function normalizeOrder(order: string[] | null | undefined, current?: string): ChatProviderId[] {
   const seen = new Set<string>();
-  const out: string[] = [];
-  const source = [
+  const out: ChatProviderId[] = [];
+  const source: string[] = [
     ...(current ? [current] : []),
     ...(order ?? []),
     ...DEFAULT_ORDER,
   ];
   for (const id of source) {
-    if (AI_PROVIDER_LABELS[id] && !seen.has(id)) {
+    if ((id in AI_PROVIDER_LABELS) && !seen.has(id)) {
       seen.add(id);
-      out.push(id);
+      out.push(id as ChatProviderId);
     }
   }
   return out;
