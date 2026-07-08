@@ -58,6 +58,34 @@ export function SettingsForm() {
   const [showCustomKey, setShowCustomKey] = useState(false);
   const [showAstroKey, setShowAstroKey] = useState(false);
   const [expandedProvider, setExpandedProvider] = useState<string | null>(null);
+  const [providerModels, setProviderModels] = useState<Record<string, string[]>>({});
+  const [providerBusy, setProviderBusy] = useState<Record<string, "listing" | "testing" | null>>({});
+  const [providerStatus, setProviderStatus] = useState<Record<string, { ok: boolean; message: string } | null>>({});
+  const listModelsFn = useServerFn(listProviderModels);
+  const testProviderFn = useServerFn(testProvider);
+
+  async function loadModels(id: string, key?: string) {
+    setProviderBusy((b) => ({ ...b, [id]: "listing" }));
+    try {
+      const res = await listModelsFn({ data: { provider: id as "openai" | "anthropic" | "google" | "lovable", key: key ?? null } });
+      if (res.ok) setProviderModels((m) => ({ ...m, [id]: res.models }));
+      else toast.error(`Modelos ${id}: ${res.error}`);
+    } finally {
+      setProviderBusy((b) => ({ ...b, [id]: null }));
+    }
+  }
+
+  async function runTest(id: string, key?: string, model?: string) {
+    setProviderBusy((b) => ({ ...b, [id]: "testing" }));
+    setProviderStatus((s) => ({ ...s, [id]: null }));
+    try {
+      const res = await testProviderFn({ data: { provider: id as "openai" | "anthropic" | "google" | "lovable", key: key ?? null, model: model ?? null } });
+      setProviderStatus((s) => ({ ...s, [id]: { ok: res.ok, message: res.message } }));
+      res.ok ? toast.success(`${id}: ${res.message}`) : toast.error(`${id}: ${res.message}`);
+    } finally {
+      setProviderBusy((b) => ({ ...b, [id]: null }));
+    }
+  }
   const [form, setForm] = useState({
     preferred_engine: "swiss_ephemeris",
     astrology_api_user_id: "",
