@@ -22,7 +22,7 @@ export function AdminHoroscopeStatus() {
     // Poll faster quando há pendências; mais devagar quando tudo está resolvido.
     refetchInterval: (q): number => {
       const d = q.state.data as HoroscopeStatusResult | undefined;
-      return d && d.users.some((u) => u.pending) ? 15_000 : 60_000;
+      return d && d.users.some((u: UserHoroscopeStatus) => u.pending) ? 15_000 : 60_000;
     },
     refetchIntervalInBackground: true,
     refetchOnWindowFocus: true,
