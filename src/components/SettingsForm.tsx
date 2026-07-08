@@ -555,13 +555,34 @@ export function SettingsForm() {
                         {AI_PROVIDER_LABELS[id]}
                         {isDefault && <span className="ml-2 text-[10px] uppercase tracking-wider text-gold">padrão</span>}
                         {!enabled && <span className="ml-2 text-[10px] uppercase tracking-wider text-muted-foreground">desativado</span>}
-                        {enabled && checking && <span className="ml-2 text-[10px] uppercase tracking-wider text-muted-foreground">verificando…</span>}
-                        {enabled && !checking && status && (
-                          <span className={`ml-2 text-[10px] uppercase tracking-wider ${status.ok ? "text-emerald-500" : "text-destructive"}`}>
-                            {status.ok ? "online" : "offline"}
+                        {enabled && (
+                          <span
+                            className={`ml-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wider ${
+                              checking
+                                ? "bg-muted text-muted-foreground"
+                                : status
+                                  ? status.ok
+                                    ? "bg-emerald-500/15 text-emerald-500 ring-1 ring-emerald-500/40"
+                                    : "bg-destructive/15 text-destructive ring-1 ring-destructive/40"
+                                  : online
+                                    ? "bg-emerald-500/15 text-emerald-500 ring-1 ring-emerald-500/40"
+                                    : "bg-muted text-muted-foreground ring-1 ring-border"
+                            }`}
+                          >
+                            <span
+                              className={`size-1.5 rounded-full ${
+                                checking
+                                  ? "bg-muted-foreground animate-pulse"
+                                  : (status ? status.ok : online)
+                                    ? "bg-emerald-500"
+                                    : status
+                                      ? "bg-destructive"
+                                      : "bg-muted-foreground"
+                              }`}
+                            />
+                            {checking ? "verificando…" : status ? (status.ok ? "online" : "offline") : online ? "online" : "não testado"}
                           </span>
                         )}
-                        {enabled && !checking && !status && online && <span className="ml-2 text-[10px] uppercase tracking-wider text-emerald-500">online</span>}
                       </div>
                       <div className="text-[11px] text-muted-foreground pl-4">
                         {isDefault ? "Usado primeiro" : `Fallback ${idx}`}
