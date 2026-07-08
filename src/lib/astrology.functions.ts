@@ -815,10 +815,38 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
     }
 
     try {
-      const rawForecast =
+      let rawForecast: Partial<AstroForecast> =
         chart.forecast && typeof chart.forecast === "object"
           ? (chart.forecast as Partial<AstroForecast>)
           : {};
+
+      // Se as previsões temporais estão faltando/inválidas, tenta gerar tudo
+      // agora (o usuário pediu que já venha completo). Falha silenciosa cai
+      // no fallback abaixo.
+      const forecastIncomplete =
+        !rawForecast.nextDays || !rawForecast.week ||
+        !rawForecast.month || !rawForecast.year ||
+        !rawForecast.love || !rawForecast.money;
+      if (forecastIncomplete) {
+        try {
+          const fresh = await buildForecastWithAI({
+            planets: chart.planets as any,
+            ascendant: chart.ascendant as number | null,
+            midheaven: chart.midheaven as number | null,
+            aspects: chart.aspects as any,
+            summary: chart.summary,
+          });
+          rawForecast = fresh;
+          await supabaseAdmin
+            .from("astro_charts")
+            .update({ forecast: fresh, forecast_generated_at: fresh.generatedAt })
+            .eq("id", chart.id);
+        } catch (regenErr) {
+          console.error("[exportAstroPdf] regeneration failed", regenErr);
+        }
+      }
+
+
 
       // Tolera previsões parciais/legadas preenchendo campos faltantes com
       // fallback seguro — evita refazer a chamada de IA (que estoura o
