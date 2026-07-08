@@ -59,6 +59,28 @@ const AI_PROVIDER_LINKS: Record<ChatProviderId, { url: string; label: string; tu
 
 const DEFAULT_ORDER: ChatProviderId[] = ["openai", "anthropic", "google", "groq", "mistral", "openrouter"];
 
+const DEFAULT_IMAGE_ORDER: ImageProviderId[] = [
+  "img_pollinations",
+  "img_huggingface",
+  "img_together",
+  "img_openai",
+  "img_stability",
+  "img_replicate",
+];
+
+function normalizeImageOrder(order: string[] | null | undefined): ImageProviderId[] {
+  const seen = new Set<string>();
+  const out: ImageProviderId[] = [];
+  for (const id of [...(order ?? []), ...DEFAULT_IMAGE_ORDER]) {
+    if (DEFAULT_IMAGE_ORDER.includes(id as ImageProviderId) && !seen.has(id)) {
+      seen.add(id);
+      out.push(id as ImageProviderId);
+    }
+  }
+  return out;
+}
+
+
 type ImageProviderId =
   | "img_pollinations"
   | "img_huggingface"
