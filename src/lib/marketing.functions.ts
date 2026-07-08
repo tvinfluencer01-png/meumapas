@@ -124,3 +124,40 @@ export async function pickMarketingFooter(
     return `— ${MARKETING_SIGNATURE}`;
   }
 }
+
+/**
+ * Rotaciona uma mensagem de marketing de OUTRO produto para anexar ao final
+ * de relatórios/PDFs. Evita divulgar o mesmo serviço que gerou o conteúdo.
+ * Retorna null quando não há nada configurado.
+ */
+export async function pickCrossPromotionForReport(
+  excludeService: string,
+): Promise<{ title: string; body: string } | null> {
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data } = await supabaseAdmin
+      .from("marketing_messages")
+      .select("title, body, weight, services")
+      .eq("enabled", true);
+    const rows = ((data ?? []) as Array<{
+      title: string; body: string; weight: number; services: string[] | null;
+    }>).filter((r) => {
+      const s = r.services ?? [];
+      if (s.length === 0) return true; // mensagem genérica
+      return !s.includes(excludeService);
+    });
+    if (rows.length === 0) return null;
+    const weights = rows.map((r) => Math.max(1, Number(r.weight) || 1));
+    const total = weights.reduce((a, w) => a + w, 0);
+    let pick = Math.random() * total;
+    let chosen = rows[rows.length - 1]!;
+    for (let i = 0; i < rows.length; i++) {
+      pick -= weights[i]!;
+      if (pick < 0) { chosen = rows[i]!; break; }
+    }
+    return { title: chosen.title, body: chosen.body };
+  } catch {
+    return null;
+  }
+}
+

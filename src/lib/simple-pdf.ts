@@ -17,16 +17,18 @@ import { hyphenPointsPt } from "./pt-hyphen";
 
 
 export type SimplePdfBlock =
-  | { type: "h2"; text: string }
+  | { type: "h2"; text: string; pageBreak?: boolean }
   | { type: "h3"; text: string }
   | { type: "p"; text: string }
   | { type: "quote"; text: string }
   | { type: "list"; items: string[] }
   | { type: "kv"; rows: { k: string; v: string }[] }
   | { type: "image"; pngB64: string; caption?: string; maxHeight?: number }
+  | { type: "page-break" }
   | { type: "hebrew-hero"; letter: string; name: string; transliteration: string; meaning: string }
   | { type: "hebrew-row"; letter: string; name: string; value: number | string; meaning: string }
   | { type: "hebrew-name"; latinName: string; hebrewWords: string[]; caption?: string };
+
 
 export type SimplePdfBranding = {
   coverImageBytes?: Uint8Array;
@@ -792,7 +794,11 @@ export async function buildSimplePdf(data: SimplePdfData): Promise<Uint8Array> {
   }
 
   for (const block of data.blocks) {
-    if (block.type === "h2") drawHeading(block.text, 22, { newPage: !data.flowing });
+    if (block.type === "page-break") {
+      cursor = newPage(cursor.pageNumber + 1);
+      isFirstHeading = true;
+    }
+    else if (block.type === "h2") drawHeading(block.text, 22, { newPage: block.pageBreak ?? !data.flowing });
     else if (block.type === "h3") drawSubHeading(block.text);
     else if (block.type === "p") drawParagraph(block.text);
     else if (block.type === "quote") drawQuote(block.text);
@@ -803,6 +809,7 @@ export async function buildSimplePdf(data: SimplePdfData): Promise<Uint8Array> {
     else if (block.type === "hebrew-row") drawHebrewRow(block);
     else if (block.type === "hebrew-name") drawHebrewName(block);
   }
+
 
   // assinatura final
   ensureSpace(60);
