@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { createClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
@@ -162,4 +163,208 @@ export const adminExportDatabase = createServerFn({ method: "POST" })
     sql += "\nCOMMIT;\n";
 
     return { sql };
+  });
+
+// ============================================================
+// Sync entre bancos (Lovable Cloud → Novo Supabase)
+// ============================================================
+
+function getDestinationClient() {
+  const url = process.env.NEW_SUPABASE_URL;
+  const key = process.env.NEW_SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) {
+    throw new Error(
+      "Destino não configurado. Defina os secrets NEW_SUPABASE_URL e NEW_SUPABASE_SERVICE_ROLE_KEY.",
+    );
+  }
+  return createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false, storage: undefined },
+  });
+}
+
+// Tabelas ignoradas (efêmeras, gerenciadas por outros processos ou já com estado local)
+const SYNC_IGNORE = new Set<string>([
+  "db_sync_state",
+  "affiliate_rate_limits",
+  "affiliate_cache",
+  "affiliate_verification_codes",
+  "mp_webhook_logs",
+  "app_logs",
+  "notification_log",
+  "horoscope_log",
+  "pwa_install_events",
+  "affiliate_processing_queue",
+  "affiliate_event_queue",
+]);
+
+async function listTablesWithMeta() {
+  const { data: tRows, error: tErr } = await supabaseAdmin.rpc("get_public_tables" as any);
+  if (tErr) throw new Error(`Falha ao listar tabelas: ${tErr.message}`);
+  const tables = ((tRows as any[]) ?? [])
+    .map((r) => r.table_name as string)
+    .filter((t) => !SYNC_IGNORE.has(t));
+
+  const meta: Array<{ table: string; hasUpdatedAt: boolean; pk: string[] }> = [];
+  for (const table of tables) {
+    const { data: cols } = await supabaseAdmin.rpc("get_table_structure", { t_name: table });
+    const colsArr = (cols as any[]) ?? [];
+    const hasUpdatedAt = colsArr.some((c) => c.column_name === "updated_at");
+    const pk = colsArr.filter((c) => c.is_primary_key).map((c) => c.column_name as string);
+    meta.push({ table, hasUpdatedAt, pk });
+  }
+  return meta;
+}
+
+export const getSyncStatus = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.userId);
+
+    const destinationConfigured = !!(
+      process.env.NEW_SUPABASE_URL && process.env.NEW_SUPABASE_SERVICE_ROLE_KEY
+    );
+
+    let destinationReachable = false;
+    let destinationError: string | null = null;
+    if (destinationConfigured) {
+      try {
+        const dest = getDestinationClient();
+        const { error } = await dest.from("profiles").select("id", { head: true, count: "exact" }).limit(1);
+        if (error && !/permission|does not exist/i.test(error.message)) throw error;
+        destinationReachable = true;
+      } catch (e: any) {
+        destinationError = e.message ?? String(e);
+      }
+    }
+
+    const { data: history } = await supabaseAdmin
+      .from("db_sync_state")
+      .select("*")
+      .order("last_sync_at", { ascending: false });
+
+    const lastGlobal = history?.[0]?.last_sync_at ?? null;
+
+    // Sugestão de estratégia
+    let suggestion: "incremental" | "upsert_all" | "full_replace" = "full_replace";
+    let suggestionReason = "Nenhuma sincronização anterior detectada. Recomenda-se enviar tudo pela primeira vez.";
+    if (lastGlobal) {
+      suggestion = "incremental";
+      suggestionReason = `Última sincronização em ${new Date(lastGlobal).toLocaleString("pt-BR")}. Enviar apenas alterações desde então.`;
+    }
+
+    return {
+      destinationConfigured,
+      destinationReachable,
+      destinationError,
+      destinationUrl: process.env.NEW_SUPABASE_URL ?? null,
+      lastGlobal,
+      history: history ?? [],
+      suggestion,
+      suggestionReason,
+    };
+  });
+
+const strategySchema = z.object({
+  strategy: z.enum(["incremental", "upsert_all", "full_replace"]),
+});
+
+export const syncToNewDatabase = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => strategySchema.parse(d))
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context.userId);
+    const dest = getDestinationClient();
+    const meta = await listTablesWithMeta();
+
+    const results: Array<{ table: string; rows: number; strategy: string; error?: string }> = [];
+    const startedAt = new Date().toISOString();
+
+    for (const { table, hasUpdatedAt, pk } of meta) {
+      try {
+        let effective = data.strategy;
+        if (effective === "incremental" && !hasUpdatedAt) effective = "upsert_all";
+
+        let query = supabaseAdmin.from(table as any).select("*");
+
+        if (effective === "incremental") {
+          const { data: last } = await supabaseAdmin
+            .from("db_sync_state")
+            .select("last_max_updated_at")
+            .eq("table_name", table)
+            .maybeSingle();
+          const since = last?.last_max_updated_at;
+          if (since) query = query.gt("updated_at", since);
+        }
+
+        const { data: rows, error: srcErr } = await query;
+        if (srcErr) throw new Error(`Origem: ${srcErr.message}`);
+
+        if (effective === "full_replace") {
+          // apagar todos no destino
+          const { error: delErr } = await dest.from(table as any).delete().gte("created_at", "1900-01-01");
+          if (delErr && !/does not exist|column .* does not exist/i.test(delErr.message)) {
+            // fallback: delete all sem filtro (alguns sem created_at)
+            const { error: delErr2 } = await dest.from(table as any).delete().not("ctid", "is", null as any);
+            if (delErr2) throw new Error(`Destino delete: ${delErr2.message}`);
+          }
+        }
+
+        const arr = (rows as any[]) ?? [];
+        let synced = 0;
+        let maxUpdated: string | null = null;
+
+        if (arr.length > 0) {
+          const batchSize = 200;
+          for (let i = 0; i < arr.length; i += batchSize) {
+            const batch = arr.slice(i, i + batchSize);
+            if (hasUpdatedAt) {
+              for (const r of batch) {
+                if (r.updated_at && (!maxUpdated || r.updated_at > maxUpdated)) maxUpdated = r.updated_at;
+              }
+            }
+            const upsertOpts = pk.length > 0 ? { onConflict: pk.join(",") } : undefined;
+            const { error: upErr } = await dest.from(table as any).upsert(batch, upsertOpts as any);
+            if (upErr) throw new Error(`Destino upsert: ${upErr.message}`);
+            synced += batch.length;
+          }
+        }
+
+        await supabaseAdmin.from("db_sync_state").upsert(
+          {
+            table_name: table,
+            last_sync_at: new Date().toISOString(),
+            last_max_updated_at: maxUpdated,
+            last_strategy: effective,
+            rows_synced: synced,
+            last_error: null,
+          },
+          { onConflict: "table_name" },
+        );
+
+        results.push({ table, rows: synced, strategy: effective });
+      } catch (e: any) {
+        const msg = e.message ?? String(e);
+        await supabaseAdmin.from("db_sync_state").upsert(
+          {
+            table_name: table,
+            last_sync_at: new Date().toISOString(),
+            last_strategy: data.strategy,
+            rows_synced: 0,
+            last_error: msg,
+          },
+          { onConflict: "table_name" },
+        );
+        results.push({ table, rows: 0, strategy: data.strategy, error: msg });
+      }
+    }
+
+    const okCount = results.filter((r) => !r.error).length;
+    const totalRows = results.reduce((s, r) => s + r.rows, 0);
+    return {
+      startedAt,
+      finishedAt: new Date().toISOString(),
+      strategy: data.strategy,
+      results,
+      summary: { tables: results.length, ok: okCount, rows: totalRows },
+    };
   });

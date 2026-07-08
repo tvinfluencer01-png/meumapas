@@ -3678,6 +3678,33 @@ export type Database = {
         }
         Relationships: []
       }
+      db_sync_state: {
+        Row: {
+          last_error: string | null
+          last_max_updated_at: string | null
+          last_strategy: string | null
+          last_sync_at: string
+          rows_synced: number | null
+          table_name: string
+        }
+        Insert: {
+          last_error?: string | null
+          last_max_updated_at?: string | null
+          last_strategy?: string | null
+          last_sync_at?: string
+          rows_synced?: number | null
+          table_name: string
+        }
+        Update: {
+          last_error?: string | null
+          last_max_updated_at?: string | null
+          last_strategy?: string | null
+          last_sync_at?: string
+          rows_synced?: number | null
+          table_name?: string
+        }
+        Relationships: []
+      }
       evolution_settings: {
         Row: {
           base_url: string | null
