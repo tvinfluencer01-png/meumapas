@@ -512,72 +512,29 @@ export function SettingsForm() {
         </div>
 
 
-        {form.ai_provider === "lovable" && (
-          <div className="rounded-xl border border-emerald-600/30 bg-emerald-600/5 p-4 space-y-3">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <Sparkles className="size-4 text-emerald-500" />
-                <span className="text-sm text-stardust font-medium">Lovable AI Gateway</span>
-              </div>
-              {lovableConfigured && <OnlineBadge />}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Chave gerenciada pela Lovable e provisionada automaticamente. Acessa Gemini, GPT e outros modelos integrados.
-            </p>
-            <div>
-              <Label className="text-stardust text-xs">LOVABLE_API_KEY</Label>
-              <div className="relative mt-1">
-                <Input
-                  readOnly
-                  type="text"
-                  value={
-                    lovableKeyStatus?.key
-                      ? showLovableKey
-                        ? lovableKeyStatus.key
-                        : maskKey(lovableKeyStatus.key)
-                      : lovableConfigured
-                        ? "••••••••••••"
-                        : "(não configurada)"
-                  }
-                  className="bg-input border-border pr-10 font-mono text-xs"
-                />
-                {lovableKeyStatus?.key && (
-                  <button type="button" onClick={() => setShowLovableKey((s) => !s)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-stardust"
-                    aria-label={showLovableKey ? "Ocultar chave" : "Mostrar chave"}>
-                    {showLovableKey ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                  </button>
-                )}
-              </div>
-            </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <Label className="text-stardust text-xs">Modelo padrão (compatível com o provedor selecionado)</Label>
+            <Input value={form.custom_ai_model}
+              onChange={(e) => setForm({ ...form, custom_ai_model: e.target.value })}
+              onKeyDown={(e) => e.stopPropagation()}
+              className="mt-1 bg-input border-border" placeholder="gpt-5 / claude-opus / gemini-2.5-pro" />
           </div>
-        )}
-
-        {form.ai_provider !== "lovable" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div>
-              <Label className="text-stardust text-xs">Modelo</Label>
-              <Input value={form.custom_ai_model}
-                onChange={(e) => setForm({ ...form, custom_ai_model: e.target.value })}
+          <div>
+            <Label className="text-stardust text-xs">API Key do provedor padrão</Label>
+            <div className="relative mt-1">
+              <Input type={showCustomKey ? "text" : "password"} value={form.custom_ai_key}
+                onChange={(e) => setForm({ ...form, custom_ai_key: e.target.value })}
                 onKeyDown={(e) => e.stopPropagation()}
-                className="mt-1 bg-input border-border" placeholder="gpt-5 / claude-opus / gemini-2.5-pro" />
-            </div>
-            <div>
-              <Label className="text-stardust text-xs">API Key</Label>
-              <div className="relative mt-1">
-                <Input type={showCustomKey ? "text" : "password"} value={form.custom_ai_key}
-                  onChange={(e) => setForm({ ...form, custom_ai_key: e.target.value })}
-                  onKeyDown={(e) => e.stopPropagation()}
-                  className="bg-input border-border pr-10" placeholder="sk-..." />
-                <button type="button" onClick={() => setShowCustomKey((s) => !s)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-stardust"
-                  aria-label={showCustomKey ? "Ocultar chave" : "Mostrar chave"}>
-                  {showCustomKey ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                </button>
-              </div>
+                className="bg-input border-border pr-10" placeholder="sk-..." />
+              <button type="button" onClick={() => setShowCustomKey((s) => !s)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-stardust"
+                aria-label={showCustomKey ? "Ocultar chave" : "Mostrar chave"}>
+                {showCustomKey ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+              </button>
             </div>
           </div>
-        )}
+        </div>
         <div className="text-xs text-muted-foreground">
           Links rápidos:{" "}
           <ExtLink href="https://platform.openai.com/api-keys">OpenAI keys</ExtLink>{" · "}
