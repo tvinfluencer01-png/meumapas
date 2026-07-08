@@ -85,11 +85,13 @@ export function SettingsForm() {
 
   useEffect(() => {
     if (data) {
+      const order = normalizeOrder(data.ai_provider_order as string[] | null, data.ai_provider ?? undefined);
       setForm({
         preferred_engine: data.preferred_engine ?? "swiss_ephemeris",
         astrology_api_user_id: data.astrology_api_user_id ?? "",
         astrology_api_key: data.astrology_api_key ?? "",
-        ai_provider: data.ai_provider ?? "openai",
+        ai_provider: order[0] ?? "openai",
+        ai_provider_order: order,
         custom_ai_key: data.custom_ai_key ?? "",
         custom_ai_model: data.custom_ai_model ?? "openai/gpt-5.5",
       });
