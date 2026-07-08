@@ -49,7 +49,7 @@ async function callProvider(
       prompt,
     )}?width=${w}&height=${h}&nologo=true&enhance=true`;
     const res = await fetch(url);
-    if (!res.ok) return null;
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return new Uint8Array(await res.arrayBuffer());
   }
 
@@ -59,14 +59,14 @@ async function callProvider(
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
       body: JSON.stringify({ model: "gpt-image-1", prompt, size, n: 1 }),
     });
-    if (!res.ok) return null;
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const j = (await res.json()) as { data?: Array<{ b64_json?: string; url?: string }> };
     const b64 = j?.data?.[0]?.b64_json;
     if (b64) return Buffer.from(b64, "base64");
     const url = j?.data?.[0]?.url;
     if (url) {
       const r = await fetch(url);
-      if (!r.ok) return null;
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
       return new Uint8Array(await r.arrayBuffer());
     }
     return null;
@@ -81,7 +81,7 @@ async function callProvider(
         body: JSON.stringify({ inputs: prompt, parameters: { width: w, height: h } }),
       },
     );
-    if (!res.ok) return null;
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return new Uint8Array(await res.arrayBuffer());
   }
 
@@ -98,7 +98,7 @@ async function callProvider(
         response_format: "b64_json",
       }),
     });
-    if (!res.ok) return null;
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const j = (await res.json()) as { data?: Array<{ b64_json?: string }> };
     const b64 = j?.data?.[0]?.b64_json;
     return b64 ? Buffer.from(b64, "base64") : null;
@@ -117,7 +117,7 @@ async function callProvider(
         body: form,
       },
     );
-    if (!res.ok) return null;
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return new Uint8Array(await res.arrayBuffer());
   }
 
@@ -134,12 +134,12 @@ async function callProvider(
         body: JSON.stringify({ input: { prompt, aspect_ratio: w === h ? "1:1" : w > h ? "3:2" : "2:3" } }),
       },
     );
-    if (!res.ok) return null;
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const j = (await res.json()) as { output?: string | string[] };
     const url = Array.isArray(j.output) ? j.output[0] : j.output;
     if (!url) return null;
     const r = await fetch(url);
-    if (!r.ok) return null;
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
     return new Uint8Array(await r.arrayBuffer());
   }
   return null;
@@ -184,21 +184,72 @@ export async function generateImageWithConfigured(
     }
   }
   const errors: string[] = [];
-  for (const p of order) {
+  const attempts: Array<{ provider: ImageProviderId; ok: boolean; reason?: string }> = [];
 
+  const isRetryable = (msg: string): boolean => {
+    const s = msg.toLowerCase();
+    // Offline / rate limit / auth / network → try next provider
+    return (
+      s.includes("http 429") ||
+      s.includes("http 5") || // 500-599
+      s.includes("http 401") ||
+      s.includes("http 403") ||
+      s.includes("http 408") ||
+      s.includes("timeout") ||
+      s.includes("rate") ||
+      s.includes("quota") ||
+      s.includes("limit") ||
+      s.includes("unavail") ||
+      s.includes("fetch") ||
+      s.includes("network") ||
+      s.includes("econnrefused") ||
+      s.includes("enotfound")
+    );
+  };
+
+  for (const p of order) {
     const cfg = cfgMap[p] ?? {};
-    if (cfg.enabled === false) continue;
+    if (cfg.enabled === false) {
+      attempts.push({ provider: p, ok: false, reason: "disabled" });
+      continue;
+    }
     const key = (cfg.key && cfg.key.trim()) || envKey(p);
-    if (!key) continue;
+    if (!key) {
+      attempts.push({ provider: p, ok: false, reason: "no key" });
+      continue;
+    }
     try {
       const bytes = await callProvider(p, key, prompt, size);
-      if (bytes && bytes.byteLength > 512) return bytes;
-      errors.push(`${p}: resposta vazia`);
+      if (bytes && bytes.byteLength > 512) {
+        attempts.push({ provider: p, ok: true });
+        console.info(
+          `[image-resolver] success using ${p} (${bytes.byteLength} bytes) — trail: ${attempts
+            .map((a) => `${a.provider}${a.ok ? "✓" : `✗(${a.reason})`}`)
+            .join(" → ")}`,
+        );
+        return bytes;
+      }
+      const reason = "empty response";
+      attempts.push({ provider: p, ok: false, reason });
+      errors.push(`${p}: ${reason}`);
+      // empty response is treated as offline → continue fallback
     } catch (e) {
-      errors.push(`${p}: ${(e as Error)?.message ?? String(e)}`);
+      const msg = (e as Error)?.message ?? String(e);
+      attempts.push({ provider: p, ok: false, reason: msg });
+      errors.push(`${p}: ${msg}`);
+      if (!isRetryable(msg)) {
+        console.warn(
+          `[image-resolver] non-retryable error on ${p}: ${msg} — aborting fallback`,
+        );
+        throw new Error(`Falha em ${p}: ${msg}`);
+      }
+      console.warn(
+        `[image-resolver] ${p} offline/limit (${msg}) — tentando próximo provedor`,
+      );
     }
   }
   throw new Error(
     `Nenhum provedor de imagem disponível. Ative pelo menos um em Configurações → IA (Geração de Imagens). ${errors.join(" | ")}`,
   );
 }
+
