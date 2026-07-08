@@ -616,6 +616,8 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
           .update({ forecast, forecast_generated_at: forecast.generatedAt })
           .eq("id", chart.id);
       }
+      if (!forecast) throw new Error("Falha ao gerar previsões do mapa.");
+
 
 
       const planets = (chart.planets ?? []) as { name: string; sign: string; degree: number }[];
