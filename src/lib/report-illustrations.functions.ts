@@ -437,6 +437,8 @@ export const seedIllustrationsForAllKinds = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await ensureAdmin(context);
+    const openaiKey = await getConfiguredProviderKey(context.supabase, context.userId, "openai");
+    if (!openaiKey) throw new Error("Configure uma chave OpenAI em Configurações → IA para gerar ilustrações.");
     const perKind = data.perKind ?? 3;
     const kinds = Object.keys(THEME_BY_KIND);
     const results: Array<{ kind: string; ok: number; failed: number; error?: string }> = [];
@@ -447,7 +449,7 @@ export const seedIllustrationsForAllKinds = createServerFn({ method: "POST" })
       let lastErr: string | undefined;
       for (let i = 0; i < perKind; i++) {
         try {
-          await generateOne(theme, kind, context.userId, i);
+          await generateOne(theme, kind, context.userId, openaiKey, i);
           ok++;
         } catch (e: any) {
           failed++;
