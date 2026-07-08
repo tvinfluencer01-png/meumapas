@@ -2,17 +2,21 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Save, Phone, Loader2, BellRing, Mail } from "lucide-react";
+import { Save, Phone, Loader2, BellRing, Mail, Send, CheckCircle2, XCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { getSystemGlobalSettings, saveSystemGlobalSettings } from "@/lib/admin.functions";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { getSystemGlobalSettings, saveSystemGlobalSettings, sendSystemAlertTest } from "@/lib/admin.functions";
 
 export function AdminGlobalSettings() {
   const qc = useQueryClient();
   const getSettingsFn = useServerFn(getSystemGlobalSettings);
   const saveSettingsFn = useServerFn(saveSystemGlobalSettings);
+  const sendTestFn = useServerFn(sendSystemAlertTest);
+  const [severity, setSeverity] = useState<"critical" | "warning" | "info">("warning");
+  const [lastTest, setLastTest] = useState<Awaited<ReturnType<typeof sendSystemAlertTest>> | null>(null);
 
   const [whatsapp, setWhatsapp] = useState("");
   const [alertEmail, setAlertEmail] = useState("");
@@ -37,6 +41,19 @@ export function AdminGlobalSettings() {
     onSuccess: () => {
       toast.success("Configurações salvas.");
       qc.invalidateQueries({ queryKey: ["admin-global-settings"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const testMut = useMutation({
+    mutationFn: () => sendTestFn({ data: { severity } }),
+    onSuccess: (res) => {
+      setLastTest(res);
+      const parts: string[] = [];
+      if (res.email.attempted) parts.push(`Email: ${res.email.ok ? "enviado" : "falhou"}`);
+      if (res.whatsapp.attempted) parts.push(`WhatsApp: ${res.whatsapp.ok ? "enviado" : "falhou"}`);
+      const anyOk = res.email.ok || res.whatsapp.ok;
+      (anyOk ? toast.success : toast.error)(`Teste de alerta — ${parts.join(" · ") || "nenhum canal configurado"}`);
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -137,19 +154,62 @@ export function AdminGlobalSettings() {
                 </p>
               </div>
 
-              <Button
-                onClick={() =>
-                  saveMut.mutate({
-                    alert_email: alertEmail || null,
-                    alert_whatsapp: alertWhatsapp || null,
-                  })
-                }
-                disabled={saveMut.isPending}
-                className="bg-gold text-primary-foreground hover:bg-gold-glow"
-              >
-                {saveMut.isPending ? <Loader2 className="size-4 animate-spin mr-2" /> : <Save className="size-4 mr-2" />}
-                Salvar destinos de alertas
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  onClick={() =>
+                    saveMut.mutate({
+                      alert_email: alertEmail || null,
+                      alert_whatsapp: alertWhatsapp || null,
+                    })
+                  }
+                  disabled={saveMut.isPending}
+                  className="bg-gold text-primary-foreground hover:bg-gold-glow"
+                >
+                  {saveMut.isPending ? <Loader2 className="size-4 animate-spin mr-2" /> : <Save className="size-4 mr-2" />}
+                  Salvar destinos
+                </Button>
+
+                <div className="flex items-center gap-2">
+                  <Select value={severity} onValueChange={(v) => setSeverity(v as "critical" | "warning" | "info")}>
+                    <SelectTrigger className="w-[140px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="info">Info</SelectItem>
+                      <SelectItem value="warning">Warning</SelectItem>
+                      <SelectItem value="critical">Critical</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    variant="outline"
+                    onClick={() => testMut.mutate()}
+                    disabled={testMut.isPending || (!alertEmail && !alertWhatsapp)}
+                  >
+                    {testMut.isPending ? <Loader2 className="size-4 animate-spin mr-2" /> : <Send className="size-4 mr-2" />}
+                    Testar alertas
+                  </Button>
+                </div>
+              </div>
+
+              {lastTest && (
+                <div className="rounded-md border border-border bg-card/40 p-3 space-y-2 text-xs">
+                  <div className="font-medium">Resultado do último teste ({lastTest.severity.toUpperCase()})</div>
+                  <div className="flex items-start gap-2">
+                    {lastTest.email.ok ? <CheckCircle2 className="size-4 text-emerald-400 mt-0.5" /> : <XCircle className="size-4 text-destructive mt-0.5" />}
+                    <div>
+                      <div>Email → {lastTest.email.to || "—"}</div>
+                      {lastTest.email.error && <div className="text-destructive">{lastTest.email.error}</div>}
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    {lastTest.whatsapp.ok ? <CheckCircle2 className="size-4 text-emerald-400 mt-0.5" /> : <XCircle className="size-4 text-destructive mt-0.5" />}
+                    <div>
+                      <div>WhatsApp → {lastTest.whatsapp.to || "—"} {lastTest.whatsapp.provider ? `(${lastTest.whatsapp.provider})` : ""}</div>
+                      {lastTest.whatsapp.error && <div className="text-destructive">{lastTest.whatsapp.error}</div>}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </CardContent>
