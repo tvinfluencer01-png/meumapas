@@ -1,12 +1,13 @@
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState, useEffect } from "react";
-import { CheckCircle2, AlertTriangle, Clock, RefreshCw, Send, Sparkles, ShieldAlert, ShieldCheck } from "lucide-react";
+import { CheckCircle2, AlertTriangle, Clock, RefreshCw, Send, Sparkles, ShieldAlert, ShieldCheck, Radio } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { GradientStatCard } from "@/components/ui/gradient-stat-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getHoroscopeStatus, type HoroscopeStatusResult, type UserHoroscopeStatus } from "@/lib/horoscope-status.functions";
+import { supabase } from "@/integrations/supabase/client";
+import { getHoroscopeStatus } from "@/lib/horoscope-status.functions";
 
 function fmt(ts: string | null) {
   if (!ts) return "—";
@@ -16,17 +17,35 @@ function fmt(ts: string | null) {
 
 export function AdminHoroscopeStatus() {
   const fn = useServerFn(getHoroscopeStatus);
+  const queryKey = ["admin-horoscope-status"] as const;
+  const queryClient = useQueryClient();
   const { data, isLoading, isFetching, refetch, error, dataUpdatedAt } = useQuery({
-    queryKey: ["admin-horoscope-status"],
+    queryKey,
     queryFn: () => fn(),
-    // Poll faster quando há pendências; mais devagar quando tudo está resolvido.
-    refetchInterval: (q): number => {
-      const d = q.state.data as HoroscopeStatusResult | undefined;
-      return d && d.users.some((u: UserHoroscopeStatus) => u.pending) ? 15_000 : 60_000;
-    },
-    refetchIntervalInBackground: true,
     refetchOnWindowFocus: true,
   });
+  const [realtimeReady, setRealtimeReady] = useState(false);
+
+  useEffect(() => {
+    let debounce: ReturnType<typeof setTimeout> | null = null;
+    const invalidate = () => {
+      if (debounce) clearTimeout(debounce);
+      debounce = setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey });
+      }, 400);
+    };
+    const channel = supabase
+      .channel("admin-horoscope-status")
+      .on("postgres_changes", { event: "*", schema: "public", table: "horoscope_log" }, invalidate)
+      .on("postgres_changes", { event: "*", schema: "public", table: "horoscope_subscriptions" }, invalidate)
+      .subscribe((status) => {
+        setRealtimeReady(status === "SUBSCRIBED");
+      });
+    return () => {
+      if (debounce) clearTimeout(debounce);
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   const [page, setPage] = useState(1);
   const pageSize = 10;
@@ -51,7 +70,11 @@ export function AdminHoroscopeStatus() {
             </CardDescription>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-xs text-muted-foreground hidden sm:inline" title="Atualiza automaticamente">
+            <Badge variant="outline" className={realtimeReady ? "border-emerald-500/40 text-emerald-300 gap-1" : "text-muted-foreground gap-1"} title={realtimeReady ? "Atualizações em tempo real ativas" : "Conectando ao tempo real…"}>
+              <Radio className={`size-3 ${realtimeReady ? "animate-pulse" : ""}`} />
+              {realtimeReady ? "tempo real" : "conectando"}
+            </Badge>
+            <span className="text-xs text-muted-foreground hidden sm:inline" title="Atualiza automaticamente via Realtime">
               {isFetching ? "atualizando…" : dataUpdatedAt ? `atualizado ${fmt(new Date(dataUpdatedAt).toISOString())}` : ""}
             </span>
             <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching} className="gap-2">
