@@ -335,7 +335,16 @@ export function SettingsForm() {
         <div>
           <div className="flex items-center justify-between gap-3">
             <Label className="text-stardust">Ordem dos provedores</Label>
-            <span className="text-[11px] text-muted-foreground">1º = padrão · demais = fallback em caso de falha</span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => checkAllProviders(form.ai_provider_order, form.ai_providers_config)}
+                className="text-[11px] text-gold hover:underline"
+              >
+                Verificar status
+              </button>
+              <span className="text-[11px] text-muted-foreground">1º = padrão · demais = fallback</span>
+            </div>
           </div>
           <ul className="mt-2 space-y-2">
             {form.ai_provider_order.map((id, idx) => {
