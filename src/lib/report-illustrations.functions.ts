@@ -404,27 +404,9 @@ const THEME_BY_KIND: Record<string, string> = {
   personal_kabbalah: "cabala",
 };
 
-async function generateOne(theme: string, report_kind: string, userId: string, variantIndex = 0) {
-  const key = process.env.LOVABLE_API_KEY;
-  if (!key) throw new Error("LOVABLE_API_KEY ausente");
+async function generateOne(theme: string, report_kind: string, userId: string, openaiKey: string, variantIndex = 0) {
   const prompt = themePrompt(theme, undefined, variantIndex);
-  const res = await fetch("https://ai.gateway.lovable.dev/v1/images/generations", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: "openai/gpt-image-2",
-      prompt,
-      size: "1536x1024",
-      quality: "low",
-      n: 1,
-    }),
-  });
-  if (!res.ok) {
-    const txt = await res.text().catch(() => "");
-    throw new Error(`Falha (${res.status}) em ${report_kind}: ${txt.slice(0, 160)}`);
-  }
-  const json = await res.json();
-  const bytes = await extractImageBytes(json);
+  const bytes = await generateImageBytes(prompt, openaiKey);
   if (!bytes) throw new Error(`Sem imagem utilizável para ${report_kind}`);
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const path = `${report_kind}/${crypto.randomUUID()}.png`;
