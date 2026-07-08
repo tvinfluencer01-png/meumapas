@@ -220,17 +220,23 @@ export function SettingsForm() {
   function pickBestGeminiModel(models: string[]): string | null {
     const candidates = models
       .map((m) => m.replace(/^models\//, ""))
-      .filter((m) => /gemini/i.test(m) && !/(embed|aqa|vision-legacy|image|tts|audio)/i.test(m));
+      .filter(
+        (m) =>
+          /gemini/i.test(m) &&
+          !/(embed|aqa|vision|image|tts|audio|thinking|learnlm)/i.test(m) &&
+          !/preview|exp/i.test(m) && // previews têm cota mínima → offline rápido
+          !/-\d{3,}/.test(m), // ignora snapshots datados (ex: -0827)
+      );
     if (!candidates.length) return null;
     const score = (m: string): number => {
       let s = 0;
       const v = parseFloat((m.match(/gemini-(\d+(?:\.\d+)?)/i) ?? [])[1] ?? "0");
       s += v * 100;
-      if (/pro/i.test(m)) s += 40;
-      else if (/flash(?!-lite)/i.test(m)) s += 30;
-      else if (/flash-lite/i.test(m)) s += 20;
-      if (/preview|exp|latest/i.test(m)) s -= 5;
-      if (/-\d{3,}/.test(m)) s -= 10;
+      // Free tier: flash tem cota muito maior que pro → preferir flash
+      if (/flash(?!-lite)/i.test(m)) s += 50;
+      else if (/flash-lite/i.test(m)) s += 30;
+      else if (/pro/i.test(m)) s += 10;
+      if (/latest/i.test(m)) s += 5;
       return s;
     };
     return candidates.sort((a, b) => score(b) - score(a))[0] ?? null;
@@ -253,6 +259,8 @@ export function SettingsForm() {
               },
             }));
             toast.success(`Gemini: modelo recomendado selecionado (${best})`);
+            // Re-testa com o modelo escolhido para refletir status real do tier
+            void runTest(id, key, best);
           }
         }
       }
@@ -261,6 +269,7 @@ export function SettingsForm() {
       setProviderBusy((b) => ({ ...b, [id]: null }));
     }
   }
+
 
   async function runTest(id: string, key?: string, model?: string) {
     setProviderBusy((b) => ({ ...b, [id]: "testing" }));
