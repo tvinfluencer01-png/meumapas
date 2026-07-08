@@ -559,6 +559,62 @@ async function handler({ request }: { request: Request }) {
     }
   } catch {}
 
+  // ------- Alertas automáticos: processed:0 ou delivered:0 -------
+  try {
+    const eligible = (subs?.length ?? 0) + (freeProcessed > 0 ? 1 : 0);
+    const shouldAlert =
+      (subs && subs.length > 0 && (processed === 0 || delivered === 0)) ||
+      (freeProcessed > 0 && freeDelivered === 0);
+
+    if (shouldAlert) {
+      const severity = delivered === 0 ? "critical" : "warning";
+      const summary =
+        `Job send-daily-horoscope sem entregas. ` +
+        `Assinantes elegíveis: ${subs?.length ?? 0} | processed: ${processed} | delivered: ${delivered} | ` +
+        `retriesScheduled: ${retriesScheduled} | givenUp: ${givenUp} | ` +
+        `freeProcessed: ${freeProcessed} | freeDelivered: ${freeDelivered}`;
+
+      // 1) Notificação no dashboard (visível em AdminHoroscopeStatus / logs do dia)
+      await supabaseAdmin.from("horoscope_log").insert({
+        user_id: "00000000-0000-0000-0000-000000000000",
+        date: today,
+        channel: "alert",
+        status: severity,
+        detail: summary.slice(0, 500),
+        sign: null,
+      }).select().maybeSingle().then(() => {}, () => {});
+
+      await (supabaseAdmin as any).from("app_logs").insert({
+        user_id: null,
+        event: "horoscope_job_alert",
+        payload: { severity, processed, delivered, retriesScheduled, givenUp, freeProcessed, freeDelivered, freeExpired, eligible_subs: subs?.length ?? 0, at: nowIso },
+      }).then(() => {}, () => {});
+
+      // 2) Email para o super admin via SMTP configurado
+      const adminEmail = process.env.SUPER_ADMIN_EMAIL;
+      if (adminEmail && smtp?.enabled && smtp.host && smtp.username && smtp.password && smtp.from_email) {
+        try {
+          const nodemailer = (await import("nodemailer")).default;
+          const transporter = nodemailer.createTransport({
+            host: smtp.host,
+            port: smtp.port,
+            secure: !!smtp.secure,
+            auth: { user: smtp.username, pass: smtp.password },
+          });
+          const html = `<div style="font-family:Arial,sans-serif;color:#222"><h2 style="color:#b00020">⚠️ Alerta: Horóscopo diário sem entregas</h2><p>${summary}</p><p style="color:#666;font-size:12px">Timestamp: ${nowIso}</p></div>`;
+          await transporter.sendMail({
+            from: `"${smtp.from_name || smtp.from_email}" <${smtp.from_email}>`,
+            to: adminEmail,
+            subject: `[${severity.toUpperCase()}] send-daily-horoscope: processed=${processed} delivered=${delivered}`,
+            text: summary,
+            html,
+          });
+        } catch {}
+      }
+    }
+  } catch {}
+
   return Response.json({ ok: true, processed, delivered, retriesScheduled, givenUp, freeProcessed, freeDelivered, freeExpired });
 }
+
 
