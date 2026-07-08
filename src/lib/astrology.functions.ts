@@ -19,6 +19,7 @@ import {
   resolveBrandingPayload,
   isBrandingEnabledFor,
 } from "@/lib/pdf-branding.functions";
+import { pickCrossPromotionForReport } from "@/lib/marketing.functions";
 
 // Fire-and-forget structured error logger. Writes to app_logs via service role
 // so failures are captured even when the user context is absent.
