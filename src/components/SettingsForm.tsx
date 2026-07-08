@@ -273,18 +273,21 @@ export function SettingsForm() {
   useEffect(() => {
     if (data) {
       const order = normalizeOrder(data.ai_provider_order as string[] | null, data.ai_provider ?? undefined);
+      const cfgMap = ((data as { ai_providers_config?: Record<string, unknown> }).ai_providers_config) ?? {};
+      const savedImgOrder = (cfgMap as Record<string, unknown>)["__image_order"];
+      const imgOrder = normalizeImageOrder(Array.isArray(savedImgOrder) ? (savedImgOrder as string[]) : null);
       setForm({
         preferred_engine: data.preferred_engine ?? "swiss_ephemeris",
         astrology_api_user_id: data.astrology_api_user_id ?? "",
         astrology_api_key: data.astrology_api_key ?? "",
         ai_provider: order[0] ?? "openai",
         ai_provider_order: order,
+        image_provider_order: imgOrder,
         custom_ai_key: data.custom_ai_key ?? "",
         custom_ai_model: data.custom_ai_model ?? "openai/gpt-5.5",
-        ai_providers_config: ((data as { ai_providers_config?: Record<string, { enabled?: boolean; key?: string; model?: string }> }).ai_providers_config) ?? {},
+        ai_providers_config: cfgMap as Record<string, { enabled?: boolean; key?: string; model?: string }>,
       });
-      const cfgMap = ((data as { ai_providers_config?: Record<string, { enabled?: boolean; key?: string; model?: string }> }).ai_providers_config) ?? {};
-      void checkAllProviders(order, cfgMap);
+      void checkAllProviders(order, cfgMap as Record<string, { enabled?: boolean; key?: string; model?: string }>);
     }
   }, [data]);
 
@@ -292,9 +295,12 @@ export function SettingsForm() {
     if (!user) return;
     setSaving(true);
     try {
+      const { image_provider_order, ai_providers_config, ...rest } = form;
+      const mergedConfig = { ...ai_providers_config, __image_order: image_provider_order } as Record<string, unknown>;
       const { error } = await supabase.from("user_settings").upsert({
         user_id: user.id,
-        ...form,
+        ...rest,
+        ai_providers_config: mergedConfig as never,
         astrology_api_user_id: form.astrology_api_user_id || null,
         astrology_api_key: form.astrology_api_key || null,
         custom_ai_key: form.custom_ai_key || null,
@@ -307,6 +313,7 @@ export function SettingsForm() {
       setSaving(false);
     }
   }
+
 
   async function testAstro() {
     if (!form.astrology_api_user_id || !form.astrology_api_key) {
