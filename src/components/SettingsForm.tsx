@@ -811,6 +811,34 @@ export function SettingsForm() {
                         </span>
                         {isDefault && <span className="ml-1 text-[10px] uppercase tracking-wider text-gold">padrão</span>}
                         {!enabled && <span className="ml-1 text-[10px] uppercase tracking-wider text-muted-foreground">desativado</span>}
+                        {enabled && (
+                          <span
+                            className={`ml-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wider ${
+                              checking
+                                ? "bg-muted text-muted-foreground"
+                                : status
+                                  ? status.ok
+                                    ? "bg-emerald-500/15 text-emerald-500 ring-1 ring-emerald-500/40"
+                                    : "bg-destructive/15 text-destructive ring-1 ring-destructive/40"
+                                  : hasKey
+                                    ? "bg-emerald-500/15 text-emerald-500 ring-1 ring-emerald-500/40"
+                                    : "bg-muted text-muted-foreground ring-1 ring-border"
+                            }`}
+                          >
+                            <span
+                              className={`size-1.5 rounded-full ${
+                                checking
+                                  ? "bg-muted-foreground animate-pulse"
+                                  : (status ? status.ok : hasKey)
+                                    ? "bg-emerald-500"
+                                    : status
+                                      ? "bg-destructive"
+                                      : "bg-muted-foreground"
+                              }`}
+                            />
+                            {checking ? "verificando…" : status ? (status.ok ? "online" : "offline") : hasKey ? "online" : "não testado"}
+                          </span>
+                        )}
                       </div>
                       <div className="text-[11px] text-muted-foreground pl-4">
                         {isDefault ? "Usado primeiro" : `Fallback ${idx}`}
