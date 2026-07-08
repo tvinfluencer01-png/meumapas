@@ -1223,6 +1223,7 @@ export const downloadAstroForecastPdf = createServerFn({ method: "POST" })
       ascSign,
       weekRange: { start: week.start, end: week.end },
       monthLabel,
+      userId,
     });
     blocks.push({ type: "h2", text: "Leitura horoscópica" });
     blocks.push({ type: "h3", text: `Semana de ${week.start} a ${week.end}` });
