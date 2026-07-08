@@ -459,6 +459,7 @@ export const generateReport = createServerFn({ method: "POST" })
     const { model: makeConfiguredModel, provider: activeProvider } = await getConfiguredProvider(
       context.supabase,
       context.userId,
+      { addonId: "sub_astrologer_numerologist" },
     );
 
     let modelName = customModel ?? "google/gemini-3-flash-preview";
