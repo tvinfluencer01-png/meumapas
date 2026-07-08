@@ -67,6 +67,12 @@ function ClientesPage() {
     queryKey: ["client-profiles"],
     queryFn: () => listFn(),
   });
+  const byokFn = useServerFn(getAddonByokRequired);
+  const { data: byok } = useQuery({
+    queryKey: ["byok-required", "sub_astrologer_numerologist"],
+    queryFn: () => byokFn({ data: { addon_id: "sub_astrologer_numerologist" } }),
+  });
+  const byokEnabled = !!byok?.required;
 
   const [editing, setEditing] = useState<ClientProfile | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
