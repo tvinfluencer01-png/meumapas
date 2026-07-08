@@ -159,11 +159,10 @@ Regras de formato de saída (siga LITERALMENTE):
 - Itens de lista começam com "- " (hífen + espaço), um por linha, logo após a etiqueta [LIST].
 - Não use markdown (nada de #, **, _, >).`;
 
-  const gateway = createLovableAiGatewayProvider(apiKey);
   let text = "";
   try {
     const res = await generateText({
-      model: gateway("google/gemini-3-flash-preview"),
+      model: makeModel("google/gemini-3-flash-preview"),
       system,
       prompt,
     });
