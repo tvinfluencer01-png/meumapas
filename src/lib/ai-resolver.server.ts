@@ -8,7 +8,7 @@ import {
 export type ConfiguredProviderId = "openai" | "anthropic" | "google";
 
 const DEFAULT_MODELS: Record<ConfiguredProviderId, string> = {
-  openai: "gpt-5.5",
+  openai: "gpt-4o-mini",
   anthropic: "claude-3-5-sonnet-latest",
   google: "gemini-2.5-flash",
 };

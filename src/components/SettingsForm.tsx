@@ -459,7 +459,7 @@ export function SettingsForm() {
                               onKeyDown={(e) => e.stopPropagation()}
                               className="mt-1 bg-input border-border h-8 text-xs"
                               placeholder={
-                                id === "openai" ? "gpt-5.5" :
+                                id === "openai" ? "gpt-4o-mini" :
                                 id === "anthropic" ? "claude-3-5-sonnet-latest" :
                                 id === "google" ? "gemini-2.5-flash" :
                                 "google/gemini-3-flash-preview"

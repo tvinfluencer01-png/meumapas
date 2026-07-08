@@ -89,7 +89,7 @@ export const testProvider = createServerFn({ method: "POST" })
       } = await import("@/lib/ai-gateway");
       let model;
       switch (data.provider) {
-        case "openai": model = createOpenAIProvider(key)(data.model || "gpt-5.5"); break;
+        case "openai": model = createOpenAIProvider(key)(data.model || "gpt-4o-mini"); break;
         case "anthropic": model = createAnthropicProvider(key)(data.model || "claude-3-5-sonnet-latest"); break;
         case "google": model = createGeminiProvider(key)(data.model || "gemini-2.5-flash"); break;
       }
