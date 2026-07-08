@@ -203,6 +203,19 @@ export function SettingsForm() {
   const [providerStatus, setProviderStatus] = useState<Record<string, { ok: boolean; message: string } | null>>({});
   const listModelsFn = useServerFn(listProviderModels);
   const testProviderFn = useServerFn(testProvider);
+  const testImageProviderFn = useServerFn(testImageProvider);
+
+  async function runImageTest(id: string, key?: string) {
+    setProviderBusy((b) => ({ ...b, [id]: "testing" }));
+    setProviderStatus((s) => ({ ...s, [id]: null }));
+    try {
+      const res = await testImageProviderFn({ data: { provider: id as "img_pollinations" | "img_huggingface" | "img_together" | "img_openai" | "img_stability" | "img_replicate", key: key ?? null } });
+      setProviderStatus((s) => ({ ...s, [id]: { ok: res.ok, message: res.message } }));
+      res.ok ? toast.success(`${id}: ${res.message}`) : toast.error(`${id}: ${res.message}`);
+    } finally {
+      setProviderBusy((b) => ({ ...b, [id]: null }));
+    }
+  }
 
   async function loadModels(id: string, key?: string) {
     setProviderBusy((b) => ({ ...b, [id]: "listing" }));
