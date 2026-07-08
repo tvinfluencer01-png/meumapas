@@ -3,22 +3,44 @@ import {
   createOpenAIProvider,
   createAnthropicProvider,
   createGeminiProvider,
+  createGroqProvider,
+  createMistralProvider,
+  createOpenRouterProvider,
 } from "@/lib/ai-gateway";
 
-export type ConfiguredProviderId = "openai" | "anthropic" | "google";
+export type ConfiguredProviderId =
+  | "openai"
+  | "anthropic"
+  | "google"
+  | "groq"
+  | "mistral"
+  | "openrouter";
 
 const DEFAULT_MODELS: Record<ConfiguredProviderId, string> = {
   openai: "gpt-4o-mini",
   anthropic: "claude-3-5-sonnet-latest",
   google: "gemini-2.5-flash",
+  groq: "llama-3.3-70b-versatile",
+  mistral: "mistral-small-latest",
+  openrouter: "google/gemini-2.0-flash-exp:free",
 };
-const DEFAULT_ORDER: ConfiguredProviderId[] = ["openai", "anthropic", "google"];
+const DEFAULT_ORDER: ConfiguredProviderId[] = [
+  "openai",
+  "anthropic",
+  "google",
+  "groq",
+  "mistral",
+  "openrouter",
+];
 
 function envKey(p: ConfiguredProviderId): string | null {
   switch (p) {
     case "openai": return process.env.OPENAI_API_KEY ?? null;
     case "anthropic": return process.env.ANTHROPIC_API_KEY ?? null;
     case "google": return process.env.GEMINI_API_KEY ?? process.env.GOOGLE_API_KEY ?? null;
+    case "groq": return process.env.GROQ_API_KEY ?? null;
+    case "mistral": return process.env.MISTRAL_API_KEY ?? null;
+    case "openrouter": return process.env.OPENROUTER_API_KEY ?? null;
   }
 }
 
@@ -27,6 +49,9 @@ function makeProvider(p: ConfiguredProviderId, key: string) {
     case "openai": return createOpenAIProvider(key);
     case "anthropic": return createAnthropicProvider(key);
     case "google": return createGeminiProvider(key);
+    case "groq": return createGroqProvider(key);
+    case "mistral": return createMistralProvider(key);
+    case "openrouter": return createOpenRouterProvider(key);
   }
 }
 

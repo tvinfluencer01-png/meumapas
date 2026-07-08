@@ -2,7 +2,14 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const ProviderIdSchema = z.enum(["openai", "anthropic", "google"]);
+const ProviderIdSchema = z.enum([
+  "openai",
+  "anthropic",
+  "google",
+  "groq",
+  "mistral",
+  "openrouter",
+]);
 
 async function resolveKey(
   provider: z.infer<typeof ProviderIdSchema>,
@@ -14,6 +21,9 @@ async function resolveKey(
     case "openai": return process.env.OPENAI_API_KEY ?? null;
     case "anthropic": return process.env.ANTHROPIC_API_KEY ?? null;
     case "google": return process.env.GEMINI_API_KEY ?? process.env.GOOGLE_API_KEY ?? null;
+    case "groq": return process.env.GROQ_API_KEY ?? null;
+    case "mistral": return process.env.MISTRAL_API_KEY ?? null;
+    case "openrouter": return process.env.OPENROUTER_API_KEY ?? null;
   }
 }
 
