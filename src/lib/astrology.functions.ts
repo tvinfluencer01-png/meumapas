@@ -954,7 +954,8 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
       }
 
       // Planetas — leitura humanizada por planeta + signo
-      blocks.push({ type: "h2", text: "Cada planeta no seu mapa" });
+      blocks.push({ type: "page-break" });
+      blocks.push({ type: "h2", text: "Cada planeta no seu mapa", pageBreak: false });
       for (const p of planets) {
         const m = PLANET_MEANING[p.name];
         const reading = planetSignReading(p.name, p.sign);
@@ -971,7 +972,8 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
 
       // Aspectos principais — leitura contextual planeta + planeta + tipo
       if (aspects.length) {
-        blocks.push({ type: "h2", text: "Aspectos principais e o que significam" });
+        blocks.push({ type: "page-break" });
+        blocks.push({ type: "h2", text: "Aspectos principais e o que significam", pageBreak: false });
         for (const a of aspects.slice(0, 16)) {
           const r = aspectReading(a);
           blocks.push({ type: "h3", text: `${a.a} ${a.aspect} ${a.b} · orbe ${a.orb}°` });
@@ -985,8 +987,10 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
       // ============================================================
       // SÍNTESE DE ABERTURA (leitura profunda)
       // ============================================================
-      blocks.push({ type: "h2", text: "Síntese profunda do seu mapa" });
+      blocks.push({ type: "page-break" });
+      blocks.push({ type: "h2", text: "Síntese profunda do seu mapa", pageBreak: false });
       blocks.push({ type: "p", text: forecast.synthesis });
+
 
       // ============================================================
       // INTERPRETAÇÃO POR ÁREA DA VIDA
