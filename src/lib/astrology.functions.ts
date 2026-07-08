@@ -272,19 +272,17 @@ async function buildHoroscopeReading(params: {
   ascSign?: string;
   weekRange: { start: string; end: string };
   monthLabel: string;
+  userId?: string | null;
 }): Promise<string> {
-  const { sunSign, moonSign, ascSign, weekRange, monthLabel } = params;
-  const apiKey = process.env.LOVABLE_API_KEY;
+  const { sunSign, moonSign, ascSign, weekRange, monthLabel, userId } = params;
   const fallback =
     `Esta semana (${weekRange.start} a ${weekRange.end}), em ${monthLabel}, o céu convida você a honrar o que pulsa em ${sunSign ?? "seu Sol"}, ` +
     `acolher o que sente em ${moonSign ?? "sua Lua"} e expressar no mundo a presença de ${ascSign ?? "seu Ascendente"}. ` +
     `Permita-se pausar, sentir os movimentos sutis e agir com intenção. Pequenos gestos de cuidado e clareza abrem portas maiores.`;
-  if (!apiKey) return fallback;
   try {
-    const gateway = createLovableAiGatewayProvider(apiKey);
-    const model = gateway("google/gemini-3-flash-preview");
+    const { model: makeModel } = await getConfiguredProvider(supabaseAdmin, userId ?? null);
+    const model = makeModel("google/gemini-3-flash-preview");
     const prompt = `Escreva uma leitura horoscópica em português brasileiro, tom acolhedor e prático, em segunda pessoa ("você"), em 3 a 4 parágrafos curtos (máx. 250 palavras). Semana de ${weekRange.start} a ${weekRange.end} em ${monthLabel}. Integre Sol em ${sunSign ?? "—"}, Lua em ${moonSign ?? "—"} e Ascendente em ${ascSign ?? "—"}. Cubra clima geral, amor, trabalho e um cuidado. Sem listas, sem markdown, sem emojis. Nunca prometa eventos certos.`;
-    // Timeout curto — se a IA travar, cai no fallback e o PDF sai.
     const { text } = await Promise.race([
       generateText({ model, prompt }),
       new Promise<never>((_, rej) => setTimeout(() => rej(new Error("horoscope timeout")), 12_000)),
