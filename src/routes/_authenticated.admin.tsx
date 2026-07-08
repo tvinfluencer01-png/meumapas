@@ -1668,7 +1668,17 @@ function EvolutionForm() {
 
 function BackupAdmin() {
   const exportFn = useServerFn(adminExportDatabase);
-  
+  const statusFn = useServerFn(getSyncStatus);
+  const syncFn = useServerFn(syncToNewDatabase);
+  const qc = useQueryClient();
+  const [strategy, setStrategy] = useState<"auto" | "incremental" | "upsert_all" | "full_replace">("auto");
+
+  const { data: status, isLoading: statusLoading } = useQuery({
+    queryKey: ["db-sync-status"],
+    queryFn: () => statusFn(),
+    refetchOnWindowFocus: false,
+  });
+
   const exportMut = useMutation({
     mutationFn: () => exportFn(),
     onSuccess: (res) => {
@@ -1686,52 +1696,169 @@ function BackupAdmin() {
     onError: (e: Error) => toast.error(`Erro ao gerar backup: ${e.message}`),
   });
 
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Database className="size-5 text-gold" /> Backup e Exportação
-        </CardTitle>
-        <CardDescription>
-          Gere um arquivo SQL completo com a estrutura e dados de todas as tabelas do sistema.
-          Este arquivo pode ser usado para restaurar o sistema em outro servidor.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-4 text-sm text-amber-200">
-          <p className="font-medium flex items-center gap-2">
-            <AlertTriangle className="size-4" /> Importante
-          </p>
-          <p className="mt-1 opacity-80">
-            A exportação inclui dados sensíveis como configurações de API, logs de usuários e transações. 
-            Mantenha este arquivo em local seguro.
-          </p>
-        </div>
+  const syncMut = useMutation({
+    mutationFn: (strat: "incremental" | "upsert_all" | "full_replace") =>
+      syncFn({ data: { strategy: strat } }),
+    onSuccess: (res) => {
+      const errs = res.results.filter((r) => r.error);
+      if (errs.length === 0) {
+        toast.success(`Sincronizado: ${res.summary.ok}/${res.summary.tables} tabelas, ${res.summary.rows} linhas.`);
+      } else {
+        toast.warning(`Concluído com ${errs.length} erro(s). ${res.summary.ok} tabelas OK, ${res.summary.rows} linhas.`);
+      }
+      qc.invalidateQueries({ queryKey: ["db-sync-status"] });
+    },
+    onError: (e: Error) => toast.error(`Falha na sincronização: ${e.message}`),
+  });
 
-        <div className="flex flex-col gap-4">
-          <div className="space-y-2">
-            <h3 className="text-sm font-medium">Backup Completo (SQL)</h3>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Gera um script SQL contendo comandos INSERT para todas as tabelas do banco de dados public.
-              O arquivo resultante conterá todos os dados atuais do sistema imbutidos.
+  const effectiveStrategy = strategy === "auto" ? (status?.suggestion ?? "full_replace") : strategy;
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Database className="size-5 text-gold" /> Backup e Exportação
+          </CardTitle>
+          <CardDescription>
+            Gere um arquivo SQL completo com a estrutura e dados de todas as tabelas do sistema.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-4 text-sm text-amber-200">
+            <p className="font-medium flex items-center gap-2">
+              <AlertTriangle className="size-4" /> Importante
+            </p>
+            <p className="mt-1 opacity-80">
+              A exportação inclui dados sensíveis. Mantenha o arquivo em local seguro.
             </p>
           </div>
-
-          <Button 
-            onClick={() => exportMut.mutate()} 
-            disabled={exportMut.isPending}
-            className="w-fit"
-          >
-            {exportMut.isPending ? (
-              <Loader2 className="size-4 mr-2 animate-spin" />
-            ) : (
-              <Download className="size-4 mr-2" />
-            )}
+          <Button onClick={() => exportMut.mutate()} disabled={exportMut.isPending} className="w-fit">
+            {exportMut.isPending ? <Loader2 className="size-4 mr-2 animate-spin" /> : <Download className="size-4 mr-2" />}
             Gerar Backup Agora
           </Button>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Database className="size-5 text-gold" /> Sincronizar com Novo Banco
+          </CardTitle>
+          <CardDescription>
+            Replica os dados deste banco (Lovable Cloud) para o Supabase de destino, mantendo os dois iguais e atualizados.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          {/* Configuração do destino */}
+          <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-3">
+            <h4 className="text-sm font-medium">Configurações do banco de destino</h4>
+            <div className="grid gap-3 sm:grid-cols-2 text-xs">
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">NEW_SUPABASE_URL</Label>
+                <Input readOnly value={status?.destinationUrl ?? "— não configurado —"} className="font-mono text-xs" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">NEW_SUPABASE_SERVICE_ROLE_KEY</Label>
+                <Input readOnly value={status?.destinationConfigured ? "••••••••••••••••" : "— não configurado —"} className="font-mono text-xs" />
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Os valores ficam nos secrets do projeto. Para trocar, edite <code>NEW_SUPABASE_URL</code> e <code>NEW_SUPABASE_SERVICE_ROLE_KEY</code> em Configurações → Secrets.
+            </p>
+            <div className="text-xs">
+              {statusLoading ? (
+                <span className="text-muted-foreground">Verificando conexão...</span>
+              ) : !status?.destinationConfigured ? (
+                <span className="text-destructive">⚠ Secrets não configurados</span>
+              ) : status.destinationReachable ? (
+                <span className="text-emerald-500">✓ Conectado ao destino</span>
+              ) : (
+                <span className="text-destructive">✗ Não foi possível conectar: {status.destinationError}</span>
+              )}
+            </div>
+          </div>
+
+          {/* Estratégia */}
+          <div className="space-y-3">
+            <h4 className="text-sm font-medium">Estratégia de sincronização</h4>
+            <p className="text-xs text-muted-foreground">
+              Sugestão do sistema: <strong className="text-gold">{status?.suggestion ?? "..."}</strong> — {status?.suggestionReason ?? ""}
+            </p>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {[
+                { v: "auto", label: "Automático (sugerido)", desc: "Usa a recomendação do sistema" },
+                { v: "incremental", label: "Incremental", desc: "Apenas linhas alteradas (updated_at). Rápido." },
+                { v: "upsert_all", label: "Upsert completo", desc: "Reenvia todas as linhas por PK. Sem deletes." },
+                { v: "full_replace", label: "Substituir tudo", desc: "Apaga destino e reinsere. Lento, 100% consistente." },
+              ].map((opt) => (
+                <button
+                  key={opt.v}
+                  type="button"
+                  onClick={() => setStrategy(opt.v as any)}
+                  className={`text-left rounded-lg border p-3 transition ${
+                    strategy === opt.v ? "border-gold bg-gold/10" : "border-border hover:border-gold/50"
+                  }`}
+                >
+                  <div className="text-sm font-medium">{opt.label}</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">{opt.desc}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <Button
+            onClick={() => syncMut.mutate(effectiveStrategy as any)}
+            disabled={syncMut.isPending || !status?.destinationReachable}
+            className="w-fit"
+          >
+            {syncMut.isPending ? <Loader2 className="size-4 mr-2 animate-spin" /> : <Download className="size-4 mr-2 rotate-180" />}
+            Sincronizar agora ({effectiveStrategy})
+          </Button>
+
+          {/* Última sincronização */}
+          {status?.lastGlobal && (
+            <p className="text-xs text-muted-foreground">
+              Última sincronização: {new Date(status.lastGlobal).toLocaleString("pt-BR")}
+            </p>
+          )}
+
+          {/* Histórico por tabela */}
+          {status?.history && status.history.length > 0 && (
+            <details className="text-xs">
+              <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
+                Ver histórico por tabela ({status.history.length})
+              </summary>
+              <div className="mt-2 max-h-64 overflow-auto rounded border border-border">
+                <table className="w-full">
+                  <thead className="bg-muted/50 sticky top-0">
+                    <tr className="text-left">
+                      <th className="p-2">Tabela</th>
+                      <th className="p-2">Última</th>
+                      <th className="p-2">Estratégia</th>
+                      <th className="p-2">Linhas</th>
+                      <th className="p-2">Erro</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {status.history.map((h: any) => (
+                      <tr key={h.table_name} className="border-t border-border">
+                        <td className="p-2 font-mono">{h.table_name}</td>
+                        <td className="p-2">{new Date(h.last_sync_at).toLocaleString("pt-BR")}</td>
+                        <td className="p-2">{h.last_strategy ?? "—"}</td>
+                        <td className="p-2">{h.rows_synced ?? 0}</td>
+                        <td className="p-2 text-destructive">{h.last_error ?? ""}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </details>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }
+
 
