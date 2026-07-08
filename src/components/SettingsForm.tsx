@@ -708,66 +708,129 @@ export function SettingsForm() {
         <div>
           <h2 className="font-serif text-xl text-gold">Geração de Imagens (IA)</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Configure provedores para gerar ilustrações. Free ou pagos — a chave salva aqui será usada quando o
-            recurso de imagens for acionado. Cada provedor tem seu tutorial rápido e link para pegar a API.
+            Configure a ordem dos provedores de imagem. O primeiro ativo é usado; os demais servem como fallback automático.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {IMAGE_PROVIDERS.map((p) => {
-            const cfg = form.ai_providers_config[p.id] ?? {};
-            const enabled = cfg.enabled !== false;
-            const updateCfg = (patch: Partial<{ enabled: boolean; key: string; model: string }>) => {
-              setForm({
-                ...form,
-                ai_providers_config: {
-                  ...form.ai_providers_config,
-                  [p.id]: { ...cfg, ...patch },
-                },
-              });
-            };
-            return (
-              <div
-                key={p.id}
-                className={`rounded-lg border p-3 space-y-2 ${
-                  p.tier === "grátis" ? "border-emerald-500/30 bg-emerald-500/5" : "border-gold/30 bg-gold/5"
-                } ${!enabled ? "opacity-60" : ""}`}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <div className="text-sm text-stardust font-medium flex items-center gap-2">
-                      {p.label}
-                      <span className={`text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded ${
-                        p.tier === "grátis" ? "bg-emerald-600/80 text-white" : "bg-gold/80 text-primary-foreground"
-                      }`}>
-                        {p.tier}
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-muted-foreground mt-1">{p.tutorial}</p>
+        <div>
+          <div className="flex items-center justify-between gap-3">
+            <Label className="text-stardust">Ordem dos provedores</Label>
+            <span className="text-[11px] text-muted-foreground">1º = padrão · demais = fallback</span>
+          </div>
+          <ul className="mt-2 space-y-2">
+            {form.image_provider_order.map((id, idx) => {
+              const meta = IMAGE_PROVIDERS.find((x) => x.id === id);
+              if (!meta) return null;
+              const isDefault = idx === 0;
+              const cfg = form.ai_providers_config[id] ?? {};
+              const enabled = cfg.enabled !== false;
+              const expanded = expandedProvider === id;
+              const move = (dir: -1 | 1) => {
+                const next = [...form.image_provider_order];
+                const j = idx + dir;
+                if (j < 0 || j >= next.length) return;
+                [next[idx], next[j]] = [next[j], next[idx]];
+                setForm({ ...form, image_provider_order: next });
+              };
+              const setAsDefault = () => {
+                if (isDefault) return;
+                const next = [id, ...form.image_provider_order.filter((p) => p !== id)];
+                setForm({ ...form, image_provider_order: next });
+              };
+              const updateCfg = (patch: Partial<{ enabled: boolean; key: string; model: string }>) => {
+                setForm({
+                  ...form,
+                  ai_providers_config: {
+                    ...form.ai_providers_config,
+                    [id]: { ...cfg, ...patch },
+                  },
+                });
+              };
+              return (
+                <li
+                  key={id}
+                  className={`rounded-lg border ${
+                    isDefault ? "border-gold/50 bg-gold/10" : "border-border bg-input/40"
+                  } ${!enabled ? "opacity-60" : ""}`}
+                >
+                  <div className="flex items-center gap-2 p-2.5">
+                    <span className={`inline-flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
+                      isDefault ? "bg-gold text-primary-foreground" : "bg-secondary text-stardust"
+                    }`}>
+                      {idx + 1}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setExpandedProvider(expanded ? null : id)}
+                      className="flex-1 min-w-0 text-left"
+                    >
+                      <div className="text-sm text-stardust truncate flex items-center gap-2">
+                        {expanded ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}
+                        {meta.label}
+                        <span className={`text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded ${
+                          meta.tier === "grátis" ? "bg-emerald-600/80 text-white" : "bg-gold/80 text-primary-foreground"
+                        }`}>
+                          {meta.tier}
+                        </span>
+                        {isDefault && <span className="ml-1 text-[10px] uppercase tracking-wider text-gold">padrão</span>}
+                        {!enabled && <span className="ml-1 text-[10px] uppercase tracking-wider text-muted-foreground">desativado</span>}
+                      </div>
+                      <div className="text-[11px] text-muted-foreground pl-4">
+                        {isDefault ? "Usado primeiro" : `Fallback ${idx}`}
+                      </div>
+                    </button>
+                    <Switch
+                      checked={enabled}
+                      onCheckedChange={(v) => updateCfg({ enabled: v })}
+                      aria-label="Ativar provedor de imagem"
+                    />
+                    <Button type="button" size="sm" variant="ghost" onClick={setAsDefault}
+                      disabled={isDefault}
+                      className="h-8 px-2 text-gold hover:bg-gold/10 disabled:opacity-40"
+                      title="Definir como padrão">
+                      <Star className={`size-4 ${isDefault ? "fill-gold" : ""}`} />
+                    </Button>
+                    <Button type="button" size="sm" variant="ghost" onClick={() => move(-1)}
+                      disabled={idx === 0} className="h-8 px-2 disabled:opacity-40" title="Subir">
+                      <ArrowUp className="size-4" />
+                    </Button>
+                    <Button type="button" size="sm" variant="ghost" onClick={() => move(1)}
+                      disabled={idx === form.image_provider_order.length - 1}
+                      className="h-8 px-2 disabled:opacity-40" title="Descer">
+                      <ArrowDown className="size-4" />
+                    </Button>
                   </div>
-                  <Switch
-                    checked={enabled}
-                    onCheckedChange={(v) => updateCfg({ enabled: v })}
-                    aria-label="Ativar provedor de imagem"
-                  />
-                </div>
-                {p.keyRequired && (
-                  <Input
-                    type="password"
-                    value={cfg.key ?? ""}
-                    onChange={(e) => updateCfg({ key: e.target.value })}
-                    onKeyDown={(e) => e.stopPropagation()}
-                    className="bg-input border-border h-8 text-xs"
-                    placeholder={p.placeholder}
-                  />
-                )}
-                <div className="text-[11px]">
-                  <ExtLink href={p.url}>{p.linkLabel}</ExtLink>
-                </div>
-              </div>
-            );
-          })}
+                  {expanded && (
+                    <div className="border-t border-border/50 p-3 space-y-3">
+                      {meta.keyRequired && (
+                        <div>
+                          <Label className="text-stardust text-xs">API Key</Label>
+                          <Input
+                            type="password"
+                            value={cfg.key ?? ""}
+                            onChange={(e) => updateCfg({ key: e.target.value })}
+                            onKeyDown={(e) => e.stopPropagation()}
+                            className="mt-1 bg-input border-border h-8 text-xs"
+                            placeholder={meta.placeholder}
+                          />
+                        </div>
+                      )}
+                      <div className="rounded-md border border-border/50 bg-background/40 p-2 text-[11px] text-muted-foreground space-y-1">
+                        <div className="text-stardust font-medium">Como configurar</div>
+                        <div>{meta.tutorial}</div>
+                        <ExtLink href={meta.url}>{meta.linkLabel}</ExtLink>
+                      </div>
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            Se o provedor padrão falhar, o sistema tenta o próximo da lista automaticamente.
+          </p>
         </div>
+
       </section>
 
 
