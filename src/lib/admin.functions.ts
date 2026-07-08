@@ -1328,17 +1328,7 @@ export const sendEvolutionTest = createServerFn({ method: "POST" })
     return { ok: true, id: String(id) };
   });
 
-// ===== Lovable AI key status (admin only) =====
-export const getLovableApiKeyStatus = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    await assertAdmin(context.userId);
-    const key = process.env.LOVABLE_API_KEY ?? "";
-    return {
-      configured: key.length > 0,
-      key: key || null,
-    };
-  });
+// Lovable API key status endpoint removed — sistema não depende mais de LOVABLE_API_KEY.
 
 export const migrateUserAddon = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
