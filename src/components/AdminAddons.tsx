@@ -331,6 +331,27 @@ function AddonEditor({ row }: { row: AddonRow }) {
           />
         </div>
 
+        <div className="flex items-start justify-between gap-3 rounded-md border border-border/60 bg-muted/20 p-3">
+          <div className="min-w-0">
+            <Label htmlFor={`byok-${row.addon_id}`} className="text-sm font-medium">
+              Chave de IA do assinante (BYOK)
+            </Label>
+            <p className="text-[11px] text-muted-foreground mt-0.5">
+              {requireUserKey
+                ? "Ativado — assinantes deste plano precisam salvar a própria chave em Configurações → IA. As chaves do sistema não serão usadas."
+                : "Desativado — assinantes deste plano usam as chaves de IA do sistema."}
+            </p>
+          </div>
+          <Switch
+            id={`byok-${row.addon_id}`}
+            checked={requireUserKey}
+            onCheckedChange={(v) => {
+              setRequireUserKey(v);
+              saveMut.mutate();
+            }}
+          />
+        </div>
+
         {hasPromptDefault && (
           <div className="space-y-2 rounded-md border border-gold/20 bg-gold/5 p-3">
             <Label className="text-xs font-semibold text-gold uppercase tracking-wider flex items-center gap-2">
