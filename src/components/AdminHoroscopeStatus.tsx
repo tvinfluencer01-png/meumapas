@@ -70,7 +70,11 @@ export function AdminHoroscopeStatus() {
             </CardDescription>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-xs text-muted-foreground hidden sm:inline" title="Atualiza automaticamente">
+            <Badge variant="outline" className={realtimeReady ? "border-emerald-500/40 text-emerald-300 gap-1" : "text-muted-foreground gap-1"} title={realtimeReady ? "Atualizações em tempo real ativas" : "Conectando ao tempo real…"}>
+              <Radio className={`size-3 ${realtimeReady ? "animate-pulse" : ""}`} />
+              {realtimeReady ? "tempo real" : "conectando"}
+            </Badge>
+            <span className="text-xs text-muted-foreground hidden sm:inline" title="Atualiza automaticamente via Realtime">
               {isFetching ? "atualizando…" : dataUpdatedAt ? `atualizado ${fmt(new Date(dataUpdatedAt).toISOString())}` : ""}
             </span>
             <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching} className="gap-2">
