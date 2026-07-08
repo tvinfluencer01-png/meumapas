@@ -261,47 +261,60 @@ function AdminDashboard() {
           </div>
         </div>
 
-        <nav className="flex-1 overflow-y-auto p-3 space-y-1 scrollbar-gold">
-          {ADMIN_MENU.map((item) => {
-            const Icon = item.icon;
-            const isActive = tab === item.value;
-            return (
-              <button
-                key={item.value}
-                type="button"
-                ref={(el) => {
-                  if (isActive && el) {
-                    el.scrollIntoView({ block: "nearest", behavior: "smooth" });
-                  }
-                }}
-                aria-current={isActive ? "page" : undefined}
-                onClick={() => selectTab(item.value)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors text-left ${
-                  isActive
-                    ? "bg-gold/15 text-gold border border-gold/40 shadow-[0_0_10px_rgba(212,175,55,0.15)] font-medium"
-                    : "text-muted-foreground hover:text-gold hover:bg-secondary/40 border border-transparent"
-                }`}
-              >
-                <Icon className={`size-4 shrink-0 ${isActive ? "text-gold" : ""}`} />
-                <span className="flex-1">{item.label}</span>
-                {item.value === "pedidos" && unviewedCount > 0 && (
-                  <span className="relative inline-flex" title={`${unviewedCount} novo(s) pedido(s)`}>
-                    <span className="absolute inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500 opacity-75 animate-ping" />
-                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.9)]" />
-                  </span>
-                )}
-                {isActive && <span className="size-1.5 rounded-full bg-gold shadow-[0_0_6px_rgba(212,175,55,0.8)]" />}
-              </button>
-            );
-          })}
-          <Link
-            to="/admin/ilustracoes"
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-gold hover:bg-secondary/40 border border-transparent transition-colors"
-          >
-            <Sparkles className="size-4 shrink-0" />
-            <span className="flex-1">Ilustrações</span>
-          </Link>
+        <nav className="flex-1 overflow-y-auto p-3 space-y-4 scrollbar-gold">
+          {ADMIN_MENU_GROUPS.map((group) => (
+            <div key={group.group} className="space-y-1">
+              <div className="px-3 pt-1 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+                {group.group}
+              </div>
+              {group.items.map((item) => {
+                const Icon = item.icon;
+                const isActive = tab === item.value;
+                return (
+                  <button
+                    key={item.value}
+                    type="button"
+                    ref={(el) => {
+                      if (isActive && el) {
+                        el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+                      }
+                    }}
+                    aria-current={isActive ? "page" : undefined}
+                    onClick={() => selectTab(item.value)}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors text-left ${
+                      isActive
+                        ? "bg-gold/15 text-gold border border-gold/40 shadow-[0_0_10px_rgba(212,175,55,0.15)] font-medium"
+                        : "text-muted-foreground hover:text-gold hover:bg-secondary/40 border border-transparent"
+                    }`}
+                  >
+                    <Icon className={`size-4 shrink-0 ${isActive ? "text-gold" : ""}`} />
+                    <span className="flex-1">{item.label}</span>
+                    {item.value === "pedidos" && unviewedCount > 0 && (
+                      <span className="relative inline-flex" title={`${unviewedCount} novo(s) pedido(s)`}>
+                        <span className="absolute inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500 opacity-75 animate-ping" />
+                        <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.9)]" />
+                      </span>
+                    )}
+                    {isActive && <span className="size-1.5 rounded-full bg-gold shadow-[0_0_6px_rgba(212,175,55,0.8)]" />}
+                  </button>
+                );
+              })}
+            </div>
+          ))}
+          <div className="space-y-1 pt-1">
+            <div className="px-3 pt-1 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+              Extras
+            </div>
+            <Link
+              to="/admin/ilustracoes"
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-gold hover:bg-secondary/40 border border-transparent transition-colors"
+            >
+              <Sparkles className="size-4 shrink-0" />
+              <span className="flex-1">Ilustrações</span>
+            </Link>
+          </div>
         </nav>
+
 
 
 
