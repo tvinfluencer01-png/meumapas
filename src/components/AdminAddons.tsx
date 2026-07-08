@@ -15,8 +15,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Save, Package, Sparkles, Undo2, Plus, Trash2 } from "lucide-react";
+import { Save, Package, Sparkles, Plus, Trash2, KeyRound, Settings2 } from "lucide-react";
 import { formatBRL } from "@/lib/addons.catalog";
 import { confirmDialog } from "@/components/system-feedback";
 
@@ -62,9 +69,9 @@ export function AdminAddons() {
           Nenhum plano configurado.
         </div>
       ) : (
-        <div className="grid gap-4">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {data.map((row) => (
-            <AddonEditor key={row.addon_id} row={row} />
+            <AddonCard key={row.addon_id} row={row} />
           ))}
         </div>
       )}
@@ -173,6 +180,60 @@ function AddonCreator({ onCancel }: { onCancel: () => void }) {
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+function AddonCard({ row }: { row: AddonRow }) {
+  const [open, setOpen] = useState(false);
+  const e = row.effective;
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className={`text-left rounded-lg border bg-card p-4 transition hover:border-gold/50 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gold/40 ${
+          !e.enabled ? "opacity-60" : ""
+        }`}
+      >
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-semibold truncate">{e.name}</span>
+              {row.defaults.highlight && (
+                <Badge variant="secondary" className="text-[10px] bg-gold/10 text-gold border-gold/20">
+                  Destaque
+                </Badge>
+              )}
+              {!e.enabled && <Badge variant="destructive" className="text-[10px]">Pausado</Badge>}
+            </div>
+            <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground mt-0.5 truncate">
+              {row.addon_id}
+            </p>
+          </div>
+          <Settings2 className="size-4 text-muted-foreground shrink-0" />
+        </div>
+        {e.description && (
+          <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{e.description}</p>
+        )}
+        <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/50">
+          <span className="text-sm font-semibold text-gold">{formatBRL(e.price_cents)}/mês</span>
+          {e.require_user_key && (
+            <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
+              <KeyRound className="size-3" /> BYOK
+            </span>
+          )}
+        </div>
+      </button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Configurar plano</DialogTitle>
+            <DialogDescription>Ajuste nome, preço, recursos e a inteligência do plano.</DialogDescription>
+          </DialogHeader>
+          <AddonEditor row={row} />
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
