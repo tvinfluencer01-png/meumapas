@@ -467,19 +467,17 @@ export function SettingsForm() {
                             />
                           )}
                         </div>
-                        {id !== "lovable" && (
-                          <div>
-                            <Label className="text-stardust text-xs">API Key</Label>
-                            <Input
-                              type="password"
-                              value={cfg.key ?? ""}
-                              onChange={(e) => updateCfg({ key: e.target.value })}
-                              onKeyDown={(e) => e.stopPropagation()}
-                              className="mt-1 bg-input border-border h-8 text-xs"
-                              placeholder="sk-..."
-                            />
-                          </div>
-                        )}
+                        <div>
+                          <Label className="text-stardust text-xs">API Key</Label>
+                          <Input
+                            type="password"
+                            value={cfg.key ?? ""}
+                            onChange={(e) => updateCfg({ key: e.target.value })}
+                            onKeyDown={(e) => e.stopPropagation()}
+                            className="mt-1 bg-input border-border h-8 text-xs"
+                            placeholder="sk-..."
+                          />
+                        </div>
                       </div>
                       <div className="flex items-center justify-between gap-2">
                         <div className="text-[11px]">
