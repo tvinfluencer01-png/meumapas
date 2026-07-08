@@ -216,7 +216,20 @@ function MapaAstral() {
     showLoader({ title: "Montando seu relatório", subtitle: "PDF completo do mapa" });
     try {
       const chartImageB64 = await captureChartPng();
-      const r = await exportPdf({ data: { chartId: currentChartId, chartImageB64: chartImageB64 ?? undefined } });
+      let r;
+      try {
+        r = await exportPdf({ data: { chartId: currentChartId, chartImageB64: chartImageB64 ?? undefined } });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "";
+        if (/Gere as previs/i.test(msg)) {
+          showLoader({ title: "Atualizando previsões", subtitle: "Isso pode levar até 1 minuto" });
+          await genForecast({ data: { chartId: currentChartId } });
+          showLoader({ title: "Montando seu relatório", subtitle: "PDF completo do mapa" });
+          r = await exportPdf({ data: { chartId: currentChartId, chartImageB64: chartImageB64 ?? undefined } });
+        } else {
+          throw err;
+        }
+      }
       const bytes = Uint8Array.from(atob(r.pdfBase64), (c) => c.charCodeAt(0));
       const blob = new Blob([bytes], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
@@ -226,6 +239,7 @@ function MapaAstral() {
       document.body.appendChild(a); a.click(); a.remove();
       URL.revokeObjectURL(url);
       showFeedback({ title: "PDF gerado", type: "success" });
+
     } catch (e) {
       showFeedback({ title: "Erro no PDF", description: e instanceof Error ? e.message : "Falha ao gerar PDF.", type: "error" });
     } finally {
