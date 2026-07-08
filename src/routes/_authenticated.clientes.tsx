@@ -5,7 +5,7 @@ import { useMemo, useState, useEffect } from "react";
 import { toast } from "sonner";
 import {
   Users, Plus, Pencil, Trash2, Star, StarOff, Phone, Mail, Tag,
-  Sparkles, ShoppingCart, Search, Check, ChevronsUpDown,
+  Sparkles, ShoppingCart, Search, Check, ChevronsUpDown, Settings,
 } from "lucide-react";
 import { SectionLamp } from "@/components/SectionLamp";
 import { Button } from "@/components/ui/button";
@@ -141,9 +141,18 @@ function ClientesPage() {
             </p>
           </div>
         </div>
-        <Button onClick={openCreate} className="gap-2">
-          <Plus className="size-4" /> Novo cliente
-        </Button>
+        <div className="flex items-center gap-2">
+          {hasAddon && (
+            <Button asChild variant="outline" className="gap-2">
+              <Link to="/configuracoes">
+                <Settings className="size-4" /> Configurações
+              </Link>
+            </Button>
+          )}
+          <Button onClick={openCreate} className="gap-2">
+            <Plus className="size-4" /> Novo cliente
+          </Button>
+        </div>
       </header>
 
       {!hasAddon && (
