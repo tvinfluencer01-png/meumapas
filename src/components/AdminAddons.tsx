@@ -190,6 +190,7 @@ function AddonEditor({ row }: { row: AddonRow }) {
   );
   const [prompt, setPrompt] = useState(row.effective.prompt ?? "");
   const [enabled, setEnabled] = useState(row.effective.enabled);
+  const [requireUserKey, setRequireUserKey] = useState(row.effective.require_user_key);
   const [improveInstruction, setImproveInstruction] = useState("");
 
   useEffect(() => {
@@ -199,6 +200,7 @@ function AddonEditor({ row }: { row: AddonRow }) {
     setPriceReais((row.effective.price_cents / 100).toFixed(2).replace(".", ","));
     setPrompt(row.effective.prompt ?? "");
     setEnabled(row.effective.enabled);
+    setRequireUserKey(row.effective.require_user_key);
   }, [row]);
 
   const hasPromptDefault = !!row.defaults.prompt_template;
@@ -222,6 +224,7 @@ function AddonEditor({ row }: { row: AddonRow }) {
           price_cents: cents,
           prompt: hasPromptDefault ? (prompt.trim() || null) : undefined,
           enabled,
+          require_user_key: requireUserKey,
         },
       });
     },
@@ -325,6 +328,27 @@ function AddonEditor({ row }: { row: AddonRow }) {
             onChange={(e) => setFeatures(e.target.value)}
             onKeyDown={(e) => e.stopPropagation()}
             rows={3}
+          />
+        </div>
+
+        <div className="flex items-start justify-between gap-3 rounded-md border border-border/60 bg-muted/20 p-3">
+          <div className="min-w-0">
+            <Label htmlFor={`byok-${row.addon_id}`} className="text-sm font-medium">
+              Chave de IA do assinante (BYOK)
+            </Label>
+            <p className="text-[11px] text-muted-foreground mt-0.5">
+              {requireUserKey
+                ? "Ativado — assinantes deste plano precisam salvar a própria chave em Configurações → IA. As chaves do sistema não serão usadas."
+                : "Desativado — assinantes deste plano usam as chaves de IA do sistema."}
+            </p>
+          </div>
+          <Switch
+            id={`byok-${row.addon_id}`}
+            checked={requireUserKey}
+            onCheckedChange={(v) => {
+              setRequireUserKey(v);
+              saveMut.mutate();
+            }}
           />
         </div>
 

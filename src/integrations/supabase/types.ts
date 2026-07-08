@@ -23,6 +23,7 @@ export type Database = {
           name: string | null
           price_cents: number | null
           prompt: string | null
+          require_user_key: boolean
           updated_at: string
           updated_by: string | null
         }
@@ -34,6 +35,7 @@ export type Database = {
           name?: string | null
           price_cents?: number | null
           prompt?: string | null
+          require_user_key?: boolean
           updated_at?: string
           updated_by?: string | null
         }
@@ -45,6 +47,7 @@ export type Database = {
           name?: string | null
           price_cents?: number | null
           prompt?: string | null
+          require_user_key?: boolean
           updated_at?: string
           updated_by?: string | null
         }
