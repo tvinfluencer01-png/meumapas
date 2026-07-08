@@ -13,12 +13,131 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { testAstrologyCredentials } from "@/lib/admin.functions";
 import { listProviderModels, testProvider } from "@/lib/ai-providers.functions";
 
-const AI_PROVIDER_LABELS: Record<string, string> = {
-  openai: "OpenAI (BYO key)",
-  anthropic: "Anthropic Claude (BYO key)",
-  google: "Google Gemini (BYO key)",
+type ChatProviderId = "openai" | "anthropic" | "google" | "groq" | "mistral" | "openrouter";
+
+const AI_PROVIDER_LABELS: Record<ChatProviderId, string> = {
+  openai: "OpenAI (BYO key) — pago",
+  anthropic: "Anthropic Claude (BYO key) — pago",
+  google: "Google Gemini (BYO key) — grátis",
+  groq: "Groq — Llama/Mixtral (grátis)",
+  mistral: "Mistral AI (grátis)",
+  openrouter: "OpenRouter — Llama/Gemini free (grátis)",
 };
-const DEFAULT_ORDER = ["openai", "anthropic", "google"];
+
+const AI_PROVIDER_LINKS: Record<ChatProviderId, { url: string; label: string; tutorial: string }> = {
+  openai: {
+    url: "https://platform.openai.com/api-keys",
+    label: "Obter chave OpenAI",
+    tutorial: "1) Crie conta em platform.openai.com  2) Adicione crédito em Billing  3) Vá em API Keys → Create new secret key  4) Cole aqui.",
+  },
+  anthropic: {
+    url: "https://console.anthropic.com/settings/keys",
+    label: "Obter chave Anthropic",
+    tutorial: "1) Crie conta em console.anthropic.com  2) Adicione crédito em Plans & Billing  3) Settings → API Keys → Create Key  4) Cole aqui.",
+  },
+  google: {
+    url: "https://aistudio.google.com/app/apikey",
+    label: "Obter chave Google AI",
+    tutorial: "1) Acesse aistudio.google.com/app/apikey  2) Create API key  3) Escolha um projeto  4) Copie e cole aqui. Tier gratuito generoso.",
+  },
+  groq: {
+    url: "https://console.groq.com/keys",
+    label: "Obter chave Groq (grátis)",
+    tutorial: "1) Crie conta em console.groq.com  2) API Keys → Create API Key  3) Cole aqui. Ultra-rápido, gratuito com limite diário.",
+  },
+  mistral: {
+    url: "https://console.mistral.ai/api-keys",
+    label: "Obter chave Mistral (grátis)",
+    tutorial: "1) Crie conta em console.mistral.ai  2) API Keys → Create new key  3) Ative o plano Experiment (grátis)  4) Cole aqui.",
+  },
+  openrouter: {
+    url: "https://openrouter.ai/keys",
+    label: "Obter chave OpenRouter (grátis)",
+    tutorial: "1) Crie conta em openrouter.ai  2) Keys → Create Key  3) Cole aqui. Modelos com sufixo :free são gratuitos.",
+  },
+};
+
+const DEFAULT_ORDER: ChatProviderId[] = ["openai", "anthropic", "google", "groq", "mistral", "openrouter"];
+
+type ImageProviderId =
+  | "img_pollinations"
+  | "img_huggingface"
+  | "img_together"
+  | "img_openai"
+  | "img_stability"
+  | "img_replicate";
+
+const IMAGE_PROVIDERS: Array<{
+  id: ImageProviderId;
+  label: string;
+  tier: "grátis" | "pago";
+  keyRequired: boolean;
+  url: string;
+  linkLabel: string;
+  tutorial: string;
+  placeholder: string;
+}> = [
+  {
+    id: "img_pollinations",
+    label: "Pollinations.ai",
+    tier: "grátis",
+    keyRequired: false,
+    url: "https://pollinations.ai",
+    linkLabel: "Saiba mais",
+    tutorial: "Sem chave. Gere imagens via URL pública: https://image.pollinations.ai/prompt/{seu-prompt}",
+    placeholder: "Não requer chave",
+  },
+  {
+    id: "img_huggingface",
+    label: "Hugging Face (SDXL/FLUX)",
+    tier: "grátis",
+    keyRequired: true,
+    url: "https://huggingface.co/settings/tokens",
+    linkLabel: "Obter token HF (grátis)",
+    tutorial: "1) Crie conta em huggingface.co  2) Settings → Access Tokens → New token (role: read)  3) Cole aqui. Inference API grátis com fila.",
+    placeholder: "hf_...",
+  },
+  {
+    id: "img_together",
+    label: "Together AI (FLUX schnell)",
+    tier: "grátis",
+    keyRequired: true,
+    url: "https://api.together.ai/settings/api-keys",
+    linkLabel: "Obter chave Together",
+    tutorial: "1) Crie conta em together.ai (ganha US$5 grátis)  2) Settings → API Keys → Create key  3) Cole aqui.",
+    placeholder: "tgp_...",
+  },
+  {
+    id: "img_openai",
+    label: "OpenAI (gpt-image-1 / DALL·E 3)",
+    tier: "pago",
+    keyRequired: true,
+    url: "https://platform.openai.com/api-keys",
+    linkLabel: "Obter chave OpenAI",
+    tutorial: "Mesma chave da OpenAI Chat. Modelos gpt-image-1 e dall-e-3 consomem crédito por imagem.",
+    placeholder: "sk-...",
+  },
+  {
+    id: "img_stability",
+    label: "Stability AI (SD3 / SDXL)",
+    tier: "pago",
+    keyRequired: true,
+    url: "https://platform.stability.ai/account/keys",
+    linkLabel: "Obter chave Stability",
+    tutorial: "1) Crie conta em platform.stability.ai  2) Adicione créditos  3) Account → Keys → Create API Key  4) Cole aqui.",
+    placeholder: "sk-...",
+  },
+  {
+    id: "img_replicate",
+    label: "Replicate (FLUX pro / Ideogram)",
+    tier: "pago",
+    keyRequired: true,
+    url: "https://replicate.com/account/api-tokens",
+    linkLabel: "Obter token Replicate",
+    tutorial: "1) Crie conta em replicate.com  2) Adicione método de pagamento  3) Account → API tokens → Create token  4) Cole aqui.",
+    placeholder: "r8_...",
+  },
+];
 
 function normalizeOrder(order: string[] | null | undefined, current?: string): string[] {
   const seen = new Set<string>();
