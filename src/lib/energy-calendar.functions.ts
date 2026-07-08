@@ -1,8 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { createLovableAiGatewayProvider } from "@/lib/ai-gateway";
-import { generateText } from "ai";
 import * as Astro from "astronomy-engine";
 import { resolveActiveSubject } from "@/lib/active-subject";
 
