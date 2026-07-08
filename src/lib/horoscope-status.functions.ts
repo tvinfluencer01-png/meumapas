@@ -16,6 +16,7 @@ export type UserHoroscopeStatus = {
   last_detail: string | null;
   ready: boolean;
   issues: string[];
+  pending_reason: string | null;
 };
 
 export type HoroscopeStatusResult = {
