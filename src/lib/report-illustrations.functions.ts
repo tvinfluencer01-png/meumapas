@@ -1,6 +1,35 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { getConfiguredProviderKey } from "@/lib/ai-resolver.server";
+
+async function generateImageBytes(prompt: string, openaiKey: string): Promise<Uint8Array | null> {
+  const res = await fetch("https://api.openai.com/v1/images/generations", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${openaiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "gpt-image-1",
+      prompt,
+      size: "1536x1024",
+      n: 1,
+    }),
+  });
+  if (!res.ok) {
+    const txt = await res.text().catch(() => "");
+    if (res.status === 429) throw new Error("Limite de geração OpenAI atingido. Tente novamente em instantes.");
+    if (res.status === 401) throw new Error("Chave OpenAI inválida — verifique em Configurações → IA.");
+    throw new Error(`Falha na geração (${res.status}): ${txt.slice(0, 200)}`);
+  }
+  const json = (await res.json()) as { data?: Array<{ b64_json?: string; url?: string }> };
+  const first = json.data?.[0];
+  if (first?.b64_json) return Buffer.from(first.b64_json, "base64");
+  if (first?.url) {
+    const imgRes = await fetch(first.url);
+    if (!imgRes.ok) return null;
+    return new Uint8Array(await imgRes.arrayBuffer());
+  }
+  return null;
+}
 
 /**
  * Temas fixos que o sistema pode usar dentro dos relatórios.
@@ -200,33 +229,15 @@ export const generateReportIllustration = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await ensureAdmin(context);
-    const key = process.env.LOVABLE_API_KEY;
-    if (!key) throw new Error("LOVABLE_API_KEY ausente");
+    const openaiKey = await getConfiguredProviderKey(context.supabase, context.userId, "openai");
+    if (!openaiKey) throw new Error("Configure uma chave OpenAI em Configurações → IA para gerar ilustrações.");
 
     const n = data.count ?? 1;
     const created: Array<{ id: string; theme: string }> = [];
 
     for (let i = 0; i < n; i++) {
       const prompt = themePrompt(data.theme, data.customPrompt, i);
-      const res = await fetch("https://ai.gateway.lovable.dev/v1/images/generations", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "openai/gpt-image-2",
-          prompt,
-          size: "1536x1024",
-          quality: "low",
-          n: 1,
-        }),
-      });
-      if (!res.ok) {
-        const txt = await res.text().catch(() => "");
-        if (res.status === 429) throw new Error("Limite de geração atingido. Tente novamente em instantes.");
-        if (res.status === 402) throw new Error("Créditos de IA esgotados na workspace.");
-        throw new Error(`Falha na geração (${res.status}): ${txt.slice(0, 200)}`);
-      }
-      const json = await res.json();
-      const bytes = await extractImageBytes(json);
+      const bytes = await generateImageBytes(prompt, openaiKey);
       if (!bytes) throw new Error("Resposta da IA sem imagem utilizável.");
 
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -393,27 +404,9 @@ const THEME_BY_KIND: Record<string, string> = {
   personal_kabbalah: "cabala",
 };
 
-async function generateOne(theme: string, report_kind: string, userId: string, variantIndex = 0) {
-  const key = process.env.LOVABLE_API_KEY;
-  if (!key) throw new Error("LOVABLE_API_KEY ausente");
+async function generateOne(theme: string, report_kind: string, userId: string, openaiKey: string, variantIndex = 0) {
   const prompt = themePrompt(theme, undefined, variantIndex);
-  const res = await fetch("https://ai.gateway.lovable.dev/v1/images/generations", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: "openai/gpt-image-2",
-      prompt,
-      size: "1536x1024",
-      quality: "low",
-      n: 1,
-    }),
-  });
-  if (!res.ok) {
-    const txt = await res.text().catch(() => "");
-    throw new Error(`Falha (${res.status}) em ${report_kind}: ${txt.slice(0, 160)}`);
-  }
-  const json = await res.json();
-  const bytes = await extractImageBytes(json);
+  const bytes = await generateImageBytes(prompt, openaiKey);
   if (!bytes) throw new Error(`Sem imagem utilizável para ${report_kind}`);
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const path = `${report_kind}/${crypto.randomUUID()}.png`;
@@ -444,6 +437,8 @@ export const seedIllustrationsForAllKinds = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await ensureAdmin(context);
+    const openaiKey = await getConfiguredProviderKey(context.supabase, context.userId, "openai");
+    if (!openaiKey) throw new Error("Configure uma chave OpenAI em Configurações → IA para gerar ilustrações.");
     const perKind = data.perKind ?? 3;
     const kinds = Object.keys(THEME_BY_KIND);
     const results: Array<{ kind: string; ok: number; failed: number; error?: string }> = [];
@@ -454,7 +449,7 @@ export const seedIllustrationsForAllKinds = createServerFn({ method: "POST" })
       let lastErr: string | undefined;
       for (let i = 0; i < perKind; i++) {
         try {
-          await generateOne(theme, kind, context.userId, i);
+          await generateOne(theme, kind, context.userId, openaiKey, i);
           ok++;
         } catch (e: any) {
           failed++;

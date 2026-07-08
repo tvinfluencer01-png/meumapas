@@ -1,0 +1,4 @@
+ALTER TABLE public.user_settings ALTER COLUMN ai_provider_order SET DEFAULT ARRAY['openai','anthropic','google']::text[];
+ALTER TABLE public.user_settings ALTER COLUMN ai_provider SET DEFAULT 'openai';
+UPDATE public.user_settings SET ai_provider_order = (SELECT COALESCE(array_agg(p), ARRAY['openai','anthropic','google']::text[]) FROM unnest(ai_provider_order) AS p WHERE p <> 'lovable') WHERE 'lovable' = ANY (ai_provider_order);
+UPDATE public.user_settings SET ai_provider = COALESCE((SELECT p FROM unnest(ai_provider_order) AS p WHERE p <> 'lovable' LIMIT 1), 'openai') WHERE ai_provider = 'lovable';

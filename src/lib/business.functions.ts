@@ -3,7 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { generateText } from "ai";
-import { createLovableAiGatewayProvider } from "@/lib/ai-gateway";
+import { getConfiguredProvider } from "@/lib/ai-resolver.server";
 import { computeNumerology, numLabel, numTitle, formatBirthDateBR } from "@/lib/numerology";
 import { buildReportPdf, type ReportData } from "@/lib/reports-pdf";
 import { consumeCredits, hasUnlimitedAccess, getCreditCost, refundCredits } from "@/lib/credits.functions";
@@ -76,9 +76,8 @@ export const generateBusinessReport = createServerFn({ method: "POST" })
 
       yield { type: "progress" as const, progress: 30, step: "Consultando arquétipos e ciclos com IA..." };
 
-      const apiKey = process.env.LOVABLE_API_KEY!;
-      const provider = createLovableAiGatewayProvider(apiKey);
-      const model = provider.chatModel("openai/gpt-5");
+      const { model: makeModel } = await getConfiguredProvider(context.supabase, userId);
+      const model = makeModel("openai/gpt-5");
 
       const prompt = `Você é um consultor sênior que combina astrologia mundana, numerologia pitagórica e cabalística e estratégia empresarial.
 Produza uma análise PROFUNDA, profissional e específica sobre a empresa abaixo, em pt-BR.

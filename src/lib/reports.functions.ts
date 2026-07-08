@@ -3,12 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { generateText } from "ai";
-import {
-  createLovableAiGatewayProvider,
-  createOpenAIProvider,
-  createAnthropicProvider,
-  createGeminiProvider,
-} from "@/lib/ai-gateway";
+import { getConfiguredProvider } from "@/lib/ai-resolver.server";
 import { computeNumerology, NUMBER_MEANINGS, formatBirthDateBR, numLabel, numTitle } from "@/lib/numerology";
 import { buildReportPdf, type ReportData } from "@/lib/reports-pdf";
 import { consumeCredits, hasUnlimitedAccess, getCreditCost, refundCredits, type CreditAction } from "@/lib/credits.functions";
@@ -459,39 +454,23 @@ export const generateReport = createServerFn({ method: "POST" })
       return output;
     }
 
-    // 2) Choose AI provider
-    const provider = settings?.ai_provider ?? "lovable";
-    const customKey = settings?.custom_ai_key as string | null;
+    // 2) Choose AI provider (resolved from user settings; ignores legacy `ai_provider === 'lovable'`)
     const customModel = (settings?.custom_ai_model as string | null) ?? null;
-    const isCustomProvider = ["openai", "anthropic", "gemini"].includes(provider) && !!customKey;
+    const { model: makeConfiguredModel, provider: activeProvider } = await getConfiguredProvider(
+      context.supabase,
+      context.userId,
+    );
 
     let modelName = customModel ?? "google/gemini-3-flash-preview";
-    const lovableKey = process.env.LOVABLE_API_KEY;
-
-    const makeModel = (candidate: string): ReturnType<ReturnType<typeof createLovableAiGatewayProvider>> => {
-      if (provider === "openai" && customKey) {
-        return createOpenAIProvider(customKey)(candidate);
-      }
-      if (provider === "anthropic" && customKey) {
-        return createAnthropicProvider(customKey)(candidate);
-      }
-      if (provider === "gemini" && customKey) {
-        return createGeminiProvider(customKey)(candidate);
-      }
-      if (!lovableKey) throw new Error("LOVABLE_API_KEY ausente");
-      return createLovableAiGatewayProvider(lovableKey)(candidate);
-    };
-
-    if (provider === "openai" && customKey) {
+    if (activeProvider === "openai") {
       modelName = customModel ?? "gpt-5-mini";
-    } else if (provider === "anthropic" && customKey) {
-      modelName = customModel ?? "claude-3-5-sonnet-20241022";
-    } else if (provider === "gemini" && customKey) {
-      modelName = customModel ?? "gemini-2.5-flash-lite";
-    } else {
-      modelName = customModel?.startsWith("google/") ? customModel : "google/gemini-2.5-flash";
+    } else if (activeProvider === "anthropic") {
+      modelName = customModel ?? "claude-3-5-sonnet-latest";
+    } else if (activeProvider === "google") {
+      modelName = customModel ?? "gemini-2.5-flash";
     }
 
+    const makeModel = (candidate: string) => makeConfiguredModel(candidate);
     let model = makeModel(modelName);
 
     // 3) Generate humanized structured content
@@ -563,19 +542,15 @@ Mapa astral:
 ${astroBlock}${extraContextBlock}`;
 
     const getFallbackModels = () => {
-      const candidates = (
-        provider === "openai" && customKey
-          ? [modelName, "gpt-5-mini"]
-          : provider === "gemini" && customKey
-            ? [modelName, "gemini-2.5-flash"]
-            : provider === "anthropic" && customKey
-              ? [modelName, "claude-3-5-sonnet-20241022"]
-              : !isCustomProvider && lovableKey
-                ? [modelName, "google/gemini-2.5-flash", "google/gemini-3-flash-preview"]
-                : [modelName]
-      ).filter((candidate, index, arr) => arr.indexOf(candidate) === index);
-
-      return candidates;
+      const extras =
+        activeProvider === "openai"
+          ? ["gpt-5-mini"]
+          : activeProvider === "google"
+            ? ["gemini-2.5-flash", "gemini-2.5-flash-lite"]
+            : activeProvider === "anthropic"
+              ? ["claude-3-5-sonnet-latest"]
+              : [];
+      return [modelName, ...extras].filter((c, i, a) => a.indexOf(c) === i);
     };
 
     async function callWithRetry({

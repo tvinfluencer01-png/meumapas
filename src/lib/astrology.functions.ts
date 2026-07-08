@@ -4,7 +4,7 @@ import { generateText } from "ai";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import * as Astro from "astronomy-engine";
-import { createLovableAiGatewayProvider } from "@/lib/ai-gateway";
+import { getConfiguredProvider } from "@/lib/ai-resolver.server";
 import {
   consumeCredits,
   refundCredits,
@@ -272,19 +272,17 @@ async function buildHoroscopeReading(params: {
   ascSign?: string;
   weekRange: { start: string; end: string };
   monthLabel: string;
+  userId?: string | null;
 }): Promise<string> {
-  const { sunSign, moonSign, ascSign, weekRange, monthLabel } = params;
-  const apiKey = process.env.LOVABLE_API_KEY;
+  const { sunSign, moonSign, ascSign, weekRange, monthLabel, userId } = params;
   const fallback =
     `Esta semana (${weekRange.start} a ${weekRange.end}), em ${monthLabel}, o céu convida você a honrar o que pulsa em ${sunSign ?? "seu Sol"}, ` +
     `acolher o que sente em ${moonSign ?? "sua Lua"} e expressar no mundo a presença de ${ascSign ?? "seu Ascendente"}. ` +
     `Permita-se pausar, sentir os movimentos sutis e agir com intenção. Pequenos gestos de cuidado e clareza abrem portas maiores.`;
-  if (!apiKey) return fallback;
   try {
-    const gateway = createLovableAiGatewayProvider(apiKey);
-    const model = gateway("google/gemini-3-flash-preview");
+    const { model: makeModel } = await getConfiguredProvider(supabaseAdmin, userId ?? null);
+    const model = makeModel("google/gemini-3-flash-preview");
     const prompt = `Escreva uma leitura horoscópica em português brasileiro, tom acolhedor e prático, em segunda pessoa ("você"), em 3 a 4 parágrafos curtos (máx. 250 palavras). Semana de ${weekRange.start} a ${weekRange.end} em ${monthLabel}. Integre Sol em ${sunSign ?? "—"}, Lua em ${moonSign ?? "—"} e Ascendente em ${ascSign ?? "—"}. Cubra clima geral, amor, trabalho e um cuidado. Sem listas, sem markdown, sem emojis. Nunca prometa eventos certos.`;
-    // Timeout curto — se a IA travar, cai no fallback e o PDF sai.
     const { text } = await Promise.race([
       generateText({ model, prompt }),
       new Promise<never>((_, rej) => setTimeout(() => rej(new Error("horoscope timeout")), 12_000)),
@@ -592,11 +590,10 @@ async function buildForecastWithAI(chart: {
   midheaven: number | null;
   aspects: { a: string; b: string; aspect: string; orb: number }[];
   summary: string | null;
-}): Promise<AstroForecast> {
-  const apiKey = process.env.LOVABLE_API_KEY;
-  if (!apiKey) throw new Error("LOVABLE_API_KEY ausente");
+}, userId?: string | null): Promise<AstroForecast> {
+  const { model: makeModel } = await getConfiguredProvider(supabaseAdmin, userId ?? null);
   // Modelo mais robusto para gerar leitura extensa e profunda (~40 páginas)
-  const model = createLovableAiGatewayProvider(apiKey)("openai/gpt-5.5");
+  const model = makeModel("openai/gpt-5.5");
 
   const ascSign = chart.ascendant != null ? SIGNS[Math.floor(chart.ascendant / 30)] : "—";
   const mcSign = chart.midheaven != null ? SIGNS[Math.floor(chart.midheaven / 30)] : "—";
@@ -768,7 +765,7 @@ export const generateAstroForecast = createServerFn({ method: "POST" })
         midheaven: chart.midheaven as number | null,
         aspects: chart.aspects as any,
         summary: chart.summary,
-      });
+      }, userId);
       await supabaseAdmin
         .from("astro_charts")
         .update({ forecast, forecast_generated_at: forecast.generatedAt })
@@ -1021,6 +1018,7 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
         ascSign,
         weekRange: { start: week.start, end: week.end },
         monthLabel,
+        userId,
       });
       blocks.push({ type: "page-break" });
       blocks.push({ type: "h2", text: "Leitura horoscópica", pageBreak: false });
@@ -1226,6 +1224,7 @@ export const downloadAstroForecastPdf = createServerFn({ method: "POST" })
       ascSign,
       weekRange: { start: week.start, end: week.end },
       monthLabel,
+      userId,
     });
     blocks.push({ type: "h2", text: "Leitura horoscópica" });
     blocks.push({ type: "h3", text: `Semana de ${week.start} a ${week.end}` });

@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { generateText } from "ai";
-import { createLovableAiGatewayProvider } from "@/lib/ai-gateway";
+import { getConfiguredProvider } from "@/lib/ai-resolver.server";
 import { buildHoroscopePrompt, computeLuckyForDay, loadChartSummaryForHoroscope, themesForDay } from "@/lib/horoscope.functions";
 import { localContextFor } from "@/lib/tz-context";
 
@@ -133,9 +133,6 @@ async function handler({ request }: { request: Request }) {
   const evoReady =
     evo?.enabled && evo?.base_url && evo?.global_api_key && evo?.instance_name;
 
-  const apiKey = process.env.LOVABLE_API_KEY;
-  if (!apiKey) return new Response("LOVABLE_API_KEY missing", { status: 500 });
-  const provider = createLovableAiGatewayProvider(apiKey);
   const modelCandidates = ["google/gemini-3-flash-preview", "google/gemini-2.5-flash"];
 
   const { getAddonPromptOverride } = await import("@/lib/addon-settings.functions");
@@ -249,10 +246,16 @@ async function handler({ request }: { request: Request }) {
       const seedHash = Array.from(`${s.user_id}|${today}`).reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 2166136261) >>> 0;
       const seedNum = seedHash % 2147483647;
       let lastErr: any = null;
+      let makeModel: ((h?: string | null) => any) | null = null;
+      try {
+        ({ model: makeModel } = await getConfiguredProvider(supabaseAdmin, s.user_id));
+      } catch (e) {
+        throw e;
+      }
       for (const modelName of modelCandidates) {
         try {
           const { text } = await generateText({
-            model: (provider as any)(modelName), prompt, temperature: 1.0, topP: 0.95, seed: seedNum,
+            model: makeModel!(modelName), prompt, temperature: 1.0, topP: 0.95, seed: seedNum,
           });
           body = text.trim();
           lastErr = null;
@@ -536,13 +539,16 @@ async function handler({ request }: { request: Request }) {
           : buildHoroscopePrompt(sign, leadToday, lucky);
 
         let body = "";
-        for (const modelName of modelCandidates) {
-          try {
-            const { text } = await generateText({ model: (provider as any)(modelName), prompt, temperature: 1.0, topP: 0.95 });
-            body = text.trim();
-            break;
-          } catch {}
-        }
+        try {
+          const { model: makeModel } = await getConfiguredProvider(supabaseAdmin, null);
+          for (const modelName of modelCandidates) {
+            try {
+              const { text } = await generateText({ model: makeModel(modelName), prompt, temperature: 1.0, topP: 0.95 });
+              body = text.trim();
+              break;
+            } catch {}
+          }
+        } catch {}
         if (!body) continue;
 
         const message = `🌌 Horóscopo de hoje — ${sign}\n\n${body}\n\n— Código Cósmico (trial grátis)`;

@@ -68,7 +68,7 @@ export const updateFavoriteNote = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-import { createLovableAiGatewayProvider } from "@/lib/ai-gateway";
+import { getConfiguredProvider } from "@/lib/ai-resolver.server";
 import { generateText } from "ai";
 import * as Astro from "astronomy-engine";
 
@@ -126,11 +126,8 @@ export const generateFavoriteNote = createServerFn({ method: "POST" })
     const weekday = dateObj.toLocaleDateString("pt-BR", { weekday: "long", timeZone: "UTC" });
     const dateLabel = dateObj.toLocaleDateString("pt-BR", { day: "numeric", month: "long", timeZone: "UTC" });
 
-    const apiKey = process.env.LOVABLE_API_KEY;
-    if (!apiKey) throw new Error("AI indisponível no momento.");
-
-    const gateway = createLovableAiGatewayProvider(apiKey);
-    const model = gateway("google/gemini-3-flash-preview");
+    const { model: makeModel } = await getConfiguredProvider(supabase, userId);
+    const model = makeModel("google/gemini-3-flash-preview");
 
     const prompt = `Você é um astrólogo numerólogo cabalístico. Escreva UMA nota pessoal, humanizada e acolhedora em português (PT-BR) para marcar este dia como favorito no calendário energético de ${birth?.full_name ?? "esta pessoa"}.
 

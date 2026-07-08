@@ -2,12 +2,7 @@ import "@tanstack/react-start";
 import { createFileRoute } from "@tanstack/react-router";
 import { convertToModelMessages, streamText, type UIMessage } from "ai";
 import { createClient } from "@supabase/supabase-js";
-import {
-  createLovableAiGatewayProvider,
-  createOpenAIProvider,
-  createAnthropicProvider,
-  createGeminiProvider,
-} from "@/lib/ai-gateway";
+import { getConfiguredProvider } from "@/lib/ai-resolver.server";
 import { computeNumerology, formatBirthDateBR, numLabel, numTitle } from "@/lib/numerology";
 import { applyActiveChartFilter, resolveActiveSubject } from "@/lib/active-subject";
 
@@ -115,23 +110,10 @@ export const Route = createFileRoute("/api/chat")({
 
           const { context, settings } = await buildContext(userId, token);
 
-          // Choose provider
-          const provider = settings?.ai_provider ?? "lovable";
-          const customKey = settings?.custom_ai_key as string | null;
+          // Choose provider (user-configured openai/anthropic/google, falling back to env keys)
           const customModel = (settings?.custom_ai_model as string | null) ?? null;
-
-          let model;
-          if (provider === "openai" && customKey) {
-            model = createOpenAIProvider(customKey)(customModel ?? "gpt-4o-mini");
-          } else if (provider === "anthropic" && customKey) {
-            model = createAnthropicProvider(customKey)(customModel ?? "claude-3-5-sonnet-20241022");
-          } else if (provider === "gemini" && customKey) {
-            model = createGeminiProvider(customKey)(customModel ?? "gemini-2.0-flash");
-          } else {
-            const key = process.env.LOVABLE_API_KEY;
-            if (!key) return new Response("Missing LOVABLE_API_KEY", { status: 500 });
-            model = createLovableAiGatewayProvider(key)(customModel ?? "google/gemini-3-flash-preview");
-          }
+          const { model: makeModel } = await getConfiguredProvider(userClient, userId);
+          const model = makeModel(customModel ?? "google/gemini-3-flash-preview");
 
           const { getAddonPromptOverride } = await import("@/lib/addon-settings.functions");
           const oracleOverride = await getAddonPromptOverride("sub_oracle_premium");

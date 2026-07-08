@@ -3,7 +3,7 @@ import { z } from "zod";
 import { generateText } from "ai";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { createLovableAiGatewayProvider } from "@/lib/ai-gateway";
+import { getConfiguredProvider } from "@/lib/ai-resolver.server";
 import {
   consumeCredits,
   refundCredits,
@@ -55,11 +55,8 @@ export const generateKabbalahMeditation = createServerFn({ method: "POST" })
       const sef = findSefirah(data.sefirah);
       if (!sef) throw new Error("Sefirá inválida.");
 
-      const apiKey = process.env.LOVABLE_API_KEY;
-      if (!apiKey) throw new Error("LOVABLE_API_KEY ausente");
-      const model = createLovableAiGatewayProvider(apiKey)(
-        "google/gemini-2.5-flash",
-      );
+      const { model: makeModel } = await getConfiguredProvider(context.supabase, context.userId);
+      const model = makeModel("google/gemini-2.5-flash");
 
       const system = `Você é um **mestre cabalista contemporâneo** que guia meditações na Árvore da Vida.
 Escreva em PT-BR, tom reverente mas acessível, em segunda pessoa ("Respire fundo...", "Sinta...").

@@ -2,7 +2,7 @@
 // Usa Lovable AI Gateway para produzir uma análise completa a partir do
 // customer_data + report_type, evitando o PDF meramente informativo.
 import { generateText } from "ai";
-import { createLovableAiGatewayProvider } from "@/lib/ai-gateway";
+import { getConfiguredProvider } from "@/lib/ai-resolver.server";
 import type { SimplePdfBlock } from "@/lib/simple-pdf";
 
 type CD = Record<string, any>;
@@ -113,8 +113,12 @@ export async function buildAiOrderReportBlocks(
   landingTitle: string,
   customerData: CD,
 ): Promise<SimplePdfBlock[] | null> {
-  const apiKey = process.env.LOVABLE_API_KEY;
-  if (!apiKey) return null;
+  let makeModel: (hint?: string | null) => any;
+  try {
+    ({ model: makeModel } = await getConfiguredProvider(null, null));
+  } catch {
+    return null;
+  }
 
   const meta = TYPE_META[reportType] ?? {
     title: landingTitle || "Relatório Personalizado",
@@ -155,11 +159,10 @@ Regras de formato de saída (siga LITERALMENTE):
 - Itens de lista começam com "- " (hífen + espaço), um por linha, logo após a etiqueta [LIST].
 - Não use markdown (nada de #, **, _, >).`;
 
-  const gateway = createLovableAiGatewayProvider(apiKey);
   let text = "";
   try {
     const res = await generateText({
-      model: gateway("google/gemini-3-flash-preview"),
+      model: makeModel("google/gemini-3-flash-preview"),
       system,
       prompt,
     });

@@ -1,8 +1,10 @@
 // FASE 4C — Motor antifraude com IA (server-only).
 // Combina heurísticas determinísticas (velocity, IP repetido, UA suspeito)
-// com raciocínio LLM opcional via Lovable AI Gateway.
+// com raciocínio LLM opcional via provedores IA configurados no sistema.
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { getConfiguredProvider } from "@/lib/ai-resolver.server";
+import { generateText } from "ai";
 
 type Signal = { code: string; weight: number; detail?: string };
 
@@ -52,23 +54,15 @@ async function collectSignals(input: FraudInput): Promise<Signal[]> {
 }
 
 async function aiReasoning(input: FraudInput, signals: Signal[]): Promise<string | null> {
-  const key = process.env.LOVABLE_API_KEY;
-  if (!key || signals.length === 0) return null;
+  if (signals.length === 0) return null;
   try {
-    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: { "content-type": "application/json", authorization: `Bearer ${key}` },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: "Você é um analista antifraude. Responda em até 2 frases em português." },
-          { role: "user", content: `Sinais detectados: ${JSON.stringify(signals)}. Contexto: ${JSON.stringify(input).slice(0, 400)}. Explique o risco.` },
-        ],
-      }),
+    const { model: makeModel } = await getConfiguredProvider(supabaseAdmin, null);
+    const { text } = await generateText({
+      model: makeModel("google/gemini-2.5-flash"),
+      system: "Você é um analista antifraude. Responda em até 2 frases em português.",
+      prompt: `Sinais detectados: ${JSON.stringify(signals)}. Contexto: ${JSON.stringify(input).slice(0, 400)}. Explique o risco.`,
     });
-    if (!res.ok) return null;
-    const j = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
-    return j.choices?.[0]?.message?.content?.trim() ?? null;
+    return text.trim() || null;
   } catch { return null; }
 }
 

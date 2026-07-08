@@ -3,7 +3,7 @@
 // so guest product-order PDFs match the quality delivered to logged-in users.
 import { generateText } from "ai";
 import { z } from "zod";
-import { createLovableAiGatewayProvider } from "@/lib/ai-gateway";
+import { getConfiguredProvider } from "@/lib/ai-resolver.server";
 import { computeNumerology, numLabel, numTitle, formatBirthDateBR, NUMBER_MEANINGS } from "@/lib/numerology";
 import type { SimplePdfBlock } from "@/lib/simple-pdf";
 import { buildPersonalityNumerologyBlocks } from "@/lib/numerology-personality-report";
@@ -54,8 +54,10 @@ export async function buildAiPersonalityNumerologyBlocks(
   const headline =
     `Caminho ${numLabel(num.life_path)} · Destino ${numLabel(num.destiny)} · Alma ${numLabel(num.soul_urge)} · Personalidade ${numLabel(num.personality)}`;
 
-  const apiKey = process.env.LOVABLE_API_KEY;
-  if (!apiKey) {
+  let makeModel: (hint?: string | null) => any;
+  try {
+    ({ model: makeModel } = await getConfiguredProvider(null, null));
+  } catch {
     return buildPersonalityNumerologyBlocks(fullName, birthDate);
   }
 
@@ -100,14 +102,13 @@ Devolva APENAS um JSON válido (sem markdown, sem comentários) com esta estrutu
   "summary": "300+ caracteres sintetizando o eixo central da personalidade de ${firstName}"
 }`;
 
-  const gateway = createLovableAiGatewayProvider(apiKey);
   const models = ["google/gemini-2.5-flash", "google/gemini-3-flash-preview"];
 
   let parsed: Report | null = null;
   for (const modelId of models) {
     try {
       const { text } = await generateText({
-        model: gateway(modelId),
+        model: makeModel(modelId),
         system,
         prompt,
         abortSignal: AbortSignal.timeout(90_000),

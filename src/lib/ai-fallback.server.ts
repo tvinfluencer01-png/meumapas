@@ -1,22 +1,20 @@
 import { generateText } from "ai";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
-  createLovableAiGatewayProvider,
   createOpenAIProvider,
   createAnthropicProvider,
   createGeminiProvider,
 } from "@/lib/ai-gateway";
 
-export type AiProviderId = "lovable" | "openai" | "anthropic" | "google";
+export type AiProviderId = "openai" | "anthropic" | "google";
 
 const DEFAULT_MODELS: Record<AiProviderId, string> = {
-  lovable: "google/gemini-3-flash-preview",
   openai: "gpt-5.5",
   anthropic: "claude-3-5-sonnet-latest",
   google: "gemini-2.5-flash",
 };
 
-const DEFAULT_ORDER: AiProviderId[] = ["openai", "lovable", "anthropic", "google"];
+const DEFAULT_ORDER: AiProviderId[] = ["openai", "anthropic", "google"];
 
 type ProviderConfig = { enabled?: boolean; key?: string | null; model?: string | null };
 type ProvidersConfig = Partial<Record<AiProviderId, ProviderConfig>>;
@@ -40,11 +38,6 @@ function buildModel(
   opts: { customKey?: string | null; customModel?: string | null },
 ) {
   switch (provider) {
-    case "lovable": {
-      const key = process.env.LOVABLE_API_KEY;
-      if (!key) return null;
-      return createLovableAiGatewayProvider(key)(opts.customModel || DEFAULT_MODELS.lovable);
-    }
     case "openai": {
       const key = opts.customKey || process.env.OPENAI_API_KEY;
       if (!key) return null;
@@ -139,5 +132,5 @@ export async function generateWithFallback(
   }
 
   const summary = attempts.map((a) => `#${a.attempt} ${a.provider}: ${a.error}`).join(" | ");
-  throw new Error(`All AI providers failed. ${summary}`);
+  throw new Error(`Todos os provedores de IA falharam. ${summary}`);
 }

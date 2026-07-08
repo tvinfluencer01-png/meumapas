@@ -10,16 +10,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getLovableApiKeyStatus, testAstrologyCredentials } from "@/lib/admin.functions";
+import { testAstrologyCredentials } from "@/lib/admin.functions";
 import { listProviderModels, testProvider } from "@/lib/ai-providers.functions";
 
 const AI_PROVIDER_LABELS: Record<string, string> = {
   openai: "OpenAI (BYO key)",
-  lovable: "Lovable AI Gateway",
   anthropic: "Anthropic Claude (BYO key)",
   google: "Google Gemini (BYO key)",
 };
-const DEFAULT_ORDER = ["openai", "lovable", "anthropic", "google"];
+const DEFAULT_ORDER = ["openai", "anthropic", "google"];
 
 function normalizeOrder(order: string[] | null | undefined, current?: string): string[] {
   const seen = new Set<string>();
@@ -54,7 +53,7 @@ export function SettingsForm() {
   const [saving, setSaving] = useState(false);
   const [testingAstro, setTestingAstro] = useState(false);
   const [astroStatus, setAstroStatus] = useState<{ ok: boolean; message: string } | null>(null);
-  const [showLovableKey, setShowLovableKey] = useState(false);
+  
   const [showCustomKey, setShowCustomKey] = useState(false);
   const [showAstroKey, setShowAstroKey] = useState(false);
   const [expandedProvider, setExpandedProvider] = useState<string | null>(null);
@@ -67,7 +66,7 @@ export function SettingsForm() {
   async function loadModels(id: string, key?: string) {
     setProviderBusy((b) => ({ ...b, [id]: "listing" }));
     try {
-      const res = await listModelsFn({ data: { provider: id as "openai" | "anthropic" | "google" | "lovable", key: key ?? null } });
+      const res = await listModelsFn({ data: { provider: id as "openai" | "anthropic" | "google", key: key ?? null } });
       if (res.ok) setProviderModels((m) => ({ ...m, [id]: res.models }));
       else toast.error(`Modelos ${id}: ${res.error}`);
     } finally {
@@ -79,7 +78,7 @@ export function SettingsForm() {
     setProviderBusy((b) => ({ ...b, [id]: "testing" }));
     setProviderStatus((s) => ({ ...s, [id]: null }));
     try {
-      const res = await testProviderFn({ data: { provider: id as "openai" | "anthropic" | "google" | "lovable", key: key ?? null, model: model ?? null } });
+      const res = await testProviderFn({ data: { provider: id as "openai" | "anthropic" | "google", key: key ?? null, model: model ?? null } });
       setProviderStatus((s) => ({ ...s, [id]: { ok: res.ok, message: res.message } }));
       res.ok ? toast.success(`${id}: ${res.message}`) : toast.error(`${id}: ${res.message}`);
     } finally {
@@ -94,7 +93,7 @@ export function SettingsForm() {
         if (cfg.enabled === false) return;
         setProviderBusy((b) => ({ ...b, [id]: "testing" }));
         try {
-          const res = await testProviderFn({ data: { provider: id as "openai" | "anthropic" | "google" | "lovable", key: cfg.key ?? null, model: cfg.model ?? null } });
+          const res = await testProviderFn({ data: { provider: id as "openai" | "anthropic" | "google", key: cfg.key ?? null, model: cfg.model ?? null } });
           setProviderStatus((s) => ({ ...s, [id]: { ok: res.ok, message: res.message } }));
         } catch {
           setProviderStatus((s) => ({ ...s, [id]: { ok: false, message: "erro" } }));
@@ -124,14 +123,9 @@ export function SettingsForm() {
     },
   });
 
-  const fetchLovableKey = useServerFn(getLovableApiKeyStatus);
   const testAstroFn = useServerFn(testAstrologyCredentials);
 
-  const { data: lovableKeyStatus } = useQuery({
-    queryKey: ["lovable-api-key-status"],
-    queryFn: () => fetchLovableKey(),
-    retry: false,
-  });
+  
 
   useEffect(() => {
     if (data) {
@@ -200,11 +194,8 @@ export function SettingsForm() {
     form.preferred_engine === "swiss_ephemeris" ||
     (form.preferred_engine === "astrology_api" && astroStatus?.ok);
 
-  const lovableConfigured = !!lovableKeyStatus?.configured;
   const customConfigured = !!form.custom_ai_key && !!form.custom_ai_model;
-
-  const providerOnline =
-    form.ai_provider === "lovable" ? lovableConfigured : customConfigured;
+  const providerOnline = customConfigured;
 
   function maskKey(k: string) {
     if (!k) return "";
@@ -326,7 +317,7 @@ export function SettingsForm() {
           <div>
             <h2 className="font-serif text-xl text-gold">Inteligência Espiritual (IA)</h2>
             <p className="text-sm text-muted-foreground mt-1">
-              Padrão: <strong>Lovable AI Gateway</strong> (Gemini/GPT integrados). Ou traga sua própria chave.
+              Configure ao menos uma chave (OpenAI, Anthropic ou Google) abaixo. O sistema usa a primeira disponível e cai para as demais em fallback.
             </p>
           </div>
           {providerOnline && <OnlineBadge />}
@@ -353,7 +344,7 @@ export function SettingsForm() {
               const checking = providerBusy[id] === "testing";
               const online = status
                 ? status.ok
-                : id === "lovable" ? lovableConfigured : (form.ai_provider === id && customConfigured);
+                : (form.ai_provider === id && customConfigured);
               const move = (dir: -1 | 1) => {
                 const next = [...form.ai_provider_order];
                 const j = idx + dir;
@@ -476,19 +467,17 @@ export function SettingsForm() {
                             />
                           )}
                         </div>
-                        {id !== "lovable" && (
-                          <div>
-                            <Label className="text-stardust text-xs">API Key</Label>
-                            <Input
-                              type="password"
-                              value={cfg.key ?? ""}
-                              onChange={(e) => updateCfg({ key: e.target.value })}
-                              onKeyDown={(e) => e.stopPropagation()}
-                              className="mt-1 bg-input border-border h-8 text-xs"
-                              placeholder="sk-..."
-                            />
-                          </div>
-                        )}
+                        <div>
+                          <Label className="text-stardust text-xs">API Key</Label>
+                          <Input
+                            type="password"
+                            value={cfg.key ?? ""}
+                            onChange={(e) => updateCfg({ key: e.target.value })}
+                            onKeyDown={(e) => e.stopPropagation()}
+                            className="mt-1 bg-input border-border h-8 text-xs"
+                            placeholder="sk-..."
+                          />
+                        </div>
                       </div>
                       <div className="flex items-center justify-between gap-2">
                         <div className="text-[11px]">
@@ -523,72 +512,29 @@ export function SettingsForm() {
         </div>
 
 
-        {form.ai_provider === "lovable" && (
-          <div className="rounded-xl border border-emerald-600/30 bg-emerald-600/5 p-4 space-y-3">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <Sparkles className="size-4 text-emerald-500" />
-                <span className="text-sm text-stardust font-medium">Lovable AI Gateway</span>
-              </div>
-              {lovableConfigured && <OnlineBadge />}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Chave gerenciada pela Lovable e provisionada automaticamente. Acessa Gemini, GPT e outros modelos integrados.
-            </p>
-            <div>
-              <Label className="text-stardust text-xs">LOVABLE_API_KEY</Label>
-              <div className="relative mt-1">
-                <Input
-                  readOnly
-                  type="text"
-                  value={
-                    lovableKeyStatus?.key
-                      ? showLovableKey
-                        ? lovableKeyStatus.key
-                        : maskKey(lovableKeyStatus.key)
-                      : lovableConfigured
-                        ? "••••••••••••"
-                        : "(não configurada)"
-                  }
-                  className="bg-input border-border pr-10 font-mono text-xs"
-                />
-                {lovableKeyStatus?.key && (
-                  <button type="button" onClick={() => setShowLovableKey((s) => !s)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-stardust"
-                    aria-label={showLovableKey ? "Ocultar chave" : "Mostrar chave"}>
-                    {showLovableKey ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                  </button>
-                )}
-              </div>
-            </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <Label className="text-stardust text-xs">Modelo padrão (compatível com o provedor selecionado)</Label>
+            <Input value={form.custom_ai_model}
+              onChange={(e) => setForm({ ...form, custom_ai_model: e.target.value })}
+              onKeyDown={(e) => e.stopPropagation()}
+              className="mt-1 bg-input border-border" placeholder="gpt-5 / claude-opus / gemini-2.5-pro" />
           </div>
-        )}
-
-        {form.ai_provider !== "lovable" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div>
-              <Label className="text-stardust text-xs">Modelo</Label>
-              <Input value={form.custom_ai_model}
-                onChange={(e) => setForm({ ...form, custom_ai_model: e.target.value })}
+          <div>
+            <Label className="text-stardust text-xs">API Key do provedor padrão</Label>
+            <div className="relative mt-1">
+              <Input type={showCustomKey ? "text" : "password"} value={form.custom_ai_key}
+                onChange={(e) => setForm({ ...form, custom_ai_key: e.target.value })}
                 onKeyDown={(e) => e.stopPropagation()}
-                className="mt-1 bg-input border-border" placeholder="gpt-5 / claude-opus / gemini-2.5-pro" />
-            </div>
-            <div>
-              <Label className="text-stardust text-xs">API Key</Label>
-              <div className="relative mt-1">
-                <Input type={showCustomKey ? "text" : "password"} value={form.custom_ai_key}
-                  onChange={(e) => setForm({ ...form, custom_ai_key: e.target.value })}
-                  onKeyDown={(e) => e.stopPropagation()}
-                  className="bg-input border-border pr-10" placeholder="sk-..." />
-                <button type="button" onClick={() => setShowCustomKey((s) => !s)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-stardust"
-                  aria-label={showCustomKey ? "Ocultar chave" : "Mostrar chave"}>
-                  {showCustomKey ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                </button>
-              </div>
+                className="bg-input border-border pr-10" placeholder="sk-..." />
+              <button type="button" onClick={() => setShowCustomKey((s) => !s)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-stardust"
+                aria-label={showCustomKey ? "Ocultar chave" : "Mostrar chave"}>
+                {showCustomKey ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+              </button>
             </div>
           </div>
-        )}
+        </div>
         <div className="text-xs text-muted-foreground">
           Links rápidos:{" "}
           <ExtLink href="https://platform.openai.com/api-keys">OpenAI keys</ExtLink>{" · "}

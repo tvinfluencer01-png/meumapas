@@ -2,26 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const ProviderIdSchema = z.enum(["openai", "anthropic", "google", "lovable"]);
-
-// Curated Lovable Gateway model list (no public listing endpoint).
-const LOVABLE_MODELS = [
-  "openai/gpt-5.5",
-  "openai/gpt-5.5-pro",
-  "openai/gpt-5.4",
-  "openai/gpt-5.4-mini",
-  "openai/gpt-5.4-nano",
-  "openai/gpt-5",
-  "openai/gpt-5-mini",
-  "openai/gpt-5-nano",
-  "google/gemini-3.5-flash",
-  "google/gemini-3.1-pro-preview",
-  "google/gemini-3.1-flash-lite",
-  "google/gemini-3-flash-preview",
-  "google/gemini-2.5-pro",
-  "google/gemini-2.5-flash",
-  "google/gemini-2.5-flash-lite",
-];
+const ProviderIdSchema = z.enum(["openai", "anthropic", "google"]);
 
 async function resolveKey(
   provider: z.infer<typeof ProviderIdSchema>,
@@ -33,7 +14,6 @@ async function resolveKey(
     case "openai": return process.env.OPENAI_API_KEY ?? null;
     case "anthropic": return process.env.ANTHROPIC_API_KEY ?? null;
     case "google": return process.env.GEMINI_API_KEY ?? process.env.GOOGLE_API_KEY ?? null;
-    case "lovable": return process.env.LOVABLE_API_KEY ?? null;
   }
 }
 
@@ -48,9 +28,6 @@ export const listProviderModels = createServerFn({ method: "POST" })
     if (!key) return { ok: false as const, error: "Chave não configurada", models: [] };
 
     try {
-      if (data.provider === "lovable") {
-        return { ok: true as const, models: LOVABLE_MODELS };
-      }
       if (data.provider === "openai") {
         const res = await fetch("https://api.openai.com/v1/models", {
           headers: { Authorization: `Bearer ${key}` },
@@ -106,7 +83,6 @@ export const testProvider = createServerFn({ method: "POST" })
     try {
       const { generateText } = await import("ai");
       const {
-        createLovableAiGatewayProvider,
         createOpenAIProvider,
         createAnthropicProvider,
         createGeminiProvider,
@@ -116,7 +92,6 @@ export const testProvider = createServerFn({ method: "POST" })
         case "openai": model = createOpenAIProvider(key)(data.model || "gpt-5.5"); break;
         case "anthropic": model = createAnthropicProvider(key)(data.model || "claude-3-5-sonnet-latest"); break;
         case "google": model = createGeminiProvider(key)(data.model || "gemini-2.5-flash"); break;
-        case "lovable": model = createLovableAiGatewayProvider(key)(data.model || "google/gemini-3-flash-preview"); break;
       }
       const { text } = await Promise.race([
         generateText({ model, prompt: "Responda apenas: OK" }),
