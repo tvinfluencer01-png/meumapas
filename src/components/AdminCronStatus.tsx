@@ -1,6 +1,6 @@
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, AlertTriangle, RefreshCw, Clock, Edit2, Save, X, Play } from "lucide-react";
+import { CheckCircle2, AlertTriangle, RefreshCw, Clock, Edit2, Save, X, Play, Pause, Power } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -84,6 +84,16 @@ function CronJobItem({ job }: { job: CronJobStatus }) {
     onError: (e: Error) => toast.error(`Erro ao disparar teste: ${e.message}`),
   });
 
+  const toggleMut = useMutation({
+    mutationFn: () =>
+      updateFn({ data: { jobid: job.jobid, schedule: job.schedule, command: job.command, active: !job.active } }),
+    onSuccess: () => {
+      toast.success(job.active ? "Cron job desativado." : "Cron job ativado.");
+      qc.invalidateQueries({ queryKey: ["admin-cron-status"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const failed = job.last_status === "failed";
   const httpBad = job.last_http_status !== null && (job.last_http_status < 200 || job.last_http_status >= 300);
 
@@ -164,6 +174,16 @@ function CronJobItem({ job }: { job: CronJobStatus }) {
                 title="Testar execução agora"
               >
                 <Play className="size-3.5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className={`size-8 ${job.active ? "text-muted-foreground hover:text-amber-500" : "text-emerald-500 hover:text-emerald-400"} ${toggleMut.isPending ? "animate-pulse" : ""}`}
+                onClick={() => toggleMut.mutate()}
+                disabled={toggleMut.isPending}
+                title={job.active ? "Desativar (pausar)" : "Ativar"}
+              >
+                {job.active ? <Pause className="size-3.5" /> : <Power className="size-3.5" />}
               </Button>
             </div>
           </div>
