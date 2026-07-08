@@ -688,7 +688,45 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
         }
       }
 
-      // Previsões com contexto de datas
+      // ============================================================
+      // SÍNTESE DE ABERTURA (leitura profunda)
+      // ============================================================
+      blocks.push({ type: "h2", text: "Síntese profunda do seu mapa" });
+      blocks.push({ type: "p", text: forecast.synthesis });
+
+      // ============================================================
+      // INTERPRETAÇÃO POR ÁREA DA VIDA
+      // ============================================================
+      const deepAreas: Array<[string, typeof forecast.love]> = [
+        ["Amor", forecast.love],
+        ["Dinheiro", forecast.money],
+        ["Saúde", forecast.health],
+        ["Propósito", forecast.purpose],
+        ["Negócios", forecast.business],
+        ["Família", forecast.family],
+        ["Espiritualidade", forecast.spirituality],
+        ["Amizades", forecast.relationships],
+        ["Sombras", forecast.shadows],
+      ];
+      for (const [, area] of deepAreas) {
+        if (!area) continue;
+        blocks.push({ type: "h2", text: area.title });
+        blocks.push({ type: "p", text: area.reading });
+        blocks.push({ type: "h3", text: "Oportunidades que o seu mapa está abrindo" });
+        blocks.push({ type: "p", text: area.opportunities });
+        if (area.tips?.length) {
+          blocks.push({ type: "h3", text: "Faça isto" });
+          blocks.push({ type: "kv", rows: area.tips.map((t, i) => ({ k: `${i + 1}.`, v: t })) });
+        }
+        if (area.avoid?.length) {
+          blocks.push({ type: "h3", text: "Evite isto" });
+          blocks.push({ type: "kv", rows: area.avoid.map((t, i) => ({ k: `${i + 1}.`, v: t })) });
+        }
+      }
+
+      // ============================================================
+      // PREVISÕES TEMPORAIS
+      // ============================================================
       const week = formatWeekRange();
       const monthLabel = formatMonthLabel();
       const yearLabel = formatYearLabel();
@@ -714,6 +752,41 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
       blocks.push({ type: "h2", text: "Previsões para o ano" });
       blocks.push({ type: "h3", text: yearLabel });
       blocks.push({ type: "p", text: forecast.year });
+
+      // ============================================================
+      // CALENDÁRIO ENERGÉTICO — 30 dias (fases da lua)
+      // ============================================================
+      blocks.push({ type: "h2", text: "Calendário energético dos próximos 30 dias" });
+      blocks.push({
+        type: "p",
+        text:
+          "A fase da Lua a cada dia dá o tom da sua energia interna. Use esta agenda como bússola: dias de Lua Nova pedem intenção e recomeço; Crescente favorece ação e construção; Cheia intensifica emoções e revela verdades; Minguante convida a soltar, revisar e descansar.",
+      });
+      const moonRows: { k: string; v: string }[] = [];
+      for (let i = 0; i < 30; i++) {
+        const d = new Date();
+        d.setDate(d.getDate() + i);
+        const angle = Astro.MoonPhase(d);
+        let label = "Lua Nova";
+        if (angle < 45) label = "Lua Nova · intenção";
+        else if (angle < 90) label = "Crescente · plantar";
+        else if (angle < 135) label = "Quarto Crescente · ação";
+        else if (angle < 180) label = "Gibosa Crescente · ajuste";
+        else if (angle < 225) label = "Lua Cheia · colheita";
+        else if (angle < 270) label = "Gibosa Minguante · gratidão";
+        else if (angle < 315) label = "Quarto Minguante · liberar";
+        else label = "Minguante · descanso";
+        const dateStr = d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", weekday: "short" });
+        moonRows.push({ k: dateStr, v: label });
+      }
+      blocks.push({ type: "kv", rows: moonRows });
+
+      // ============================================================
+      // FECHAMENTO
+      // ============================================================
+      blocks.push({ type: "h2", text: "Bênção final" });
+      blocks.push({ type: "p", text: forecast.closing });
+
 
       // Branding opcional
       const { data: brandRow } = await supabaseAdmin
