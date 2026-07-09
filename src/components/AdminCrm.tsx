@@ -50,6 +50,7 @@ export function AdminCrm() {
   const qc = useQueryClient();
   const listFn = useServerFn(listCrmLeads);
   const updateFn = useServerFn(updateCrmLead);
+  const deleteLeadFn = useServerFn(deleteCrmLead);
   const getSettingsFn = useServerFn(getCrmFollowupSettings);
   const saveSettingsFn = useServerFn(saveCrmFollowupSettings);
   const runNowFn = useServerFn(runCrmFollowupsNow);
