@@ -1934,9 +1934,27 @@ function BackupAdmin() {
               {schemaMut.isPending ? <Loader2 className="size-4 mr-2 animate-spin" /> : null}
               Aplicar migração de schema
             </Button>
+            <Button
+              variant="outline"
+              onClick={() => rlsMut.mutate(true)}
+              disabled={rlsMut.isPending || !status?.destinationReachable}
+              className="w-fit"
+            >
+              {rlsMut.isPending ? <Loader2 className="size-4 mr-2 animate-spin" /> : null}
+              Prévia RLS (dry-run)
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => rlsMut.mutate(false)}
+              disabled={rlsMut.isPending || !status?.destinationReachable}
+              className="w-fit"
+            >
+              {rlsMut.isPending ? <Loader2 className="size-4 mr-2 animate-spin" /> : null}
+              Aplicar políticas RLS
+            </Button>
           </div>
           <p className="text-xs text-muted-foreground -mt-2">
-            A migração de schema cria tabelas/colunas/enums que existem no Lovable Cloud e faltam no destino (apenas aditivo — nunca apaga nem altera tipos).
+            A migração de schema cria tabelas/colunas/enums faltantes (aditivo). O botão RLS habilita Row Level Security e replica todas as políticas do Lovable Cloud no destino (recria com o mesmo nome — sobrescreve se já existir).
           </p>
 
           {/* Última sincronização */}
