@@ -25,6 +25,15 @@ import {
 } from "@/lib/horoscope-landing.functions";
 
 const LEADS_SEEN_KEY = "admin_horoscope_leads_seen_at";
+const LEADS_SEEN_EVENT = "admin-horoscope-leads-seen";
+
+export function markHoroscopeLeadsSeen() {
+  const now = new Date().toISOString();
+  if (typeof window !== "undefined") {
+    localStorage.setItem(LEADS_SEEN_KEY, now);
+    window.dispatchEvent(new CustomEvent(LEADS_SEEN_EVENT, { detail: now }));
+  }
+}
 
 export function useNewLeadsCount() {
   const [seenAt, setSeenAt] = useState<string>(() => {
@@ -43,7 +52,8 @@ export function useNewLeadsCount() {
       if (error) throw error;
       return count ?? 0;
     },
-    refetchInterval: 30_000,
+    refetchInterval: 60_000,
+    staleTime: 30_000,
   });
 
   useEffect(() => {
@@ -55,19 +65,22 @@ export function useNewLeadsCount() {
         () => qc.invalidateQueries({ queryKey: ["admin-horoscope-leads-new"] }),
       )
       .subscribe();
+    const onSeen = (e: Event) => {
+      const detail = (e as CustomEvent<string>).detail;
+      setSeenAt(detail ?? new Date().toISOString());
+    };
+    window.addEventListener(LEADS_SEEN_EVENT, onSeen);
     return () => {
       supabase.removeChannel(chan);
+      window.removeEventListener(LEADS_SEEN_EVENT, onSeen);
     };
   }, [qc]);
 
-  const markSeen = () => {
-    const now = new Date().toISOString();
-    if (typeof window !== "undefined") localStorage.setItem(LEADS_SEEN_KEY, now);
-    setSeenAt(now);
-  };
+  const markSeen = () => markHoroscopeLeadsSeen();
 
   return { count: data ?? 0, markSeen };
 }
+
 
 export function AdminHoroscopeLanding() {
   return <SettingsBlock />;
@@ -372,9 +385,11 @@ export function LeadsBlock() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<string>("");
 
-  const { data, isLoading, isFetching } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["admin-horoscope-leads", page, search, status],
     queryFn: () => listFn({ data: { page, search: search || null, status: status || null } }),
+    placeholderData: (prev) => prev,
+    staleTime: 15_000,
   });
 
   useEffect(() => {
@@ -464,7 +479,7 @@ export function LeadsBlock() {
               </tr>
             </thead>
             <tbody>
-              {isLoading || isFetching ? (
+              {isLoading ? (
                 <tr><td colSpan={7} className="px-3 py-6 text-center text-muted-foreground">Carregando…</td></tr>
               ) : rows.length === 0 ? (
                 <tr><td colSpan={7} className="px-3 py-6 text-center text-muted-foreground">Nenhum lead ainda.</td></tr>
