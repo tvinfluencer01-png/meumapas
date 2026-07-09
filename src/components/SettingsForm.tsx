@@ -689,7 +689,7 @@ export function SettingsForm() {
                               placeholder={
                                 id === "openai" ? "gpt-4o-mini" :
                                 id === "anthropic" ? "claude-3-5-sonnet-latest" :
-                                id === "google" ? "gemini-2.5-flash" :
+                                id === "google" ? "gemini-2.0-flash" :
                                 "google/gemini-3-flash-preview"
                               }
                             />
