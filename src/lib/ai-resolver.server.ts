@@ -167,6 +167,114 @@ export async function getConfiguredProvider(
   );
 }
 
+/**
+ * Resolve TODOS os provedores configurados na ordem de prioridade do usuário,
+ * pulando os desabilitados/sem credencial. Usado por `runWithProviderFallback`.
+ */
+export async function getConfiguredProviders(
+  supabase: SupabaseClient | null,
+  userId: string | null,
+  options?: { requireUserKey?: boolean; addonId?: string | null },
+): Promise<ResolvedProvider[]> {
+  let requireUserKey = options?.requireUserKey === true;
+  if (!requireUserKey && options?.addonId && supabase && userId) {
+    try {
+      const [{ data: addon }, { data: hasIt }] = await Promise.all([
+        supabase.from("addon_settings").select("require_user_key").eq("addon_id", options.addonId).maybeSingle(),
+        supabase.rpc("has_active_addon", { _user_id: userId, _addon_id: options.addonId }),
+      ]);
+      if ((addon as { require_user_key?: boolean } | null)?.require_user_key && hasIt) requireUserKey = true;
+    } catch { /* ignore */ }
+  }
+
+  let order: ConfiguredProviderId[] = DEFAULT_ORDER;
+  let cfgMap: Record<string, { enabled?: boolean; key?: string; model?: string }> = {};
+  let legacyKey: string | null = null;
+  let legacyModel: string | null = null;
+  let defaultProvider: ConfiguredProviderId | null = null;
+
+  if (supabase && userId) {
+    const { data } = await supabase
+      .from("user_settings")
+      .select("ai_provider_order, ai_provider, custom_ai_key, custom_ai_model, ai_providers_config")
+      .eq("user_id", userId)
+      .maybeSingle();
+    const raw =
+      (data?.ai_provider_order as string[] | null) ??
+      (data?.ai_provider ? [data.ai_provider] : []);
+    const seen = new Set<string>();
+    const filtered: ConfiguredProviderId[] = [];
+    for (const id of [...raw, ...DEFAULT_ORDER]) {
+      if (typeof id !== "string" || !(id in DEFAULT_MODELS) || seen.has(id)) continue;
+      seen.add(id);
+      filtered.push(id as ConfiguredProviderId);
+    }
+    if (filtered.length) order = filtered;
+    cfgMap = ((data?.ai_providers_config as any) ?? {});
+    defaultProvider = order[0] ?? null;
+    legacyKey = (data?.custom_ai_key as string | null) ?? null;
+    legacyModel = (data?.custom_ai_model as string | null) ?? null;
+  }
+
+  const out: ResolvedProvider[] = [];
+  for (const p of order) {
+    const cfg = cfgMap[p] ?? {};
+    if (cfg.enabled === false) continue;
+    const userKey = (cfg.key && cfg.key.trim()) || (p === defaultProvider ? legacyKey : null) || null;
+    const key = userKey || (requireUserKey ? null : envKey(p));
+    if (!key) continue;
+    const perProviderModel =
+      (cfg.model && cfg.model.trim()) ||
+      (p === defaultProvider ? legacyModel : null) ||
+      DEFAULT_MODELS[p];
+    const providerFn = makeProvider(p, key);
+    out.push({
+      provider: p,
+      defaultModel: perProviderModel,
+      model: (hint?: string | null) => providerFn(stripVendorPrefix(hint) || perProviderModel),
+    });
+  }
+  return out;
+}
+
+export type ProviderAttempt = { provider: ConfiguredProviderId; ok: boolean; error?: string };
+
+/**
+ * Executa `run(model)` para cada provider configurado na ordem, retornando o
+ * primeiro sucesso. Se todos falharem, lança um erro consolidado.
+ */
+export async function runWithProviderFallback<T>(
+  supabase: SupabaseClient | null,
+  userId: string | null,
+  run: (model: ReturnType<ResolvedProvider["model"]>, provider: ConfiguredProviderId) => Promise<T>,
+  options?: { requireUserKey?: boolean; addonId?: string | null; modelHint?: string | null },
+): Promise<{ result: T; provider: ConfiguredProviderId; attempts: ProviderAttempt[] }> {
+  const providers = await getConfiguredProviders(supabase, userId, options);
+  if (!providers.length) {
+    throw new Error(
+      options?.requireUserKey
+        ? "Este recurso requer sua própria chave de IA. Adicione uma chave em Configurações → IA."
+        : "Nenhum provedor de IA configurado. Adicione uma chave em Configurações → IA.",
+    );
+  }
+  const attempts: ProviderAttempt[] = [];
+  for (const p of providers) {
+    try {
+      const model = p.model(options?.modelHint ?? null);
+      const result = await run(model, p.provider);
+      attempts.push({ provider: p.provider, ok: true });
+      console.info(`[ai-fallback] success with ${p.provider} (${attempts.length}/${providers.length})`);
+      return { result, provider: p.provider, attempts };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.warn(`[ai-fallback] ${p.provider} failed: ${msg}`);
+      attempts.push({ provider: p.provider, ok: false, error: msg });
+    }
+  }
+  const summary = attempts.map((a) => `${a.provider}: ${a.error}`).join(" | ");
+  throw new Error(`Todos os provedores de IA falharam. ${summary}`);
+}
+
 /** Retrieve the API key for a specific provider from user settings or env. */
 export async function getConfiguredProviderKey(
   supabase: SupabaseClient | null,
