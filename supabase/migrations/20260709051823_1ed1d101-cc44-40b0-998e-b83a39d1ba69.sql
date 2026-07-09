@@ -1,0 +1,1 @@
+UPDATE public.marketing_messages SET body = REPLACE(body, 'https://mapaastra.ms3.com.br', 'https://mapaastral.ms3.com.br') WHERE body LIKE '%mapaastra.ms3.com.br%';
