@@ -111,8 +111,6 @@ export const runSystemDiagnostic = createServerFn({ method: "POST" })
     // Tables without RLS / policies
     {
       const r = await timed(async () => {
-        const { data, error } = await supabaseAdmin.rpc("exec_sql" as any, { sql_query: "SELECT 1;" }).then(() => ({ data: null, error: null } as any)).catch(() => ({ data: null, error: null }));
-        // We can't run arbitrary SQL from origem via exec_sql (not created there). Use pg_policies via a lightweight scan of get_public_tables + get_public_policies:
         const [{ data: tRows }, { data: pRows }] = await Promise.all([
           supabaseAdmin.rpc("get_public_tables" as any),
           supabaseAdmin.rpc("get_public_policies" as any),
