@@ -1,13 +1,11 @@
 import { Users } from "lucide-react";
-import { LeadsBlock, useNewLeadsCount } from "@/components/AdminHoroscopeLanding";
+import { LeadsBlock, markHoroscopeLeadsSeen } from "@/components/AdminHoroscopeLanding";
 import { useEffect } from "react";
 
 export function AdminHoroscopeLeads() {
-  const { markSeen } = useNewLeadsCount();
-
   useEffect(() => {
-    markSeen();
-  }, [markSeen]);
+    markHoroscopeLeadsSeen();
+  }, []);
 
   return (
     <div className="space-y-4">
