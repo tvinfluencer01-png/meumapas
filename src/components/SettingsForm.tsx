@@ -218,28 +218,32 @@ export function SettingsForm() {
   }
 
   function pickBestGeminiModel(models: string[]): string | null {
-    const candidates = models
-      .map((m) => m.replace(/^models\//, ""))
-      .filter(
-        (m) =>
-          /gemini/i.test(m) &&
-          !/(embed|aqa|vision|image|tts|audio|thinking|learnlm)/i.test(m) &&
-          !/preview|exp/i.test(m) && // previews têm cota mínima → offline rápido
-          !/-\d{3,}/.test(m), // ignora snapshots datados (ex: -0827)
-      );
-    if (!candidates.length) return null;
-    const score = (m: string): number => {
-      let s = 0;
-      const v = parseFloat((m.match(/gemini-(\d+(?:\.\d+)?)/i) ?? [])[1] ?? "0");
-      s += v * 100;
-      // Free tier: flash tem cota muito maior que pro → preferir flash
-      if (/flash(?!-lite)/i.test(m)) s += 50;
-      else if (/flash-lite/i.test(m)) s += 30;
-      else if (/pro/i.test(m)) s += 10;
-      if (/latest/i.test(m)) s += 5;
-      return s;
-    };
-    return candidates.sort((a, b) => score(b) - score(a))[0] ?? null;
+    const normalized = models.map((m) => m.replace(/^models\//, ""));
+    // Prioridade explícita: modelos estáveis do free tier (cota generosa e disponibilidade real
+    // na maioria das chaves da Google AI Studio). 2.5-flash costuma estar apenas em preview,
+    // com cota de poucas requisições por minuto → cai para "offline" na segunda verificação.
+    const preferredOrder = [
+      "gemini-2.0-flash",
+      "gemini-2.0-flash-001",
+      "gemini-flash-latest",
+      "gemini-1.5-flash",
+      "gemini-1.5-flash-latest",
+      "gemini-1.5-flash-8b",
+      "gemini-2.0-flash-lite",
+    ];
+    for (const want of preferredOrder) {
+      const hit = normalized.find((m) => m === want);
+      if (hit) return hit;
+    }
+    // Fallback: qualquer flash estável (sem preview/exp/snapshots datados)
+    const stableFlash = normalized.find(
+      (m) =>
+        /gemini/i.test(m) &&
+        /flash/i.test(m) &&
+        !/(embed|aqa|vision|image|tts|audio|thinking|learnlm|preview|exp)/i.test(m) &&
+        !/-\d{3,}/.test(m),
+    );
+    return stableFlash ?? null;
   }
 
   async function loadModels(id: string, key?: string) {
@@ -275,7 +279,28 @@ export function SettingsForm() {
     setProviderBusy((b) => ({ ...b, [id]: "testing" }));
     setProviderStatus((s) => ({ ...s, [id]: null }));
     try {
-      const res = await testProviderFn({ data: { provider: id as ChatProviderId, key: key ?? null, model: model ?? null } });
+      let res = await testProviderFn({ data: { provider: id as ChatProviderId, key: key ?? null, model: model ?? null } });
+      // Gemini free-tier: se o modelo escolhido caiu por cota/indisponibilidade,
+      // tenta novamente com o modelo estável de maior compatibilidade.
+      if (
+        !res.ok &&
+        id === "google" &&
+        (model ?? "") !== "gemini-2.0-flash" &&
+        /(limite|indispon|timeout|inválida)/i.test(res.message)
+      ) {
+        const retry = await testProviderFn({ data: { provider: "google" as ChatProviderId, key: key ?? null, model: "gemini-2.0-flash" } });
+        if (retry.ok) {
+          setForm((f) => ({
+            ...f,
+            ai_providers_config: {
+              ...f.ai_providers_config,
+              google: { ...(f.ai_providers_config.google ?? {}), model: "gemini-2.0-flash" },
+            },
+          }));
+          toast.info("Gemini: usando gemini-2.0-flash (mais estável no free tier)");
+          res = retry;
+        }
+      }
       setProviderStatus((s) => ({ ...s, [id]: { ok: res.ok, message: res.message } }));
       res.ok ? toast.success(`${id}: ${res.message}`) : toast.error(`${id}: ${res.message}`);
     } finally {
