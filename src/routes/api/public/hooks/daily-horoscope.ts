@@ -250,20 +250,11 @@ async function handler({ request }: { request: Request }) {
           supabaseAdmin,
           s.user_id,
           async (model) => {
-            let last: any = null;
-            for (const modelName of modelCandidates) {
-              try {
-                const { text } = await generateText({
-                  model, prompt, temperature: 1.0, topP: 0.95, seed: seedNum,
-                });
-                return text.trim();
-              } catch (e) { last = e; }
-            }
-            // Se não há hint válido para o provider (ex.: Google direto ignora "google/..."),
-            // ainda tentamos o defaultModel do provider:
-            const { text } = await generateText({ model, prompt, temperature: 1.0, topP: 0.95, seed: seedNum });
-            if (text?.trim()) return text.trim();
-            throw last ?? new Error("empty");
+            const { text } = await generateText({
+              model, prompt, temperature: 1.0, topP: 0.95, seed: seedNum,
+            });
+            if (!text?.trim()) throw new Error("empty response");
+            return text.trim();
           },
           { modelHint: modelCandidates[0], addonId: "sub_astrologer_numerologist" },
         );
