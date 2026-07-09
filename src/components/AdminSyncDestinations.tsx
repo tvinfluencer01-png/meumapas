@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Plus, Trash2, Save, Loader2, RefreshCw, Star, StarOff, Globe } from "lucide-react";
+import { Plus, Trash2, Save, Loader2, RefreshCw, Star, StarOff, Globe, CheckCircle2, XCircle, PlugZap } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ import {
   upsertSyncDestination,
   deleteSyncDestination,
   remapDestinationUrls,
+  testSyncDestination,
 } from "@/lib/sync-destinations.functions";
 
 type Dest = {
@@ -47,6 +48,7 @@ export function AdminSyncDestinations() {
   const upsertFn = useServerFn(upsertSyncDestination);
   const deleteFn = useServerFn(deleteSyncDestination);
   const remapFn = useServerFn(remapDestinationUrls);
+  const testFn = useServerFn(testSyncDestination);
 
   const { data, isLoading } = useQuery({
     queryKey: ["sync-destinations"],
@@ -56,6 +58,7 @@ export function AdminSyncDestinations() {
   const [form, setForm] = useState<Partial<Dest>>(EMPTY);
   const [legacyText, setLegacyText] = useState("");
   const [remapResult, setRemapResult] = useState<any>(null);
+  const [testResult, setTestResult] = useState<any>(null);
 
   const setField = <K extends keyof Dest>(k: K, v: Dest[K]) => setForm((p) => ({ ...p, [k]: v }));
 
@@ -93,6 +96,16 @@ export function AdminSyncDestinations() {
     onSuccess: (res) => {
       setRemapResult(res);
       toast.success(res.dryRun ? `Prévia: ${res.statementsCount} instrução(ões)` : `Aplicado: ${res.statementsCount} instrução(ões)`);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const testMut = useMutation({
+    mutationFn: (destinationId?: string) => testFn({ data: destinationId ? { destinationId } : {} }),
+    onSuccess: (res) => {
+      setTestResult(res);
+      if (res.ok) toast.success(`Destino "${res.destination.name}" OK`);
+      else toast.error(`Destino "${res.destination.name}" com falhas`);
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -139,6 +152,10 @@ export function AdminSyncDestinations() {
                   )}
                 </div>
                 <div className="flex gap-1">
+                  <Button size="sm" variant="outline" onClick={() => testMut.mutate(d.id)} disabled={testMut.isPending}>
+                    {testMut.isPending && testMut.variables === d.id ? <Loader2 className="size-4 animate-spin" /> : <PlugZap className="size-4" />}
+                    <span className="ml-1">Testar</span>
+                  </Button>
                   <Button size="sm" variant="ghost" onClick={() => startEdit(d)}>Editar</Button>
                   <Button size="sm" variant="ghost" onClick={() => { if (confirm(`Remover "${d.name}"?`)) delMut.mutate(d.id); }}>
                     <Trash2 className="size-4" />
@@ -146,6 +163,24 @@ export function AdminSyncDestinations() {
                 </div>
               </div>
             ))
+          )}
+          {testResult && (
+            <div className="rounded-lg border border-border bg-muted/20 p-3 text-xs space-y-1">
+              <div className="flex items-center gap-2">
+                {testResult.ok ? <CheckCircle2 className="size-4 text-green-500" /> : <XCircle className="size-4 text-red-500" />}
+                <span className="font-medium">
+                  Teste de "{testResult.destination.name}" — {testResult.ok ? "todos os checks passaram" : "falhas detectadas"}
+                </span>
+              </div>
+              <ul className="space-y-0.5 pl-6">
+                {testResult.checks.map((c: any, i: number) => (
+                  <li key={i} className="flex items-start gap-2">
+                    {c.ok ? <CheckCircle2 className="size-3.5 text-green-500 mt-0.5" /> : <XCircle className="size-3.5 text-red-500 mt-0.5" />}
+                    <span><strong>{c.name}</strong>{c.detail ? <span className="text-muted-foreground"> — {c.detail}</span> : null}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
         </CardContent>
       </Card>
