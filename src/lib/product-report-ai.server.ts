@@ -2,7 +2,7 @@
 // Usa Lovable AI Gateway para produzir uma análise completa a partir do
 // customer_data + report_type, evitando o PDF meramente informativo.
 import { generateText } from "ai";
-import { getConfiguredProvider } from "@/lib/ai-resolver.server";
+import { runWithProviderFallback } from "@/lib/ai-resolver.server";
 import type { SimplePdfBlock } from "@/lib/simple-pdf";
 
 type CD = Record<string, any>;
