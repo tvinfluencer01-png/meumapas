@@ -500,6 +500,16 @@ export function LeadsBlock() {
                           <CheckCircle2 className="size-3.5" /> Ativar
                         </Button>
                       )}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => sendCrm.mutate(r.id)}
+                        disabled={sendCrm.isPending}
+                        className="gap-1"
+                        title={r.sent_to_crm_at ? `Já enviado em ${new Date(r.sent_to_crm_at).toLocaleString("pt-BR")}. Clique para reenviar/atualizar.` : "Enviar este lead para o CRM e iniciar o funil de vendas."}
+                      >
+                        <Send className="size-3.5" /> {r.sent_to_crm_at ? "Reenviar CRM" : "Enviar CRM"}
+                      </Button>
                       <Button size="sm" variant="ghost" onClick={() => del.mutate(r.id)} className="text-destructive">
                         <Trash2 className="size-3.5" />
                       </Button>
