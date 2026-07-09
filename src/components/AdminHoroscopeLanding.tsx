@@ -10,7 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Save, MessageCircle, Trash2, CheckCircle2, Loader2, Copy } from "lucide-react";
+import { Sparkles, Save, MessageCircle, Trash2, CheckCircle2, Loader2, Copy, Settings } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
   adminGetHoroscopeLandingSettings,
@@ -22,12 +23,87 @@ import {
   adminTestEvolutionWebhook,
 } from "@/lib/horoscope-landing.functions";
 
+const LEADS_SEEN_KEY = "admin_horoscope_leads_seen_at";
+
+function useNewLeadsCount() {
+  const [seenAt, setSeenAt] = useState<string>(() => {
+    if (typeof window === "undefined") return new Date(0).toISOString();
+    return localStorage.getItem(LEADS_SEEN_KEY) ?? new Date(0).toISOString();
+  });
+
+  const qc = useQueryClient();
+  const { data } = useQuery({
+    queryKey: ["admin-horoscope-leads-new", seenAt],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("horoscope_free_leads")
+        .select("id", { count: "exact", head: true })
+        .gt("created_at", seenAt);
+      if (error) throw error;
+      return count ?? 0;
+    },
+    refetchInterval: 30_000,
+  });
+
+  useEffect(() => {
+    const chan = supabase
+      .channel("admin-horoscope-leads-new-rt")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "horoscope_free_leads" },
+        () => qc.invalidateQueries({ queryKey: ["admin-horoscope-leads-new"] }),
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(chan);
+    };
+  }, [qc]);
+
+  const markSeen = () => {
+    const now = new Date().toISOString();
+    if (typeof window !== "undefined") localStorage.setItem(LEADS_SEEN_KEY, now);
+    setSeenAt(now);
+  };
+
+  return { count: data ?? 0, markSeen };
+}
+
 export function AdminHoroscopeLanding() {
+  const { count: newLeads, markSeen } = useNewLeadsCount();
+  const [tab, setTab] = useState("settings");
+
   return (
-    <div className="space-y-6">
-      <SettingsBlock />
-      <LeadsBlock />
-    </div>
+    <Tabs
+      value={tab}
+      onValueChange={(v) => {
+        setTab(v);
+        if (v === "leads") markSeen();
+      }}
+      className="space-y-6"
+    >
+      <TabsList>
+        <TabsTrigger value="settings" className="gap-2">
+          <Settings className="size-4" /> Configurações
+        </TabsTrigger>
+        <TabsTrigger value="leads" className="gap-2 relative">
+          <MessageCircle className="size-4" /> Leads capturados
+          {newLeads > 0 && (
+            <span className="relative ml-1 inline-flex items-center justify-center">
+              <span className="absolute inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400 opacity-75 animate-ping" />
+              <span className="relative inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-emerald-500 text-[10px] font-semibold text-white">
+                {newLeads > 99 ? "99+" : newLeads}
+              </span>
+            </span>
+          )}
+        </TabsTrigger>
+      </TabsList>
+      <TabsContent value="settings" className="space-y-6">
+        <SettingsBlock />
+      </TabsContent>
+      <TabsContent value="leads" className="space-y-6">
+        <LeadsBlock />
+      </TabsContent>
+    </Tabs>
   );
 }
 
