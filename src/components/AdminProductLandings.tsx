@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { Link } from "@tanstack/react-router";
 import { Plus, Pencil, Trash2, Loader2, ExternalLink, Copy, Upload, Sparkles, X, Maximize } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -184,10 +185,20 @@ export function AdminProductLandings() {
                   >
                     <Copy className="size-4" />
                   </Button>
-                  <Button size="sm" variant="ghost" asChild title="Abrir landing">
-                    <a href={`/p/${l.slug}`} target="_blank" rel="noreferrer">
+                  <Button size="sm" variant="ghost" asChild title="Abrir landing (nova aba)">
+                    <Link
+                      to="/p/$slug"
+                      params={{ slug: l.slug }}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e: React.MouseEvent) => {
+                        // Garante nova aba mesmo se algo tentar interceptar como SPA nav
+                        e.preventDefault();
+                        window.open(`/p/${l.slug}`, "_blank", "noopener,noreferrer");
+                      }}
+                    >
                       <ExternalLink className="size-4" />
-                    </a>
+                    </Link>
                   </Button>
                   <Button size="sm" variant="ghost" onClick={() => setEditing({ ...EMPTY, ...l, benefits: l.benefits ?? [], required_fields: l.required_fields ?? [] })}>
                     <Pencil className="size-4" />
