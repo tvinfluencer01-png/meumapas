@@ -19,7 +19,7 @@ export type ConfiguredProviderId =
 const DEFAULT_MODELS: Record<ConfiguredProviderId, string> = {
   openai: "gpt-4o-mini",
   anthropic: "claude-3-5-sonnet-latest",
-  google: "gemini-2.5-flash",
+  google: "gemini-2.0-flash",
   groq: "llama-3.3-70b-versatile",
   mistral: "mistral-small-latest",
   openrouter: "google/gemini-2.0-flash-exp:free",

@@ -11,7 +11,7 @@ export type AiProviderId = "openai" | "anthropic" | "google";
 const DEFAULT_MODELS: Record<AiProviderId, string> = {
   openai: "gpt-4o-mini",
   anthropic: "claude-3-5-sonnet-latest",
-  google: "gemini-2.5-flash",
+  google: "gemini-2.0-flash",
 };
 
 const DEFAULT_ORDER: AiProviderId[] = ["openai", "anthropic", "google"];
