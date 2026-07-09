@@ -96,7 +96,11 @@ Responda APENAS com JSON válido (sem cercas de código):
 }
 A lista "perCard" deve ter EXATAMENTE ${draw.length} item(ns), na MESMA ordem das cartas sorteadas acima.`;
 
-      const { text } = await generateText({ model, system, prompt });
+      const { result: text } = await runWithProviderFallback(
+        context.supabase, context.userId,
+        async (model) => (await generateText({ model, system, prompt })).text,
+        { addonId: "sub_astrologer_numerologist", modelHint: "google/gemini-2.5-flash" },
+      );
 
       let jsonStr = text.trim();
       const fence = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
