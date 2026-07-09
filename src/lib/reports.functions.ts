@@ -548,7 +548,7 @@ ${astroBlock}${extraContextBlock}`;
       const out: Attempt[] = [];
       for (const p of providers) {
         const defaults =
-          p.provider === "google" ? [p.defaultModel, "gemini-2.0-flash", "gemini-2.5-flash-lite"]
+          p.provider === "google" ? [p.defaultModel, "gemini-2.0-flash"]
           : [p.defaultModel];
         // If this is the primary provider, honor the user's `modelName` first.
         const candidates = p.provider === activeProvider ? [modelName, ...defaults] : defaults;
