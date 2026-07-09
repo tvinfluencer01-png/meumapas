@@ -253,7 +253,7 @@ export function AdminSyncDestinations() {
           <div className="flex gap-2">
             <Button onClick={() => saveMut.mutate()} disabled={saveMut.isPending || !form.name || !form.site_url || !form.supabase_url}>
               {saveMut.isPending ? <Loader2 className="size-4 mr-2 animate-spin" /> : <Save className="size-4 mr-2" />}
-              Salvar
+              1 · Salvar destino
             </Button>
             {form.id && <Button variant="outline" onClick={clearForm}>Cancelar</Button>}
           </div>
