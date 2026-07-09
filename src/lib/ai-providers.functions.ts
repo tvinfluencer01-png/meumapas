@@ -116,7 +116,7 @@ export const testProvider = createServerFn({ method: "POST" })
         switch (data.provider) {
           case "openai": return createOpenAIProvider(key)(data.model || "gpt-4o-mini");
           case "anthropic": return createAnthropicProvider(key)(data.model || "claude-3-5-sonnet-latest");
-          case "google": return createGeminiProvider(key)(data.model || "gemini-2.5-flash");
+          case "google": return createGeminiProvider(key)(data.model || "gemini-2.0-flash");
           case "groq": return createGroqProvider(key)(data.model || "llama-3.3-70b-versatile");
           case "mistral": return createMistralProvider(key)(data.model || "mistral-small-latest");
           case "openrouter": return createOpenRouterProvider(key)(data.model || "google/gemini-2.0-flash-exp:free");
