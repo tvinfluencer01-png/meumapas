@@ -2,7 +2,7 @@ import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-r
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { Shield, MessageSquare, Save, Send, CheckCircle2, AlertTriangle, Users, Search, ShieldOff, ShieldCheck, History, RefreshCw, Settings as SettingsIcon, Wallet, Coins, MoreHorizontal, UserCog, KeyRound, Package, Trash2, Coins as CoinsIcon, Zap, Plug, Clock, UserPlus, Eye, EyeOff, Database, Download, Loader2, Phone, ArrowRightLeft, Layers, Megaphone, Mail, Smartphone, ShoppingCart, FileText, ArrowLeft, Menu, X, Sparkles, ChevronDown, Activity } from "lucide-react";
+import { Shield, MessageSquare, Save, Send, CheckCircle2, AlertTriangle, Users, Search, ShieldOff, ShieldCheck, History, RefreshCw, Settings as SettingsIcon, Wallet, Coins, MoreHorizontal, UserCog, KeyRound, Package, Trash2, Coins as CoinsIcon, Zap, Plug, Clock, UserPlus, Eye, EyeOff, Database, Download, Loader2, Phone, ArrowRightLeft, Layers, Megaphone, Mail, Smartphone, ShoppingCart, FileText, ArrowLeft, Menu, X, Sparkles, ChevronDown, Activity, Globe } from "lucide-react";
 import { MercadoPagoForm } from "@/components/MercadoPagoForm";
 import { AdminCreditsManager, CreditsDialog } from "@/components/AdminCreditsManager";
 import { AdminCreditCosts } from "@/components/AdminCreditCosts";
@@ -11,6 +11,7 @@ import { AdminAddons } from "@/components/AdminAddons";
 import { AdminLandingPackages } from "@/components/AdminLandingPackages";
 import { AdminCronStatus } from "@/components/AdminCronStatus";
 import { AdminSystemDiagnostic } from "@/components/AdminSystemDiagnostic";
+import { AdminSyncDestinations } from "@/components/AdminSyncDestinations";
 import { AdminGlobalSettings } from "@/components/AdminGlobalSettings";
 import { AdminPlanMigration } from "@/components/AdminPlanMigration";
 import { AdminMarketing } from "@/components/AdminMarketing";
@@ -126,6 +127,7 @@ const ADMIN_MENU_GROUPS: AdminMenuGroup[] = [
       { value: "cron", label: "Cron Jobs", icon: Clock },
       { value: "migration", label: "Migração", icon: ArrowRightLeft },
       { value: "backup", label: "Backup", icon: Database },
+      { value: "destinations", label: "Destinos Sync", icon: Globe },
       { value: "diagnostic", label: "Diagnóstico", icon: Activity },
     ],
   },
@@ -438,6 +440,7 @@ function AdminTabContent({ tab }: { tab: string }) {
     case "horoscope-plans": return <AdminHoroscopePlans />;
 
     case "backup": return <BackupAdmin />;
+    case "destinations": return <AdminSyncDestinations />;
     case "diagnostic": return <AdminSystemDiagnostic />;
     case "global": return <AdminGlobalSettings />;
     case "marketing": return <AdminMarketing />;
