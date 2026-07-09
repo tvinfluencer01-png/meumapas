@@ -223,12 +223,12 @@ export function SettingsForm() {
     // na maioria das chaves da Google AI Studio). 2.5-flash costuma estar apenas em preview,
     // com cota de poucas requisições por minuto → cai para "offline" na segunda verificação.
     const preferredOrder = [
-      "gemini-2.0-flash",
-      "gemini-2.0-flash-001",
-      "gemini-flash-latest",
       "gemini-1.5-flash",
       "gemini-1.5-flash-latest",
       "gemini-1.5-flash-8b",
+      "gemini-2.0-flash",
+      "gemini-2.0-flash-001",
+      "gemini-flash-latest",
       "gemini-2.0-flash-lite",
     ];
     for (const want of preferredOrder) {
