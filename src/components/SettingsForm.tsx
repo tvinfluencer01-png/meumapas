@@ -288,7 +288,7 @@ export function SettingsForm() {
         /(limite|indispon|timeout|inválida|endpoint|não encontrado|not found|404|recurso)/i.test(res.message)
       ) {
         // 1) Descobre modelos realmente disponíveis para ESTA chave
-        const listed = await listProviderModelsFn({ data: { provider: "google" as ChatProviderId, key: key ?? null } });
+        const listed = await listModelsFn({ data: { provider: "google" as ChatProviderId, key: key ?? null } });
         const available = listed.ok ? listed.models : [];
         // 2) Prioriza estáveis conhecidos que existem na chave, depois qualquer "flash" retornado
         const preferred = [
