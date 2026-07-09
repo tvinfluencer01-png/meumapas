@@ -126,9 +126,6 @@ export const generateFavoriteNote = createServerFn({ method: "POST" })
     const weekday = dateObj.toLocaleDateString("pt-BR", { weekday: "long", timeZone: "UTC" });
     const dateLabel = dateObj.toLocaleDateString("pt-BR", { day: "numeric", month: "long", timeZone: "UTC" });
 
-    const { model: makeModel } = await getConfiguredProvider(supabase, userId, { addonId: "sub_astrologer_numerologist" });
-    const model = makeModel("google/gemini-3-flash-preview");
-
     const prompt = `Você é um astrólogo numerólogo cabalístico. Escreva UMA nota pessoal, humanizada e acolhedora em português (PT-BR) para marcar este dia como favorito no calendário energético de ${birth?.full_name ?? "esta pessoa"}.
 
 Dia: ${weekday}, ${dateLabel}
@@ -143,8 +140,12 @@ Regras:
 - Não comece com "Hoje" nem com a data.
 - Responda APENAS com o texto da nota, sem aspas, sem markdown.`;
 
-    const { text } = await generateText({ model, prompt });
-    const note = text.trim().replace(/^["']|["']$/g, "").slice(0, 280);
+    const { result } = await runWithProviderFallback(
+      supabase, userId,
+      async (model) => (await generateText({ model, prompt })).text,
+      { addonId: "sub_astrologer_numerologist", modelHint: "google/gemini-3-flash-preview" },
+    );
+    const note = result.trim().replace(/^["']|["']$/g, "").slice(0, 280);
 
     const { data: existing } = await supabase
       .from("calendar_favorites")
