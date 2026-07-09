@@ -10,12 +10,82 @@ async function assertAdmin(userId: string) {
   if (!data) throw new Error("Forbidden: admin only");
 }
 
-function getDestClient(url?: string | null) {
+function getDestClient(url?: string | null, secretName?: string | null) {
   const finalUrl = url ?? process.env.NEW_SUPABASE_URL;
-  const key = process.env.NEW_SUPABASE_SERVICE_ROLE_KEY;
-  if (!finalUrl || !key) throw new Error("Destino não configurado (NEW_SUPABASE_URL / NEW_SUPABASE_SERVICE_ROLE_KEY).");
+  const keyName = secretName || "NEW_SUPABASE_SERVICE_ROLE_KEY";
+  const key = process.env[keyName] ?? process.env.NEW_SUPABASE_SERVICE_ROLE_KEY;
+  if (!finalUrl || !key) throw new Error(`Destino não configurado (supabase_url / secret ${keyName}).`);
   return createClient(finalUrl, key, { auth: { persistSession: false, autoRefreshToken: false, storage: undefined } });
 }
+
+// ----------------- Test destination (dry-run connectivity) -----------------
+
+export const testSyncDestination = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ destinationId: z.string().uuid().optional() }).parse(d ?? {}))
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context.userId);
+
+    const q = supabaseAdmin.from("sync_destinations").select("*");
+    const { data: destRow, error: destErr } = data.destinationId
+      ? await q.eq("id", data.destinationId).maybeSingle()
+      : await q.eq("is_default", true).maybeSingle();
+    if (destErr) throw new Error(destErr.message);
+    if (!destRow) throw new Error("Destino não encontrado.");
+
+    const row: any = destRow;
+    const checks: Array<{ name: string; ok: boolean; detail?: string }> = [];
+
+    // 1) Secret presente?
+    const keyName = row.service_role_secret_name || "NEW_SUPABASE_SERVICE_ROLE_KEY";
+    const keyVal = process.env[keyName] ?? process.env.NEW_SUPABASE_SERVICE_ROLE_KEY;
+    checks.push({
+      name: `Secret ${keyName}`,
+      ok: !!keyVal,
+      detail: keyVal ? `configurado (${keyVal.length} chars)` : "ausente no ambiente",
+    });
+    if (!keyVal) {
+      return { ok: false, destination: { id: row.id, name: row.name, site_url: row.site_url }, checks };
+    }
+
+    // 2) Conectividade + service role: listar 1 usuário via Auth Admin API
+    let client;
+    try {
+      client = getDestClient(row.supabase_url, keyName);
+    } catch (e: any) {
+      checks.push({ name: "Cliente Supabase", ok: false, detail: e.message });
+      return { ok: false, destination: { id: row.id, name: row.name, site_url: row.site_url }, checks };
+    }
+    checks.push({ name: "Cliente Supabase", ok: true, detail: row.supabase_url });
+
+    try {
+      const { data: users, error } = await (client as any).auth.admin.listUsers({ page: 1, perPage: 1 });
+      if (error) throw error;
+      checks.push({ name: "Auth Admin (service_role)", ok: true, detail: `ok · ${users?.users?.length ?? 0} usuário(s) na página` });
+    } catch (e: any) {
+      checks.push({ name: "Auth Admin (service_role)", ok: false, detail: e.message });
+    }
+
+    // 3) Leitura de tabela pública
+    try {
+      const { error } = await client.from("sync_destinations").select("id").limit(1);
+      if (error) throw error;
+      checks.push({ name: "Leitura DB (public.sync_destinations)", ok: true });
+    } catch (e: any) {
+      checks.push({ name: "Leitura DB (public.sync_destinations)", ok: false, detail: e.message });
+    }
+
+    // 4) RPC admin_cron_status (usado no remap)
+    try {
+      const { error } = await client.rpc("admin_cron_status" as any);
+      checks.push({ name: "RPC admin_cron_status", ok: !error, detail: error?.message });
+    } catch (e: any) {
+      checks.push({ name: "RPC admin_cron_status", ok: false, detail: e.message });
+    }
+
+    const ok = checks.every((c) => c.ok);
+    return { ok, destination: { id: row.id, name: row.name, site_url: row.site_url, supabase_url: row.supabase_url }, checks };
+  });
 
 // ----------------- CRUD -----------------
 
