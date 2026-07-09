@@ -1797,6 +1797,20 @@ function BackupAdmin() {
     onError: (e: Error) => toast.error(`Falha no schema: ${e.message}`),
   });
 
+  const rlsMut = useMutation({
+    mutationFn: (dryRun: boolean) => rlsFn({ data: { dryRun } }),
+    onSuccess: (res) => {
+      const msg = `${res.policies} política(s), ${res.applied} instrução(ões)` + (res.skipped ? ` — ${res.skipped} ignorada(s) (tabela ausente no destino)` : "");
+      if (res.dryRun) {
+        toast.info(`Prévia RLS: ${msg}`);
+        console.log("[rls-sync] pendentes:\n" + res.statements.join("\n"));
+      } else {
+        toast.success(`RLS sincronizado: ${msg}`);
+      }
+    },
+    onError: (e: Error) => toast.error(`Falha no RLS: ${e.message}`),
+  });
+
   const effectiveStrategy = strategy === "auto" ? (status?.suggestion ?? "full_replace") : strategy;
 
   return (
