@@ -84,10 +84,10 @@ Responda APENAS com JSON válido (sem cercas de código):
 A soma dos "duration_min" das fases deve ser aproximadamente ${data.duration_min - 2}.
 A lista "phases" deve ter entre 3 e 5 itens, cada um focado em um aspecto da sefirá ${sef.name}.`;
 
-      const { result: text } = await runWithProviderFallback(
+      const { result: text, provider } = await runWithProviderFallback(
         context.supabase, context.userId,
         async (model) => (await generateText({ model, system, prompt })).text,
-        { addonId: "sub_astrologer_numerologist", modelHint: "google/gemini-2.5-flash" },
+        { addonId: "sub_astrologer_numerologist" },
       );
 
       let jsonStr = text.trim();
@@ -117,7 +117,7 @@ A lista "phases" deve ter entre 3 e 5 itens, cada um focado em um aspecto da sef
           intention: data.intention ?? null,
           script,
           duration_min: data.duration_min,
-          ai_model: "google/gemini-2.5-flash",
+          ai_model: provider,
         })
         .select("id, created_at")
         .single();
