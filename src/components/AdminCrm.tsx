@@ -393,7 +393,7 @@ export function AdminCrm() {
                             </div>
                           )}
                           {l.followup_paused && <div className="mt-1 text-[11px] text-amber-300">Pausado</div>}
-                          <div className="mt-2 flex flex-wrap gap-1" onClick={(e) => e.stopPropagation()}>
+                          <div className="mt-2 flex flex-wrap items-center gap-1 [&>*]:shrink-0" onClick={(e) => e.stopPropagation()}>
                             <Button size="icon" variant="ghost" asChild title="E-mail" className="h-6 w-6">
                               <a href={`mailto:${l.email}`}><Mail className="size-3" /></a>
                             </Button>
