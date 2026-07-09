@@ -1915,21 +1915,13 @@ function BackupAdmin() {
 
           <div className="flex flex-wrap gap-2">
             <Button
-              onClick={() => syncMut.mutate(effectiveStrategy as any)}
-              disabled={syncMut.isPending || !status?.destinationReachable}
-              className="w-fit"
-            >
-              {syncMut.isPending ? <Loader2 className="size-4 mr-2 animate-spin" /> : <Download className="size-4 mr-2 rotate-180" />}
-              Sincronizar dados ({effectiveStrategy})
-            </Button>
-            <Button
               variant="outline"
               onClick={() => schemaMut.mutate(true)}
               disabled={schemaMut.isPending || !status?.destinationReachable}
               className="w-fit"
             >
               {schemaMut.isPending ? <Loader2 className="size-4 mr-2 animate-spin" /> : null}
-              Prévia da migração (dry-run)
+              1 · Prévia da migração (dry-run)
             </Button>
             <Button
               variant="secondary"
@@ -1938,7 +1930,7 @@ function BackupAdmin() {
               className="w-fit"
             >
               {schemaMut.isPending ? <Loader2 className="size-4 mr-2 animate-spin" /> : null}
-              Aplicar migração de schema
+              2 · Aplicar migração de schema
             </Button>
             <Button
               variant="outline"
@@ -1947,7 +1939,7 @@ function BackupAdmin() {
               className="w-fit"
             >
               {rlsMut.isPending ? <Loader2 className="size-4 mr-2 animate-spin" /> : null}
-              Prévia RLS (dry-run)
+              3 · Prévia RLS (dry-run)
             </Button>
             <Button
               variant="secondary"
@@ -1956,7 +1948,15 @@ function BackupAdmin() {
               className="w-fit"
             >
               {rlsMut.isPending ? <Loader2 className="size-4 mr-2 animate-spin" /> : null}
-              Aplicar políticas RLS
+              4 · Aplicar políticas RLS
+            </Button>
+            <Button
+              onClick={() => syncMut.mutate(effectiveStrategy as any)}
+              disabled={syncMut.isPending || !status?.destinationReachable}
+              className="w-fit"
+            >
+              {syncMut.isPending ? <Loader2 className="size-4 mr-2 animate-spin" /> : <Download className="size-4 mr-2 rotate-180" />}
+              5 · Sincronizar dados ({effectiveStrategy})
             </Button>
           </div>
           <p className="text-xs text-muted-foreground -mt-2">
