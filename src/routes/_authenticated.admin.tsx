@@ -23,6 +23,7 @@ import { AdminCrm } from "@/components/AdminCrm";
 import { AdminHoroscopeStatus } from "@/components/AdminHoroscopeStatus";
 import { AdminHoroscopeLanding } from "@/components/AdminHoroscopeLanding";
 import { AdminHoroscopePlans } from "@/components/AdminHoroscopePlans";
+import { AdminHoroscopeLeads } from "@/components/AdminHoroscopeLeads";
 
 import { AdminAffiliatePanel } from "@/modules/affiliate/ui/AdminAffiliatePanel";
 import { getServerTime } from "@/lib/server-time.functions";
@@ -105,6 +106,7 @@ const ADMIN_MENU_GROUPS: AdminMenuGroup[] = [
       { value: "product-landings", label: "Landings Produtos", icon: FileText },
       { value: "horoscope-plans", label: "Horóscopo Planos e Config.", icon: Sparkles },
       { value: "horoscope-status", label: "Horóscopo Status", icon: Sparkles },
+      { value: "horoscope-leads", label: "Horóscopo Leads", icon: Users },
       { value: "marketing", label: "Marketing", icon: Megaphone },
     ],
   },
@@ -437,6 +439,7 @@ function AdminTabContent({ tab }: { tab: string }) {
     case "horoscope-status": return <AdminHoroscopeStatus />;
     case "horoscope-landing": return <AdminHoroscopePlans />;
     case "horoscope-plans": return <AdminHoroscopePlans />;
+    case "horoscope-leads": return <AdminHoroscopeLeads />;
 
     case "backup": return <BackupAdmin />;
     case "destinations": return <AdminSyncDestinations />;

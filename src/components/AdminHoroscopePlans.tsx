@@ -1,8 +1,8 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Loader2, Star, Package, Users } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Star, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,13 +13,11 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AdminHoroscopeLanding } from "@/components/AdminHoroscopeLanding";
 import {
   adminListHoroscopePlans,
   adminUpsertHoroscopePlan,
   adminDeleteHoroscopePlan,
-  adminListHoroscopePaidLeads,
 } from "@/lib/horoscope-plans.functions";
 
 
@@ -114,34 +112,7 @@ export function AdminHoroscopePlans() {
     });
   };
 
-  const leadsFn = useServerFn(adminListHoroscopePaidLeads);
-  const { data: leadsData, isLoading: leadsLoading } = useQuery({
-    queryKey: ["admin-horoscope-paid-leads"],
-    queryFn: () => leadsFn(),
-    refetchInterval: 30_000,
-  });
-  const leads: any[] = (leadsData as any)?.leads ?? [];
-  const [tab, setTab] = useState<"config" | "settings" | "leads">("config");
-  const [seenLeadsAt, setSeenLeadsAt] = useState<number>(() => {
-    if (typeof window === "undefined") return 0;
-    return Number(window.localStorage.getItem("admin-horoscope-paid-leads-seen") ?? 0);
-  });
-  const newLeadsCount = useMemo(
-    () => leads.filter((l) => new Date(l.created_at).getTime() > seenLeadsAt).length,
-    [leads, seenLeadsAt],
-  );
-  const markLeadsSeen = () => {
-    const now = Date.now();
-    setSeenLeadsAt(now);
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem("admin-horoscope-paid-leads-seen", String(now));
-    }
-  };
-
-  const statusLabel = (s: string) =>
-    s === "active" ? "Ativa" : s === "pending" ? "Pendente" : s === "canceled" ? "Cancelada" : s;
-  const statusVariant = (s: string): "default" | "secondary" | "outline" | "destructive" =>
-    s === "active" ? "default" : s === "pending" ? "secondary" : s === "canceled" ? "outline" : "outline";
+  const [tab, setTab] = useState<"config" | "settings">("config");
 
   return (
     <Card>
@@ -149,7 +120,7 @@ export function AdminHoroscopePlans() {
         <div className="flex flex-row items-start justify-between gap-3">
           <div>
             <CardTitle className="flex items-center gap-2"><Package className="size-5 text-gold" /> Horóscopo Planos e Config.</CardTitle>
-            <CardDescription>Gerencie os planos de <code>/horoscopo-assinar</code>, as configurações da landing grátis e acompanhe leads.</CardDescription>
+            <CardDescription>Gerencie os planos de <code>/horoscopo-assinar</code> e as configurações da landing grátis.</CardDescription>
           </div>
           {tab === "config" && (
             <Button onClick={() => setForm({ ...EMPTY })} className="gap-2">
@@ -159,19 +130,10 @@ export function AdminHoroscopePlans() {
         </div>
       </CardHeader>
       <CardContent>
-        <Tabs value={tab} onValueChange={(v) => { setTab(v as any); if (v === "leads") markLeadsSeen(); }}>
+        <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
           <TabsList>
             <TabsTrigger value="config" className="gap-2"><Package className="size-4" /> Planos</TabsTrigger>
             <TabsTrigger value="settings" className="gap-2"><Star className="size-4" /> Configurações</TabsTrigger>
-            <TabsTrigger value="leads" className="gap-2 relative">
-              <Users className="size-4" /> Leads Capturados
-              {newLeadsCount > 0 && (
-                <span className="relative flex size-2 ml-1">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-gold opacity-75" />
-                  <span className="relative inline-flex size-2 rounded-full bg-gold" />
-                </span>
-              )}
-            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="config" className="mt-4">
@@ -210,45 +172,9 @@ export function AdminHoroscopePlans() {
           <TabsContent value="settings" className="mt-4">
             <AdminHoroscopeLanding />
           </TabsContent>
-
-          <TabsContent value="leads" className="mt-4">
-            {leadsLoading ? (
-              <div className="py-8 flex justify-center"><Loader2 className="size-5 animate-spin text-gold" /></div>
-            ) : leads.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4 text-center">Nenhum lead capturado ainda.</p>
-            ) : (
-              <div className="overflow-x-auto rounded-lg border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Data</TableHead>
-                      <TableHead>E-mail</TableHead>
-                      <TableHead>Telefone</TableHead>
-                      <TableHead>Plano</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Próx. cobrança</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {leads.map((l) => (
-                      <TableRow key={l.id}>
-                        <TableCell className="whitespace-nowrap text-xs">{new Date(l.created_at).toLocaleString("pt-BR")}</TableCell>
-                        <TableCell className="text-sm">{l.email ?? "—"}</TableCell>
-                        <TableCell className="text-sm">{l.phone_e164 ?? "—"}</TableCell>
-                        <TableCell className="text-sm">{l.plan?.name ?? "—"}</TableCell>
-                        <TableCell><Badge variant={statusVariant(l.status)}>{statusLabel(l.status)}</Badge></TableCell>
-                        <TableCell className="text-xs whitespace-nowrap">
-                          {l.current_period_end ? new Date(l.current_period_end).toLocaleDateString("pt-BR") : "—"}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </TabsContent>
         </Tabs>
       </CardContent>
+
 
 
       <Dialog open={!!form} onOpenChange={(v) => !v && setForm(null)}>
