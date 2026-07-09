@@ -422,7 +422,7 @@ export function AdminCrm() {
                             <Button
                               size="icon"
                               variant="ghost"
-                              className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10"
+                              className="h-6 w-6 ml-auto bg-destructive/15 text-destructive hover:bg-destructive hover:text-destructive-foreground border border-destructive/40"
                               title="Excluir lead"
                               disabled={deleteMut.isPending}
                               onClick={() => {
@@ -431,7 +431,7 @@ export function AdminCrm() {
                                 }
                               }}
                             >
-                              <Trash2 className="size-3" />
+                              <Trash2 className="size-3.5" />
                             </Button>
                           </div>
                         </div>
