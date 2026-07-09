@@ -477,7 +477,7 @@ export function LeadsBlock() {
               </tr>
             </thead>
             <tbody>
-              {isLoading || isFetching ? (
+              {isLoading ? (
                 <tr><td colSpan={7} className="px-3 py-6 text-center text-muted-foreground">Carregando…</td></tr>
               ) : rows.length === 0 ? (
                 <tr><td colSpan={7} className="px-3 py-6 text-center text-muted-foreground">Nenhum lead ainda.</td></tr>
