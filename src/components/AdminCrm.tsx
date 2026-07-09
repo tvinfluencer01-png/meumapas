@@ -419,6 +419,20 @@ export function AdminCrm() {
                             <Button size="icon" variant="ghost" className="h-6 w-6" title="Auditoria de status" onClick={() => setAuditLead(l)}>
                               <ClipboardList className="size-3" />
                             </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10"
+                              title="Excluir lead"
+                              disabled={deleteMut.isPending}
+                              onClick={() => {
+                                if (confirm(`Excluir lead "${l.full_name || l.email}"? Esta ação não pode ser desfeita.`)) {
+                                  deleteMut.mutate(l.id);
+                                }
+                              }}
+                            >
+                              <Trash2 className="size-3" />
+                            </Button>
                           </div>
                         </div>
                       );
