@@ -326,8 +326,7 @@ export const improveAddonPrompt = createServerFn({ method: "POST" })
     const def = ADDON_PROMPT_DEFAULTS[data.addon_id];
     const vars = (def?.vars ?? []).join(", ") || "(nenhuma)";
 
-    const { model: makeModel } = await getConfiguredProvider(context.supabase, context.userId);
-    const model = makeModel("google/gemini-2.5-flash");
+    // model injetado pelo runWithProviderFallback abaixo
 
     const system = `Você é especialista em engenharia de prompts para LLMs em português (pt-BR).
 Aprimore o prompt abaixo para que produza saídas mais ricas, específicas, claras e acionáveis,
