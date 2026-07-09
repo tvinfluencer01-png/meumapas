@@ -1,15 +1,17 @@
 import { useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, Users } from "lucide-react";
+import { Loader2, Users, Gift, CreditCard } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { adminListHoroscopePaidLeads } from "@/lib/horoscope-plans.functions";
+import { LeadsBlock, useNewLeadsCount } from "@/components/AdminHoroscopeLanding";
 
-const SEEN_KEY = "admin-horoscope-paid-leads-seen";
+const PAID_SEEN_KEY = "admin-horoscope-paid-leads-seen";
 
-export function AdminHoroscopeLeads() {
+function PaidLeadsBlock() {
   const leadsFn = useServerFn(adminListHoroscopePaidLeads);
   const { data, isLoading } = useQuery({
     queryKey: ["admin-horoscope-paid-leads"],
@@ -20,9 +22,8 @@ export function AdminHoroscopeLeads() {
 
   const [seenAt] = useState<number>(() => {
     if (typeof window === "undefined") return 0;
-    const v = Number(window.localStorage.getItem(SEEN_KEY) ?? 0);
-    // marca como visto ao abrir o menu
-    window.localStorage.setItem(SEEN_KEY, String(Date.now()));
+    const v = Number(window.localStorage.getItem(PAID_SEEN_KEY) ?? 0);
+    window.localStorage.setItem(PAID_SEEN_KEY, String(Date.now()));
     return v;
   });
 
@@ -40,7 +41,7 @@ export function AdminHoroscopeLeads() {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Users className="size-5 text-gold" /> Horóscopo Leads
+          <CreditCard className="size-5 text-gold" /> Assinaturas pagas
           {newCount > 0 && (
             <Badge className="ml-2 bg-gold text-background">{newCount} novo(s)</Badge>
           )}
@@ -84,5 +85,46 @@ export function AdminHoroscopeLeads() {
         )}
       </CardContent>
     </Card>
+  );
+}
+
+export function AdminHoroscopeLeads() {
+  const { count: newFree, markSeen } = useNewLeadsCount();
+  const [tab, setTab] = useState("free");
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <Users className="size-5 text-gold" />
+        <h2 className="text-lg font-semibold">Horóscopo Leads</h2>
+      </div>
+      <Tabs
+        value={tab}
+        onValueChange={(v) => {
+          setTab(v);
+          if (v === "free") markSeen();
+        }}
+        className="space-y-4"
+      >
+        <TabsList>
+          <TabsTrigger value="free" className="gap-2 relative">
+            <Gift className="size-4" /> Grátis (Landing)
+            {newFree > 0 && (
+              <span className="relative ml-1 inline-flex items-center justify-center">
+                <span className="absolute inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400 opacity-75 animate-ping" />
+                <span className="relative inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-emerald-500 text-[10px] font-semibold text-white">
+                  {newFree > 99 ? "99+" : newFree}
+                </span>
+              </span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="paid" className="gap-2">
+            <CreditCard className="size-4" /> Planos pagos
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="free"><LeadsBlock /></TabsContent>
+        <TabsContent value="paid"><PaidLeadsBlock /></TabsContent>
+      </Tabs>
+    </div>
   );
 }
