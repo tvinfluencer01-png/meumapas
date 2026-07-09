@@ -231,7 +231,17 @@ export async function getConfiguredProviders(
     out.push({
       provider: p,
       defaultModel: perProviderModel,
-      model: (hint?: string | null) => providerFn(stripVendorPrefix(hint) || perProviderModel),
+      model: (hint?: string | null) => {
+        // Only honor the hint if it targets THIS provider (e.g. "google/..." for google).
+        // Otherwise it would try a Google model on Anthropic/OpenAI and always fail.
+        let name = perProviderModel;
+        if (hint) {
+          const slash = hint.indexOf("/");
+          const vendor = slash >= 0 ? hint.slice(0, slash) : null;
+          if (!vendor || vendor === p) name = stripVendorPrefix(hint) || perProviderModel;
+        }
+        return providerFn(name);
+      },
     });
   }
   return out;
