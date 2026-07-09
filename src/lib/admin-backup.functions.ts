@@ -301,7 +301,9 @@ export const syncToNewDatabase = createServerFn({ method: "POST" })
     const results: Array<{ table: string; rows: number; strategy: string; error?: string }> = [];
     const startedAt = new Date().toISOString();
 
-    for (const { table, hasUpdatedAt, pk } of meta) {
+    const superAdminId = await getSuperAdminUserId();
+
+    for (const { table, hasUpdatedAt, pk, userCol } of meta) {
       try {
         let effective = data.strategy;
         if (effective === "incremental" && !hasUpdatedAt) effective = "upsert_all";
@@ -318,18 +320,26 @@ export const syncToNewDatabase = createServerFn({ method: "POST" })
           if (since) query = query.gt("updated_at", since);
         }
 
+        // Exclui o super admin já na origem quando aplicável
+        if (superAdminId && userCol) query = query.neq(userCol, superAdminId);
+
         const { data: rows, error: srcErr } = await query;
         if (srcErr) throw new Error(`Origem: ${srcErr.message}`);
 
         if (effective === "full_replace") {
-          // apagar todos no destino
-          const { error: delErr } = await dest.from(table as any).delete().gte("created_at", "1900-01-01");
+          // apagar todos no destino — preservando o super admin
+          let del = dest.from(table as any).delete().gte("created_at", "1900-01-01");
+          if (superAdminId && userCol) del = del.neq(userCol, superAdminId);
+          const { error: delErr } = await del;
           if (delErr && !/does not exist|column .* does not exist/i.test(delErr.message)) {
-            // fallback: delete all sem filtro (alguns sem created_at)
-            const { error: delErr2 } = await dest.from(table as any).delete().not("ctid", "is", null as any);
+            // fallback: delete all sem filtro de created_at
+            let del2 = dest.from(table as any).delete().not("ctid", "is", null as any);
+            if (superAdminId && userCol) del2 = del2.neq(userCol, superAdminId);
+            const { error: delErr2 } = await del2;
             if (delErr2) throw new Error(`Destino delete: ${delErr2.message}`);
           }
         }
+
 
         const arr = (rows as any[]) ?? [];
         let synced = 0;
