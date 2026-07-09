@@ -3753,6 +3753,7 @@ export type Database = {
           consent_text: string | null
           consent_user_agent: string | null
           created_at: string
+          crm_lead_id: string | null
           email: string
           expiry_reminder_sent_at: string | null
           full_name: string
@@ -3762,6 +3763,7 @@ export type Database = {
           last_sent_on: string | null
           phone_e164: string
           retry_count: number
+          sent_to_crm_at: string | null
           source: string | null
           status: string
           sun_sign: string | null
@@ -3787,6 +3789,7 @@ export type Database = {
           consent_text?: string | null
           consent_user_agent?: string | null
           created_at?: string
+          crm_lead_id?: string | null
           email: string
           expiry_reminder_sent_at?: string | null
           full_name: string
@@ -3796,6 +3799,7 @@ export type Database = {
           last_sent_on?: string | null
           phone_e164: string
           retry_count?: number
+          sent_to_crm_at?: string | null
           source?: string | null
           status?: string
           sun_sign?: string | null
@@ -3821,6 +3825,7 @@ export type Database = {
           consent_text?: string | null
           consent_user_agent?: string | null
           created_at?: string
+          crm_lead_id?: string | null
           email?: string
           expiry_reminder_sent_at?: string | null
           full_name?: string
@@ -3830,6 +3835,7 @@ export type Database = {
           last_sent_on?: string | null
           phone_e164?: string
           retry_count?: number
+          sent_to_crm_at?: string | null
           source?: string | null
           status?: string
           sun_sign?: string | null
@@ -3841,7 +3847,15 @@ export type Database = {
           updated_at?: string
           utm?: Json | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "horoscope_free_leads_crm_lead_id_fkey"
+            columns: ["crm_lead_id"]
+            isOneToOne: false
+            referencedRelation: "crm_leads"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       horoscope_landing_settings: {
         Row: {
