@@ -35,7 +35,7 @@ export const Route = createFileRoute("/api/public/affiliate/track/visit")({
             const { data: aff } = await admin
               .from("affiliate_profiles" as any)
               .select("id")
-              .eq("affiliate_code", payload.affiliateCode)
+              .ilike("affiliate_code", payload.affiliateCode)
               .maybeSingle();
             affiliateId = (aff as any)?.id ?? null;
           }
