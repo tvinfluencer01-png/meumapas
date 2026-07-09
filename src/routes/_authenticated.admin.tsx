@@ -103,8 +103,7 @@ const ADMIN_MENU_GROUPS: AdminMenuGroup[] = [
     group: "Conteúdo & Marketing",
     items: [
       { value: "product-landings", label: "Landings Produtos", icon: FileText },
-      { value: "horoscope-landing", label: "Horóscopo Grátis (Landing)", icon: Sparkles },
-      { value: "horoscope-plans", label: "Horóscopo Configuração / Planos", icon: Sparkles },
+      { value: "horoscope-plans", label: "Horóscopo Planos e Config.", icon: Sparkles },
       { value: "horoscope-status", label: "Horóscopo Status", icon: Sparkles },
       { value: "marketing", label: "Marketing", icon: Megaphone },
     ],
@@ -436,7 +435,7 @@ function AdminTabContent({ tab }: { tab: string }) {
     case "migration": return <AdminPlanMigration />;
     case "cron": return <AdminCronStatus />;
     case "horoscope-status": return <AdminHoroscopeStatus />;
-    case "horoscope-landing": return <AdminHoroscopeLanding />;
+    case "horoscope-landing": return <AdminHoroscopePlans />;
     case "horoscope-plans": return <AdminHoroscopePlans />;
 
     case "backup": return <BackupAdmin />;
