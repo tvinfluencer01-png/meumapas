@@ -191,7 +191,7 @@ export function AdminProductLandings() {
                       params={{ slug: l.slug }}
                       target="_blank"
                       rel="noopener noreferrer"
-                      onClick={(e) => {
+                      onClick={(e: React.MouseEvent) => {
                         // Garante nova aba mesmo se algo tentar interceptar como SPA nav
                         e.preventDefault();
                         window.open(`/p/${l.slug}`, "_blank", "noopener,noreferrer");
