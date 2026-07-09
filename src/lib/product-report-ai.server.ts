@@ -113,13 +113,6 @@ export async function buildAiOrderReportBlocks(
   landingTitle: string,
   customerData: CD,
 ): Promise<SimplePdfBlock[] | null> {
-  let makeModel: (hint?: string | null) => any;
-  try {
-    ({ model: makeModel } = await getConfiguredProvider(null, null));
-  } catch {
-    return null;
-  }
-
   const meta = TYPE_META[reportType] ?? {
     title: landingTitle || "Relatório Personalizado",
     focus: "Interprete os dados fornecidos com profundidade espiritual e prática.",
@@ -161,14 +154,14 @@ Regras de formato de saída (siga LITERALMENTE):
 
   let text = "";
   try {
-    const res = await generateText({
-      model: makeModel("google/gemini-3-flash-preview"),
-      system,
-      prompt,
-    });
-    text = (res.text ?? "").trim();
+    const { result } = await runWithProviderFallback(
+      null, null,
+      async (model) => (await generateText({ model, system, prompt })).text,
+      { modelHint: "google/gemini-3-flash-preview" },
+    );
+    text = (result ?? "").trim();
   } catch (e) {
-    console.error("[buildAiOrderReportBlocks] gateway error", e);
+    console.error("[buildAiOrderReportBlocks] all providers failed", e);
     return null;
   }
   if (!text) return null;
