@@ -25,7 +25,7 @@ import {
 
 const LEADS_SEEN_KEY = "admin_horoscope_leads_seen_at";
 
-function useNewLeadsCount() {
+export function useNewLeadsCount() {
   const [seenAt, setSeenAt] = useState<string>(() => {
     if (typeof window === "undefined") return new Date(0).toISOString();
     return localStorage.getItem(LEADS_SEEN_KEY) ?? new Date(0).toISOString();
@@ -69,43 +69,9 @@ function useNewLeadsCount() {
 }
 
 export function AdminHoroscopeLanding() {
-  const { count: newLeads, markSeen } = useNewLeadsCount();
-  const [tab, setTab] = useState("settings");
-
-  return (
-    <Tabs
-      value={tab}
-      onValueChange={(v) => {
-        setTab(v);
-        if (v === "leads") markSeen();
-      }}
-      className="space-y-6"
-    >
-      <TabsList>
-        <TabsTrigger value="settings" className="gap-2">
-          <Settings className="size-4" /> Configurações
-        </TabsTrigger>
-        <TabsTrigger value="leads" className="gap-2 relative">
-          <MessageCircle className="size-4" /> Leads capturados
-          {newLeads > 0 && (
-            <span className="relative ml-1 inline-flex items-center justify-center">
-              <span className="absolute inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400 opacity-75 animate-ping" />
-              <span className="relative inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-emerald-500 text-[10px] font-semibold text-white">
-                {newLeads > 99 ? "99+" : newLeads}
-              </span>
-            </span>
-          )}
-        </TabsTrigger>
-      </TabsList>
-      <TabsContent value="settings" className="space-y-6">
-        <SettingsBlock />
-      </TabsContent>
-      <TabsContent value="leads" className="space-y-6">
-        <LeadsBlock />
-      </TabsContent>
-    </Tabs>
-  );
+  return <SettingsBlock />;
 }
+
 
 function SettingsBlock() {
   const qc = useQueryClient();
