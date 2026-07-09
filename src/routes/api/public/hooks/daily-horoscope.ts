@@ -537,14 +537,16 @@ async function handler({ request }: { request: Request }) {
 
         let body = "";
         try {
-          const { model: makeModel } = await getConfiguredProvider(supabaseAdmin, null);
-          for (const modelName of modelCandidates) {
-            try {
-              const { text } = await generateText({ model: makeModel(modelName), prompt, temperature: 1.0, topP: 0.95 });
-              body = text.trim();
-              break;
-            } catch {}
-          }
+          const { result } = await runWithProviderFallback(
+            supabaseAdmin, null,
+            async (model) => {
+              const { text } = await generateText({ model, prompt, temperature: 1.0, topP: 0.95 });
+              if (!text?.trim()) throw new Error("empty");
+              return text.trim();
+            },
+            { modelHint: modelCandidates[0] },
+          );
+          body = result;
         } catch {}
         if (!body) continue;
 
