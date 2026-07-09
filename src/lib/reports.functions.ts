@@ -454,24 +454,25 @@ export const generateReport = createServerFn({ method: "POST" })
       return output;
     }
 
-    // 2) Choose AI provider (resolved from user settings; ignores legacy `ai_provider === 'lovable'`)
+    // 2) Resolve TODOS os providers configurados (ordem de prioridade)
     const customModel = (settings?.custom_ai_model as string | null) ?? null;
-    const { model: makeConfiguredModel, provider: activeProvider } = await getConfiguredProvider(
+    const providers = await getConfiguredProviders(
       context.supabase,
       context.userId,
       { addonId: "sub_astrologer_numerologist" },
     );
+    if (providers.length === 0) {
+      throw new Error("Nenhum provedor de IA configurado. Adicione uma chave em Configurações → IA.");
+    }
+    const primary = providers[0];
+    const activeProvider = primary.provider;
 
     let modelName = customModel ?? "google/gemini-3-flash-preview";
-    if (activeProvider === "openai") {
-      modelName = customModel ?? "gpt-5-mini";
-    } else if (activeProvider === "anthropic") {
-      modelName = customModel ?? "claude-3-5-sonnet-latest";
-    } else if (activeProvider === "google") {
-      modelName = customModel ?? "gemini-2.5-flash";
-    }
+    if (activeProvider === "openai") modelName = customModel ?? "gpt-5-mini";
+    else if (activeProvider === "anthropic") modelName = customModel ?? "claude-3-5-sonnet-latest";
+    else if (activeProvider === "google") modelName = customModel ?? "gemini-2.0-flash";
 
-    const makeModel = (candidate: string) => makeConfiguredModel(candidate);
+    const makeModel = (candidate: string) => primary.model(candidate);
     let model = makeModel(modelName);
 
     // 3) Generate humanized structured content
