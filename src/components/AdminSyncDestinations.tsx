@@ -100,6 +100,16 @@ export function AdminSyncDestinations() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const testMut = useMutation({
+    mutationFn: (destinationId?: string) => testFn({ data: destinationId ? { destinationId } : {} }),
+    onSuccess: (res) => {
+      setTestResult(res);
+      if (res.ok) toast.success(`Destino "${res.destination.name}" OK`);
+      else toast.error(`Destino "${res.destination.name}" com falhas`);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const destinations: Dest[] = (data?.destinations ?? []) as any;
 
   return (
