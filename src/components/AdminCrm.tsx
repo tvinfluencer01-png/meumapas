@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { showFeedback } from "@/components/system-feedback";
-import { listCrmLeads, updateCrmLead, listCrmLeadStatusHistory, createCrmLead } from "@/lib/product-orders.functions";
+import { listCrmLeads, updateCrmLead, listCrmLeadStatusHistory, createCrmLead, deleteCrmLead } from "@/lib/product-orders.functions";
 import {
   getCrmFollowupSettings,
   saveCrmFollowupSettings,
