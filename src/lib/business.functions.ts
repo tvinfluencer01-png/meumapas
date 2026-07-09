@@ -76,8 +76,7 @@ export const generateBusinessReport = createServerFn({ method: "POST" })
 
       yield { type: "progress" as const, progress: 30, step: "Consultando arquétipos e ciclos com IA..." };
 
-      const { model: makeModel } = await getConfiguredProvider(context.supabase, userId, { addonId: "sub_astrologer_numerologist" });
-      const model = makeModel("openai/gpt-5");
+      // model injetado pelo runWithProviderFallback abaixo
 
       const prompt = `Você é um consultor sênior que combina astrologia mundana, numerologia pitagórica e cabalística e estratégia empresarial.
 Produza uma análise PROFUNDA, profissional e específica sobre a empresa abaixo, em pt-BR.
