@@ -113,6 +113,16 @@ export function AdminSyncDestinations() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const verifyMut = useMutation({
+    mutationFn: () => verifyFn({ data: {} }),
+    onSuccess: (res) => {
+      setVerifyResult(res);
+      if (res.ok) toast.success("Nenhuma ocorrência remanescente.");
+      else toast.warning(`${res.totalTableRows} linha(s) e ${res.cronRemaining.length} cron job(s) ainda com legacy`);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const destinations: Dest[] = (data?.destinations ?? []) as any;
 
   return (
