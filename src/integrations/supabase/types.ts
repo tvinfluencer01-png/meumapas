@@ -5539,6 +5539,18 @@ export type Database = {
           type_name: string
         }[]
       }
+      get_public_policies: {
+        Args: never
+        Returns: {
+          cmd: string
+          permissive: string
+          policy_name: string
+          qual: string
+          roles: string[]
+          table_name: string
+          with_check: string
+        }[]
+      }
       get_public_tables: {
         Args: never
         Returns: {
