@@ -501,3 +501,88 @@ export const syncSchemaToNewDatabase = createServerFn({ method: "POST" })
     return { ok: true, dryRun: false, report, statements, applied: statements.length, message: `${statements.length} instrução(ões) aplicada(s).` };
   });
 
+// ============================================================
+// Sync de políticas RLS (habilita RLS e replica policies do origem)
+// ============================================================
+
+type PolicyRow = {
+  table_name: string;
+  policy_name: string;
+  cmd: string; // ALL | SELECT | INSERT | UPDATE | DELETE
+  roles: string[];
+  permissive: string; // PERMISSIVE | RESTRICTIVE
+  qual: string | null;
+  with_check: string | null;
+};
+
+function buildPolicyStatements(p: PolicyRow): string[] {
+  const table = `public."${p.table_name}"`;
+  const stmts: string[] = [
+    `ALTER TABLE ${table} ENABLE ROW LEVEL SECURITY;`,
+    `DROP POLICY IF EXISTS "${p.policy_name}" ON ${table};`,
+  ];
+  const forClause = p.cmd && p.cmd !== "ALL" ? `FOR ${p.cmd}` : "FOR ALL";
+  const roles = (p.roles ?? []).filter((r) => r && r !== "public").join(", ");
+  const toClause = roles ? `TO ${roles}` : "";
+  const using = p.qual ? `USING (${p.qual})` : "";
+  const withCheck = p.with_check ? `WITH CHECK (${p.with_check})` : "";
+  const perm = p.permissive === "RESTRICTIVE" ? "AS RESTRICTIVE" : "";
+  stmts.push(
+    `CREATE POLICY "${p.policy_name}" ON ${table} ${perm} ${forClause} ${toClause} ${using} ${withCheck};`
+      .replace(/\s+/g, " ")
+      .trim() + ";",
+  );
+  return stmts;
+}
+
+export const syncRlsPoliciesToNewDatabase = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ dryRun: z.boolean().default(false) }).parse(d ?? {}))
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context.userId);
+    const dest = getDestinationClient();
+
+    const [{ data: srcPolRows, error: srcErr }, { data: dstTblRows }] = await Promise.all([
+      supabaseAdmin.rpc("get_public_policies" as any),
+      dest.rpc("get_public_tables" as any),
+    ]);
+    if (srcErr) throw new Error(`Origem: ${srcErr.message}`);
+    const destTables = new Set(((dstTblRows as any[]) ?? []).map((r) => r.table_name as string));
+    const srcPolicies = ((srcPolRows as any[]) ?? []) as PolicyRow[];
+
+    const applicable = srcPolicies.filter((p) => destTables.has(p.table_name));
+    const skipped = srcPolicies.filter((p) => !destTables.has(p.table_name));
+
+    const statements: string[] = [];
+    const enabledTables = new Set<string>();
+    for (const p of applicable) {
+      const built = buildPolicyStatements(p);
+      // Deduplicate the ALTER TABLE ENABLE RLS per table
+      for (const s of built) {
+        if (s.startsWith("ALTER TABLE")) {
+          if (enabledTables.has(p.table_name)) continue;
+          enabledTables.add(p.table_name);
+        }
+        statements.push(s);
+      }
+    }
+
+    if (statements.length === 0) {
+      return { ok: true, dryRun: data.dryRun, applied: 0, statements, policies: 0, skipped: skipped.length, message: "Nenhuma política aplicável." };
+    }
+
+    if (data.dryRun) {
+      return { ok: true, dryRun: true, applied: 0, statements, policies: applicable.length, skipped: skipped.length, message: `${applicable.length} política(s) prontas para aplicar.` };
+    }
+
+    const { error } = await dest.rpc("exec_sql" as any, { sql_query: statements.join("\n") });
+    if (error) {
+      if (/exec_sql.*does not exist/i.test(error.message)) {
+        throw new Error("Função public.exec_sql(text) não existe no destino. Crie-a antes de aplicar políticas.");
+      }
+      throw new Error(`Falha ao aplicar políticas: ${error.message}`);
+    }
+    return { ok: true, dryRun: false, applied: statements.length, statements, policies: applicable.length, skipped: skipped.length, message: `${applicable.length} política(s) sincronizada(s).` };
+  });
+
+
