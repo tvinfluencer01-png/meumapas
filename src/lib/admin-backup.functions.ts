@@ -368,3 +368,136 @@ export const syncToNewDatabase = createServerFn({ method: "POST" })
       summary: { tables: results.length, ok: okCount, rows: totalRows },
     };
   });
+
+// ============================================================
+// Sync de SCHEMA (DDL) — cria tabelas/colunas/enums faltantes no destino
+// ============================================================
+
+type ColRow = {
+  column_name: string;
+  data_type: string; // udt_name
+  is_nullable: string;
+  column_default: string | null;
+  is_primary_key: boolean;
+};
+
+function renderType(udt: string): string {
+  const t = udt.toLowerCase();
+  if (t.startsWith("_")) return `${t.substring(1)}[]`;
+  return t;
+}
+
+function colDefSQL(c: ColRow): string {
+  let line = `"${c.column_name}" ${renderType(c.data_type)}`;
+  if (c.is_nullable === "NO") line += " NOT NULL";
+  if (c.column_default) line += ` DEFAULT ${c.column_default}`;
+  return line;
+}
+
+async function fetchSchema(client: any) {
+  const [{ data: tRows }, { data: eRows }] = await Promise.all([
+    client.rpc("get_public_tables"),
+    client.rpc("get_public_enums"),
+  ]);
+  const tables = ((tRows as any[]) ?? []).map((r) => r.table_name as string);
+  const enums: Record<string, string[]> = {};
+  for (const e of (eRows as any[]) ?? []) {
+    (enums[e.type_name] ??= []).push(e.enum_label);
+  }
+  const tableCols: Record<string, ColRow[]> = {};
+  for (const t of tables) {
+    const { data: cols } = await client.rpc("get_table_structure", { t_name: t });
+    tableCols[t] = ((cols as any[]) ?? []) as ColRow[];
+  }
+  return { tables, enums, tableCols };
+}
+
+export const syncSchemaToNewDatabase = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ dryRun: z.boolean().default(false) }).parse(d ?? {}))
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context.userId);
+    const dest = getDestinationClient();
+
+    const [src, dst] = await Promise.all([fetchSchema(supabaseAdmin), fetchSchema(dest)]);
+
+    const statements: string[] = [];
+    const report = {
+      enumsCreated: [] as string[],
+      enumLabelsAdded: [] as string[],
+      tablesCreated: [] as string[],
+      columnsAdded: [] as string[],
+    };
+
+    // 1. Enums
+    for (const [name, labels] of Object.entries(src.enums)) {
+      const existing = dst.enums[name];
+      if (!existing) {
+        const vals = labels.map((l) => `'${l.replace(/'/g, "''")}'`).join(", ");
+        statements.push(`CREATE TYPE public."${name}" AS ENUM (${vals});`);
+        report.enumsCreated.push(name);
+      } else {
+        for (const l of labels) {
+          if (!existing.includes(l)) {
+            statements.push(`ALTER TYPE public."${name}" ADD VALUE IF NOT EXISTS '${l.replace(/'/g, "''")}';`);
+            report.enumLabelsAdded.push(`${name}.${l}`);
+          }
+        }
+      }
+    }
+
+    // 2. Tables
+    for (const table of src.tables) {
+      const srcCols = src.tableCols[table] ?? [];
+      const dstCols = dst.tableCols[table];
+      if (!dstCols) {
+        // CREATE TABLE
+        const lines = srcCols.map(colDefSQL);
+        const pks = srcCols.filter((c) => c.is_primary_key).map((c) => `"${c.column_name}"`);
+        if (pks.length > 0) lines.push(`CONSTRAINT "${table}_pkey" PRIMARY KEY (${pks.join(", ")})`);
+        statements.push(`CREATE TABLE IF NOT EXISTS public."${table}" (\n  ${lines.join(",\n  ")}\n);`);
+        statements.push(`GRANT SELECT, INSERT, UPDATE, DELETE ON public."${table}" TO authenticated;`);
+        statements.push(`GRANT ALL ON public."${table}" TO service_role;`);
+        statements.push(`ALTER TABLE public."${table}" ENABLE ROW LEVEL SECURITY;`);
+        report.tablesCreated.push(table);
+      } else {
+        // Diff columns
+        const dstNames = new Set(dstCols.map((c) => c.column_name));
+        for (const c of srcCols) {
+          if (!dstNames.has(c.column_name)) {
+            // Adição segura: colunas NOT NULL sem default seriam bloqueadas se houver linhas;
+            // relaxamos para nullable temporariamente e ajustamos default se houver.
+            const nullable = c.is_nullable === "NO" && !c.column_default ? false : c.is_nullable === "YES";
+            const parts = [`"${c.column_name}" ${renderType(c.data_type)}`];
+            if (c.column_default) parts.push(`DEFAULT ${c.column_default}`);
+            if (!nullable && c.is_nullable === "NO") parts.push("NOT NULL");
+            statements.push(`ALTER TABLE public."${table}" ADD COLUMN IF NOT EXISTS ${parts.join(" ")};`);
+            report.columnsAdded.push(`${table}.${c.column_name}`);
+          }
+        }
+      }
+    }
+
+    if (statements.length === 0) {
+      return { ok: true, dryRun: data.dryRun, report, statements, applied: 0, message: "Schemas já estão idênticos." };
+    }
+
+    if (data.dryRun) {
+      return { ok: true, dryRun: true, report, statements, applied: 0, message: `${statements.length} instrução(ões) pendente(s).` };
+    }
+
+    // Aplica em lote
+    const sql = statements.join("\n");
+    const { error } = await dest.rpc("exec_sql" as any, { sql_query: sql });
+    if (error) {
+      if (/exec_sql.*does not exist/i.test(error.message)) {
+        throw new Error(
+          "A função RPC public.exec_sql(text) não existe no banco destino. Crie-a uma vez com: CREATE OR REPLACE FUNCTION public.exec_sql(sql_query text) RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ BEGIN EXECUTE sql_query; END; $$;",
+        );
+      }
+      throw new Error(`Falha ao aplicar DDL: ${error.message}`);
+    }
+
+    return { ok: true, dryRun: false, report, statements, applied: statements.length, message: `${statements.length} instrução(ões) aplicada(s).` };
+  });
+

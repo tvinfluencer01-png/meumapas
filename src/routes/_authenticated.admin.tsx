@@ -66,7 +66,7 @@ import {
   testEvolutionConnection,
   sendEvolutionTest,
 } from "@/lib/admin.functions";
-import { adminExportDatabase, getSyncStatus, syncToNewDatabase } from "@/lib/admin-backup.functions";
+import { adminExportDatabase, getSyncStatus, syncToNewDatabase, syncSchemaToNewDatabase } from "@/lib/admin-backup.functions";
 import { countUnviewedOrders } from "@/lib/product-orders.functions";
 
 
@@ -1734,6 +1734,7 @@ function BackupAdmin() {
   const exportFn = useServerFn(adminExportDatabase);
   const statusFn = useServerFn(getSyncStatus);
   const syncFn = useServerFn(syncToNewDatabase);
+  const schemaFn = useServerFn(syncSchemaToNewDatabase);
   const qc = useQueryClient();
   const [strategy, setStrategy] = useState<"auto" | "incremental" | "upsert_all" | "full_replace">("auto");
 
@@ -1773,6 +1774,26 @@ function BackupAdmin() {
       qc.invalidateQueries({ queryKey: ["db-sync-status"] });
     },
     onError: (e: Error) => toast.error(`Falha na sincronização: ${e.message}`),
+  });
+
+  const schemaMut = useMutation({
+    mutationFn: (dryRun: boolean) => schemaFn({ data: { dryRun } }),
+    onSuccess: (res) => {
+      const r = res.report;
+      const parts: string[] = [];
+      if (r.tablesCreated.length) parts.push(`${r.tablesCreated.length} tabela(s)`);
+      if (r.columnsAdded.length) parts.push(`${r.columnsAdded.length} coluna(s)`);
+      if (r.enumsCreated.length) parts.push(`${r.enumsCreated.length} enum(s)`);
+      if (r.enumLabelsAdded.length) parts.push(`${r.enumLabelsAdded.length} label(s) de enum`);
+      const summary = parts.length ? parts.join(", ") : "nenhuma diferença";
+      if (res.dryRun) {
+        toast.info(`Prévia: ${summary}. ${res.statements.length} instrução(ões) pendente(s).`);
+        console.log("[schema-sync] pendentes:\n" + res.statements.join("\n"));
+      } else {
+        toast.success(`Schema sincronizado: ${summary}.`);
+      }
+    },
+    onError: (e: Error) => toast.error(`Falha no schema: ${e.message}`),
   });
 
   const effectiveStrategy = strategy === "auto" ? (status?.suggestion ?? "full_replace") : strategy;
@@ -1871,14 +1892,37 @@ function BackupAdmin() {
             </div>
           </div>
 
-          <Button
-            onClick={() => syncMut.mutate(effectiveStrategy as any)}
-            disabled={syncMut.isPending || !status?.destinationReachable}
-            className="w-fit"
-          >
-            {syncMut.isPending ? <Loader2 className="size-4 mr-2 animate-spin" /> : <Download className="size-4 mr-2 rotate-180" />}
-            Sincronizar agora ({effectiveStrategy})
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              onClick={() => syncMut.mutate(effectiveStrategy as any)}
+              disabled={syncMut.isPending || !status?.destinationReachable}
+              className="w-fit"
+            >
+              {syncMut.isPending ? <Loader2 className="size-4 mr-2 animate-spin" /> : <Download className="size-4 mr-2 rotate-180" />}
+              Sincronizar dados ({effectiveStrategy})
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => schemaMut.mutate(true)}
+              disabled={schemaMut.isPending || !status?.destinationReachable}
+              className="w-fit"
+            >
+              {schemaMut.isPending ? <Loader2 className="size-4 mr-2 animate-spin" /> : null}
+              Prévia da migração (dry-run)
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => schemaMut.mutate(false)}
+              disabled={schemaMut.isPending || !status?.destinationReachable}
+              className="w-fit"
+            >
+              {schemaMut.isPending ? <Loader2 className="size-4 mr-2 animate-spin" /> : null}
+              Aplicar migração de schema
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground -mt-2">
+            A migração de schema cria tabelas/colunas/enums que existem no Lovable Cloud e faltam no destino (apenas aditivo — nunca apaga nem altera tipos).
+          </p>
 
           {/* Última sincronização */}
           {status?.lastGlobal && (
