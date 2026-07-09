@@ -1892,14 +1892,37 @@ function BackupAdmin() {
             </div>
           </div>
 
-          <Button
-            onClick={() => syncMut.mutate(effectiveStrategy as any)}
-            disabled={syncMut.isPending || !status?.destinationReachable}
-            className="w-fit"
-          >
-            {syncMut.isPending ? <Loader2 className="size-4 mr-2 animate-spin" /> : <Download className="size-4 mr-2 rotate-180" />}
-            Sincronizar agora ({effectiveStrategy})
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              onClick={() => syncMut.mutate(effectiveStrategy as any)}
+              disabled={syncMut.isPending || !status?.destinationReachable}
+              className="w-fit"
+            >
+              {syncMut.isPending ? <Loader2 className="size-4 mr-2 animate-spin" /> : <Download className="size-4 mr-2 rotate-180" />}
+              Sincronizar dados ({effectiveStrategy})
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => schemaMut.mutate(true)}
+              disabled={schemaMut.isPending || !status?.destinationReachable}
+              className="w-fit"
+            >
+              {schemaMut.isPending ? <Loader2 className="size-4 mr-2 animate-spin" /> : null}
+              Prévia da migração (dry-run)
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => schemaMut.mutate(false)}
+              disabled={schemaMut.isPending || !status?.destinationReachable}
+              className="w-fit"
+            >
+              {schemaMut.isPending ? <Loader2 className="size-4 mr-2 animate-spin" /> : null}
+              Aplicar migração de schema
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground -mt-2">
+            A migração de schema cria tabelas/colunas/enums que existem no Lovable Cloud e faltam no destino (apenas aditivo — nunca apaga nem altera tipos).
+          </p>
 
           {/* Última sincronização */}
           {status?.lastGlobal && (
