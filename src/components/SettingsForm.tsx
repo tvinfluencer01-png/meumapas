@@ -218,28 +218,32 @@ export function SettingsForm() {
   }
 
   function pickBestGeminiModel(models: string[]): string | null {
-    const candidates = models
-      .map((m) => m.replace(/^models\//, ""))
-      .filter(
-        (m) =>
-          /gemini/i.test(m) &&
-          !/(embed|aqa|vision|image|tts|audio|thinking|learnlm)/i.test(m) &&
-          !/preview|exp/i.test(m) && // previews têm cota mínima → offline rápido
-          !/-\d{3,}/.test(m), // ignora snapshots datados (ex: -0827)
-      );
-    if (!candidates.length) return null;
-    const score = (m: string): number => {
-      let s = 0;
-      const v = parseFloat((m.match(/gemini-(\d+(?:\.\d+)?)/i) ?? [])[1] ?? "0");
-      s += v * 100;
-      // Free tier: flash tem cota muito maior que pro → preferir flash
-      if (/flash(?!-lite)/i.test(m)) s += 50;
-      else if (/flash-lite/i.test(m)) s += 30;
-      else if (/pro/i.test(m)) s += 10;
-      if (/latest/i.test(m)) s += 5;
-      return s;
-    };
-    return candidates.sort((a, b) => score(b) - score(a))[0] ?? null;
+    const normalized = models.map((m) => m.replace(/^models\//, ""));
+    // Prioridade explícita: modelos estáveis do free tier (cota generosa e disponibilidade real
+    // na maioria das chaves da Google AI Studio). 2.5-flash costuma estar apenas em preview,
+    // com cota de poucas requisições por minuto → cai para "offline" na segunda verificação.
+    const preferredOrder = [
+      "gemini-2.0-flash",
+      "gemini-2.0-flash-001",
+      "gemini-flash-latest",
+      "gemini-1.5-flash",
+      "gemini-1.5-flash-latest",
+      "gemini-1.5-flash-8b",
+      "gemini-2.0-flash-lite",
+    ];
+    for (const want of preferredOrder) {
+      const hit = normalized.find((m) => m === want);
+      if (hit) return hit;
+    }
+    // Fallback: qualquer flash estável (sem preview/exp/snapshots datados)
+    const stableFlash = normalized.find(
+      (m) =>
+        /gemini/i.test(m) &&
+        /flash/i.test(m) &&
+        !/(embed|aqa|vision|image|tts|audio|thinking|learnlm|preview|exp)/i.test(m) &&
+        !/-\d{3,}/.test(m),
+    );
+    return stableFlash ?? null;
   }
 
   async function loadModels(id: string, key?: string) {
