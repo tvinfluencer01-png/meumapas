@@ -516,9 +516,6 @@ export const sendTestHoroscopeWhatsapp = createServerFn({ method: "POST" })
       throw new Error("Nenhum provedor WhatsApp configurado (Evolution ou Twilio).");
     }
 
-    const { model: makeModel } = await getConfiguredProvider(supabaseAdmin, userId, { addonId: "sub_astrologer_numerologist" });
-    const model = makeModel("google/gemini-2.5-flash");
-
     const { getAddonPromptOverride } = await import("./addon-settings.functions");
     const override = await getAddonPromptOverride("sub_daily_horoscope");
     const today = new Date().toISOString().slice(0, 10);
@@ -542,14 +539,18 @@ export const sendTestHoroscopeWhatsapp = createServerFn({ method: "POST" })
 
     let body = "";
     try {
-      const { text } = await generateText({
-        model,
-        prompt,
-        temperature: 1.0,
-        topP: 0.95,
-        seed: hashStr(`${userId}|${today}`),
-      });
-      body = text.trim();
+      const { result } = await runWithProviderFallback(
+        supabaseAdmin, userId,
+        async (model) => {
+          const { text } = await generateText({
+            model, prompt, temperature: 1.0, topP: 0.95, seed: hashStr(`${userId}|${today}`),
+          });
+          if (!text?.trim()) throw new Error("empty");
+          return text.trim();
+        },
+        { addonId: "sub_astrologer_numerologist", modelHint: "google/gemini-2.5-flash" },
+      );
+      body = result;
     } catch (e: any) {
       throw new Error("Falha ao gerar horóscopo: " + (e?.message ?? String(e)));
     }
