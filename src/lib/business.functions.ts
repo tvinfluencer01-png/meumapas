@@ -131,7 +131,11 @@ A análise deve ser sofisticada, com linguagem executiva e simbólica equilibrad
 
       let aiJson: any = null;
       try {
-        const { text } = await generateText({ model, prompt });
+        const { result: text } = await runWithProviderFallback(
+          context.supabase, userId,
+          async (model) => (await generateText({ model, prompt })).text,
+          { addonId: "sub_astrologer_numerologist", modelHint: "openai/gpt-5" },
+        );
         const m = text.match(/\{[\s\S]*\}/);
         aiJson = JSON.parse(m ? m[0] : text);
       } catch (e) {
