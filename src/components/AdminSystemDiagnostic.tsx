@@ -17,7 +17,9 @@ const STATUS_META: Record<CheckStatus, { label: string; className: string; Icon:
 
 export function AdminSystemDiagnostic() {
   const runFn = useServerFn(runSystemDiagnostic);
+  const reconcileFn = useServerFn(reconcileTableRows);
   const [result, setResult] = useState<Awaited<ReturnType<typeof runSystemDiagnostic>> | null>(null);
+  const [reconciling, setReconciling] = useState<string | null>(null);
 
   const runMut = useMutation({
     mutationFn: () => runFn(),
@@ -27,6 +29,19 @@ export function AdminSystemDiagnostic() {
     },
     onError: (e: Error) => toast.error(`Falha ao rodar diagnóstico: ${e.message}`),
   });
+
+  const reconcile = async (table: string) => {
+    setReconciling(table);
+    try {
+      const r = await reconcileFn({ data: { table } });
+      toast.success(`${table}: ${r.inserted} linha(s) copiada(s). Origem=${r.src} / Destino=${r.dst}`);
+      runMut.mutate();
+    } catch (e: any) {
+      toast.error(`Falha ao reconciliar ${table}: ${e?.message ?? e}`);
+    } finally {
+      setReconciling(null);
+    }
+  };
 
   const grouped = useMemo(() => {
     if (!result) return [] as Array<{ group: string; items: CheckResult[] }>;
