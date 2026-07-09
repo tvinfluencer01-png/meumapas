@@ -15,7 +15,7 @@ export type CheckResult = {
   name: string;
   status: CheckStatus;
   detail: string;
-  meta?: Record<string, unknown>;
+  meta?: any;
   durationMs: number;
 };
 
