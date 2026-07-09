@@ -543,16 +543,30 @@ ${numBlock}
 Mapa astral:
 ${astroBlock}${extraContextBlock}`;
 
-    const getFallbackModels = () => {
-      const extras =
-        activeProvider === "openai"
-          ? ["gpt-5-mini"]
-          : activeProvider === "google"
-            ? ["gemini-2.5-flash", "gemini-2.5-flash-lite"]
-            : activeProvider === "anthropic"
-              ? ["claude-3-5-sonnet-latest"]
-              : [];
-      return [modelName, ...extras].filter((c, i, a) => a.indexOf(c) === i);
+    // Lista de tentativas na ORDEM DE PRIORIDADE dos providers configurados.
+    // Cada tentativa carrega o builder do provider correspondente + o modelo.
+    type Attempt = { label: string; build: () => any };
+    const getAttempts = (): Attempt[] => {
+      const seen = new Set<string>();
+      const out: Attempt[] = [];
+      for (const p of providers) {
+        const defaults =
+          p.provider === "openai" ? ["gpt-5-mini"]
+          : p.provider === "anthropic" ? ["claude-3-5-sonnet-latest"]
+          : p.provider === "google" ? ["gemini-2.0-flash", "gemini-2.5-flash-lite"]
+          : p.provider === "groq" ? ["llama-3.3-70b-versatile"]
+          : p.provider === "mistral" ? ["mistral-small-latest"]
+          : ["google/gemini-2.0-flash-exp:free"];
+        // If this is the primary provider, honor the user's `modelName` first.
+        const candidates = p.provider === activeProvider ? [modelName, ...defaults] : defaults;
+        for (const c of candidates) {
+          const key = `${p.provider}:${c}`;
+          if (seen.has(key)) continue;
+          seen.add(key);
+          out.push({ label: `${p.provider}/${c}`, build: () => p.model(c) });
+        }
+      }
+      return out;
     };
 
     async function callWithRetry({
@@ -565,16 +579,13 @@ ${astroBlock}${extraContextBlock}`;
       errorMessage: string;
     }) {
       let lastErr: unknown;
-      const fallbackModels = getFallbackModels();
-      for (const candidate of fallbackModels) {
-        const candidateModel = candidate === modelName ? model : makeModel(candidate);
+      const attempts = getAttempts();
+      for (const attempt of attempts) {
+        const candidateModel = attempt.build();
         const startedAt = Date.now();
-        // Hard wall-clock timeout. Uses AbortSignal.timeout which is honored
-        // by fetch in Cloudflare Workers, plus a manual Promise.race fallback
-        // in case the SDK swallows the abort signal.
         const signal = AbortSignal.timeout(timeoutMs);
         try {
-          console.info(`[reports] AI stage start (model=${candidate}, timeout=${timeoutMs}ms)`);
+          console.info(`[reports] AI stage start (${attempt.label}, timeout=${timeoutMs}ms)`);
           const text = await new Promise<string>((resolve, reject) => {
             const timer = setTimeout(
               () => reject(new Error(`AI timeout after ${timeoutMs}ms`)),
@@ -587,39 +598,18 @@ ${astroBlock}${extraContextBlock}`;
               abortSignal: signal,
               maxRetries: 0,
             })
-              .then((res) => {
-                clearTimeout(timer);
-                resolve(res.text);
-              })
-              .catch((err) => {
-                clearTimeout(timer);
-                reject(err);
-              });
+              .then((res) => { clearTimeout(timer); resolve(res.text); })
+              .catch((err) => { clearTimeout(timer); reject(err); });
           });
-          console.info(`[reports] AI stage done (model=${candidate}, elapsed=${Date.now() - startedAt}ms)`);
-          modelName = candidate;
+          console.info(`[reports] AI stage done (${attempt.label}, elapsed=${Date.now() - startedAt}ms)`);
           model = candidateModel;
           return text;
         } catch (e) {
           lastErr = e;
           const rawMessage = e instanceof Error ? e.message : String(e);
-          const msg = rawMessage.toLowerCase();
-          const retriable =
-            msg.includes("timeout") ||
-            msg.includes("aborted") ||
-            msg.includes("upstream") ||
-            msg.includes("unsupported parameter") ||
-            msg.includes("not supported with this model") ||
-            msg.includes("502") ||
-            msg.includes("503") ||
-            msg.includes("504") ||
-            msg.includes("econnreset") ||
-            msg.includes("network");
-          console.error(
-            `[reports] AI attempt failed (model=${candidate}, elapsed=${Date.now() - startedAt}ms)`,
-            rawMessage,
-          );
-          if (!retriable) throw e;
+          console.error(`[reports] AI attempt failed (${attempt.label}, elapsed=${Date.now() - startedAt}ms)`, rawMessage);
+          // Sempre tenta o próximo provider/modelo — priorização = cascata completa
+          continue;
         }
       }
 
@@ -627,6 +617,7 @@ ${astroBlock}${extraContextBlock}`;
         ? new Error(errorMessage)
         : new Error("Falha temporaria na IA. Tente novamente.");
     }
+
 
     function cleanInlineText(value: unknown) {
       return String(value ?? "")
