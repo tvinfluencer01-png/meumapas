@@ -11,6 +11,7 @@ import { AdminAddons } from "@/components/AdminAddons";
 import { AdminLandingPackages } from "@/components/AdminLandingPackages";
 import { AdminCronStatus } from "@/components/AdminCronStatus";
 import { AdminSystemDiagnostic } from "@/components/AdminSystemDiagnostic";
+import { AdminSyncDestinations } from "@/components/AdminSyncDestinations";
 import { AdminGlobalSettings } from "@/components/AdminGlobalSettings";
 import { AdminPlanMigration } from "@/components/AdminPlanMigration";
 import { AdminMarketing } from "@/components/AdminMarketing";
