@@ -729,7 +729,11 @@ REGRAS ABSOLUTAS
 4. Nunca prometa evento certo. Use "tende a", "convida", "pede", "abre espaço para".
 5. Português brasileiro. Sem markdown. Sem emojis. Sem cabeçalhos.`;
 
-  const { text } = await generateText({ model, system, prompt });
+  const { result: text } = await runWithProviderFallback(
+    supabaseAdmin, userId ?? null,
+    async (model) => (await generateText({ model, system, prompt })).text,
+    { addonId: "sub_astrologer_numerologist", modelHint: "openai/gpt-5.5" },
+  );
   const parsed = safeParseLlmJson<Omit<AstroForecast, "generatedAt">>(text);
   return { ...parsed, generatedAt: new Date().toISOString() };
 }
