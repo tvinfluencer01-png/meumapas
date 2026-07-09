@@ -385,9 +385,11 @@ export function LeadsBlock() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<string>("");
 
-  const { data, isLoading, isFetching } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["admin-horoscope-leads", page, search, status],
     queryFn: () => listFn({ data: { page, search: search || null, status: status || null } }),
+    placeholderData: (prev) => prev,
+    staleTime: 15_000,
   });
 
   useEffect(() => {
