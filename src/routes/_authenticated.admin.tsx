@@ -104,7 +104,7 @@ const ADMIN_MENU_GROUPS: AdminMenuGroup[] = [
     items: [
       { value: "product-landings", label: "Landings Produtos", icon: FileText },
       { value: "horoscope-landing", label: "Horóscopo Grátis (Landing)", icon: Sparkles },
-      { value: "horoscope-plans", label: "Horóscopo Planos Pagos", icon: Sparkles },
+      { value: "horoscope-plans", label: "Horóscopo Configuração / Planos", icon: Sparkles },
       { value: "horoscope-status", label: "Horóscopo Status", icon: Sparkles },
       { value: "marketing", label: "Marketing", icon: Megaphone },
     ],
