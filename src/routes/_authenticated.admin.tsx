@@ -66,7 +66,7 @@ import {
   testEvolutionConnection,
   sendEvolutionTest,
 } from "@/lib/admin.functions";
-import { adminExportDatabase, getSyncStatus, syncToNewDatabase, syncSchemaToNewDatabase } from "@/lib/admin-backup.functions";
+import { adminExportDatabase, getSyncStatus, syncToNewDatabase, syncSchemaToNewDatabase, syncRlsPoliciesToNewDatabase } from "@/lib/admin-backup.functions";
 import { countUnviewedOrders } from "@/lib/product-orders.functions";
 
 
@@ -1735,6 +1735,7 @@ function BackupAdmin() {
   const statusFn = useServerFn(getSyncStatus);
   const syncFn = useServerFn(syncToNewDatabase);
   const schemaFn = useServerFn(syncSchemaToNewDatabase);
+  const rlsFn = useServerFn(syncRlsPoliciesToNewDatabase);
   const qc = useQueryClient();
   const [strategy, setStrategy] = useState<"auto" | "incremental" | "upsert_all" | "full_replace">("auto");
 
@@ -1794,6 +1795,20 @@ function BackupAdmin() {
       }
     },
     onError: (e: Error) => toast.error(`Falha no schema: ${e.message}`),
+  });
+
+  const rlsMut = useMutation({
+    mutationFn: (dryRun: boolean) => rlsFn({ data: { dryRun } }),
+    onSuccess: (res) => {
+      const msg = `${res.policies} política(s), ${res.applied} instrução(ões)` + (res.skipped ? ` — ${res.skipped} ignorada(s) (tabela ausente no destino)` : "");
+      if (res.dryRun) {
+        toast.info(`Prévia RLS: ${msg}`);
+        console.log("[rls-sync] pendentes:\n" + res.statements.join("\n"));
+      } else {
+        toast.success(`RLS sincronizado: ${msg}`);
+      }
+    },
+    onError: (e: Error) => toast.error(`Falha no RLS: ${e.message}`),
   });
 
   const effectiveStrategy = strategy === "auto" ? (status?.suggestion ?? "full_replace") : strategy;
@@ -1919,9 +1934,27 @@ function BackupAdmin() {
               {schemaMut.isPending ? <Loader2 className="size-4 mr-2 animate-spin" /> : null}
               Aplicar migração de schema
             </Button>
+            <Button
+              variant="outline"
+              onClick={() => rlsMut.mutate(true)}
+              disabled={rlsMut.isPending || !status?.destinationReachable}
+              className="w-fit"
+            >
+              {rlsMut.isPending ? <Loader2 className="size-4 mr-2 animate-spin" /> : null}
+              Prévia RLS (dry-run)
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => rlsMut.mutate(false)}
+              disabled={rlsMut.isPending || !status?.destinationReachable}
+              className="w-fit"
+            >
+              {rlsMut.isPending ? <Loader2 className="size-4 mr-2 animate-spin" /> : null}
+              Aplicar políticas RLS
+            </Button>
           </div>
           <p className="text-xs text-muted-foreground -mt-2">
-            A migração de schema cria tabelas/colunas/enums que existem no Lovable Cloud e faltam no destino (apenas aditivo — nunca apaga nem altera tipos).
+            A migração de schema cria tabelas/colunas/enums faltantes (aditivo). O botão RLS habilita Row Level Security e replica todas as políticas do Lovable Cloud no destino (recria com o mesmo nome — sobrescreve se já existir).
           </p>
 
           {/* Última sincronização */}
