@@ -126,6 +126,7 @@ const ADMIN_MENU_GROUPS: AdminMenuGroup[] = [
       { value: "cron", label: "Cron Jobs", icon: Clock },
       { value: "migration", label: "Migração", icon: ArrowRightLeft },
       { value: "backup", label: "Backup", icon: Database },
+      { value: "diagnostic", label: "Diagnóstico", icon: Activity },
     ],
   },
 ];
