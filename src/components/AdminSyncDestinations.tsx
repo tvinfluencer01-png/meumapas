@@ -58,6 +58,7 @@ export function AdminSyncDestinations() {
   const [form, setForm] = useState<Partial<Dest>>(EMPTY);
   const [legacyText, setLegacyText] = useState("");
   const [remapResult, setRemapResult] = useState<any>(null);
+  const [testResult, setTestResult] = useState<any>(null);
 
   const setField = <K extends keyof Dest>(k: K, v: Dest[K]) => setForm((p) => ({ ...p, [k]: v }));
 
