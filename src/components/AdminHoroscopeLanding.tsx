@@ -412,6 +412,15 @@ export function LeadsBlock() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const sendCrm = useMutation({
+    mutationFn: (id: string) => sendCrmFn({ data: { id } }),
+    onSuccess: (r: any) => {
+      toast.success(r?.already_existed ? "Lead atualizado no CRM." : "Lead enviado ao CRM.");
+      qc.invalidateQueries({ queryKey: ["admin-horoscope-leads"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const rows = data?.rows ?? [];
   const total = data?.total ?? 0;
   const pageSize = data?.pageSize ?? 25;
