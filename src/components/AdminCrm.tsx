@@ -124,6 +124,15 @@ export function AdminCrm() {
     onError: (e: Error) => showFeedback({ title: "Erro", description: e.message, type: "error" }),
   });
 
+  const deleteMut = useMutation({
+    mutationFn: (id: string) => deleteLeadFn({ data: { id } }),
+    onSuccess: () => {
+      showFeedback({ title: "Lead excluído", type: "success" });
+      qc.invalidateQueries({ queryKey: ["admin-crm-leads"] });
+    },
+    onError: (e: Error) => showFeedback({ title: "Erro ao excluir", description: e.message, type: "error" }),
+  });
+
   const createFn = useServerFn(createCrmLead);
   const emptyQuick = { full_name: "", email: "", phone: "", landing_slug: "", notes: "", status: "new" as string };
   const [quickOpen, setQuickOpen] = useState(false);
