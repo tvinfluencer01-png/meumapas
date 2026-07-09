@@ -281,7 +281,51 @@ export function AdminSyncDestinations() {
               {remapMut.isPending ? <Loader2 className="size-4 mr-2 animate-spin" /> : <RefreshCw className="size-4 mr-2" />}
               Aplicar reescrita
             </Button>
+            <Button variant="secondary" onClick={() => verifyMut.mutate()} disabled={verifyMut.isPending}>
+              {verifyMut.isPending ? <Loader2 className="size-4 mr-2 animate-spin" /> : <SearchCheck className="size-4 mr-2" />}
+              Verificar alterações
+            </Button>
           </div>
+          {verifyResult && (
+            <div className="rounded-lg border border-border bg-muted/20 p-3 text-xs space-y-2">
+              <div className="flex items-center gap-2">
+                {verifyResult.ok ? <CheckCircle2 className="size-4 text-green-500" /> : <XCircle className="size-4 text-red-500" />}
+                <span className="font-medium">
+                  {verifyResult.ok
+                    ? "Tudo limpo — nenhum domínio antigo remanescente."
+                    : `Ainda há ${verifyResult.totalTableRows} linha(s) em ${verifyResult.tableFindings.length} coluna(s) e ${verifyResult.cronRemaining.length} cron job(s).`}
+                </span>
+              </div>
+              <div className="text-muted-foreground">
+                Legado buscado: <span className="font-mono">{verifyResult.legacy.join(", ")}</span>
+              </div>
+              {verifyResult.tableFindings.length > 0 && (
+                <div>
+                  <div className="font-medium mb-1">Tabelas:</div>
+                  <ul className="list-disc pl-5 space-y-0.5">
+                    {verifyResult.tableFindings.map((f: any, i: number) => (
+                      <li key={i}>
+                        <span className="font-mono">{f.table_name}.{f.column_name}</span> — {f.remaining} linha(s)
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {verifyResult.cronRemaining.length > 0 && (
+                <div>
+                  <div className="font-medium mb-1">Cron jobs:</div>
+                  <ul className="list-disc pl-5 space-y-0.5">
+                    {verifyResult.cronRemaining.map((j: any) => (
+                      <li key={j.jobid}>
+                        <span className="font-mono">#{j.jobid}</span> {j.jobname}
+                        <span className="text-muted-foreground"> — {j.matches.join(", ")}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
           {remapResult && (
             <div className="rounded-lg border border-border bg-muted/20 p-3 text-xs space-y-2">
               <div>
