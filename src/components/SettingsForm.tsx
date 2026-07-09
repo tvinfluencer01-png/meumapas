@@ -287,14 +287,28 @@ export function SettingsForm() {
         id === "google" &&
         /(limite|indispon|timeout|inválida|endpoint|não encontrado|not found|404|recurso)/i.test(res.message)
       ) {
-        const fallbacks = [
+        // 1) Descobre modelos realmente disponíveis para ESTA chave
+        const listed = await listModelsFn({ data: { provider: "google" as ChatProviderId, key: key ?? null } });
+        const available: string[] = listed.ok ? (listed.models as string[]) : [];
+        // 2) Prioriza estáveis conhecidos que existem na chave, depois qualquer "flash" retornado
+        const preferred = [
           "gemini-1.5-flash",
           "gemini-1.5-flash-latest",
-          "gemini-2.0-flash",
-          "gemini-flash-latest",
           "gemini-1.5-flash-8b",
-        ].filter((m) => m !== (model ?? ""));
-        for (const candidate of fallbacks) {
+          "gemini-2.0-flash",
+          "gemini-2.0-flash-001",
+          "gemini-flash-latest",
+          "gemini-2.0-flash-lite",
+        ];
+        const inKey = (m: string) => available.length === 0 || available.includes(m);
+        const dynamicFlash = available.filter(
+          (m: string) => /gemini/i.test(m) && /flash/i.test(m) && !/preview|exp|thinking|vision|image/i.test(m),
+        );
+        const candidates = Array.from(
+          new Set([...preferred.filter(inKey), ...dynamicFlash]),
+        ).filter((m) => m !== (model ?? ""));
+
+        for (const candidate of candidates) {
           const retry = await testProviderFn({ data: { provider: "google" as ChatProviderId, key: key ?? null, model: candidate } });
           if (retry.ok) {
             setForm((f) => ({
@@ -308,6 +322,11 @@ export function SettingsForm() {
             res = retry;
             break;
           }
+        }
+        if (!res.ok && available.length === 0) {
+          res = { ok: false, message: "Chave sem acesso a modelos Gemini. Gere nova em aistudio.google.com/apikey (com Generative Language API ativa)." };
+        } else if (!res.ok) {
+          res = { ok: false, message: `Nenhum modelo compatível. Disponíveis: ${available.slice(0, 5).join(", ")}${available.length > 5 ? "…" : ""}` };
         }
       }
       setProviderStatus((s) => ({ ...s, [id]: { ok: res.ok, message: res.message } }));
