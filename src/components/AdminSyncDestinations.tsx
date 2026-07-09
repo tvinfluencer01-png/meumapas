@@ -152,6 +152,10 @@ export function AdminSyncDestinations() {
                   )}
                 </div>
                 <div className="flex gap-1">
+                  <Button size="sm" variant="outline" onClick={() => testMut.mutate(d.id)} disabled={testMut.isPending}>
+                    {testMut.isPending && testMut.variables === d.id ? <Loader2 className="size-4 animate-spin" /> : <PlugZap className="size-4" />}
+                    <span className="ml-1">Testar</span>
+                  </Button>
                   <Button size="sm" variant="ghost" onClick={() => startEdit(d)}>Editar</Button>
                   <Button size="sm" variant="ghost" onClick={() => { if (confirm(`Remover "${d.name}"?`)) delMut.mutate(d.id); }}>
                     <Trash2 className="size-4" />
