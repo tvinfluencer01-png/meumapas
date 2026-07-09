@@ -347,12 +347,11 @@ PROMPT ATUAL:
 ${data.prompt}
 """`;
 
-    const { text } = await generateText({
-      model,
-      system,
-      prompt: userMsg,
-      temperature: 0.6,
-    });
+    const { result: text } = await runWithProviderFallback(
+      context.supabase, context.userId,
+      async (model) => (await generateText({ model, system, prompt: userMsg, temperature: 0.6 })).text,
+      { modelHint: "google/gemini-2.5-flash" },
+    );
     return { prompt: text.trim() };
   });
 
