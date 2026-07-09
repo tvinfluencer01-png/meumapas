@@ -548,7 +548,7 @@ export const sendTestHoroscopeWhatsapp = createServerFn({ method: "POST" })
           if (!text?.trim()) throw new Error("empty");
           return text.trim();
         },
-        { addonId: "sub_astrologer_numerologist", modelHint: "google/gemini-2.5-flash" },
+        { addonId: "sub_astrologer_numerologist" },
       );
       body = result;
     } catch (e: any) {

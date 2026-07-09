@@ -108,7 +108,7 @@ Devolva APENAS um JSON válido (sem markdown, sem comentários) com esta estrutu
         abortSignal: AbortSignal.timeout(90_000),
         maxRetries: 0,
       })).text,
-      { modelHint: "google/gemini-2.5-flash" },
+      undefined,
     );
     const jsonStr = extractJson(text);
     if (jsonStr) {

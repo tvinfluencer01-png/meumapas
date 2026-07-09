@@ -55,16 +55,27 @@ function makeProvider(p: ConfiguredProviderId, key: string) {
   }
 }
 
-/** Remove a "vendor/" prefix (e.g. "google/gemini-2.5-flash" → "gemini-2.5-flash"). */
+/** Remove a "vendor/" prefix (e.g. "google/gemini-2.0-flash" → "gemini-2.0-flash"). */
 function stripVendorPrefix(m?: string | null): string | null {
   if (!m) return null;
   const idx = m.indexOf("/");
   return idx >= 0 ? m.slice(idx + 1) : m;
 }
 
+function normalizeModelForProvider(provider: ConfiguredProviderId, model?: string | null): string | null {
+  const value = model?.trim();
+  if (!value) return null;
+  const slash = value.indexOf("/");
+  if (slash < 0) return value;
+  if (provider === "openrouter") return value;
+  const vendor = value.slice(0, slash);
+  return vendor === provider ? stripVendorPrefix(value) : null;
+}
+
 export type ResolvedProvider = {
   provider: ConfiguredProviderId;
   defaultModel: string;
+  resolveModelName: (hint?: string | null) => string;
   /** Build a language model instance; if a hint is passed and starts with "vendor/", the prefix is stripped. */
   model: (hint?: string | null) => ReturnType<ReturnType<typeof createOpenAIProvider>>;
 };
@@ -148,15 +159,17 @@ export async function getConfiguredProvider(
     const key = userKey || (requireUserKey ? null : envKey(p));
     if (!key) continue;
     const perProviderModel =
-      (cfg.model && cfg.model.trim()) ||
-      (p === defaultProvider ? legacyModel : null) ||
+      normalizeModelForProvider(p, cfg.model) ||
+      normalizeModelForProvider(p, p === defaultProvider ? legacyModel : null) ||
       DEFAULT_MODELS[p];
     const providerFn = makeProvider(p, key);
     return {
       provider: p,
       defaultModel: perProviderModel,
+      resolveModelName: (hint?: string | null) =>
+        normalizeModelForProvider(p, hint) || perProviderModel,
       model: (hint?: string | null) =>
-        providerFn(stripVendorPrefix(hint) || perProviderModel),
+        providerFn(normalizeModelForProvider(p, hint) || perProviderModel),
     };
   }
 
@@ -224,24 +237,17 @@ export async function getConfiguredProviders(
     const key = userKey || (requireUserKey ? null : envKey(p));
     if (!key) continue;
     const perProviderModel =
-      (cfg.model && cfg.model.trim()) ||
-      (p === defaultProvider ? legacyModel : null) ||
+      normalizeModelForProvider(p, cfg.model) ||
+      normalizeModelForProvider(p, p === defaultProvider ? legacyModel : null) ||
       DEFAULT_MODELS[p];
     const providerFn = makeProvider(p, key);
     out.push({
       provider: p,
       defaultModel: perProviderModel,
-      model: (hint?: string | null) => {
-        // Only honor the hint if it targets THIS provider (e.g. "google/..." for google).
-        // Otherwise it would try a Google model on Anthropic/OpenAI and always fail.
-        let name = perProviderModel;
-        if (hint) {
-          const slash = hint.indexOf("/");
-          const vendor = slash >= 0 ? hint.slice(0, slash) : null;
-          if (!vendor || vendor === p) name = stripVendorPrefix(hint) || perProviderModel;
-        }
-        return providerFn(name);
-      },
+      resolveModelName: (hint?: string | null) =>
+        normalizeModelForProvider(p, hint) || perProviderModel,
+      model: (hint?: string | null) =>
+        providerFn(normalizeModelForProvider(p, hint) || perProviderModel),
     });
   }
   return out;
@@ -269,16 +275,23 @@ export async function runWithProviderFallback<T>(
   }
   const attempts: ProviderAttempt[] = [];
   for (const p of providers) {
-    try {
-      const model = p.model(options?.modelHint ?? null);
-      const result = await run(model, p.provider);
-      attempts.push({ provider: p.provider, ok: true });
-      console.info(`[ai-fallback] success with ${p.provider} (${attempts.length}/${providers.length})`);
-      return { result, provider: p.provider, attempts };
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      console.warn(`[ai-fallback] ${p.provider} failed: ${msg}`);
-      attempts.push({ provider: p.provider, ok: false, error: msg });
+    const rawCandidates: Array<string | null> = [options?.modelHint ?? null, null, DEFAULT_MODELS[p.provider]];
+    const seenModels = new Set<string>();
+    for (const candidate of rawCandidates) {
+      const modelName = p.resolveModelName(candidate);
+      if (seenModels.has(modelName)) continue;
+      seenModels.add(modelName);
+      try {
+        const model = p.model(candidate);
+        const result = await run(model, p.provider);
+        attempts.push({ provider: p.provider, ok: true });
+        console.info(`[ai-fallback] success with ${p.provider}/${modelName} (${attempts.length}/${providers.length})`);
+        return { result, provider: p.provider, attempts };
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.warn(`[ai-fallback] ${p.provider}/${modelName} failed: ${msg}`);
+        attempts.push({ provider: p.provider, ok: false, error: msg });
+      }
     }
   }
   const summary = attempts.map((a) => `${a.provider}: ${a.error}`).join(" | ");

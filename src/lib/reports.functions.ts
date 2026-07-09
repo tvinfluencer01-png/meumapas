@@ -467,10 +467,7 @@ export const generateReport = createServerFn({ method: "POST" })
     const primary = providers[0];
     const activeProvider = primary.provider;
 
-    let modelName = customModel ?? "google/gemini-3-flash-preview";
-    if (activeProvider === "openai") modelName = customModel ?? "gpt-5-mini";
-    else if (activeProvider === "anthropic") modelName = customModel ?? "claude-3-5-sonnet-latest";
-    else if (activeProvider === "google") modelName = customModel ?? "gemini-2.0-flash";
+    const modelName = customModel ?? primary.defaultModel;
 
     const makeModel = (candidate: string) => primary.model(candidate);
     let model = makeModel(modelName);
@@ -551,12 +548,8 @@ ${astroBlock}${extraContextBlock}`;
       const out: Attempt[] = [];
       for (const p of providers) {
         const defaults =
-          p.provider === "openai" ? ["gpt-5-mini"]
-          : p.provider === "anthropic" ? ["claude-3-5-sonnet-latest"]
-          : p.provider === "google" ? ["gemini-2.0-flash", "gemini-2.5-flash-lite"]
-          : p.provider === "groq" ? ["llama-3.3-70b-versatile"]
-          : p.provider === "mistral" ? ["mistral-small-latest"]
-          : ["google/gemini-2.0-flash-exp:free"];
+          p.provider === "google" ? [p.defaultModel, "gemini-2.0-flash"]
+          : [p.defaultModel];
         // If this is the primary provider, honor the user's `modelName` first.
         const candidates = p.provider === activeProvider ? [modelName, ...defaults] : defaults;
         for (const c of candidates) {

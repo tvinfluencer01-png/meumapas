@@ -133,8 +133,6 @@ async function handler({ request }: { request: Request }) {
   const evoReady =
     evo?.enabled && evo?.base_url && evo?.global_api_key && evo?.instance_name;
 
-  const modelCandidates = ["google/gemini-3-flash-preview", "google/gemini-2.5-flash"];
-
   const { getAddonPromptOverride } = await import("@/lib/addon-settings.functions");
   const promptOverride = await getAddonPromptOverride("sub_daily_horoscope");
 
@@ -256,7 +254,7 @@ async function handler({ request }: { request: Request }) {
             if (!text?.trim()) throw new Error("empty response");
             return text.trim();
           },
-          { modelHint: modelCandidates[0], addonId: "sub_astrologer_numerologist" },
+          { addonId: "sub_astrologer_numerologist" },
         );
         body = result;
       } catch (e) {
@@ -544,7 +542,7 @@ async function handler({ request }: { request: Request }) {
               if (!text?.trim()) throw new Error("empty");
               return text.trim();
             },
-            { modelHint: modelCandidates[0] },
+            undefined,
           );
           body = result;
         } catch {}

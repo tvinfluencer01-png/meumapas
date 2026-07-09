@@ -96,10 +96,10 @@ Responda APENAS com JSON válido (sem cercas de código):
 }
 A lista "perCard" deve ter EXATAMENTE ${draw.length} item(ns), na MESMA ordem das cartas sorteadas acima.`;
 
-      const { result: text } = await runWithProviderFallback(
+      const { result: text, provider } = await runWithProviderFallback(
         context.supabase, context.userId,
         async (model) => (await generateText({ model, system, prompt })).text,
-        { addonId: "sub_astrologer_numerologist", modelHint: "google/gemini-2.5-flash" },
+        { addonId: "sub_astrologer_numerologist" },
       );
 
       let jsonStr = text.trim();
@@ -128,7 +128,7 @@ A lista "perCard" deve ter EXATAMENTE ${draw.length} item(ns), na MESMA ordem da
           question: data.question ?? null,
           cards: draw,
           interpretation,
-          ai_model: "google/gemini-2.5-flash",
+          ai_model: provider,
         })
         .select("id, created_at")
         .single();
