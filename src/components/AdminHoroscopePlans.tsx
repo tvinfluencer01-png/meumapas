@@ -207,6 +207,10 @@ export function AdminHoroscopePlans() {
             )}
           </TabsContent>
 
+          <TabsContent value="settings" className="mt-4">
+            <AdminHoroscopeLanding />
+          </TabsContent>
+
           <TabsContent value="leads" className="mt-4">
             {leadsLoading ? (
               <div className="py-8 flex justify-center"><Loader2 className="size-5 animate-spin text-gold" /></div>
