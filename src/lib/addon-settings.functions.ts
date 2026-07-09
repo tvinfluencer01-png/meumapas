@@ -4,7 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { SUBSCRIPTION_ADDONS } from "./addons.catalog";
 import { generateText } from "ai";
-import { getConfiguredProvider } from "@/lib/ai-resolver.server";
+import { runWithProviderFallback } from "@/lib/ai-resolver.server";
 
 async function assertAdmin(userId: string) {
   const { data } = await supabaseAdmin
