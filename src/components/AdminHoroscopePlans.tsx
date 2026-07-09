@@ -113,49 +113,137 @@ export function AdminHoroscopePlans() {
     });
   };
 
+  const leadsFn = useServerFn(adminListHoroscopePaidLeads);
+  const { data: leadsData, isLoading: leadsLoading } = useQuery({
+    queryKey: ["admin-horoscope-paid-leads"],
+    queryFn: () => leadsFn(),
+    refetchInterval: 30_000,
+  });
+  const leads: any[] = (leadsData as any)?.leads ?? [];
+  const [tab, setTab] = useState<"config" | "leads">("config");
+  const [seenLeadsAt, setSeenLeadsAt] = useState<number>(() => {
+    if (typeof window === "undefined") return 0;
+    return Number(window.localStorage.getItem("admin-horoscope-paid-leads-seen") ?? 0);
+  });
+  const newLeadsCount = useMemo(
+    () => leads.filter((l) => new Date(l.created_at).getTime() > seenLeadsAt).length,
+    [leads, seenLeadsAt],
+  );
+  const markLeadsSeen = () => {
+    const now = Date.now();
+    setSeenLeadsAt(now);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("admin-horoscope-paid-leads-seen", String(now));
+    }
+  };
+
+  const statusLabel = (s: string) =>
+    s === "active" ? "Ativa" : s === "pending" ? "Pendente" : s === "canceled" ? "Cancelada" : s;
+  const statusVariant = (s: string): "default" | "secondary" | "outline" | "destructive" =>
+    s === "active" ? "default" : s === "pending" ? "secondary" : s === "canceled" ? "outline" : "outline";
+
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div>
-          <CardTitle className="flex items-center gap-2"><Package className="size-5 text-gold" /> Planos do Horóscopo Diário</CardTitle>
-          <CardDescription>Configure os planos exibidos em <code>/horoscopo-assinar</code>.</CardDescription>
+      <CardHeader>
+        <div className="flex flex-row items-start justify-between gap-3">
+          <div>
+            <CardTitle className="flex items-center gap-2"><Package className="size-5 text-gold" /> Horóscopo Planos Pagos</CardTitle>
+            <CardDescription>Configure os planos exibidos em <code>/horoscopo-assinar</code> e acompanhe leads capturados.</CardDescription>
+          </div>
+          {tab === "config" && (
+            <Button onClick={() => setForm({ ...EMPTY })} className="gap-2">
+              <Plus className="size-4" /> Novo plano
+            </Button>
+          )}
         </div>
-        <Button onClick={() => setForm({ ...EMPTY })} className="gap-2">
-          <Plus className="size-4" /> Novo plano
-        </Button>
       </CardHeader>
       <CardContent>
-        {isLoading ? (
-          <div className="py-8 flex justify-center"><Loader2 className="size-5 animate-spin text-gold" /></div>
-        ) : plans.length === 0 ? (
-          <p className="text-sm text-muted-foreground py-4 text-center">Nenhum plano cadastrado.</p>
-        ) : (
-          <div className="space-y-3">
-            {plans.map((p: any) => (
-              <div key={p.id} className="rounded-lg border p-4 flex items-start justify-between gap-4">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h4 className="font-medium">{p.name}</h4>
-                    <code className="text-xs text-muted-foreground">{p.slug}</code>
-                    {p.is_featured && <Badge className="bg-gold text-background gap-1"><Star className="size-3" /> Destaque</Badge>}
-                    {!p.is_active && <Badge variant="outline" className="text-muted-foreground">Inativo</Badge>}
+        <Tabs value={tab} onValueChange={(v) => { setTab(v as any); if (v === "leads") markLeadsSeen(); }}>
+          <TabsList>
+            <TabsTrigger value="config" className="gap-2"><Package className="size-4" /> Configurações</TabsTrigger>
+            <TabsTrigger value="leads" className="gap-2 relative">
+              <Users className="size-4" /> Leads Capturados
+              {newLeadsCount > 0 && (
+                <span className="relative flex size-2 ml-1">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-gold opacity-75" />
+                  <span className="relative inline-flex size-2 rounded-full bg-gold" />
+                </span>
+              )}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="config" className="mt-4">
+            {isLoading ? (
+              <div className="py-8 flex justify-center"><Loader2 className="size-5 animate-spin text-gold" /></div>
+            ) : plans.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4 text-center">Nenhum plano cadastrado.</p>
+            ) : (
+              <div className="space-y-3">
+                {plans.map((p: any) => (
+                  <div key={p.id} className="rounded-lg border p-4 flex items-start justify-between gap-4">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="font-medium">{p.name}</h4>
+                        <code className="text-xs text-muted-foreground">{p.slug}</code>
+                        {p.is_featured && <Badge className="bg-gold text-background gap-1"><Star className="size-3" /> Destaque</Badge>}
+                        {!p.is_active && <Badge variant="outline" className="text-muted-foreground">Inativo</Badge>}
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {formatBRL(p.price_cents)} · {p.billing_cycle === "month" ? "mensal" : p.billing_cycle === "quarter" ? "trimestral" : "anual"} · {p.interval_months} mês(es)
+                      </p>
+                      {p.description && <p className="text-xs text-muted-foreground mt-1">{p.description}</p>}
+                    </div>
+                    <div className="flex gap-1 shrink-0">
+                      <Button size="sm" variant="ghost" onClick={() => openEdit(p)}><Pencil className="size-4" /></Button>
+                      <Button size="sm" variant="ghost" onClick={() => { if (confirm(`Remover "${p.name}"?`)) remove.mutate(p.id); }}>
+                        <Trash2 className="size-4 text-destructive" />
+                      </Button>
+                    </div>
                   </div>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {formatBRL(p.price_cents)} · {p.billing_cycle === "month" ? "mensal" : p.billing_cycle === "quarter" ? "trimestral" : "anual"} · {p.interval_months} mês(es)
-                  </p>
-                  {p.description && <p className="text-xs text-muted-foreground mt-1">{p.description}</p>}
-                </div>
-                <div className="flex gap-1 shrink-0">
-                  <Button size="sm" variant="ghost" onClick={() => openEdit(p)}><Pencil className="size-4" /></Button>
-                  <Button size="sm" variant="ghost" onClick={() => { if (confirm(`Remover "${p.name}"?`)) remove.mutate(p.id); }}>
-                    <Trash2 className="size-4 text-destructive" />
-                  </Button>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
-        )}
+            )}
+          </TabsContent>
+
+          <TabsContent value="leads" className="mt-4">
+            {leadsLoading ? (
+              <div className="py-8 flex justify-center"><Loader2 className="size-5 animate-spin text-gold" /></div>
+            ) : leads.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4 text-center">Nenhum lead capturado ainda.</p>
+            ) : (
+              <div className="overflow-x-auto rounded-lg border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Data</TableHead>
+                      <TableHead>E-mail</TableHead>
+                      <TableHead>Telefone</TableHead>
+                      <TableHead>Plano</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Próx. cobrança</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {leads.map((l) => (
+                      <TableRow key={l.id}>
+                        <TableCell className="whitespace-nowrap text-xs">{new Date(l.created_at).toLocaleString("pt-BR")}</TableCell>
+                        <TableCell className="text-sm">{l.email ?? "—"}</TableCell>
+                        <TableCell className="text-sm">{l.phone_e164 ?? "—"}</TableCell>
+                        <TableCell className="text-sm">{l.plan?.name ?? "—"}</TableCell>
+                        <TableCell><Badge variant={statusVariant(l.status)}>{statusLabel(l.status)}</Badge></TableCell>
+                        <TableCell className="text-xs whitespace-nowrap">
+                          {l.current_period_end ? new Date(l.current_period_end).toLocaleDateString("pt-BR") : "—"}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </CardContent>
+
 
       <Dialog open={!!form} onOpenChange={(v) => !v && setForm(null)}>
         <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
