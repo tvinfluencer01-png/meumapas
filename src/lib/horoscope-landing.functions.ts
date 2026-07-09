@@ -371,6 +371,71 @@ export const adminDeleteHoroscopeLead = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const adminSendHoroscopeLeadToCrm = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context as any);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: lead } = await (supabaseAdmin as any)
+      .from("horoscope_free_leads")
+      .select("*")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (!lead) throw new Error("Lead não encontrado.");
+    if (!lead.email) throw new Error("Lead sem e-mail — não é possível enviar ao CRM.");
+
+    const customerData = {
+      full_name: lead.full_name ?? null,
+      email: lead.email,
+      phone: lead.phone_e164 ?? null,
+      sun_sign: lead.sun_sign ?? null,
+      birth_date: lead.birth_date ?? null,
+      birth_city: lead.birth_city ?? null,
+      birth_uf: lead.birth_uf ?? null,
+      activation_code: lead.activation_code ?? null,
+      origin: "horoscope_free_landing",
+    };
+
+    const { data: existing } = await (supabaseAdmin as any)
+      .from("crm_leads")
+      .select("id")
+      .eq("email", lead.email)
+      .eq("source", "horoscope_free")
+      .maybeSingle();
+
+    let leadId: string;
+    if (existing) {
+      leadId = existing.id;
+      const { error } = await (supabaseAdmin as any).from("crm_leads").update({
+        full_name: lead.full_name ?? null,
+        phone: lead.phone_e164 ?? null,
+        customer_data: customerData,
+      }).eq("id", leadId);
+      if (error) throw new Error(error.message);
+    } else {
+      const { data: created, error } = await (supabaseAdmin as any).from("crm_leads").insert({
+        email: lead.email,
+        full_name: lead.full_name ?? null,
+        phone: lead.phone_e164 ?? null,
+        source: "horoscope_free",
+        landing_slug: "horoscopo-gratis",
+        customer_data: customerData,
+        status: "new",
+      }).select("id").single();
+      if (error) throw new Error(error.message);
+      leadId = created.id;
+    }
+
+    await (supabaseAdmin as any).from("horoscope_free_leads").update({
+      crm_lead_id: leadId,
+      sent_to_crm_at: new Date().toISOString(),
+    }).eq("id", data.id);
+
+    return { ok: true, crm_lead_id: leadId, already_existed: !!existing };
+  });
+
 /* ---------- ADMIN: auto-configure Evolution webhook ---------- */
 
 export const adminConfigureEvolutionWebhook = createServerFn({ method: "POST" })
