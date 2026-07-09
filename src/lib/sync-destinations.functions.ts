@@ -181,7 +181,7 @@ export const remapDestinationUrls = createServerFn({ method: "POST" })
     const legacy: string[] = (((destRow as any).legacy_domains as string[]) ?? []).filter(Boolean);
     if (legacy.length === 0) throw new Error("Cadastre pelo menos 1 domínio antigo em 'legacy_domains'.");
 
-    const client = getDestClient((destRow as any).supabase_url);
+    const client = getDestClient((destRow as any).supabase_url, (destRow as any).service_role_secret_name);
     const stmts: string[] = [];
     const report: {
       site_url: string;
