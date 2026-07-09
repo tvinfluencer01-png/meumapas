@@ -1,12 +1,12 @@
 import { useMemo, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Activity, CheckCircle2, AlertTriangle, XCircle, MinusCircle, Loader2, Download, Play } from "lucide-react";
+import { Activity, CheckCircle2, AlertTriangle, XCircle, MinusCircle, Loader2, Download, Play, RefreshCw } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { runSystemDiagnostic, type CheckResult, type CheckStatus } from "@/lib/system-diagnostic.functions";
+import { runSystemDiagnostic, reconcileTableRows, type CheckResult, type CheckStatus } from "@/lib/system-diagnostic.functions";
 
 const STATUS_META: Record<CheckStatus, { label: string; className: string; Icon: typeof CheckCircle2 }> = {
   ok:   { label: "OK",       className: "text-emerald-500 border-emerald-500/40 bg-emerald-500/10", Icon: CheckCircle2 },
@@ -17,7 +17,9 @@ const STATUS_META: Record<CheckStatus, { label: string; className: string; Icon:
 
 export function AdminSystemDiagnostic() {
   const runFn = useServerFn(runSystemDiagnostic);
+  const reconcileFn = useServerFn(reconcileTableRows);
   const [result, setResult] = useState<Awaited<ReturnType<typeof runSystemDiagnostic>> | null>(null);
+  const [reconciling, setReconciling] = useState<string | null>(null);
 
   const runMut = useMutation({
     mutationFn: () => runFn(),
@@ -27,6 +29,19 @@ export function AdminSystemDiagnostic() {
     },
     onError: (e: Error) => toast.error(`Falha ao rodar diagnóstico: ${e.message}`),
   });
+
+  const reconcile = async (table: string) => {
+    setReconciling(table);
+    try {
+      const r = await reconcileFn({ data: { table } });
+      toast.success(`${table}: ${r.inserted} linha(s) copiada(s). Origem=${r.src} / Destino=${r.dst}`);
+      runMut.mutate();
+    } catch (e: any) {
+      toast.error(`Falha ao reconciliar ${table}: ${e?.message ?? e}`);
+    } finally {
+      setReconciling(null);
+    }
+  };
 
   const grouped = useMemo(() => {
     if (!result) return [] as Array<{ group: string; items: CheckResult[] }>;
@@ -107,6 +122,26 @@ export function AdminSystemDiagnostic() {
                         <span className="text-xs opacity-60 ml-auto">{c.durationMs}ms</span>
                       </div>
                       <div className="text-sm text-foreground/80 mt-1 break-words">{c.detail}</div>
+                      {c.name === "Contagem de linhas origem × destino" && Array.isArray(c.meta?.rows) && (
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {(c.meta.rows as Array<{ table: string; src: number | null; dst: number | null; diff: number | null }>)
+                            .filter((r) => (r.diff ?? 0) > 0)
+                            .map((r) => (
+                              <Button
+                                key={r.table}
+                                size="sm"
+                                variant="outline"
+                                disabled={reconciling === r.table}
+                                onClick={() => reconcile(r.table)}
+                              >
+                                {reconciling === r.table
+                                  ? <Loader2 className="size-3 mr-1 animate-spin" />
+                                  : <RefreshCw className="size-3 mr-1" />}
+                                Reconciliar {r.table} (+{r.diff})
+                              </Button>
+                            ))}
+                        </div>
+                      )}
                       {c.meta && Object.keys(c.meta).length > 0 && (
                         <details className="mt-2 text-xs">
                           <summary className="cursor-pointer opacity-70 hover:opacity-100">Detalhes</summary>

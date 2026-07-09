@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
@@ -321,4 +322,77 @@ export const runSystemDiagnostic = createServerFn({ method: "POST" })
     ].join("\n");
 
     return { generatedAt: new Date().toISOString(), summary, checks, markdown: md };
+  });
+
+// ============================================================
+// Reconciliação de dados: copia linhas faltantes origem → destino
+// Não apaga linhas extras no destino. Usa upsert com ignoreDuplicates.
+// ============================================================
+
+const ALLOWED_RECONCILE_TABLES = new Set([
+  "profiles", "user_roles", "user_credits", "credit_costs", "credit_packages",
+  "reports", "astro_charts", "numerology_reports", "tarot_readings",
+  "horoscope_plans", "horoscope_subscriptions", "affiliate_profiles",
+  "product_landings", "product_orders", "system_settings",
+  "birth_data", "client_profiles",
+]);
+
+export const reconcileTableRows = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({
+      table: z.string().min(1),
+      conflictColumn: z.string().default("id"),
+      pageSize: z.number().int().min(50).max(1000).default(500),
+    }).parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context.userId);
+    if (!ALLOWED_RECONCILE_TABLES.has(data.table)) {
+      throw new Error(`Tabela não permitida para reconciliação: ${data.table}`);
+    }
+    const dest = getDestClient();
+    if (!dest) throw new Error("Destino não configurado (NEW_SUPABASE_URL / NEW_SUPABASE_SERVICE_ROLE_KEY).");
+
+    const t0 = Date.now();
+    let totalRead = 0;
+    let totalUpserted = 0;
+    let from = 0;
+    // Loop paginado
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const to = from + data.pageSize - 1;
+      const { data: rows, error } = await supabaseAdmin
+        .from(data.table as any)
+        .select("*")
+        .range(from, to);
+      if (error) throw new Error(`Origem: ${error.message}`);
+      if (!rows || rows.length === 0) break;
+      totalRead += rows.length;
+
+      const { error: upErr, count } = await dest
+        .from(data.table as any)
+        .upsert(rows as any, { onConflict: data.conflictColumn, ignoreDuplicates: true, count: "exact" });
+      if (upErr) throw new Error(`Destino: ${upErr.message}`);
+      totalUpserted += count ?? 0;
+
+      if (rows.length < data.pageSize) break;
+      from += data.pageSize;
+    }
+
+    // Contagens finais
+    const [{ count: srcCount }, { count: dstCount }] = await Promise.all([
+      supabaseAdmin.from(data.table as any).select("*", { head: true, count: "exact" }),
+      dest.from(data.table as any).select("*", { head: true, count: "exact" }),
+    ]);
+
+    return {
+      ok: true,
+      table: data.table,
+      read: totalRead,
+      inserted: totalUpserted,
+      src: srcCount ?? null,
+      dst: dstCount ?? null,
+      durationMs: Date.now() - t0,
+    };
   });
