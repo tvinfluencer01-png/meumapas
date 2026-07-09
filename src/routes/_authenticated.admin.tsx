@@ -438,6 +438,7 @@ function AdminTabContent({ tab }: { tab: string }) {
     case "horoscope-plans": return <AdminHoroscopePlans />;
 
     case "backup": return <BackupAdmin />;
+    case "diagnostic": return <AdminSystemDiagnostic />;
     case "global": return <AdminGlobalSettings />;
     case "marketing": return <AdminMarketing />;
     case "smtp": return <AdminSmtp />;
