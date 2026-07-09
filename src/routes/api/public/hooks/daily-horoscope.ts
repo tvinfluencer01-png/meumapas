@@ -245,26 +245,32 @@ async function handler({ request }: { request: Request }) {
       // Seed determinístico por (usuário, dia). Google exige INT32 positivo (< 2^31-1).
       const seedHash = Array.from(`${s.user_id}|${today}`).reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 2166136261) >>> 0;
       const seedNum = seedHash % 2147483647;
-      let lastErr: any = null;
-      let makeModel: ((h?: string | null) => any) | null = null;
       try {
-        ({ model: makeModel } = await getConfiguredProvider(supabaseAdmin, s.user_id));
+        const { result } = await runWithProviderFallback(
+          supabaseAdmin,
+          s.user_id,
+          async (model) => {
+            let last: any = null;
+            for (const modelName of modelCandidates) {
+              try {
+                const { text } = await generateText({
+                  model, prompt, temperature: 1.0, topP: 0.95, seed: seedNum,
+                });
+                return text.trim();
+              } catch (e) { last = e; }
+            }
+            // Se não há hint válido para o provider (ex.: Google direto ignora "google/..."),
+            // ainda tentamos o defaultModel do provider:
+            const { text } = await generateText({ model, prompt, temperature: 1.0, topP: 0.95, seed: seedNum });
+            if (text?.trim()) return text.trim();
+            throw last ?? new Error("empty");
+          },
+          { modelHint: modelCandidates[0], addonId: "sub_astrologer_numerologist" },
+        );
+        body = result;
       } catch (e) {
         throw e;
       }
-      for (const modelName of modelCandidates) {
-        try {
-          const { text } = await generateText({
-            model: makeModel!(modelName), prompt, temperature: 1.0, topP: 0.95, seed: seedNum,
-          });
-          body = text.trim();
-          lastErr = null;
-          break;
-        } catch (e) {
-          lastErr = e;
-        }
-      }
-      if (lastErr) throw lastErr;
     } catch (e: any) {
       const detail = [
         e?.message,
