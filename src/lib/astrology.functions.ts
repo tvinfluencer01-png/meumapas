@@ -593,9 +593,7 @@ async function buildForecastWithAI(chart: {
   aspects: { a: string; b: string; aspect: string; orb: number }[];
   summary: string | null;
 }, userId?: string | null): Promise<AstroForecast> {
-  const { model: makeModel } = await getConfiguredProvider(supabaseAdmin, userId ?? null, { addonId: "sub_astrologer_numerologist" });
-  // Modelo mais robusto para gerar leitura extensa e profunda (~40 páginas)
-  const model = makeModel("openai/gpt-5.5");
+  // model resolvido via runWithProviderFallback abaixo
 
   const ascSign = chart.ascendant != null ? SIGNS[Math.floor(chart.ascendant / 30)] : "—";
   const mcSign = chart.midheaven != null ? SIGNS[Math.floor(chart.midheaven / 30)] : "—";
