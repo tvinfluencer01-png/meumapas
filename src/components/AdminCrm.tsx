@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { showFeedback } from "@/components/system-feedback";
-import { listCrmLeads, updateCrmLead, listCrmLeadStatusHistory, createCrmLead } from "@/lib/product-orders.functions";
+import { listCrmLeads, updateCrmLead, listCrmLeadStatusHistory, createCrmLead, deleteCrmLead } from "@/lib/product-orders.functions";
 import {
   getCrmFollowupSettings,
   saveCrmFollowupSettings,
@@ -50,6 +50,7 @@ export function AdminCrm() {
   const qc = useQueryClient();
   const listFn = useServerFn(listCrmLeads);
   const updateFn = useServerFn(updateCrmLead);
+  const deleteLeadFn = useServerFn(deleteCrmLead);
   const getSettingsFn = useServerFn(getCrmFollowupSettings);
   const saveSettingsFn = useServerFn(saveCrmFollowupSettings);
   const runNowFn = useServerFn(runCrmFollowupsNow);
@@ -121,6 +122,15 @@ export function AdminCrm() {
       setEditing(null);
     },
     onError: (e: Error) => showFeedback({ title: "Erro", description: e.message, type: "error" }),
+  });
+
+  const deleteMut = useMutation({
+    mutationFn: (id: string) => deleteLeadFn({ data: { id } }),
+    onSuccess: () => {
+      showFeedback({ title: "Lead excluído", type: "success" });
+      qc.invalidateQueries({ queryKey: ["admin-crm-leads"] });
+    },
+    onError: (e: Error) => showFeedback({ title: "Erro ao excluir", description: e.message, type: "error" }),
   });
 
   const createFn = useServerFn(createCrmLead);
@@ -408,6 +418,20 @@ export function AdminCrm() {
                             </Button>
                             <Button size="icon" variant="ghost" className="h-6 w-6" title="Auditoria de status" onClick={() => setAuditLead(l)}>
                               <ClipboardList className="size-3" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10"
+                              title="Excluir lead"
+                              disabled={deleteMut.isPending}
+                              onClick={() => {
+                                if (confirm(`Excluir lead "${l.full_name || l.email}"? Esta ação não pode ser desfeita.`)) {
+                                  deleteMut.mutate(l.id);
+                                }
+                              }}
+                            >
+                              <Trash2 className="size-3" />
                             </Button>
                           </div>
                         </div>
