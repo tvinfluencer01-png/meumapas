@@ -480,7 +480,15 @@ export function LeadsBlock() {
             </thead>
             <tbody>
               {isLoading ? (
-                <tr><td colSpan={7} className="px-3 py-6 text-center text-muted-foreground">Carregando…</td></tr>
+                Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={`sk-${i}`} className="border-t border-border">
+                    {Array.from({ length: 7 }).map((_, j) => (
+                      <td key={j} className="px-3 py-3">
+                        <div className="h-3 rounded bg-muted/60 animate-pulse" style={{ width: `${60 + ((i + j) * 7) % 35}%` }} />
+                      </td>
+                    ))}
+                  </tr>
+                ))
               ) : rows.length === 0 ? (
                 <tr><td colSpan={7} className="px-3 py-6 text-center text-muted-foreground">Nenhum lead ainda.</td></tr>
               ) : rows.map((r: any) => {
