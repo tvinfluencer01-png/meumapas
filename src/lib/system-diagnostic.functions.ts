@@ -236,8 +236,9 @@ export const runSystemDiagnostic = createServerFn({ method: "POST" })
         const { data } = await supabaseAdmin.from("evolution_settings").select("*").maybeSingle();
         if (!data) return { configured: false };
         const base = (data as any).base_url as string | null;
-        const key = (data as any).api_key as string | null;
-        if (!base || !key) return { configured: false };
+        const key = ((data as any).global_api_key ?? (data as any).api_key) as string | null;
+        const enabled = (data as any).enabled !== false;
+        if (!base || !key || !enabled) return { configured: false };
         const res = await fetch(`${base.replace(/\/+$/, "")}/instance/fetchInstances`, { headers: { apikey: key } });
         return { configured: true, ok: res.ok, status: res.status };
       });
