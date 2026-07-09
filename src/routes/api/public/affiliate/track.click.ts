@@ -40,7 +40,7 @@ export const Route = createFileRoute("/api/public/affiliate/track/click")({
             const { data: aff } = await admin
               .from("affiliate_profiles" as any)
               .select("id, status")
-              .eq("affiliate_code", payload.affiliateCode)
+              .ilike("affiliate_code", payload.affiliateCode)
               .maybeSingle();
             if (aff && (aff as any).status === "approved") affiliateId = (aff as any).id;
           }
