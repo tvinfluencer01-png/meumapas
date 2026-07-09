@@ -360,7 +360,7 @@ const STATUS_LABEL: Record<string, { label: string; className: string }> = {
   unsubscribed: { label: "cancelado", className: "bg-destructive/15 text-destructive border-destructive/30" },
 };
 
-function LeadsBlock() {
+export function LeadsBlock() {
   const qc = useQueryClient();
   const listFn = useServerFn(adminListHoroscopeLeads);
   const activateFn = useServerFn(adminActivateHoroscopeLead);
