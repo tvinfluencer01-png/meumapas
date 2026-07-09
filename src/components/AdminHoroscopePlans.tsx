@@ -1,8 +1,8 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Loader2, Star, Package, Users } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Star, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,13 +13,11 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AdminHoroscopeLanding } from "@/components/AdminHoroscopeLanding";
 import {
   adminListHoroscopePlans,
   adminUpsertHoroscopePlan,
   adminDeleteHoroscopePlan,
-  adminListHoroscopePaidLeads,
 } from "@/lib/horoscope-plans.functions";
 
 
@@ -114,34 +112,7 @@ export function AdminHoroscopePlans() {
     });
   };
 
-  const leadsFn = useServerFn(adminListHoroscopePaidLeads);
-  const { data: leadsData, isLoading: leadsLoading } = useQuery({
-    queryKey: ["admin-horoscope-paid-leads"],
-    queryFn: () => leadsFn(),
-    refetchInterval: 30_000,
-  });
-  const leads: any[] = (leadsData as any)?.leads ?? [];
-  const [tab, setTab] = useState<"config" | "settings" | "leads">("config");
-  const [seenLeadsAt, setSeenLeadsAt] = useState<number>(() => {
-    if (typeof window === "undefined") return 0;
-    return Number(window.localStorage.getItem("admin-horoscope-paid-leads-seen") ?? 0);
-  });
-  const newLeadsCount = useMemo(
-    () => leads.filter((l) => new Date(l.created_at).getTime() > seenLeadsAt).length,
-    [leads, seenLeadsAt],
-  );
-  const markLeadsSeen = () => {
-    const now = Date.now();
-    setSeenLeadsAt(now);
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem("admin-horoscope-paid-leads-seen", String(now));
-    }
-  };
-
-  const statusLabel = (s: string) =>
-    s === "active" ? "Ativa" : s === "pending" ? "Pendente" : s === "canceled" ? "Cancelada" : s;
-  const statusVariant = (s: string): "default" | "secondary" | "outline" | "destructive" =>
-    s === "active" ? "default" : s === "pending" ? "secondary" : s === "canceled" ? "outline" : "outline";
+  const [tab, setTab] = useState<"config" | "settings">("config");
 
   return (
     <Card>
