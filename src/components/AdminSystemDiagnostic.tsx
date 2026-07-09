@@ -1,12 +1,12 @@
 import { useMemo, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Activity, CheckCircle2, AlertTriangle, XCircle, MinusCircle, Loader2, Download, Play } from "lucide-react";
+import { Activity, CheckCircle2, AlertTriangle, XCircle, MinusCircle, Loader2, Download, Play, RefreshCw } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { runSystemDiagnostic, type CheckResult, type CheckStatus } from "@/lib/system-diagnostic.functions";
+import { runSystemDiagnostic, reconcileTableRows, type CheckResult, type CheckStatus } from "@/lib/system-diagnostic.functions";
 
 const STATUS_META: Record<CheckStatus, { label: string; className: string; Icon: typeof CheckCircle2 }> = {
   ok:   { label: "OK",       className: "text-emerald-500 border-emerald-500/40 bg-emerald-500/10", Icon: CheckCircle2 },
