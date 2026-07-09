@@ -252,3 +252,89 @@ export const remapDestinationUrls = createServerFn({ method: "POST" })
 
     return { ok: true, dryRun: false, report, statementsCount: stmts.length };
   });
+
+// ----------------- Verify remap (procura ocorrências remanescentes) -----------------
+
+export const verifyRemapDestination = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ destinationId: z.string().uuid().optional() }).parse(d ?? {}))
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context.userId);
+
+    const q = supabaseAdmin.from("sync_destinations").select("*");
+    const { data: destRow, error: destErr } = data.destinationId
+      ? await q.eq("id", data.destinationId).maybeSingle()
+      : await q.eq("is_default", true).maybeSingle();
+    if (destErr) throw new Error(destErr.message);
+    if (!destRow) throw new Error("Destino não encontrado.");
+
+    const row: any = destRow;
+    const siteUrl: string = String(row.site_url).replace(/\/+$/, "");
+    const legacy: string[] = (row.legacy_domains ?? []).filter(Boolean);
+    if (legacy.length === 0) throw new Error("Destino sem legacy_domains cadastrados.");
+
+    const client = getDestClient(row.supabase_url, row.service_role_secret_name);
+
+    // Monta SQL que retorna todas as linhas remanescentes
+    const legacyList = legacy.map((d) => `'${d.replace(/'/g, "''")}'`).join(",");
+    const parts: string[] = [];
+
+    for (const { table, columns } of URL_TABLES) {
+      for (const col of columns) {
+        parts.push(`
+          SELECT '${table}' AS table_name, '${col}' AS column_name,
+                 COUNT(*)::int AS remaining
+          FROM public."${table}"
+          WHERE EXISTS (
+            SELECT 1 FROM information_schema.columns
+             WHERE table_schema='public' AND table_name='${table}' AND column_name='${col}'
+          ) AND (${legacy.map((d) => `"${col}" LIKE '%${d.replace(/'/g, "''")}%'`).join(" OR ")})
+        `);
+      }
+    }
+
+    const tablesSql = `SELECT * FROM (${parts.join(" UNION ALL ")}) t WHERE remaining > 0 ORDER BY table_name, column_name;`;
+
+    let tableFindings: Array<{ table_name: string; column_name: string; remaining: number }> = [];
+    try {
+      const { data: rows, error } = await client.rpc("exec_sql_json" as any, { sql_query: tablesSql });
+      if (error) throw error;
+      tableFindings = (rows as any) ?? [];
+    } catch {
+      // Fallback: consulta tabela-a-tabela pela API PostgREST
+      for (const { table, columns } of URL_TABLES) {
+        for (const col of columns) {
+          try {
+            const or = legacy.map((d) => `${col}.ilike.%${d}%`).join(",");
+            const { count, error } = await client.from(table).select(col, { count: "exact", head: true }).or(or);
+            if (error) continue;
+            if ((count ?? 0) > 0) tableFindings.push({ table_name: table, column_name: col, remaining: count! });
+          } catch { /* coluna/tabela ausente no destino, ignorar */ }
+        }
+      }
+    }
+
+    // Cron jobs com legacy ainda presente
+    const cronRemaining: Array<{ jobid: number; jobname: string; matches: string[] }> = [];
+    try {
+      const { data: jobs, error } = await client.rpc("admin_cron_status" as any);
+      if (error) throw error;
+      for (const j of ((jobs as any[]) ?? [])) {
+        const cmd = String(j.command ?? "");
+        const hits = legacy.filter((d) => cmd.includes(d));
+        if (hits.length) cronRemaining.push({ jobid: j.jobid, jobname: j.jobname, matches: hits });
+      }
+    } catch { /* RPC indisponível */ }
+
+    const totalTableRows = tableFindings.reduce((s, f) => s + f.remaining, 0);
+    const ok = totalTableRows === 0 && cronRemaining.length === 0;
+
+    return {
+      ok,
+      destination: { id: row.id, name: row.name, site_url: siteUrl },
+      legacy,
+      tableFindings,
+      cronRemaining,
+      totalTableRows,
+    };
+  });
