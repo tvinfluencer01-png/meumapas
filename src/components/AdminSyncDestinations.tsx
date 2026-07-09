@@ -275,15 +275,15 @@ export function AdminSyncDestinations() {
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" onClick={() => remapMut.mutate(true)} disabled={remapMut.isPending}>
               {remapMut.isPending ? <Loader2 className="size-4 mr-2 animate-spin" /> : null}
-              Prévia (dry-run)
+              3 · Prévia (dry-run)
             </Button>
             <Button onClick={() => remapMut.mutate(false)} disabled={remapMut.isPending}>
               {remapMut.isPending ? <Loader2 className="size-4 mr-2 animate-spin" /> : <RefreshCw className="size-4 mr-2" />}
-              Aplicar reescrita
+              4 · Aplicar reescrita
             </Button>
             <Button variant="secondary" onClick={() => verifyMut.mutate()} disabled={verifyMut.isPending}>
               {verifyMut.isPending ? <Loader2 className="size-4 mr-2 animate-spin" /> : <SearchCheck className="size-4 mr-2" />}
-              Verificar alterações
+              5 · Verificar alterações
             </Button>
           </div>
           {verifyResult && (
