@@ -201,6 +201,7 @@ function AdminDashboard() {
     refetchInterval: 30_000,
   });
   const unviewedCount = unviewed?.count ?? 0;
+  const { count: newHoroscopeLeadsCount } = useNewLeadsCount();
 
   function selectTab(value: string) {
     setTab(value);
