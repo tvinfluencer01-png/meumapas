@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Save, MessageCircle, Trash2, CheckCircle2, Loader2, Copy, Settings } from "lucide-react";
+import { Sparkles, Save, MessageCircle, Trash2, CheckCircle2, Loader2, Copy, Settings, Send } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
@@ -19,6 +19,7 @@ import {
   adminListHoroscopeLeads,
   adminActivateHoroscopeLead,
   adminDeleteHoroscopeLead,
+  adminSendHoroscopeLeadToCrm,
   adminConfigureEvolutionWebhook,
   adminTestEvolutionWebhook,
 } from "@/lib/horoscope-landing.functions";
@@ -365,6 +366,7 @@ export function LeadsBlock() {
   const listFn = useServerFn(adminListHoroscopeLeads);
   const activateFn = useServerFn(adminActivateHoroscopeLead);
   const deleteFn = useServerFn(adminDeleteHoroscopeLead);
+  const sendCrmFn = useServerFn(adminSendHoroscopeLeadToCrm);
 
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
@@ -405,6 +407,15 @@ export function LeadsBlock() {
     mutationFn: (id: string) => deleteFn({ data: { id } }),
     onSuccess: () => {
       toast.success("Lead removido.");
+      qc.invalidateQueries({ queryKey: ["admin-horoscope-leads"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const sendCrm = useMutation({
+    mutationFn: (id: string) => sendCrmFn({ data: { id } }),
+    onSuccess: (r: any) => {
+      toast.success(r?.already_existed ? "Lead atualizado no CRM." : "Lead enviado ao CRM.");
       qc.invalidateQueries({ queryKey: ["admin-horoscope-leads"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -489,6 +500,16 @@ export function LeadsBlock() {
                           <CheckCircle2 className="size-3.5" /> Ativar
                         </Button>
                       )}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => sendCrm.mutate(r.id)}
+                        disabled={sendCrm.isPending}
+                        className="gap-1"
+                        title={r.sent_to_crm_at ? `Já enviado em ${new Date(r.sent_to_crm_at).toLocaleString("pt-BR")}. Clique para reenviar/atualizar.` : "Enviar este lead para o CRM e iniciar o funil de vendas."}
+                      >
+                        <Send className="size-3.5" /> {r.sent_to_crm_at ? "Reenviar CRM" : "Enviar CRM"}
+                      </Button>
                       <Button size="sm" variant="ghost" onClick={() => del.mutate(r.id)} className="text-destructive">
                         <Trash2 className="size-3.5" />
                       </Button>
