@@ -147,7 +147,7 @@ export function AdminHoroscopePlans() {
       <CardHeader>
         <div className="flex flex-row items-start justify-between gap-3">
           <div>
-            <CardTitle className="flex items-center gap-2"><Package className="size-5 text-gold" /> Horóscopo Planos Pagos</CardTitle>
+            <CardTitle className="flex items-center gap-2"><Package className="size-5 text-gold" /> Horóscopo Configuração / Planos</CardTitle>
             <CardDescription>Configure os planos exibidos em <code>/horoscopo-assinar</code> e acompanhe leads capturados.</CardDescription>
           </div>
           {tab === "config" && (
