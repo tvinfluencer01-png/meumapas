@@ -122,6 +122,26 @@ export function AdminSystemDiagnostic() {
                         <span className="text-xs opacity-60 ml-auto">{c.durationMs}ms</span>
                       </div>
                       <div className="text-sm text-foreground/80 mt-1 break-words">{c.detail}</div>
+                      {c.name === "Contagem de linhas origem × destino" && Array.isArray(c.meta?.rows) && (
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {(c.meta.rows as Array<{ table: string; src: number | null; dst: number | null; diff: number | null }>)
+                            .filter((r) => (r.diff ?? 0) > 0)
+                            .map((r) => (
+                              <Button
+                                key={r.table}
+                                size="sm"
+                                variant="outline"
+                                disabled={reconciling === r.table}
+                                onClick={() => reconcile(r.table)}
+                              >
+                                {reconciling === r.table
+                                  ? <Loader2 className="size-3 mr-1 animate-spin" />
+                                  : <RefreshCw className="size-3 mr-1" />}
+                                Reconciliar {r.table} (+{r.diff})
+                              </Button>
+                            ))}
+                        </div>
+                      )}
                       {c.meta && Object.keys(c.meta).length > 0 && (
                         <details className="mt-2 text-xs">
                           <summary className="cursor-pointer opacity-70 hover:opacity-100">Detalhes</summary>
