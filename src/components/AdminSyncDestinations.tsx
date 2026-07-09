@@ -167,7 +167,7 @@ export function AdminSyncDestinations() {
                 <div className="flex gap-1">
                   <Button size="sm" variant="outline" onClick={() => testMut.mutate(d.id)} disabled={testMut.isPending}>
                     {testMut.isPending && testMut.variables === d.id ? <Loader2 className="size-4 animate-spin" /> : <PlugZap className="size-4" />}
-                    <span className="ml-1">Testar</span>
+                    <span className="ml-1">2 · Testar conexão</span>
                   </Button>
                   <Button size="sm" variant="ghost" onClick={() => startEdit(d)}>Editar</Button>
                   <Button size="sm" variant="ghost" onClick={() => { if (confirm(`Remover "${d.name}"?`)) delMut.mutate(d.id); }}>
@@ -253,7 +253,7 @@ export function AdminSyncDestinations() {
           <div className="flex gap-2">
             <Button onClick={() => saveMut.mutate()} disabled={saveMut.isPending || !form.name || !form.site_url || !form.supabase_url}>
               {saveMut.isPending ? <Loader2 className="size-4 mr-2 animate-spin" /> : <Save className="size-4 mr-2" />}
-              Salvar
+              1 · Salvar destino
             </Button>
             {form.id && <Button variant="outline" onClick={clearForm}>Cancelar</Button>}
           </div>
@@ -275,15 +275,15 @@ export function AdminSyncDestinations() {
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" onClick={() => remapMut.mutate(true)} disabled={remapMut.isPending}>
               {remapMut.isPending ? <Loader2 className="size-4 mr-2 animate-spin" /> : null}
-              Prévia (dry-run)
+              3 · Prévia (dry-run)
             </Button>
             <Button onClick={() => remapMut.mutate(false)} disabled={remapMut.isPending}>
               {remapMut.isPending ? <Loader2 className="size-4 mr-2 animate-spin" /> : <RefreshCw className="size-4 mr-2" />}
-              Aplicar reescrita
+              4 · Aplicar reescrita
             </Button>
             <Button variant="secondary" onClick={() => verifyMut.mutate()} disabled={verifyMut.isPending}>
               {verifyMut.isPending ? <Loader2 className="size-4 mr-2 animate-spin" /> : <SearchCheck className="size-4 mr-2" />}
-              Verificar alterações
+              5 · Verificar alterações
             </Button>
           </div>
           {verifyResult && (
