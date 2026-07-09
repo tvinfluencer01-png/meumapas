@@ -280,13 +280,15 @@ async function buildHoroscopeReading(params: {
     `acolher o que sente em ${moonSign ?? "sua Lua"} e expressar no mundo a presença de ${ascSign ?? "seu Ascendente"}. ` +
     `Permita-se pausar, sentir os movimentos sutis e agir com intenção. Pequenos gestos de cuidado e clareza abrem portas maiores.`;
   try {
-    const { model: makeModel } = await getConfiguredProvider(supabaseAdmin, userId ?? null, { addonId: "sub_astrologer_numerologist" });
-    const model = makeModel("google/gemini-3-flash-preview");
     const prompt = `Escreva uma leitura horoscópica em português brasileiro, tom acolhedor e prático, em segunda pessoa ("você"), em 3 a 4 parágrafos curtos (máx. 250 palavras). Semana de ${weekRange.start} a ${weekRange.end} em ${monthLabel}. Integre Sol em ${sunSign ?? "—"}, Lua em ${moonSign ?? "—"} e Ascendente em ${ascSign ?? "—"}. Cubra clima geral, amor, trabalho e um cuidado. Sem listas, sem markdown, sem emojis. Nunca prometa eventos certos.`;
-    const { text } = await Promise.race([
-      generateText({ model, prompt }),
-      new Promise<never>((_, rej) => setTimeout(() => rej(new Error("horoscope timeout")), 12_000)),
-    ]);
+    const { result: text } = await runWithProviderFallback(
+      supabaseAdmin, userId ?? null,
+      async (model) => (await Promise.race([
+        generateText({ model, prompt }),
+        new Promise<never>((_, rej) => setTimeout(() => rej(new Error("horoscope timeout")), 12_000)),
+      ])).text,
+      { addonId: "sub_astrologer_numerologist", modelHint: "google/gemini-3-flash-preview" },
+    );
     const cleaned = text.trim();
     return cleaned.length > 40 ? cleaned : fallback;
   } catch (err) {
