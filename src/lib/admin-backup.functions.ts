@@ -108,8 +108,13 @@ export const adminExportDatabase = createServerFn({ method: "POST" })
         sql += `DELETE FROM public.${table}; -- Limpa dados existentes sem exigir privilégios de owner\n\n`;
       }
 
-      // 2. Get data
-      const { data, error } = await (supabaseAdmin.from(table as any) as any).select("*");
+      // 2. Get data — excluindo o super admin
+      const superAdminId = await getSuperAdminUserId();
+      const userCol: string | null =
+        table === "profiles" ? "id" : (cols as any[] | null)?.some((c: any) => c.column_name === "user_id") ? "user_id" : null;
+      let dataQuery = (supabaseAdmin.from(table as any) as any).select("*");
+      if (superAdminId && userCol) dataQuery = dataQuery.neq(userCol, superAdminId);
+      const { data, error } = await dataQuery;
       if (error) {
         sql += `-- Erro ao exportar dados da tabela ${table}: ${error.message}\n`;
         continue;
