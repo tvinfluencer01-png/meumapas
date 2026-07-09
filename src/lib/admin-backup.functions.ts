@@ -108,8 +108,13 @@ export const adminExportDatabase = createServerFn({ method: "POST" })
         sql += `DELETE FROM public.${table}; -- Limpa dados existentes sem exigir privilégios de owner\n\n`;
       }
 
-      // 2. Get data
-      const { data, error } = await (supabaseAdmin.from(table as any) as any).select("*");
+      // 2. Get data — excluindo o super admin
+      const superAdminId = await getSuperAdminUserId();
+      const userCol: string | null =
+        table === "profiles" ? "id" : (cols as any[] | null)?.some((c: any) => c.column_name === "user_id") ? "user_id" : null;
+      let dataQuery = (supabaseAdmin.from(table as any) as any).select("*");
+      if (superAdminId && userCol) dataQuery = dataQuery.neq(userCol, superAdminId);
+      const { data, error } = await dataQuery;
       if (error) {
         sql += `-- Erro ao exportar dados da tabela ${table}: ${error.message}\n`;
         continue;
@@ -204,15 +209,37 @@ async function listTablesWithMeta() {
     .map((r) => r.table_name as string)
     .filter((t) => !SYNC_IGNORE.has(t));
 
-  const meta: Array<{ table: string; hasUpdatedAt: boolean; pk: string[] }> = [];
+  const meta: Array<{ table: string; hasUpdatedAt: boolean; pk: string[]; userCol: string | null }> = [];
   for (const table of tables) {
     const { data: cols } = await supabaseAdmin.rpc("get_table_structure", { t_name: table });
     const colsArr = (cols as any[]) ?? [];
     const hasUpdatedAt = colsArr.some((c) => c.column_name === "updated_at");
     const pk = colsArr.filter((c) => c.is_primary_key).map((c) => c.column_name as string);
-    meta.push({ table, hasUpdatedAt, pk });
+    const colNames = new Set(colsArr.map((c: any) => c.column_name as string));
+    // Coluna que identifica o "dono" do registro — usada para excluir o super admin da sync/export
+    let userCol: string | null = null;
+    if (table === "profiles") userCol = "id";
+    else if (colNames.has("user_id")) userCol = "user_id";
+    meta.push({ table, hasUpdatedAt, pk, userCol });
   }
   return meta;
+}
+
+// Super admin cujos dados NÃO devem ser exportados nem sincronizados para o novo banco.
+const SUPER_ADMIN_EMAIL = (process.env.SUPER_ADMIN_EMAIL || "sac@ms3.com.br").toLowerCase();
+let _superAdminIdCache: string | null | undefined;
+async function getSuperAdminUserId(): Promise<string | null> {
+  if (_superAdminIdCache !== undefined) return _superAdminIdCache;
+  try {
+    for (let page = 1; page <= 20; page++) {
+      const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 200 });
+      if (error) break;
+      const found = data.users.find((u) => (u.email ?? "").toLowerCase() === SUPER_ADMIN_EMAIL);
+      if (found) return (_superAdminIdCache = found.id);
+      if (data.users.length < 200) break;
+    }
+  } catch { /* ignore */ }
+  return (_superAdminIdCache = null);
 }
 
 export const getSyncStatus = createServerFn({ method: "GET" })
@@ -279,7 +306,9 @@ export const syncToNewDatabase = createServerFn({ method: "POST" })
     const results: Array<{ table: string; rows: number; strategy: string; error?: string }> = [];
     const startedAt = new Date().toISOString();
 
-    for (const { table, hasUpdatedAt, pk } of meta) {
+    const superAdminId = await getSuperAdminUserId();
+
+    for (const { table, hasUpdatedAt, pk, userCol } of meta) {
       try {
         let effective = data.strategy;
         if (effective === "incremental" && !hasUpdatedAt) effective = "upsert_all";
@@ -296,18 +325,26 @@ export const syncToNewDatabase = createServerFn({ method: "POST" })
           if (since) query = query.gt("updated_at", since);
         }
 
+        // Exclui o super admin já na origem quando aplicável
+        if (superAdminId && userCol) query = query.neq(userCol, superAdminId);
+
         const { data: rows, error: srcErr } = await query;
         if (srcErr) throw new Error(`Origem: ${srcErr.message}`);
 
         if (effective === "full_replace") {
-          // apagar todos no destino
-          const { error: delErr } = await dest.from(table as any).delete().gte("created_at", "1900-01-01");
+          // apagar todos no destino — preservando o super admin
+          let del = dest.from(table as any).delete().gte("created_at", "1900-01-01");
+          if (superAdminId && userCol) del = del.neq(userCol, superAdminId);
+          const { error: delErr } = await del;
           if (delErr && !/does not exist|column .* does not exist/i.test(delErr.message)) {
-            // fallback: delete all sem filtro (alguns sem created_at)
-            const { error: delErr2 } = await dest.from(table as any).delete().not("ctid", "is", null as any);
+            // fallback: delete all sem filtro de created_at
+            let del2 = dest.from(table as any).delete().not("ctid", "is", null as any);
+            if (superAdminId && userCol) del2 = del2.neq(userCol, superAdminId);
+            const { error: delErr2 } = await del2;
             if (delErr2) throw new Error(`Destino delete: ${delErr2.message}`);
           }
         }
+
 
         const arr = (rows as any[]) ?? [];
         let synced = 0;
