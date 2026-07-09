@@ -366,6 +366,7 @@ export function LeadsBlock() {
   const listFn = useServerFn(adminListHoroscopeLeads);
   const activateFn = useServerFn(adminActivateHoroscopeLead);
   const deleteFn = useServerFn(adminDeleteHoroscopeLead);
+  const sendCrmFn = useServerFn(adminSendHoroscopeLeadToCrm);
 
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
