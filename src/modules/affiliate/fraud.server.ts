@@ -3,7 +3,7 @@
 // com raciocínio LLM opcional via provedores IA configurados no sistema.
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { getConfiguredProvider } from "@/lib/ai-resolver.server";
+import { runWithProviderFallback } from "@/lib/ai-resolver.server";
 import { generateText } from "ai";
 
 type Signal = { code: string; weight: number; detail?: string };
