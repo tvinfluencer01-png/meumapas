@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { AdminHoroscopeLanding } from "@/components/AdminHoroscopeLanding";
 import {
   adminListHoroscopePlans,
   adminUpsertHoroscopePlan,
@@ -120,7 +121,7 @@ export function AdminHoroscopePlans() {
     refetchInterval: 30_000,
   });
   const leads: any[] = (leadsData as any)?.leads ?? [];
-  const [tab, setTab] = useState<"config" | "leads">("config");
+  const [tab, setTab] = useState<"config" | "settings" | "leads">("config");
   const [seenLeadsAt, setSeenLeadsAt] = useState<number>(() => {
     if (typeof window === "undefined") return 0;
     return Number(window.localStorage.getItem("admin-horoscope-paid-leads-seen") ?? 0);
@@ -147,8 +148,8 @@ export function AdminHoroscopePlans() {
       <CardHeader>
         <div className="flex flex-row items-start justify-between gap-3">
           <div>
-            <CardTitle className="flex items-center gap-2"><Package className="size-5 text-gold" /> Horóscopo Configuração / Planos</CardTitle>
-            <CardDescription>Configure os planos exibidos em <code>/horoscopo-assinar</code> e acompanhe leads capturados.</CardDescription>
+            <CardTitle className="flex items-center gap-2"><Package className="size-5 text-gold" /> Horóscopo Planos e Config.</CardTitle>
+            <CardDescription>Gerencie os planos de <code>/horoscopo-assinar</code>, as configurações da landing grátis e acompanhe leads.</CardDescription>
           </div>
           {tab === "config" && (
             <Button onClick={() => setForm({ ...EMPTY })} className="gap-2">
@@ -160,7 +161,8 @@ export function AdminHoroscopePlans() {
       <CardContent>
         <Tabs value={tab} onValueChange={(v) => { setTab(v as any); if (v === "leads") markLeadsSeen(); }}>
           <TabsList>
-            <TabsTrigger value="config" className="gap-2"><Package className="size-4" /> Configurações</TabsTrigger>
+            <TabsTrigger value="config" className="gap-2"><Package className="size-4" /> Planos</TabsTrigger>
+            <TabsTrigger value="settings" className="gap-2"><Star className="size-4" /> Configurações</TabsTrigger>
             <TabsTrigger value="leads" className="gap-2 relative">
               <Users className="size-4" /> Leads Capturados
               {newLeadsCount > 0 && (
