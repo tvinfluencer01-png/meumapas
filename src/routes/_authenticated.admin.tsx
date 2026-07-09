@@ -24,6 +24,7 @@ import { AdminHoroscopeStatus } from "@/components/AdminHoroscopeStatus";
 import { AdminHoroscopeLanding } from "@/components/AdminHoroscopeLanding";
 import { AdminHoroscopePlans } from "@/components/AdminHoroscopePlans";
 import { AdminHoroscopeLeads } from "@/components/AdminHoroscopeLeads";
+import { useNewLeadsCount } from "@/components/AdminHoroscopeLanding";
 
 import { AdminAffiliatePanel } from "@/modules/affiliate/ui/AdminAffiliatePanel";
 import { getServerTime } from "@/lib/server-time.functions";
@@ -201,6 +202,7 @@ function AdminDashboard() {
     refetchInterval: 30_000,
   });
   const unviewedCount = unviewed?.count ?? 0;
+  const { count: newHoroscopeLeadsCount } = useNewLeadsCount();
 
   function selectTab(value: string) {
     setTab(value);
@@ -316,6 +318,12 @@ function AdminDashboard() {
                       <span className="flex-1">{item.label}</span>
                       {item.value === "pedidos" && unviewedCount > 0 && (
                         <span className="relative inline-flex" title={`${unviewedCount} novo(s) pedido(s)`}>
+                          <span className="absolute inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500 opacity-75 animate-ping" />
+                          <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.9)]" />
+                        </span>
+                      )}
+                      {item.value === "horoscope-leads" && newHoroscopeLeadsCount > 0 && (
+                        <span className="relative inline-flex" title={`${newHoroscopeLeadsCount} novo(s) lead(s) grátis`}>
                           <span className="absolute inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500 opacity-75 animate-ping" />
                           <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.9)]" />
                         </span>
