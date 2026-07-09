@@ -24,6 +24,7 @@ import { AdminHoroscopeStatus } from "@/components/AdminHoroscopeStatus";
 import { AdminHoroscopeLanding } from "@/components/AdminHoroscopeLanding";
 import { AdminHoroscopePlans } from "@/components/AdminHoroscopePlans";
 import { AdminHoroscopeLeads } from "@/components/AdminHoroscopeLeads";
+import { useNewLeadsCount } from "@/components/AdminHoroscopeLanding";
 
 import { AdminAffiliatePanel } from "@/modules/affiliate/ui/AdminAffiliatePanel";
 import { getServerTime } from "@/lib/server-time.functions";
