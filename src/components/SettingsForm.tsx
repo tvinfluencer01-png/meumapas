@@ -223,12 +223,12 @@ export function SettingsForm() {
     // na maioria das chaves da Google AI Studio). 2.5-flash costuma estar apenas em preview,
     // com cota de poucas requisições por minuto → cai para "offline" na segunda verificação.
     const preferredOrder = [
-      "gemini-2.0-flash",
-      "gemini-2.0-flash-001",
-      "gemini-flash-latest",
       "gemini-1.5-flash",
       "gemini-1.5-flash-latest",
       "gemini-1.5-flash-8b",
+      "gemini-2.0-flash",
+      "gemini-2.0-flash-001",
+      "gemini-flash-latest",
       "gemini-2.0-flash-lite",
     ];
     for (const want of preferredOrder) {
@@ -280,25 +280,34 @@ export function SettingsForm() {
     setProviderStatus((s) => ({ ...s, [id]: null }));
     try {
       let res = await testProviderFn({ data: { provider: id as ChatProviderId, key: key ?? null, model: model ?? null } });
-      // Gemini free-tier: se o modelo escolhido caiu por cota/indisponibilidade,
-      // tenta novamente com o modelo estável de maior compatibilidade.
+      // Gemini: se falhar por cota, indisponibilidade OU endpoint/recurso não encontrado (404),
+      // tenta em cascata os modelos estáveis compatíveis com a chave do usuário.
       if (
         !res.ok &&
         id === "google" &&
-        (model ?? "") !== "gemini-2.0-flash" &&
-        /(limite|indispon|timeout|inválida)/i.test(res.message)
+        /(limite|indispon|timeout|inválida|endpoint|não encontrado|not found|404|recurso)/i.test(res.message)
       ) {
-        const retry = await testProviderFn({ data: { provider: "google" as ChatProviderId, key: key ?? null, model: "gemini-2.0-flash" } });
-        if (retry.ok) {
-          setForm((f) => ({
-            ...f,
-            ai_providers_config: {
-              ...f.ai_providers_config,
-              google: { ...(f.ai_providers_config.google ?? {}), model: "gemini-2.0-flash" },
-            },
-          }));
-          toast.info("Gemini: usando gemini-2.0-flash (mais estável no free tier)");
-          res = retry;
+        const fallbacks = [
+          "gemini-1.5-flash",
+          "gemini-1.5-flash-latest",
+          "gemini-2.0-flash",
+          "gemini-flash-latest",
+          "gemini-1.5-flash-8b",
+        ].filter((m) => m !== (model ?? ""));
+        for (const candidate of fallbacks) {
+          const retry = await testProviderFn({ data: { provider: "google" as ChatProviderId, key: key ?? null, model: candidate } });
+          if (retry.ok) {
+            setForm((f) => ({
+              ...f,
+              ai_providers_config: {
+                ...f.ai_providers_config,
+                google: { ...(f.ai_providers_config.google ?? {}), model: candidate },
+              },
+            }));
+            toast.info(`Gemini: usando ${candidate} (compatível com sua chave)`);
+            res = retry;
+            break;
+          }
         }
       }
       setProviderStatus((s) => ({ ...s, [id]: { ok: res.ok, message: res.message } }));
