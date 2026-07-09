@@ -5213,6 +5213,51 @@ export type Database = {
         }
         Relationships: []
       }
+      sync_destinations: {
+        Row: {
+          created_at: string
+          id: string
+          is_default: boolean
+          legacy_domains: string[]
+          name: string
+          notes: string | null
+          service_role_secret_name: string
+          site_url: string
+          supabase_project_ref: string | null
+          supabase_publishable_key: string | null
+          supabase_url: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          legacy_domains?: string[]
+          name: string
+          notes?: string | null
+          service_role_secret_name?: string
+          site_url: string
+          supabase_project_ref?: string | null
+          supabase_publishable_key?: string | null
+          supabase_url: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          legacy_domains?: string[]
+          name?: string
+          notes?: string | null
+          service_role_secret_name?: string
+          site_url?: string
+          supabase_project_ref?: string | null
+          supabase_publishable_key?: string | null
+          supabase_url?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       system_settings: {
         Row: {
           alert_email: string | null
