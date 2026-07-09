@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Plus, Trash2, Save, Loader2, RefreshCw, Star, StarOff, Globe } from "lucide-react";
+import { Plus, Trash2, Save, Loader2, RefreshCw, Star, StarOff, Globe, CheckCircle2, XCircle, PlugZap } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ import {
   upsertSyncDestination,
   deleteSyncDestination,
   remapDestinationUrls,
+  testSyncDestination,
 } from "@/lib/sync-destinations.functions";
 
 type Dest = {
