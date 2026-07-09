@@ -66,13 +66,13 @@ export const testSyncDestination = createServerFn({ method: "POST" })
       checks.push({ name: "Auth Admin (service_role)", ok: false, detail: e.message });
     }
 
-    // 3) Leitura de tabela pública
+    // 3) Leitura de tabela pública no destino (profiles existe em ambos)
     try {
-      const { error } = await client.from("sync_destinations").select("id").limit(1);
+      const { error } = await client.from("profiles").select("id").limit(1);
       if (error) throw error;
-      checks.push({ name: "Leitura DB (public.sync_destinations)", ok: true });
+      checks.push({ name: "Leitura DB (public.profiles)", ok: true });
     } catch (e: any) {
-      checks.push({ name: "Leitura DB (public.sync_destinations)", ok: false, detail: e.message });
+      checks.push({ name: "Leitura DB (public.profiles)", ok: false, detail: e.message });
     }
 
     // 4) RPC admin_cron_status (usado no remap)
