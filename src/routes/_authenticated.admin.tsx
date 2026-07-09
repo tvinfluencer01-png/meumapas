@@ -66,7 +66,7 @@ import {
   testEvolutionConnection,
   sendEvolutionTest,
 } from "@/lib/admin.functions";
-import { adminExportDatabase, getSyncStatus, syncToNewDatabase } from "@/lib/admin-backup.functions";
+import { adminExportDatabase, getSyncStatus, syncToNewDatabase, syncSchemaToNewDatabase } from "@/lib/admin-backup.functions";
 import { countUnviewedOrders } from "@/lib/product-orders.functions";
 
 
