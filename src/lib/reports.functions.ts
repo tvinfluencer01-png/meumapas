@@ -3,7 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { generateText } from "ai";
-import { getConfiguredProvider } from "@/lib/ai-resolver.server";
+import { getConfiguredProviders } from "@/lib/ai-resolver.server";
 import { computeNumerology, NUMBER_MEANINGS, formatBirthDateBR, numLabel, numTitle } from "@/lib/numerology";
 import { buildReportPdf, type ReportData } from "@/lib/reports-pdf";
 import { consumeCredits, hasUnlimitedAccess, getCreditCost, refundCredits, type CreditAction } from "@/lib/credits.functions";
@@ -454,24 +454,25 @@ export const generateReport = createServerFn({ method: "POST" })
       return output;
     }
 
-    // 2) Choose AI provider (resolved from user settings; ignores legacy `ai_provider === 'lovable'`)
+    // 2) Resolve TODOS os providers configurados (ordem de prioridade)
     const customModel = (settings?.custom_ai_model as string | null) ?? null;
-    const { model: makeConfiguredModel, provider: activeProvider } = await getConfiguredProvider(
+    const providers = await getConfiguredProviders(
       context.supabase,
       context.userId,
       { addonId: "sub_astrologer_numerologist" },
     );
+    if (providers.length === 0) {
+      throw new Error("Nenhum provedor de IA configurado. Adicione uma chave em Configurações → IA.");
+    }
+    const primary = providers[0];
+    const activeProvider = primary.provider;
 
     let modelName = customModel ?? "google/gemini-3-flash-preview";
-    if (activeProvider === "openai") {
-      modelName = customModel ?? "gpt-5-mini";
-    } else if (activeProvider === "anthropic") {
-      modelName = customModel ?? "claude-3-5-sonnet-latest";
-    } else if (activeProvider === "google") {
-      modelName = customModel ?? "gemini-2.5-flash";
-    }
+    if (activeProvider === "openai") modelName = customModel ?? "gpt-5-mini";
+    else if (activeProvider === "anthropic") modelName = customModel ?? "claude-3-5-sonnet-latest";
+    else if (activeProvider === "google") modelName = customModel ?? "gemini-2.0-flash";
 
-    const makeModel = (candidate: string) => makeConfiguredModel(candidate);
+    const makeModel = (candidate: string) => primary.model(candidate);
     let model = makeModel(modelName);
 
     // 3) Generate humanized structured content
@@ -542,16 +543,30 @@ ${numBlock}
 Mapa astral:
 ${astroBlock}${extraContextBlock}`;
 
-    const getFallbackModels = () => {
-      const extras =
-        activeProvider === "openai"
-          ? ["gpt-5-mini"]
-          : activeProvider === "google"
-            ? ["gemini-2.5-flash", "gemini-2.5-flash-lite"]
-            : activeProvider === "anthropic"
-              ? ["claude-3-5-sonnet-latest"]
-              : [];
-      return [modelName, ...extras].filter((c, i, a) => a.indexOf(c) === i);
+    // Lista de tentativas na ORDEM DE PRIORIDADE dos providers configurados.
+    // Cada tentativa carrega o builder do provider correspondente + o modelo.
+    type Attempt = { label: string; build: () => any };
+    const getAttempts = (): Attempt[] => {
+      const seen = new Set<string>();
+      const out: Attempt[] = [];
+      for (const p of providers) {
+        const defaults =
+          p.provider === "openai" ? ["gpt-5-mini"]
+          : p.provider === "anthropic" ? ["claude-3-5-sonnet-latest"]
+          : p.provider === "google" ? ["gemini-2.0-flash", "gemini-2.5-flash-lite"]
+          : p.provider === "groq" ? ["llama-3.3-70b-versatile"]
+          : p.provider === "mistral" ? ["mistral-small-latest"]
+          : ["google/gemini-2.0-flash-exp:free"];
+        // If this is the primary provider, honor the user's `modelName` first.
+        const candidates = p.provider === activeProvider ? [modelName, ...defaults] : defaults;
+        for (const c of candidates) {
+          const key = `${p.provider}:${c}`;
+          if (seen.has(key)) continue;
+          seen.add(key);
+          out.push({ label: `${p.provider}/${c}`, build: () => p.model(c) });
+        }
+      }
+      return out;
     };
 
     async function callWithRetry({
@@ -564,16 +579,13 @@ ${astroBlock}${extraContextBlock}`;
       errorMessage: string;
     }) {
       let lastErr: unknown;
-      const fallbackModels = getFallbackModels();
-      for (const candidate of fallbackModels) {
-        const candidateModel = candidate === modelName ? model : makeModel(candidate);
+      const attempts = getAttempts();
+      for (const attempt of attempts) {
+        const candidateModel = attempt.build();
         const startedAt = Date.now();
-        // Hard wall-clock timeout. Uses AbortSignal.timeout which is honored
-        // by fetch in Cloudflare Workers, plus a manual Promise.race fallback
-        // in case the SDK swallows the abort signal.
         const signal = AbortSignal.timeout(timeoutMs);
         try {
-          console.info(`[reports] AI stage start (model=${candidate}, timeout=${timeoutMs}ms)`);
+          console.info(`[reports] AI stage start (${attempt.label}, timeout=${timeoutMs}ms)`);
           const text = await new Promise<string>((resolve, reject) => {
             const timer = setTimeout(
               () => reject(new Error(`AI timeout after ${timeoutMs}ms`)),
@@ -586,39 +598,18 @@ ${astroBlock}${extraContextBlock}`;
               abortSignal: signal,
               maxRetries: 0,
             })
-              .then((res) => {
-                clearTimeout(timer);
-                resolve(res.text);
-              })
-              .catch((err) => {
-                clearTimeout(timer);
-                reject(err);
-              });
+              .then((res) => { clearTimeout(timer); resolve(res.text); })
+              .catch((err) => { clearTimeout(timer); reject(err); });
           });
-          console.info(`[reports] AI stage done (model=${candidate}, elapsed=${Date.now() - startedAt}ms)`);
-          modelName = candidate;
+          console.info(`[reports] AI stage done (${attempt.label}, elapsed=${Date.now() - startedAt}ms)`);
           model = candidateModel;
           return text;
         } catch (e) {
           lastErr = e;
           const rawMessage = e instanceof Error ? e.message : String(e);
-          const msg = rawMessage.toLowerCase();
-          const retriable =
-            msg.includes("timeout") ||
-            msg.includes("aborted") ||
-            msg.includes("upstream") ||
-            msg.includes("unsupported parameter") ||
-            msg.includes("not supported with this model") ||
-            msg.includes("502") ||
-            msg.includes("503") ||
-            msg.includes("504") ||
-            msg.includes("econnreset") ||
-            msg.includes("network");
-          console.error(
-            `[reports] AI attempt failed (model=${candidate}, elapsed=${Date.now() - startedAt}ms)`,
-            rawMessage,
-          );
-          if (!retriable) throw e;
+          console.error(`[reports] AI attempt failed (${attempt.label}, elapsed=${Date.now() - startedAt}ms)`, rawMessage);
+          // Sempre tenta o próximo provider/modelo — priorização = cascata completa
+          continue;
         }
       }
 
@@ -626,6 +617,7 @@ ${astroBlock}${extraContextBlock}`;
         ? new Error(errorMessage)
         : new Error("Falha temporaria na IA. Tente novamente.");
     }
+
 
     function cleanInlineText(value: unknown) {
       return String(value ?? "")

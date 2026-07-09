@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { getConfiguredProvider } from "@/lib/ai-resolver.server";
+import { runWithProviderFallback } from "@/lib/ai-resolver.server";
 import { generateText } from "ai";
 import * as Astro from "astronomy-engine";
 import { resolveActiveSubject } from "@/lib/active-subject";
@@ -83,15 +83,17 @@ export const getWeeklyReading = createServerFn({ method: "POST" })
 
     let summary = "";
     try {
-      const { model: makeModel } = await getConfiguredProvider(supabase, userId, { addonId: "sub_astrologer_numerologist" });
-      const model = makeModel("google/gemini-3-flash-preview");
       const prompt = `Você é um astrólogo e numerólogo cabalístico. Escreva uma leitura semanal curta (3 a 4 frases, máx 70 palavras) em português, poética, prática e personalizada. Identifique o tema central da semana, o dia de maior potência e um conselho final. Não use listas, apenas prosa contínua.
 
 ${birth?.full_name ? `Pessoa: ${birth.full_name.split(" ")[0]}` : ""}
 Próximos 7 dias:
 ${days.map((d) => `- ${d.date} (${d.weekday}): dia pessoal ${d.personal_day ?? "?"}, ${d.moon.label}, tendência: ${d.trend.label}`).join("\n")}`;
-      const { text } = await generateText({ model, prompt });
-      summary = text.trim();
+      const { result } = await runWithProviderFallback(
+        supabase, userId,
+        async (model) => (await generateText({ model, prompt })).text,
+        { addonId: "sub_astrologer_numerologist", modelHint: "google/gemini-3-flash-preview" },
+      );
+      summary = result.trim();
     } catch (err) {
       console.error("[weekly-reading] AI error", err);
     }

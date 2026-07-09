@@ -3,7 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { generateText } from "ai";
-import { getConfiguredProvider } from "@/lib/ai-resolver.server";
+import { runWithProviderFallback } from "@/lib/ai-resolver.server";
 import { computeNumerology, numLabel, numTitle, formatBirthDateBR } from "@/lib/numerology";
 import { buildReportPdf, type ReportData } from "@/lib/reports-pdf";
 import { consumeCredits, hasUnlimitedAccess, getCreditCost, refundCredits } from "@/lib/credits.functions";
@@ -76,8 +76,7 @@ export const generateBusinessReport = createServerFn({ method: "POST" })
 
       yield { type: "progress" as const, progress: 30, step: "Consultando arquétipos e ciclos com IA..." };
 
-      const { model: makeModel } = await getConfiguredProvider(context.supabase, userId, { addonId: "sub_astrologer_numerologist" });
-      const model = makeModel("openai/gpt-5");
+      // model injetado pelo runWithProviderFallback abaixo
 
       const prompt = `Você é um consultor sênior que combina astrologia mundana, numerologia pitagórica e cabalística e estratégia empresarial.
 Produza uma análise PROFUNDA, profissional e específica sobre a empresa abaixo, em pt-BR.
@@ -132,7 +131,11 @@ A análise deve ser sofisticada, com linguagem executiva e simbólica equilibrad
 
       let aiJson: any = null;
       try {
-        const { text } = await generateText({ model, prompt });
+        const { result: text } = await runWithProviderFallback(
+          context.supabase, userId,
+          async (model) => (await generateText({ model, prompt })).text,
+          { addonId: "sub_astrologer_numerologist", modelHint: "openai/gpt-5" },
+        );
         const m = text.match(/\{[\s\S]*\}/);
         aiJson = JSON.parse(m ? m[0] : text);
       } catch (e) {

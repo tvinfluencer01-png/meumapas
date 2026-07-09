@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { generateText } from "ai";
-import { getConfiguredProvider } from "@/lib/ai-resolver.server";
+import { runWithProviderFallback } from "@/lib/ai-resolver.server";
 import { buildHoroscopePrompt, computeLuckyForDay, loadChartSummaryForHoroscope, themesForDay } from "@/lib/horoscope.functions";
 import { localContextFor } from "@/lib/tz-context";
 
@@ -245,26 +245,23 @@ async function handler({ request }: { request: Request }) {
       // Seed determinístico por (usuário, dia). Google exige INT32 positivo (< 2^31-1).
       const seedHash = Array.from(`${s.user_id}|${today}`).reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 2166136261) >>> 0;
       const seedNum = seedHash % 2147483647;
-      let lastErr: any = null;
-      let makeModel: ((h?: string | null) => any) | null = null;
       try {
-        ({ model: makeModel } = await getConfiguredProvider(supabaseAdmin, s.user_id));
+        const { result } = await runWithProviderFallback(
+          supabaseAdmin,
+          s.user_id,
+          async (model) => {
+            const { text } = await generateText({
+              model, prompt, temperature: 1.0, topP: 0.95, seed: seedNum,
+            });
+            if (!text?.trim()) throw new Error("empty response");
+            return text.trim();
+          },
+          { modelHint: modelCandidates[0], addonId: "sub_astrologer_numerologist" },
+        );
+        body = result;
       } catch (e) {
         throw e;
       }
-      for (const modelName of modelCandidates) {
-        try {
-          const { text } = await generateText({
-            model: makeModel!(modelName), prompt, temperature: 1.0, topP: 0.95, seed: seedNum,
-          });
-          body = text.trim();
-          lastErr = null;
-          break;
-        } catch (e) {
-          lastErr = e;
-        }
-      }
-      if (lastErr) throw lastErr;
     } catch (e: any) {
       const detail = [
         e?.message,
@@ -540,14 +537,16 @@ async function handler({ request }: { request: Request }) {
 
         let body = "";
         try {
-          const { model: makeModel } = await getConfiguredProvider(supabaseAdmin, null);
-          for (const modelName of modelCandidates) {
-            try {
-              const { text } = await generateText({ model: makeModel(modelName), prompt, temperature: 1.0, topP: 0.95 });
-              body = text.trim();
-              break;
-            } catch {}
-          }
+          const { result } = await runWithProviderFallback(
+            supabaseAdmin, null,
+            async (model) => {
+              const { text } = await generateText({ model, prompt, temperature: 1.0, topP: 0.95 });
+              if (!text?.trim()) throw new Error("empty");
+              return text.trim();
+            },
+            { modelHint: modelCandidates[0] },
+          );
+          body = result;
         } catch {}
         if (!body) continue;
 

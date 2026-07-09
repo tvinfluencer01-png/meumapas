@@ -4,7 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { SUBSCRIPTION_ADDONS } from "./addons.catalog";
 import { generateText } from "ai";
-import { getConfiguredProvider } from "@/lib/ai-resolver.server";
+import { runWithProviderFallback } from "@/lib/ai-resolver.server";
 
 async function assertAdmin(userId: string) {
   const { data } = await supabaseAdmin
@@ -326,8 +326,7 @@ export const improveAddonPrompt = createServerFn({ method: "POST" })
     const def = ADDON_PROMPT_DEFAULTS[data.addon_id];
     const vars = (def?.vars ?? []).join(", ") || "(nenhuma)";
 
-    const { model: makeModel } = await getConfiguredProvider(context.supabase, context.userId);
-    const model = makeModel("google/gemini-2.5-flash");
+    // model injetado pelo runWithProviderFallback abaixo
 
     const system = `Você é especialista em engenharia de prompts para LLMs em português (pt-BR).
 Aprimore o prompt abaixo para que produza saídas mais ricas, específicas, claras e acionáveis,
@@ -348,12 +347,11 @@ PROMPT ATUAL:
 ${data.prompt}
 """`;
 
-    const { text } = await generateText({
-      model,
-      system,
-      prompt: userMsg,
-      temperature: 0.6,
-    });
+    const { result: text } = await runWithProviderFallback(
+      context.supabase, context.userId,
+      async (model) => (await generateText({ model, system, prompt: userMsg, temperature: 0.6 })).text,
+      { modelHint: "google/gemini-2.5-flash" },
+    );
     return { prompt: text.trim() };
   });
 

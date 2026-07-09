@@ -3,7 +3,7 @@
 // so guest product-order PDFs match the quality delivered to logged-in users.
 import { generateText } from "ai";
 import { z } from "zod";
-import { getConfiguredProvider } from "@/lib/ai-resolver.server";
+import { runWithProviderFallback } from "@/lib/ai-resolver.server";
 import { computeNumerology, numLabel, numTitle, formatBirthDateBR, NUMBER_MEANINGS } from "@/lib/numerology";
 import type { SimplePdfBlock } from "@/lib/simple-pdf";
 import { buildPersonalityNumerologyBlocks } from "@/lib/numerology-personality-report";
@@ -54,12 +54,7 @@ export async function buildAiPersonalityNumerologyBlocks(
   const headline =
     `Caminho ${numLabel(num.life_path)} · Destino ${numLabel(num.destiny)} · Alma ${numLabel(num.soul_urge)} · Personalidade ${numLabel(num.personality)}`;
 
-  let makeModel: (hint?: string | null) => any;
-  try {
-    ({ model: makeModel } = await getConfiguredProvider(null, null));
-  } catch {
-    return buildPersonalityNumerologyBlocks(fullName, birthDate);
-  }
+  // provider resolvido via runWithProviderFallback abaixo
 
   const numBlock = [
     `Caminho de Vida ${numLabel(num.life_path)} (${numTitle(num.life_path)}) — ${NUMBER_MEANINGS[num.life_path ?? 0]?.essence ?? ""}`,
@@ -102,29 +97,27 @@ Devolva APENAS um JSON válido (sem markdown, sem comentários) com esta estrutu
   "summary": "300+ caracteres sintetizando o eixo central da personalidade de ${firstName}"
 }`;
 
-  const models = ["google/gemini-2.5-flash", "google/gemini-3-flash-preview"];
-
   let parsed: Report | null = null;
-  for (const modelId of models) {
-    try {
-      const { text } = await generateText({
-        model: makeModel(modelId),
+  try {
+    const { result: text } = await runWithProviderFallback(
+      null, null,
+      async (model) => (await generateText({
+        model,
         system,
         prompt,
         abortSignal: AbortSignal.timeout(90_000),
         maxRetries: 0,
-      });
-      const jsonStr = extractJson(text);
-      if (!jsonStr) continue;
+      })).text,
+      { modelHint: "google/gemini-2.5-flash" },
+    );
+    const jsonStr = extractJson(text);
+    if (jsonStr) {
       const obj = JSON.parse(jsonStr);
       const validated = ReportSchema.safeParse(obj);
-      if (validated.success) {
-        parsed = validated.data;
-        break;
-      }
-    } catch (e) {
-      console.error(`[numerology-ai] model=${modelId} failed`, e instanceof Error ? e.message : e);
+      if (validated.success) parsed = validated.data;
     }
+  } catch (e) {
+    console.error(`[numerology-ai] all providers failed`, e instanceof Error ? e.message : e);
   }
 
   if (!parsed) {

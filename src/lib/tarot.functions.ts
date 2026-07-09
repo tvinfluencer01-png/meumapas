@@ -3,7 +3,7 @@ import { z } from "zod";
 import { generateText } from "ai";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { getConfiguredProvider } from "@/lib/ai-resolver.server";
+import { runWithProviderFallback } from "@/lib/ai-resolver.server";
 import {
   consumeCredits,
   refundCredits,
@@ -64,8 +64,7 @@ export const generateTarotReading = createServerFn({ method: "POST" })
       const draw = drawSpread(data.spread);
       const spread = SPREADS[data.spread];
 
-      const { model: makeModel } = await getConfiguredProvider(context.supabase, context.userId, { addonId: "sub_astrologer_numerologist" });
-      const model = makeModel("google/gemini-2.5-flash");
+      // model é injetado pelo runWithProviderFallback abaixo
 
       const cardsBlock = draw
         .map((c, i) => {
@@ -97,7 +96,11 @@ Responda APENAS com JSON válido (sem cercas de código):
 }
 A lista "perCard" deve ter EXATAMENTE ${draw.length} item(ns), na MESMA ordem das cartas sorteadas acima.`;
 
-      const { text } = await generateText({ model, system, prompt });
+      const { result: text } = await runWithProviderFallback(
+        context.supabase, context.userId,
+        async (model) => (await generateText({ model, system, prompt })).text,
+        { addonId: "sub_astrologer_numerologist", modelHint: "google/gemini-2.5-flash" },
+      );
 
       let jsonStr = text.trim();
       const fence = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);

@@ -3,7 +3,7 @@ import { z } from "zod";
 import { generateText } from "ai";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { getConfiguredProvider } from "@/lib/ai-resolver.server";
+import { runWithProviderFallback } from "@/lib/ai-resolver.server";
 import {
   consumeCredits,
   refundCredits,
@@ -55,8 +55,7 @@ export const generateKabbalahMeditation = createServerFn({ method: "POST" })
       const sef = findSefirah(data.sefirah);
       if (!sef) throw new Error("Sefirá inválida.");
 
-      const { model: makeModel } = await getConfiguredProvider(context.supabase, context.userId, { addonId: "sub_astrologer_numerologist" });
-      const model = makeModel("google/gemini-2.5-flash");
+      // model injetado pelo runWithProviderFallback
 
       const system = `Você é um **mestre cabalista contemporâneo** que guia meditações na Árvore da Vida.
 Escreva em PT-BR, tom reverente mas acessível, em segunda pessoa ("Respire fundo...", "Sinta...").
@@ -85,7 +84,11 @@ Responda APENAS com JSON válido (sem cercas de código):
 A soma dos "duration_min" das fases deve ser aproximadamente ${data.duration_min - 2}.
 A lista "phases" deve ter entre 3 e 5 itens, cada um focado em um aspecto da sefirá ${sef.name}.`;
 
-      const { text } = await generateText({ model, system, prompt });
+      const { result: text } = await runWithProviderFallback(
+        context.supabase, context.userId,
+        async (model) => (await generateText({ model, system, prompt })).text,
+        { addonId: "sub_astrologer_numerologist", modelHint: "google/gemini-2.5-flash" },
+      );
 
       let jsonStr = text.trim();
       const fence = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);

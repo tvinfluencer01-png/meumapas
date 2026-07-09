@@ -3,7 +3,7 @@
 // com raciocínio LLM opcional via provedores IA configurados no sistema.
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { getConfiguredProvider } from "@/lib/ai-resolver.server";
+import { runWithProviderFallback } from "@/lib/ai-resolver.server";
 import { generateText } from "ai";
 
 type Signal = { code: string; weight: number; detail?: string };
@@ -56,13 +56,16 @@ async function collectSignals(input: FraudInput): Promise<Signal[]> {
 async function aiReasoning(input: FraudInput, signals: Signal[]): Promise<string | null> {
   if (signals.length === 0) return null;
   try {
-    const { model: makeModel } = await getConfiguredProvider(supabaseAdmin, null);
-    const { text } = await generateText({
-      model: makeModel("google/gemini-2.5-flash"),
-      system: "Você é um analista antifraude. Responda em até 2 frases em português.",
-      prompt: `Sinais detectados: ${JSON.stringify(signals)}. Contexto: ${JSON.stringify(input).slice(0, 400)}. Explique o risco.`,
-    });
-    return text.trim() || null;
+    const { result } = await runWithProviderFallback(
+      supabaseAdmin, null,
+      async (model) => (await generateText({
+        model,
+        system: "Você é um analista antifraude. Responda em até 2 frases em português.",
+        prompt: `Sinais detectados: ${JSON.stringify(signals)}. Contexto: ${JSON.stringify(input).slice(0, 400)}. Explique o risco.`,
+      })).text,
+      { modelHint: "google/gemini-2.5-flash" },
+    );
+    return result.trim() || null;
   } catch { return null; }
 }
 
