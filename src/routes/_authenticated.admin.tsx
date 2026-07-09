@@ -1776,6 +1776,26 @@ function BackupAdmin() {
     onError: (e: Error) => toast.error(`Falha na sincronização: ${e.message}`),
   });
 
+  const schemaMut = useMutation({
+    mutationFn: (dryRun: boolean) => schemaFn({ data: { dryRun } }),
+    onSuccess: (res) => {
+      const r = res.report;
+      const parts: string[] = [];
+      if (r.tablesCreated.length) parts.push(`${r.tablesCreated.length} tabela(s)`);
+      if (r.columnsAdded.length) parts.push(`${r.columnsAdded.length} coluna(s)`);
+      if (r.enumsCreated.length) parts.push(`${r.enumsCreated.length} enum(s)`);
+      if (r.enumLabelsAdded.length) parts.push(`${r.enumLabelsAdded.length} label(s) de enum`);
+      const summary = parts.length ? parts.join(", ") : "nenhuma diferença";
+      if (res.dryRun) {
+        toast.info(`Prévia: ${summary}. ${res.statements.length} instrução(ões) pendente(s).`);
+        console.log("[schema-sync] pendentes:\n" + res.statements.join("\n"));
+      } else {
+        toast.success(`Schema sincronizado: ${summary}.`);
+      }
+    },
+    onError: (e: Error) => toast.error(`Falha no schema: ${e.message}`),
+  });
+
   const effectiveStrategy = strategy === "auto" ? (status?.suggestion ?? "full_replace") : strategy;
 
   return (
