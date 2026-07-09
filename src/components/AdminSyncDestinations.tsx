@@ -50,6 +50,7 @@ export function AdminSyncDestinations() {
   const deleteFn = useServerFn(deleteSyncDestination);
   const remapFn = useServerFn(remapDestinationUrls);
   const testFn = useServerFn(testSyncDestination);
+  const verifyFn = useServerFn(verifyRemapDestination);
 
   const { data, isLoading } = useQuery({
     queryKey: ["sync-destinations"],
