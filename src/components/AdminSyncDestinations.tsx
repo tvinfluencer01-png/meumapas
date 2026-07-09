@@ -164,6 +164,24 @@ export function AdminSyncDestinations() {
               </div>
             ))
           )}
+          {testResult && (
+            <div className="rounded-lg border border-border bg-muted/20 p-3 text-xs space-y-1">
+              <div className="flex items-center gap-2">
+                {testResult.ok ? <CheckCircle2 className="size-4 text-green-500" /> : <XCircle className="size-4 text-red-500" />}
+                <span className="font-medium">
+                  Teste de "{testResult.destination.name}" — {testResult.ok ? "todos os checks passaram" : "falhas detectadas"}
+                </span>
+              </div>
+              <ul className="space-y-0.5 pl-6">
+                {testResult.checks.map((c: any, i: number) => (
+                  <li key={i} className="flex items-start gap-2">
+                    {c.ok ? <CheckCircle2 className="size-3.5 text-green-500 mt-0.5" /> : <XCircle className="size-3.5 text-red-500 mt-0.5" />}
+                    <span><strong>{c.name}</strong>{c.detail ? <span className="text-muted-foreground"> — {c.detail}</span> : null}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </CardContent>
       </Card>
 
