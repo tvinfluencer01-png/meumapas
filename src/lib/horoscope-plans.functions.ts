@@ -224,6 +224,20 @@ export const adminListHoroscopePlans = createServerFn({ method: "GET" })
     return { plans: data ?? [] };
   });
 
+export const adminListHoroscopePaidLeads = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context as any);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data } = await (supabaseAdmin as any)
+      .from("horoscope_paid_subscriptions")
+      .select("id, user_id, status, email, phone_e164, created_at, activated_at, cancelled_at, current_period_end, plan:horoscope_plans(name, slug, price_cents, billing_cycle)")
+      .order("created_at", { ascending: false })
+      .limit(500);
+    return { leads: data ?? [] };
+  });
+
+
 const UpsertSchema = z.object({
   id: z.string().uuid().nullable().optional(),
   slug: z.string().trim().min(2).max(60).regex(/^[a-z0-9-]+$/),
