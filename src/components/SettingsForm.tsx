@@ -279,7 +279,28 @@ export function SettingsForm() {
     setProviderBusy((b) => ({ ...b, [id]: "testing" }));
     setProviderStatus((s) => ({ ...s, [id]: null }));
     try {
-      const res = await testProviderFn({ data: { provider: id as ChatProviderId, key: key ?? null, model: model ?? null } });
+      let res = await testProviderFn({ data: { provider: id as ChatProviderId, key: key ?? null, model: model ?? null } });
+      // Gemini free-tier: se o modelo escolhido caiu por cota/indisponibilidade,
+      // tenta novamente com o modelo estável de maior compatibilidade.
+      if (
+        !res.ok &&
+        id === "google" &&
+        (model ?? "") !== "gemini-2.0-flash" &&
+        /(limite|indispon|timeout|inválida)/i.test(res.message)
+      ) {
+        const retry = await testProviderFn({ data: { provider: "google" as ChatProviderId, key: key ?? null, model: "gemini-2.0-flash" } });
+        if (retry.ok) {
+          setForm((f) => ({
+            ...f,
+            ai_providers_config: {
+              ...f.ai_providers_config,
+              google: { ...(f.ai_providers_config.google ?? {}), model: "gemini-2.0-flash" },
+            },
+          }));
+          toast.info("Gemini: usando gemini-2.0-flash (mais estável no free tier)");
+          res = retry;
+        }
+      }
       setProviderStatus((s) => ({ ...s, [id]: { ok: res.ok, message: res.message } }));
       res.ok ? toast.success(`${id}: ${res.message}`) : toast.error(`${id}: ${res.message}`);
     } finally {
