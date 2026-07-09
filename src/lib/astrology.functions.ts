@@ -287,7 +287,7 @@ async function buildHoroscopeReading(params: {
         generateText({ model, prompt }),
         new Promise<never>((_, rej) => setTimeout(() => rej(new Error("horoscope timeout")), 12_000)),
       ])).text,
-      { addonId: "sub_astrologer_numerologist", modelHint: "google/gemini-3-flash-preview" },
+      { addonId: "sub_astrologer_numerologist" },
     );
     const cleaned = text.trim();
     return cleaned.length > 40 ? cleaned : fallback;

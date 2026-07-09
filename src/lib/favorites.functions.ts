@@ -143,7 +143,7 @@ Regras:
     const { result } = await runWithProviderFallback(
       supabase, userId,
       async (model) => (await generateText({ model, prompt })).text,
-      { addonId: "sub_astrologer_numerologist", modelHint: "google/gemini-3-flash-preview" },
+      { addonId: "sub_astrologer_numerologist" },
     );
     const note = result.trim().replace(/^["']|["']$/g, "").slice(0, 280);
 

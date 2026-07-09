@@ -157,7 +157,7 @@ Regras de formato de saída (siga LITERALMENTE):
     const { result } = await runWithProviderFallback(
       null, null,
       async (model) => (await generateText({ model, system, prompt })).text,
-      { modelHint: "google/gemini-3-flash-preview" },
+      undefined,
     );
     text = (result ?? "").trim();
   } catch (e) {
