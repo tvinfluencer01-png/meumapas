@@ -289,7 +289,7 @@ export function SettingsForm() {
       ) {
         // 1) Descobre modelos realmente disponíveis para ESTA chave
         const listed = await listModelsFn({ data: { provider: "google" as ChatProviderId, key: key ?? null } });
-        const available = listed.ok ? listed.models : [];
+        const available: string[] = listed.ok ? (listed.models as string[]) : [];
         // 2) Prioriza estáveis conhecidos que existem na chave, depois qualquer "flash" retornado
         const preferred = [
           "gemini-1.5-flash",
@@ -302,7 +302,7 @@ export function SettingsForm() {
         ];
         const inKey = (m: string) => available.length === 0 || available.includes(m);
         const dynamicFlash = available.filter(
-          (m) => /gemini/i.test(m) && /flash/i.test(m) && !/preview|exp|thinking|vision|image/i.test(m),
+          (m: string) => /gemini/i.test(m) && /flash/i.test(m) && !/preview|exp|thinking|vision|image/i.test(m),
         );
         const candidates = Array.from(
           new Set([...preferred.filter(inKey), ...dynamicFlash]),
