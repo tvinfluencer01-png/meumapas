@@ -322,6 +322,12 @@ function AdminDashboard() {
                           <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.9)]" />
                         </span>
                       )}
+                      {item.value === "horoscope-leads" && newHoroscopeLeadsCount > 0 && (
+                        <span className="relative inline-flex" title={`${newHoroscopeLeadsCount} novo(s) lead(s) grátis`}>
+                          <span className="absolute inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500 opacity-75 animate-ping" />
+                          <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.9)]" />
+                        </span>
+                      )}
                       {isActive && <span className="size-1.5 rounded-full bg-gold shadow-[0_0_6px_rgba(212,175,55,0.8)]" />}
                     </button>
                   );
