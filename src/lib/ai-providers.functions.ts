@@ -140,7 +140,7 @@ function friendlyError(raw: string): string {
   if (s.includes("timeout")) return "Tempo esgotado (timeout)";
   if (s.includes("429") || s.includes("rate") || s.includes("quota") || s.includes("limit")) return "Limite de uso atingido";
   if (s.includes("401") || s.includes("403") || s.includes("unauthor") || s.includes("invalid") && s.includes("key") || s.includes("api key")) return "Chave inválida ou sem permissão";
-  if (s.includes("404")) return "Endpoint indisponível";
+  if (s.includes("404") || s.includes("not found") || s.includes("não encontrado") || s.includes("recurso")) return "Modelo/endpoint não disponível para esta chave";
   if (s.includes("500") || s.includes("502") || s.includes("503") || s.includes("504") || s.includes("unavail")) return "Serviço indisponível";
   if (s.includes("network") || s.includes("fetch") || s.includes("enotfound") || s.includes("econnrefused")) return "Falha de rede";
   return raw;
