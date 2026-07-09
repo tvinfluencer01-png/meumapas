@@ -204,15 +204,37 @@ async function listTablesWithMeta() {
     .map((r) => r.table_name as string)
     .filter((t) => !SYNC_IGNORE.has(t));
 
-  const meta: Array<{ table: string; hasUpdatedAt: boolean; pk: string[] }> = [];
+  const meta: Array<{ table: string; hasUpdatedAt: boolean; pk: string[]; userCol: string | null }> = [];
   for (const table of tables) {
     const { data: cols } = await supabaseAdmin.rpc("get_table_structure", { t_name: table });
     const colsArr = (cols as any[]) ?? [];
     const hasUpdatedAt = colsArr.some((c) => c.column_name === "updated_at");
     const pk = colsArr.filter((c) => c.is_primary_key).map((c) => c.column_name as string);
-    meta.push({ table, hasUpdatedAt, pk });
+    const colNames = new Set(colsArr.map((c: any) => c.column_name as string));
+    // Coluna que identifica o "dono" do registro — usada para excluir o super admin da sync/export
+    let userCol: string | null = null;
+    if (table === "profiles") userCol = "id";
+    else if (colNames.has("user_id")) userCol = "user_id";
+    meta.push({ table, hasUpdatedAt, pk, userCol });
   }
   return meta;
+}
+
+// Super admin cujos dados NÃO devem ser exportados nem sincronizados para o novo banco.
+const SUPER_ADMIN_EMAIL = (process.env.SUPER_ADMIN_EMAIL || "sac@ms3.com.br").toLowerCase();
+let _superAdminIdCache: string | null | undefined;
+async function getSuperAdminUserId(): Promise<string | null> {
+  if (_superAdminIdCache !== undefined) return _superAdminIdCache;
+  try {
+    for (let page = 1; page <= 20; page++) {
+      const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 200 });
+      if (error) break;
+      const found = data.users.find((u) => (u.email ?? "").toLowerCase() === SUPER_ADMIN_EMAIL);
+      if (found) return (_superAdminIdCache = found.id);
+      if (data.users.length < 200) break;
+    }
+  } catch { /* ignore */ }
+  return (_superAdminIdCache = null);
 }
 
 export const getSyncStatus = createServerFn({ method: "GET" })
