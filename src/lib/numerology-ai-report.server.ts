@@ -97,29 +97,27 @@ Devolva APENAS um JSON válido (sem markdown, sem comentários) com esta estrutu
   "summary": "300+ caracteres sintetizando o eixo central da personalidade de ${firstName}"
 }`;
 
-  const models = ["google/gemini-2.5-flash", "google/gemini-3-flash-preview"];
-
   let parsed: Report | null = null;
-  for (const modelId of models) {
-    try {
-      const { text } = await generateText({
-        model: makeModel(modelId),
+  try {
+    const { result: text } = await runWithProviderFallback(
+      null, null,
+      async (model) => (await generateText({
+        model,
         system,
         prompt,
         abortSignal: AbortSignal.timeout(90_000),
         maxRetries: 0,
-      });
-      const jsonStr = extractJson(text);
-      if (!jsonStr) continue;
+      })).text,
+      { modelHint: "google/gemini-2.5-flash" },
+    );
+    const jsonStr = extractJson(text);
+    if (jsonStr) {
       const obj = JSON.parse(jsonStr);
       const validated = ReportSchema.safeParse(obj);
-      if (validated.success) {
-        parsed = validated.data;
-        break;
-      }
-    } catch (e) {
-      console.error(`[numerology-ai] model=${modelId} failed`, e instanceof Error ? e.message : e);
+      if (validated.success) parsed = validated.data;
     }
+  } catch (e) {
+    console.error(`[numerology-ai] all providers failed`, e instanceof Error ? e.message : e);
   }
 
   if (!parsed) {
