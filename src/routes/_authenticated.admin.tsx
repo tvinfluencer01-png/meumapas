@@ -1735,6 +1735,7 @@ function BackupAdmin() {
   const statusFn = useServerFn(getSyncStatus);
   const syncFn = useServerFn(syncToNewDatabase);
   const schemaFn = useServerFn(syncSchemaToNewDatabase);
+  const rlsFn = useServerFn(syncRlsPoliciesToNewDatabase);
   const qc = useQueryClient();
   const [strategy, setStrategy] = useState<"auto" | "incremental" | "upsert_all" | "full_replace">("auto");
 
