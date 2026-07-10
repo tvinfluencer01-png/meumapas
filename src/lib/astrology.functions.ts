@@ -1263,7 +1263,14 @@ R6. Similaridade semântica entre seções não pode passar de 60%.
 R7. Listas "tips"/"avoid" variam em quantidade e formato entre capítulos.
 R8. Mantenha personalização profunda e humana; quebre padrões de template imediatamente.
 R9. Não reduza extensão — aumente a diversidade textual.
-R10. Se uma seção anterior falou de um tema, a próxima deve mudar o ângulo, a cena, os verbos, as metáforas e o campo de aplicação. Não basta trocar sinônimos.`;
+R10. Se uma seção anterior falou de um tema, a próxima deve mudar o ângulo, a cena, os verbos, as metáforas e o campo de aplicação. Não basta trocar sinônimos.
+R21. É proibido reutilizar introduções, conclusões, perguntas reflexivas, profecias simbólicas ou blocos de oportunidade entre capítulos ou dias diferentes.
+R22. As seções "Dinheiro", "Saúde", "Propósito", "Carreira", "Família", "Espiritualidade", "Amizades" e "Sombras" devem começar diretamente pela interpretação astrológica específica daquela área (planeta regente + signo + casa + aspecto), sem qualquer texto introdutório padrão. Nada de "Esta área é interpretada a partir do desenho do seu mapa" ou variações. A estrutura fixa "Introdução → Oportunidade → Faça isto → Evite isto" está proibida: cada área escolhe 2 dos 4 blocos e varia a ordem.
+R23. Cada dia do calendário deve ser construído pela combinação: FASE DA LUA + NÚMERO PESSOAL + PLANETA EM TRÂNSITO + ASPECTO DO MAPA NATAL + TEMA DO DIA. Nunca reaproveite molde do dia anterior.
+R24. Nenhuma pergunta reflexiva pode aparecer mais de duas vezes em todo o documento.
+R25. Cada profecia simbólica precisa ser completamente inédita; nunca reutilize a mesma imagem entre dias ou seções.
+R26. O bloco de 30 dias e o de próximos 7 dias devem conter no mínimo dez estruturas narrativas diferentes, alternando entre: conselho, metáfora, pergunta, ritual, alerta, observação psicológica, desafio, exercício, símbolo e narrativa curta. Nunca duas iguais em sequência.
+R27. Frases-âncora banidas em qualquer parte do documento: "Aproveite para alinhar uma decisão", "Espere: cansaço produtivo", "uma resposta que parecia distante começa a se aproximar", "escolher uma prioridade e cuidar do corpo antes de responder", "uma porta discreta se abre", "prometer mais do que consegue sustentar", "sinais pequenos, mensagens, atrasos ou convites", "Há oportunidade concreta de agir com mais clareza", "Esta área é interpretada a partir do desenho do seu mapa".`;
 
   const chartBlock = `Data de referência: ${todayStr} · Semana: ${week.start} a ${week.end} · Mês: ${monthLabel} · Ano: ${yearLabel}.
 
