@@ -1895,9 +1895,8 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
 
         const iso = d.toISOString().slice(0, 10);
         const pd = birthISO ? personalDayNumber(iso, birthISO) : null;
-        const pdLabel = pd != null ? `nº ${pd} · ${personalDayVibe(pd)}` : "número pessoal indisponível";
         const dateStr = d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", weekday: "short" });
-        moonRows.push({ k: dateStr, v: `${moonLabel} · ${pdLabel}` });
+        moonRows.push({ k: dateStr, v: detailedDayGuidance(d, moonLabel, pd, chart) });
       }
       blocks.push({ type: "kv", rows: moonRows });
 
@@ -1921,12 +1920,28 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
       // ============================================================
       // CROSS-PROMOÇÃO — rotaciona outro serviço nosso
       // ============================================================
-      const promo = await pickCrossPromotionForReport("astro_map");
+      const promo = await pickCrossPromotionForReport("mapa_astral");
       if (promo) {
         blocks.push({ type: "page-break" });
         blocks.push({ type: "h2", text: "Continue sua jornada com o Código Cósmico", pageBreak: false });
         if (promo.title) blocks.push({ type: "h3", text: promo.title });
         blocks.push({ type: "p", text: promo.body });
+        if (promo.heroImageUrl) {
+          const image = await fetchImageAsBase64(promo.heroImageUrl);
+          if (image) {
+            blocks.push({
+              type: "image",
+              pngB64: image.b64,
+              mime: image.mime,
+              maxHeight: 330,
+              caption: promo.productTitle ? `Imagem do produto: ${promo.productTitle}` : "Imagem do produto recomendado",
+              linkUrl: promo.productUrl,
+            });
+          }
+        }
+        if (promo.productUrl) {
+          blocks.push({ type: "link", label: promo.productTitle ? `Abrir ${promo.productTitle}` : "Abrir produto recomendado", url: promo.productUrl });
+        }
       }
 
 
