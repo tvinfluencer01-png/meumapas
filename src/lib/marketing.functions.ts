@@ -25,6 +25,13 @@ export type MarketingMessage = {
   updated_at: string;
 };
 
+type MarketingLandingPick = {
+  title: string;
+  slug: string;
+  hero_image_url: string | null;
+  report_type: string;
+};
+
 export const listMarketingMessages = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -156,7 +163,7 @@ export async function pickCrossPromotionForReport(
       if (pick < 0) { chosen = rows[i]!; break; }
     }
     const serviceCandidates = (chosen.services ?? []).filter((s) => s && s !== excludeService);
-    let landing: { title: string; slug: string; hero_image_url: string | null; report_type: string } | null = null;
+    let landing: MarketingLandingPick | null = null;
 
     if (serviceCandidates.length > 0) {
       const { data: preferred } = await supabaseAdmin
@@ -166,7 +173,7 @@ export async function pickCrossPromotionForReport(
         .in("report_type", serviceCandidates)
         .limit(1)
         .maybeSingle();
-      landing = preferred as typeof landing;
+      landing = (preferred ?? null) as MarketingLandingPick | null;
     }
 
     if (!landing) {
@@ -178,7 +185,7 @@ export async function pickCrossPromotionForReport(
         .order("updated_at", { ascending: false })
         .limit(1)
         .maybeSingle();
-      landing = anyLanding as typeof landing;
+      landing = (anyLanding ?? null) as MarketingLandingPick | null;
     }
 
     const siteUrl = (process.env.PUBLIC_SITE_URL || process.env.SITE_URL || "https://codigocosmico.com.br").replace(/\/+$/, "");
