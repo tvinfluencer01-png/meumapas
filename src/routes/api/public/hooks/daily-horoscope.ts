@@ -389,7 +389,7 @@ async function handler({ request }: { request: Request }) {
             secure: !!smtp.secure,
             auth: { user: smtp.username, pass: smtp.password },
           });
-          const html = `<div style="font-family:Arial,sans-serif;line-height:1.55;color:#222;max-width:640px;margin:0 auto;padding:16px"><h2 style="color:#6b21a8;margin:0 0 12px">🌌 Horóscopo de hoje — ${s.sun_sign}</h2><div style="white-space:pre-wrap">${body.replace(/</g, "&lt;")}</div><hr style="margin:20px 0;border:none;border-top:1px solid #eee"/><div style="color:#555;font-size:13px;white-space:pre-wrap">${footer.replace(/</g, "&lt;")}</div></div>`;
+          const html = `<div style="font-family:Arial,sans-serif;line-height:1.6;color:#222;max-width:640px;margin:0 auto;padding:16px"><h2 style="color:#6b21a8;margin:0 0 16px">🌌 Horóscopo de hoje — ${s.sun_sign}</h2>${formatHoroscopeHtml(body)}<hr style="margin:24px 0;border:none;border-top:1px solid #eee"/><div style="color:#555;font-size:13px">${formatHoroscopeHtml(footer, true)}</div></div>`;
           await transporter.sendMail({
             from: `"${smtp.from_name || smtp.from_email}" <${smtp.from_email}>`,
             to: s.email,
