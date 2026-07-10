@@ -58,96 +58,190 @@ const PLANET_AREA: Record<string, string> = {
   Netuno: "seus sonhos, sua espiritualidade, a arte e o que pede intuição",
   Plutão: "suas transformações profundas, o seu poder pessoal e o que precisa morrer para renascer",
 };
-const SIGN_TONE: Record<string, string> = {
-  "Áries": "com pressa, coragem e vontade de resolver tudo agora",
-  "Touro": "com calma, prazer sensorial e vontade de construir com segurança",
-  "Gêmeos": "com curiosidade, muitas ideias e conversas ao mesmo tempo",
-  "Câncer": "com sensibilidade, memória afetiva e cuidado com quem é da família",
-  "Leão": "com brilho, generosidade e vontade de ser reconhecido",
-  "Virgem": "com atenção aos detalhes, senso prático e vontade de melhorar tudo",
-  "Libra": "com diplomacia, estética e olhar constante para o outro",
-  "Escorpião": "com intensidade, profundidade e um pouco de segredo",
-  "Sagitário": "com entusiasmo, fé e vontade de expandir horizontes",
-  "Capricórnio": "com seriedade, ambição madura e responsabilidade",
-  "Aquário": "com originalidade, independência e visão de futuro",
-  "Peixes": "com sensibilidade, sonho e vontade de servir",
-};
-const SIGN_EVENTS: Record<string, string> = {
-  "Áries": "situações que exigem decisão rápida, novos começos, disputas e desafios que testam sua coragem",
-  "Touro": "movimentos financeiros lentos porém firmes, decisões sobre casa/corpo/dinheiro e pessoas pedindo segurança sua",
-  "Gêmeos": "conversas importantes, propostas por mensagem, viagens curtas e muita informação chegando ao mesmo tempo",
-  "Câncer": "temas de família, casa, mãe e cuidado com quem você ama voltando à tona",
-  "Leão": "convites para se expor, projetos criativos, chances de assumir a liderança e receber reconhecimento",
-  "Virgem": "revisão de rotina, saúde, trabalho e a necessidade de organizar detalhes que estavam pendentes",
-  "Libra": "questões de relacionamento, parcerias, contratos e a busca por acordos justos",
-  "Escorpião": "verdades vindo à tona, temas de intimidade, dinheiro compartilhado e transformações silenciosas",
-  "Sagitário": "oportunidades de estudo, viagens, publicação e conversas que ampliam sua visão",
-  "Capricórnio": "movimentos de carreira, cobranças de resultado e a chance de assumir mais responsabilidade",
-  "Aquário": "amizades novas, projetos coletivos, ideias fora da caixa e desejo de sair de um formato antigo",
-  "Peixes": "sinais sutis, sonhos reveladores, sensibilidade à flor da pele e momentos que pedem recolhimento",
-};
-const SIGN_TIP: Record<string, string> = {
-  "Áries": "escolher UMA prioridade por vez e respirar três vezes antes de reagir",
-  "Touro": "planejar mudanças pequenas em passos concretos e cuidar do corpo e da carteira",
-  "Gêmeos": "escrever o que precisa decidir antes de conversar e filtrar o excesso de informação",
-  "Câncer": "cuidar primeiro do seu próprio ninho, colocar a casa em ordem e pedir ajuda quando precisar",
-  "Leão": "brilhar servindo algo maior que você e agradecer publicamente quem te ajudou",
-  "Virgem": "aceitar o bom no lugar do perfeito, organizar a agenda e reservar tempo para descansar sem culpa",
-  "Libra": "tomar decisões mesmo sem consenso, escrever contratos claros e escutar o próprio desejo",
-  "Escorpião": "conversar sobre o que dói antes que vire ressentimento e soltar o controle em uma área",
-  "Sagitário": "aterrar a visão em um cronograma real e cumprir o que promete, sem exageros",
-  "Capricórnio": "combinar disciplina com pausas de prazer e delegar o que você não precisa carregar sozinho",
-  "Aquário": "aproximar-se emocionalmente das pessoas importantes e traduzir suas ideias em passos práticos",
-  "Peixes": "criar estrutura (agenda, limites, horários) para proteger sua sensibilidade e sua energia",
-};
-const SIGN_WARN: Record<string, string> = {
-  "Áries": "decidir no impulso, brigar por qualquer coisa e começar mais do que consegue terminar",
-  "Touro": "teimosia, apego a situações que já deram o que tinham de dar e gastos por conforto",
-  "Gêmeos": "dispersão, promessas leves demais e conversas que não viram ação",
-  "Câncer": "carregar mágoa em silêncio, se anular pelo outro e evitar conflitos necessários",
-  "Leão": "levar tudo para o pessoal, brigar por reconhecimento e dramatizar",
-  "Virgem": "autocrítica dura, preocupação excessiva e paralisar por medo de errar",
-  "Libra": "adiar decisões, agradar demais e esconder o que sente para manter a paz",
-  "Escorpião": "controlar, cortar vínculos no calor e alimentar ciúme ou desconfiança",
-  "Sagitário": "prometer demais, gastar demais e fugir de responsabilidades chatas",
-  "Capricórnio": "endurecer, se cobrar em excesso e adiar o prazer para depois",
-  "Aquário": "esfriar quem te ama, discutir por teimosia e romper por reflexo",
-  "Peixes": "fugir da realidade, se colocar como vítima e deixar que passem por cima dos seus limites",
+type SignNarrative = {
+  rhythm: string[];
+  concrete: string[];
+  medicine: string[];
+  shadow: string[];
 };
 
-function planetSignReading(planet: string, sign: string): {
+const SIGN_NARRATIVE: Record<string, SignNarrative> = {
+  "Áries": {
+    rhythm: ["arranque, franqueza e coragem imediata", "impulso de abrir caminhos sem esperar licença", "ação direta quando algo precisa nascer"],
+    concrete: ["decisões rápidas, disputas e recomeços visíveis", "situações que pedem iniciativa antes de garantia", "testes de coragem, autonomia e presença"],
+    medicine: ["escolher uma prioridade por vez", "respirar antes de transformar urgência em briga", "usar a força para proteger, não para atropelar"],
+    shadow: ["pressa que corta etapas importantes", "competição por qualquer motivo", "começar mais do que consegue sustentar"],
+  },
+  "Touro": {
+    rhythm: ["constância, presença e decisões amadurecidas aos poucos", "escuta do corpo e respeito ao valor real das coisas", "construção paciente antes de qualquer salto"],
+    concrete: ["segurança, dinheiro, conforto e lealdade na mesma conversa", "o corpo pedindo ritmo e as finanças pedindo critério", "uma escolha simples precisando provar valor no cotidiano"],
+    medicine: ["transformar estabilidade em base viva", "negociar tempo, preço e afeto com honestidade", "fazer do prazer uma disciplina, não uma fuga"],
+    shadow: ["resistência a mudar só para não perder controle", "conforto usado como desculpa para adiar movimento", "posse, rigidez ou silêncio acumulado"],
+  },
+  "Gêmeos": {
+    rhythm: ["mobilidade mental, perguntas e conexões rápidas", "troca de ideias antes de formar conclusão", "curiosidade que aprende conversando"],
+    concrete: ["mensagens, estudos, deslocamentos curtos e convites simultâneos", "informações cruzadas exigindo filtro", "diálogos que mudam o rumo de uma decisão"],
+    medicine: ["anotar antes de responder", "separar ruído de informação útil", "dar sequência prática ao que foi prometido"],
+    shadow: ["dispersão elegante, mas pouco comprometida", "promessas leves demais", "falar para escapar de sentir"],
+  },
+  "Câncer": {
+    rhythm: ["memória afetiva, proteção e vínculo emocional", "movimento em ondas, conforme o coração se sente seguro", "sensibilidade que percebe o clima antes das palavras"],
+    concrete: ["família, casa, intimidade e cuidado voltando à cena", "necessidades emocionais pedindo nome", "assuntos antigos procurando acolhimento maduro"],
+    medicine: ["cuidar do próprio ninho antes de salvar todos", "pedir ajuda sem transformar afeto em dívida", "separar proteção de controle emocional"],
+    shadow: ["mágoa guardada em silêncio", "anulação para não desagradar", "dependência disfarçada de cuidado"],
+  },
+  "Leão": {
+    rhythm: ["expressão, calor humano e desejo de reconhecimento", "criatividade que precisa aparecer", "presença magnética quando há verdade no gesto"],
+    concrete: ["convites para liderar, criar ou se expor", "momentos em que sua voz ocupa o centro", "situações que testam orgulho e generosidade"],
+    medicine: ["brilhar servindo algo maior", "agradecer quem sustenta os bastidores", "mostrar talento sem transformar tudo em palco"],
+    shadow: ["drama por falta de validação", "orgulho ferido comandando escolhas", "necessidade de aplauso acima da verdade"],
+  },
+  "Virgem": {
+    rhythm: ["precisão, melhoria contínua e atenção ao detalhe", "ordem construída por pequenos ajustes", "discernimento prático diante do caos"],
+    concrete: ["rotina, saúde, trabalho e pendências pedindo método", "detalhes negligenciados cobrando revisão", "tarefas simples revelando onde falta cuidado"],
+    medicine: ["aceitar o bom antes do perfeito", "organizar sem endurecer", "criar descanso dentro da agenda"],
+    shadow: ["autocrítica que paralisa", "preocupação excessiva com falhas", "servir demais e reclamar em silêncio"],
+  },
+  "Libra": {
+    rhythm: ["equilíbrio, negociação e senso estético", "olhar para o outro antes de fechar posição", "busca por harmonia sem perder elegância"],
+    concrete: ["parcerias, contratos, acordos e escolhas compartilhadas", "conversas que pedem justiça e proporção", "relações espelhando desejos não assumidos"],
+    medicine: ["decidir mesmo sem consenso total", "escrever combinados claros", "escutar o próprio desejo antes de agradar"],
+    shadow: ["adiamento para evitar desconforto", "gentileza usada como máscara", "dependência de aprovação"],
+  },
+  "Escorpião": {
+    rhythm: ["intensidade, profundidade e leitura do invisível", "mudança por dentro antes de aparecer por fora", "coragem de tocar o que estava escondido"],
+    concrete: ["verdades vindo à tona, intimidade e dinheiro compartilhado", "rupturas silenciosas que pedem honestidade", "processos de perda, cura e reconstrução"],
+    medicine: ["falar sobre o que dói antes de virar ressentimento", "soltar uma forma de controle", "usar profundidade para curar, não para vigiar"],
+    shadow: ["ciúme, suspeita ou controle emocional", "cortes feitos no calor da defesa", "manipulação por medo de vulnerabilidade"],
+  },
+  "Sagitário": {
+    rhythm: ["expansão, fé e busca por sentido", "horizonte largo, às vezes maior que o plano", "movimento que aprende atravessando fronteiras"],
+    concrete: ["estudos, viagens, publicações e conversas filosóficas", "oportunidades que pedem visão de futuro", "convites para ensinar, aprender ou arriscar mais"],
+    medicine: ["aterrar a visão em calendário", "prometer apenas o que pode cumprir", "transformar entusiasmo em direção"],
+    shadow: ["exagero travestido de confiança", "fuga das tarefas pequenas", "verdade dita sem cuidado"],
+  },
+  "Capricórnio": {
+    rhythm: ["maturidade, estratégia e construção de longo prazo", "realismo que transforma desejo em estrutura", "subida lenta, porém orientada por resultado"],
+    concrete: ["carreira, responsabilidades e cobranças de desempenho", "decisões que pedem compromisso adulto", "autoridades, prazos e metas organizando o caminho"],
+    medicine: ["combinar disciplina com pausas", "delegar o peso que não é só seu", "medir progresso sem esquecer o corpo"],
+    shadow: ["dureza consigo e com os outros", "adiar prazer indefinidamente", "confundir valor pessoal com produtividade"],
+  },
+  "Aquário": {
+    rhythm: ["originalidade, visão coletiva e necessidade de liberdade", "pensamento à frente do ambiente", "ruptura inteligente com formatos antigos"],
+    concrete: ["amizades, redes, tecnologia e projetos coletivos", "ideias fora da caixa pedindo aplicação", "grupos mostrando onde você pertence ou não"],
+    medicine: ["aproximar-se emocionalmente sem perder autonomia", "traduzir ideias em passos práticos", "inovar sem abandonar vínculos importantes"],
+    shadow: ["frieza como defesa", "rompimento por reflexo", "rebeldia que rejeita qualquer limite"],
+  },
+  "Peixes": {
+    rhythm: ["sensibilidade, imaginação e escuta espiritual", "movimento sutil que sente antes de explicar", "compaixão que atravessa fronteiras emocionais"],
+    concrete: ["sonhos, sinais, arte e momentos de recolhimento", "ambientes carregados afetando sua energia", "situações que pedem entrega com discernimento"],
+    medicine: ["criar horários e limites para proteger a energia", "dar forma concreta à inspiração", "ajudar sem desaparecer dentro da dor alheia"],
+    shadow: ["fuga da realidade", "vitimização silenciosa", "limites frouxos que viram cansaço"],
+  },
+};
+
+const PLANET_EXPRESSION: Record<string, { focus: string; scene: string; practice: string; warning: string }> = {
+  Sol: {
+    focus: "a identidade procura uma forma honesta de ocupar espaço",
+    scene: "escolhas de visibilidade, autoestima e direção pessoal",
+    practice: "agir de modo coerente com aquilo que você quer irradiar",
+    warning: "buscar segurança externa para validar quem você já é",
+  },
+  Lua: {
+    focus: "as emoções revelam do que você precisa para se sentir inteiro",
+    scene: "reações íntimas, família, descanso e necessidade de pertencimento",
+    practice: "acolher o sentimento antes de decidir a partir dele",
+    warning: "confundir proteção emocional com repetição de hábito antigo",
+  },
+  Mercúrio: {
+    focus: "a mente busca nomear, negociar e organizar a experiência",
+    scene: "conversas, estudos, contratos, mensagens e rotina de trabalho",
+    practice: "transformar pensamento em palavra clara e depois em método",
+    warning: "usar raciocínio para justificar uma resistência emocional",
+  },
+  Vênus: {
+    focus: "o prazer mostra como você ama, atrai e reconhece valor",
+    scene: "relações afetivas, estética, dinheiro recebido e escolhas de gosto",
+    practice: "cultivar beleza com presença e reciprocidade",
+    warning: "comprar paz, afeto ou conforto para evitar uma conversa necessária",
+  },
+  Marte: {
+    focus: "o desejo decide onde a energia precisa virar atitude",
+    scene: "conflitos, iniciativa, sexualidade, competição e coragem cotidiana",
+    practice: "direcionar força para uma ação concreta e limpa",
+    warning: "reagir para descarregar tensão em vez de escolher uma batalha real",
+  },
+  Júpiter: {
+    focus: "a expansão aparece onde a vida pede confiança e visão maior",
+    scene: "oportunidades, estudos superiores, viagens, fé e crescimento",
+    practice: "unir esperança com compromisso prático",
+    warning: "inflar expectativas sem medir consequências",
+  },
+  Saturno: {
+    focus: "a maturidade indica onde é preciso construir autoridade interna",
+    scene: "responsabilidades, prazos, carreira, limites e cobranças legítimas",
+    practice: "assumir o próximo passo sem transformar disciplina em castigo",
+    warning: "endurecer para parecer forte enquanto adia vulnerabilidades",
+  },
+  Urano: {
+    focus: "a liberdade aponta onde a vida não aceita mais moldes estreitos",
+    scene: "quebras de rotina, inovação, redes, tecnologia e mudanças inesperadas",
+    practice: "renovar o formato sem destruir o que ainda tem vida",
+    warning: "romper por ansiedade antes de entender o recado da mudança",
+  },
+  Netuno: {
+    focus: "a intuição dissolve certezas para abrir uma escuta mais fina",
+    scene: "sonhos, espiritualidade, arte, compaixão e zonas de idealização",
+    practice: "dar contorno ao invisível com rituais, limites e criação",
+    warning: "confundir entrega espiritual com fuga de realidade",
+  },
+  Plutão: {
+    focus: "a transformação revela onde você recupera poder pessoal",
+    scene: "crises, renascimentos, vínculos intensos e verdades profundas",
+    practice: "encarar o que precisa morrer para que a vida volte a circular",
+    warning: "controlar pessoas ou resultados para não tocar a própria ferida",
+  },
+};
+
+function narrativePick(items: string[], planet: string, sign: string, offset = 0): string {
+  if (!items.length) return "um movimento muito particular deste mapa";
+  const seed = [...`${planet}:${sign}:${offset}`].reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+  return items[Math.abs(seed) % items.length];
+}
+
+function degreeNarrative(degree?: number): string {
+  if (typeof degree !== "number" || !Number.isFinite(degree)) return "";
+  if (degree < 10) return "Como está no primeiro decanato, essa força costuma aparecer de maneira mais instintiva e inaugural.";
+  if (degree < 20) return "Por estar na faixa central do signo, essa força tende a buscar consistência antes de mudar de direção.";
+  return "Nos graus finais do signo, a experiência ganha maturidade e pede fechamento consciente de padrões antigos.";
+}
+
+function planetSignReading(planet: string, sign: string, degree?: number): {
   what: string;
   events: string;
   tip: string;
   warn: string;
 } {
   const area = PLANET_AREA[planet] ?? "essa área da sua vida";
-  const tone = SIGN_TONE[sign] ?? "de um jeito muito particular seu";
-  const events = SIGN_EVENTS[sign] ?? "situações que colocam este tema em evidência";
-  const tip = SIGN_TIP[sign] ?? "escutar o que essa energia está pedindo e agir com consciência";
-  const warn = SIGN_WARN[sign] ?? "reagir no automático e repetir padrões antigos";
-  const templates = [
-    {
-      what: `${planet} em ${sign} colore ${area} ${tone}. Não é uma força abstrata: é uma assinatura que muda o modo como você escolhe, deseja e responde quando esse assunto é ativado.`,
-      events: `Esse desenho costuma se revelar em ${events}, principalmente quando você precisa decidir sem ter todas as garantias emocionais na mão.`,
-      tip: `Para cooperar com esse posicionamento, experimente ${tip}.`,
-      warn: `O ponto de atenção é ${warn}, porque esse excesso distorce a melhor expressão de ${planet}.`,
-    },
-    {
-      what: `Quando ${planet} passa pelo filtro de ${sign}, ${area} ganha um ritmo próprio: ${tone}. É como se esta parte da sua vida pedisse uma linguagem específica para funcionar bem.`,
-      events: `Você percebe essa marca em ${events}; observe quais dessas situações aparecem repetidamente nos seus ciclos recentes.`,
-      tip: `Um ajuste simples para esta energia é ${tip}.`,
-      warn: `Evite cair em ${warn}; esse é o atalho que transforma potência em desgaste.`,
-    },
-    {
-      what: `Nesta posição, ${planet} mostra onde ${area} procura expressão. Em ${sign}, essa expressão tende a vir ${tone}, pedindo consciência para não virar piloto automático.`,
-      events: `A manifestação mais visível costuma envolver ${events}, com convites claros para agir de forma mais madura.`,
-      tip: `A prática recomendada aqui é ${tip}.`,
-      warn: `A sombra surge quando você começa a ${warn}; note esse sinal antes que ele escolha por você.`,
-    },
-  ];
-  const index = Math.abs([...`${planet}-${sign}`].reduce((acc, ch) => acc + ch.charCodeAt(0), 0)) % templates.length;
-  return templates[index];
+  const signNarrative = SIGN_NARRATIVE[sign];
+  const planetExpression = PLANET_EXPRESSION[planet] ?? {
+    focus: "esta função interna procura expressão própria",
+    scene: "situações que colocam este tema em evidência",
+    practice: "escutar o que essa energia está pedindo e agir com consciência",
+    warning: "reagir no automático e repetir padrões antigos",
+  };
+  const rhythm = signNarrative ? narrativePick(signNarrative.rhythm, planet, sign, 1) : "um ritmo muito próprio";
+  const concrete = signNarrative ? narrativePick(signNarrative.concrete, planet, sign, 2) : "situações concretas do cotidiano";
+  const medicine = signNarrative ? narrativePick(signNarrative.medicine, planet, sign, 3) : "agir com presença e discernimento";
+  const shadow = signNarrative ? narrativePick(signNarrative.shadow, planet, sign, 4) : "repetição inconsciente de padrões";
+  const degreeNote = degreeNarrative(degree);
+
+  return {
+    what: `${planet} em ${sign} atua sobre ${area}. Neste ponto do mapa, ${planetExpression.focus} por meio de ${rhythm}, criando uma assinatura que não deve ser lida apenas pelo signo, mas pela função específica deste planeta.${degreeNote ? ` ${degreeNote}` : ""}`,
+    events: `Na vida prática, isso aparece em ${planetExpression.scene}; em ${sign}, o cenário costuma envolver ${concrete}. Observe quando esse tema pede presença, porque ali a leitura deixa de ser simbólica e vira escolha concreta.`,
+    tip: `A prática recomendada é ${planetExpression.practice}. Para harmonizar com ${sign}, acrescente este cuidado: ${medicine}.`,
+    warn: `O ponto de sombra surge quando você começa a ${planetExpression.warning}; nesse signo, o excesso pode tomar a forma de ${shadow}. Reconhecer o sinal cedo evita que ele conduza suas decisões por você.`,
+  };
 }
 
 // --- leitura contextual de aspecto (dois planetas + tipo) ------------------
@@ -1482,7 +1576,7 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
       blocks.push({ type: "h2", text: "Cada planeta no seu mapa", pageBreak: false });
       for (const p of planets) {
         const m = PLANET_MEANING[p.name];
-        const reading = planetSignReading(p.name, p.sign);
+        const reading = planetSignReading(p.name, p.sign, p.degree);
         blocks.push({ type: "h3", text: `${m?.title ?? p.name} em ${p.sign} ${p.degree.toFixed(1)}°` });
         blocks.push({
           type: "p",
