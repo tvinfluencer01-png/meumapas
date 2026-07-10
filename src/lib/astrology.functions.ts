@@ -742,7 +742,35 @@ type AstroForecast = {
   antiRepeatVersion?: string;
 };
 
-const ASTRO_ANTI_REPEAT_VERSION = "temporal-calendar-marketing-v5";
+const ASTRO_ANTI_REPEAT_VERSION = "narrative-diversity-v6";
+
+// ------- Helpers determinísticos (R23–R26) -------
+function seedFromChart(chart: { planets: { name: string; sign: string; degree: number }[]; ascendant: number | null; midheaven: number | null }): number {
+  let h = 2166136261;
+  const parts = [
+    ...chart.planets.map((p) => `${p.name}:${p.sign}:${Math.round(p.degree)}`),
+    `asc:${Math.round(chart.ascendant ?? 0)}`,
+    `mc:${Math.round(chart.midheaven ?? 0)}`,
+  ].join("|");
+  for (let i = 0; i < parts.length; i++) {
+    h ^= parts.charCodeAt(i);
+    h = (h * 16777619) >>> 0;
+  }
+  return h >>> 0;
+}
+function pickSeeded<T>(arr: readonly T[], seed: number, offset: number): T {
+  return arr[(seed + offset * 2654435761) % arr.length];
+}
+function shuffleSeeded<T>(arr: readonly T[], seed: number): T[] {
+  const out = arr.slice();
+  let s = (seed || 1) >>> 0;
+  for (let i = out.length - 1; i > 0; i--) {
+    s = (s * 1664525 + 1013904223) >>> 0;
+    const j = s % (i + 1);
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
 
 // Coerce forecast time-window fields (nextDays/week/month/year) into readable
 // text. The LLM sometimes returns a string, sometimes an object shaped like a
@@ -803,14 +831,18 @@ function buildDeterministicTemporalForecast(
 
   if (key === "nextDays") {
     const rows: string[] = [];
+    const seed = seedFromChart(chart);
+    const transits = ["Sol", "Mercúrio", "Vênus", "Marte", "Júpiter", "Saturno", "Lua"];
+    const themes = ["identidade", "vínculos", "trabalho", "corpo", "família", "criação", "silêncio"];
     for (let i = 0; i < 7; i++) {
       const d = new Date(today);
       d.setDate(today.getDate() + i);
       const angle = Astro.MoonPhase(d);
       const phase = moonPhaseLabel(angle);
       const date = d.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" });
-      const verb = i % 4 === 0 ? "iniciar com calma" : i % 4 === 1 ? "organizar pendências" : i % 4 === 2 ? "conversar com clareza" : "encerrar ruídos";
-      rows.push(`${date}: ${phase} colore o dia e conversa com ${moon}. O que fazer: ${verb}, escolher uma prioridade e cuidar do corpo antes de responder no impulso. O que esperar: sinais pequenos, mensagens, atrasos ou convites que mostram onde sua energia realmente está. O que evitar: prometer mais do que consegue sustentar. O que pensar: “qual atitude simples me deixa mais inteiro hoje?”. Profecia simbólica: quando você respeita o ritmo deste dia, uma porta discreta se abre sem precisar forçar.`);
+      const transit = transits[(i + (seed % transits.length)) % transits.length];
+      const theme = themes[(i + Math.floor(seed / 7)) % themes.length];
+      rows.push(dayNarrativeBlock(i, phase, transit, theme, chart, seed, `${date}`));
     }
     return rows.join("\n\n");
   }
@@ -857,17 +889,61 @@ function moonPhaseLabel(angle: number): string {
   return "Lua Minguante";
 }
 
-function detailedDayGuidance(date: Date, moonLabel: string, pd: number | null, chart: { planets: { name: string; sign: string; degree: number }[]; ascendant: number | null; midheaven: number | null }) {
-  const s = chartSignature({ ...chart, aspects: [], summary: null });
-  const vibe = pd != null ? personalDayVibe(pd) : "escuta do momento";
-  const moonAction = moonLabel.includes("Nova") ? "plante uma intenção pequena e concreta" : moonLabel.includes("Crescente") ? "dê andamento ao que já começou" : moonLabel.includes("Cheia") ? "observe resultados e converse com franqueza" : "limpe excessos, descanse e solte cobranças";
-  const pdAction: Record<number, string> = {
-    1: "comece algo sem esperar aprovação perfeita", 2: "escute antes de responder", 3: "expresse uma ideia, mensagem ou criação", 4: "organize agenda, documentos e dinheiro", 5: "mude a rota com leveza", 6: "cuide de casa, corpo e vínculos", 7: "estude, medite e proteja silêncio", 8: "decida com autoridade e ética", 9: "encerre ciclos e doe o que não usa", 11: "confie em uma intuição e registre sinais", 22: "transforme visão em plano", 33: "sirva sem se abandonar",
+// R23/R26: fábrica de 10 formatos narrativos por dia
+type DayFormat = "conselho" | "metafora" | "pergunta" | "ritual" | "alerta" | "psicologica" | "desafio" | "exercicio" | "simbolo" | "narrativa";
+const DAY_FORMATS: readonly DayFormat[] = ["conselho", "metafora", "pergunta", "ritual", "alerta", "psicologica", "desafio", "exercicio", "simbolo", "narrativa"];
+
+function dayNarrativeBlock(
+  index: number,
+  phase: string,
+  transit: string,
+  theme: string,
+  chart: { planets: { name: string; sign: string; degree: number }[]; ascendant: number | null; midheaven: number | null; aspects?: { a: string; b: string; aspect: string; orb: number }[]; summary?: string | null },
+  seed: number,
+  prefix: string,
+  pd: number | null = null,
+): string {
+  const s = chartSignature({ ...chart, aspects: chart.aspects ?? [], summary: chart.summary ?? null });
+  // R26: pelo menos 10 formatos, não repete em sequência
+  const formats = shuffleSeeded(DAY_FORMATS, seed);
+  const format = formats[index % formats.length];
+  const sunSign = s.sun?.sign ?? "seu Sol";
+  const moonSign = s.moon?.sign ?? "sua Lua";
+  const ascSign = s.ascSign;
+  const aspects = chart.aspects ?? [];
+  const aspRef = aspects.length ? pickSeeded(aspects, seed, index + 3) : null;
+  const aspTxt = aspRef ? `${aspRef.a}-${aspRef.aspect}-${aspRef.b}` : `o eixo entre ${sunSign} e ${ascSign}`;
+  const pdTxt = pd != null ? ` (dia pessoal ${pd})` : "";
+
+  const bodies: Record<DayFormat, string> = {
+    conselho: `${prefix} — ${phase}${pdTxt}. Trânsito de ${transit} pede foco em ${theme}: dê um passo real e mensurável hoje, mesmo pequeno, ancorado em ${aspTxt}. Deixe o resto amadurecer sozinho.`,
+    metafora: `${prefix} — ${phase}${pdTxt}. Este dia é como abrir uma janela num quarto fechado: o ar novo vem de ${transit}, e ${aspTxt} mostra por onde a claridade entra em ${theme}.`,
+    pergunta: `${prefix} — ${phase}${pdTxt}. Pergunta do dia: o que ${transit} em ${theme} está tentando te ensinar quando você pausa e escuta ${moonSign}? Escreva a resposta antes de dormir.`,
+    ritual: `${prefix} — ${phase}${pdTxt}. Ritual: acenda uma vela, respire nove vezes lembrando de ${aspTxt} e nomeie em voz alta uma escolha em ${theme} que ${transit} pede coragem para assumir.`,
+    alerta: `${prefix} — ${phase}${pdTxt}. Cuidado com atalhos hoje: ${transit} tensiona ${theme}, e ${aspTxt} amplifica o que for feito no impulso. Confira duas vezes antes de confirmar.`,
+    psicologica: `${prefix} — ${phase}${pdTxt}. Observação: sua ${moonSign} tende a reagir em ${theme} como se ainda fosse aquela versão antiga. ${transit} mostra o padrão; ${aspTxt} oferece a saída.`,
+    desafio: `${prefix} — ${phase}${pdTxt}. Desafio de 24h: elimine uma pendência em ${theme} que arrasta há mais de sete dias. Use a força de ${transit} e a lucidez de ${aspTxt}.`,
+    exercicio: `${prefix} — ${phase}${pdTxt}. Exercício: em três linhas, escreva o que ${theme} pede, o que oferece e o que cobra. ${transit} guia a caneta; ${aspTxt} guia a honestidade.`,
+    simbolo: `${prefix} — ${phase}${pdTxt}. Símbolo do dia: ${transit} como mensageiro em ${theme}. ${aspTxt} funciona como o selo — só o que atravessar esses dois filtros merece energia hoje.`,
+    narrativa: `${prefix} — ${phase}${pdTxt}. Imagine ${sunSign} conversando com ${transit} sobre ${theme}: eles concordam num ponto e discordam noutro. ${aspTxt} é o mediador dessa cena interna.`,
   };
-  const expect = moonLabel.includes("Cheia") ? "emoções mais visíveis, respostas e necessidade de clareza" : moonLabel.includes("Nova") ? "sensação de recomeço, ideias ainda frágeis e vontade de reposicionar a rota" : moonLabel.includes("Minguante") ? "cansaço produtivo, vontade de simplificar e sinais do que precisa sair" : "crescimento gradual, pedidos práticos e oportunidades que exigem continuidade";
-  const avoid = pd === 5 ? "agir só por tédio" : pd === 8 ? "usar poder para controlar" : pd === 2 ? "engolir incômodo para manter paz" : "fazer tudo no automático";
-  const thought = s.moon ? `o que minha Lua em ${s.moon.sign} precisa para se sentir segura hoje?` : "o que meu corpo está tentando me dizer hoje?";
-  return `${moonLabel} · nº ${pd ?? "—"} · ${vibe}. Faça: ${moonAction}; na prática, ${pd != null ? pdAction[pd] ?? "aja com presença" : "observe e escolha uma atitude simples"}. Aproveite para alinhar uma decisão com ${s.sun ? `seu Sol em ${s.sun.sign}` : "sua essência"} e com o Ascendente em ${s.ascSign}. Espere: ${expect}. Evite: ${avoid}. Pense: “${thought}”. Profecia simbólica: se você honrar o ritmo deste dia, uma resposta que parecia distante começa a se aproximar em forma de sinal, convite ou alívio.`;
+  return bodies[format];
+}
+
+function detailedDayGuidance(
+  date: Date,
+  moonLabel: string,
+  pd: number | null,
+  chart: { planets: { name: string; sign: string; degree: number }[]; ascendant: number | null; midheaven: number | null; aspects?: { a: string; b: string; aspect: string; orb: number }[]; summary?: string | null },
+  index: number = 0,
+): string {
+  const seed = seedFromChart(chart);
+  const transits = ["Sol", "Mercúrio", "Vênus", "Marte", "Júpiter", "Saturno", "Urano", "Netuno", "Plutão", "Lua"];
+  const themes = ["identidade", "vínculos", "trabalho", "corpo", "família", "criação", "silêncio", "dinheiro", "propósito", "aprendizado"];
+  const transit = transits[(index + (seed % transits.length)) % transits.length];
+  const theme = themes[(index + Math.floor(seed / 11)) % themes.length];
+  const dateStr = date.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+  return dayNarrativeBlock(index, moonLabel, transit, theme, chart, seed, dateStr, pd);
 }
 
 async function fetchImageAsBase64(url: string): Promise<{ b64: string; mime: "image/png" | "image/jpeg" } | null> {
@@ -1187,7 +1263,14 @@ R6. Similaridade semântica entre seções não pode passar de 60%.
 R7. Listas "tips"/"avoid" variam em quantidade e formato entre capítulos.
 R8. Mantenha personalização profunda e humana; quebre padrões de template imediatamente.
 R9. Não reduza extensão — aumente a diversidade textual.
-R10. Se uma seção anterior falou de um tema, a próxima deve mudar o ângulo, a cena, os verbos, as metáforas e o campo de aplicação. Não basta trocar sinônimos.`;
+R10. Se uma seção anterior falou de um tema, a próxima deve mudar o ângulo, a cena, os verbos, as metáforas e o campo de aplicação. Não basta trocar sinônimos.
+R21. É proibido reutilizar introduções, conclusões, perguntas reflexivas, profecias simbólicas ou blocos de oportunidade entre capítulos ou dias diferentes.
+R22. As seções "Dinheiro", "Saúde", "Propósito", "Carreira", "Família", "Espiritualidade", "Amizades" e "Sombras" devem começar diretamente pela interpretação astrológica específica daquela área (planeta regente + signo + casa + aspecto), sem qualquer texto introdutório padrão. Nada de "Esta área é interpretada a partir do desenho do seu mapa" ou variações. A estrutura fixa "Introdução → Oportunidade → Faça isto → Evite isto" está proibida: cada área escolhe 2 dos 4 blocos e varia a ordem.
+R23. Cada dia do calendário deve ser construído pela combinação: FASE DA LUA + NÚMERO PESSOAL + PLANETA EM TRÂNSITO + ASPECTO DO MAPA NATAL + TEMA DO DIA. Nunca reaproveite molde do dia anterior.
+R24. Nenhuma pergunta reflexiva pode aparecer mais de duas vezes em todo o documento.
+R25. Cada profecia simbólica precisa ser completamente inédita; nunca reutilize a mesma imagem entre dias ou seções.
+R26. O bloco de 30 dias e o de próximos 7 dias devem conter no mínimo dez estruturas narrativas diferentes, alternando entre: conselho, metáfora, pergunta, ritual, alerta, observação psicológica, desafio, exercício, símbolo e narrativa curta. Nunca duas iguais em sequência.
+R27. Frases-âncora banidas em qualquer parte do documento: "Aproveite para alinhar uma decisão", "Espere: cansaço produtivo", "uma resposta que parecia distante começa a se aproximar", "escolher uma prioridade e cuidar do corpo antes de responder", "uma porta discreta se abre", "prometer mais do que consegue sustentar", "sinais pequenos, mensagens, atrasos ou convites", "Há oportunidade concreta de agir com mais clareza", "Esta área é interpretada a partir do desenho do seu mapa".`;
 
   const chartBlock = `Data de referência: ${todayStr} · Semana: ${week.start} a ${week.end} · Mês: ${monthLabel} · Ano: ${yearLabel}.
 
@@ -1637,16 +1720,147 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
           ],
         },
       };
-      const genericReading =
-        `Esta área é interpretada a partir do desenho do seu mapa: ${chart.summary ?? "a combinação entre seus planetas, signos, ascendente e aspectos principais"}. Observe onde sua energia pede presença e escolhas mais conscientes.`;
-      const genericOpp =
-        "Há oportunidade concreta de agir com mais clareza, alinhar desejo e responsabilidade e sustentar uma mudança real nos próximos 30 dias.";
+      // R21/R22: sem introdução/oportunidade genéricas. Cada área tem pool próprio.
+      const planetsForArea = (chart.planets ?? []) as { name: string; sign: string; degree: number }[];
+      const aspectsForArea = (chart.aspects ?? []) as { a: string; b: string; aspect: string; orb: number }[];
+      const areaSeed = seedFromChart({
+        planets: planetsForArea,
+        ascendant: chart.ascendant as number | null,
+        midheaven: chart.midheaven as number | null,
+      });
+      const AREA_RULERS: Record<string, string[]> = {
+        "Amor e Vínculo Afetivo": ["Vênus", "Lua", "Marte"],
+        "Dinheiro, Prosperidade e Abundância": ["Vênus", "Júpiter", "Saturno"],
+        "Saúde, Corpo e Vitalidade": ["Sol", "Marte", "Lua"],
+        "Propósito de Vida e Missão da Alma": ["Sol", "Júpiter", "Saturno"],
+        "Negócios, Carreira e Empreendimentos": ["Saturno", "Marte", "Júpiter"],
+        "Família, Raízes e Ancestralidade": ["Lua", "Saturno", "Vênus"],
+        "Espiritualidade e Sagrado": ["Netuno", "Júpiter", "Lua"],
+        "Amizades e Círculos Sociais": ["Mercúrio", "Vênus", "Júpiter"],
+        "Sombras e Padrões a Curar": ["Plutão", "Saturno", "Marte"],
+      };
+      const AREA_OPENERS: Record<string, string[]> = {
+        "Amor e Vínculo Afetivo": [
+          "No campo do afeto, o encontro é ensinado pelo eixo",
+          "O que você chama de amor nasce, no seu mapa, do diálogo entre",
+          "Sua forma de amar carrega a assinatura de",
+          "A intimidade que te transforma vem do jeito como",
+        ],
+        "Dinheiro, Prosperidade e Abundância": [
+          "Sua relação com valor material se explica pelo desenho de",
+          "O dinheiro se comporta, no seu mapa, como resposta a",
+          "Prosperidade, para você, é consequência direta de",
+          "A abundância se estabiliza quando você honra",
+        ],
+        "Saúde, Corpo e Vitalidade": [
+          "Seu corpo pede ritmo diferente do que a cabeça costuma impor: veja",
+          "A vitalidade que dura, no seu mapa, começa por",
+          "A saúde não é sorte no seu desenho — é fruto de",
+          "Onde o corpo grita, geralmente é",
+        ],
+        "Propósito de Vida e Missão da Alma": [
+          "A missão desta encarnação se costura entre",
+          "Seu propósito não está em uma profissão específica; está em",
+          "O que dá sentido para você aparece na costura entre",
+          "A alma pede que você desenvolva",
+        ],
+        "Negócios, Carreira e Empreendimentos": [
+          "Sua autoridade profissional se apoia em",
+          "Carreira, para você, é laboratório de",
+          "O reconhecimento chega quando você combina",
+          "Seu negócio prospera onde você honra",
+        ],
+        "Família, Raízes e Ancestralidade": [
+          "A herança emocional que atravessa você vem de",
+          "Sua história de origem se expressa hoje através de",
+          "Casa, no seu mapa, é o encontro entre",
+          "Ancestralidade se manifesta em você como",
+        ],
+        "Espiritualidade e Sagrado": [
+          "O sagrado te alcança pelo canal de",
+          "Sua espiritualidade não pede templo, pede",
+          "A conexão com o invisível se afina quando você",
+          "Fé, para você, é experiência somática de",
+        ],
+        "Amizades e Círculos Sociais": [
+          "Seu círculo próximo funciona como espelho de",
+          "As amizades que ficam são as que sustentam",
+          "Você atrai pessoas que trazem",
+          "O que uniu suas melhores conexões foi",
+        ],
+        "Sombras e Padrões a Curar": [
+          "O que ainda pede cura em você aparece disfarçado como",
+          "Sua sombra opera nos bastidores de",
+          "Aquilo que se repete e cansa nasce do encontro entre",
+          "O padrão que precisa ser interrompido tem raiz em",
+        ],
+      };
+      const areaSpecificReading = (title: string, idx: number): string => {
+        const rulers = AREA_RULERS[title] ?? ["Sol", "Lua", "Ascendente"];
+        const found = rulers
+          .map((r) => planetsForArea.find((p) => p.name === r))
+          .filter((p): p is { name: string; sign: string; degree: number } => Boolean(p));
+        const primary = found[0];
+        const secondary = found[1];
+        const relatedAspects = aspectsForArea.filter(
+          (a) => found.some((p) => a.a === p.name || a.b === p.name),
+        );
+        const aspRef = relatedAspects.length
+          ? pickSeeded(relatedAspects, areaSeed, idx)
+          : aspectsForArea[0] ?? null;
+        const openers = AREA_OPENERS[title] ?? ["Esta esfera se revela no encontro entre"];
+        const opener = pickSeeded(openers, areaSeed, idx * 3 + 1);
+        const primaryTxt = primary ? `${primary.name} em ${primary.sign}` : `seu Sol`;
+        const secondaryTxt = secondary ? `${secondary.name} em ${secondary.sign}` : `sua Lua`;
+        const aspTxt = aspRef
+          ? `${aspRef.a} ${aspRef.aspect} ${aspRef.b}`
+          : `os principais aspectos do seu mapa`;
+        return `${opener} ${primaryTxt} e ${secondaryTxt}, tensionados por ${aspTxt}. Esse desenho descreve com precisão como você opera nesta esfera, e por que os mesmos temas voltam quando você tenta ignorá-los.`;
+      };
+      const areaSpecificOpportunity = (title: string, idx: number): string => {
+        const rulers = AREA_RULERS[title] ?? ["Sol"];
+        const found = rulers
+          .map((r) => planetsForArea.find((p) => p.name === r))
+          .filter((p): p is { name: string; sign: string; degree: number } => Boolean(p));
+        const primary = found[0];
+        const relatedAspects = aspectsForArea.filter(
+          (a) => found.some((p) => a.a === p.name || a.b === p.name),
+        );
+        const aspRef = relatedAspects.length
+          ? pickSeeded(relatedAspects, areaSeed, idx * 5 + 7)
+          : aspectsForArea[0] ?? null;
+        const primaryTxt = primary ? `${primary.name} em ${primary.sign}` : `seu regente`;
+        const aspTxt = aspRef
+          ? `${aspRef.a} ${aspRef.aspect} ${aspRef.b}`
+          : `o desenho geral do mapa`;
+        const moves = [
+          `usar a força de ${primaryTxt} para reorganizar um combinado antigo`,
+          `deixar ${aspTxt} guiar a próxima escolha em vez de repetir o roteiro conhecido`,
+          `abrir espaço para que ${primaryTxt} se expresse sem pedir licença`,
+          `converter a tensão de ${aspTxt} num acordo prático nos próximos 21 dias`,
+          `permitir que ${primaryTxt} conduza uma conversa que vinha sendo adiada`,
+          `transformar o padrão de ${aspTxt} numa rotina curta e realista`,
+        ];
+        return pickSeeded(moves, areaSeed, idx * 11 + 3) + ".";
+      };
+      const AREA_ORDER = [
+        "Amor e Vínculo Afetivo",
+        "Dinheiro, Prosperidade e Abundância",
+        "Saúde, Corpo e Vitalidade",
+        "Propósito de Vida e Missão da Alma",
+        "Negócios, Carreira e Empreendimentos",
+        "Família, Raízes e Ancestralidade",
+        "Espiritualidade e Sagrado",
+        "Amizades e Círculos Sociais",
+        "Sombras e Padrões a Curar",
+      ] as const;
       const fallbackArea = (title: string): DeepArea => {
         const preset = FALLBACK_TIPS_BY_AREA[title];
+        const idx = Math.max(0, AREA_ORDER.indexOf(title as typeof AREA_ORDER[number]));
         return {
           title,
-          reading: genericReading,
-          opportunities: genericOpp,
+          reading: areaSpecificReading(title, idx),
+          opportunities: areaSpecificOpportunity(title, idx),
           tips: preset?.tips ?? [
             "Escolha uma ação simples e mensurável para praticar por sete dias.",
             "Registre no fim do dia onde sentiu expansão ou tensão.",
@@ -1902,7 +2116,9 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
             planets,
             ascendant: chart.ascendant as number | null,
             midheaven: chart.midheaven as number | null,
-          }),
+            aspects: aspects,
+            summary: chart.summary as string | null,
+          }, i),
         });
       }
       blocks.push({ type: "kv", rows: moonRows });
