@@ -1896,7 +1896,14 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
         const iso = d.toISOString().slice(0, 10);
         const pd = birthISO ? personalDayNumber(iso, birthISO) : null;
         const dateStr = d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", weekday: "short" });
-        moonRows.push({ k: dateStr, v: detailedDayGuidance(d, moonLabel, pd, chart) });
+        moonRows.push({
+          k: dateStr,
+          v: detailedDayGuidance(d, moonLabel, pd, {
+            planets,
+            ascendant: chart.ascendant as number | null,
+            midheaven: chart.midheaven as number | null,
+          }),
+        });
       }
       blocks.push({ type: "kv", rows: moonRows });
 
