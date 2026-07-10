@@ -904,13 +904,20 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
         (rawForecast.week as string).trim().length < 40;
       if (forecastLooksIncomplete) {
         try {
-          const generated = await buildForecastWithAI({
-            planets: chart.planets as any,
-            ascendant: chart.ascendant as number | null,
-            midheaven: chart.midheaven as number | null,
-            aspects: chart.aspects as any,
-            summary: chart.summary,
-          }, userId);
+          // Timeout de segurança — se a IA demorar demais, o PDF ainda sai
+          // com o fallback (evita "sandbox proxy failed" por timeout do worker).
+          const generated = await Promise.race<AstroForecast>([
+            buildForecastWithAI({
+              planets: chart.planets as any,
+              ascendant: chart.ascendant as number | null,
+              midheaven: chart.midheaven as number | null,
+              aspects: chart.aspects as any,
+              summary: chart.summary,
+            }, userId),
+            new Promise<AstroForecast>((_, rej) =>
+              setTimeout(() => rej(new Error("forecast_timeout")), 60_000),
+            ),
+          ]);
           rawForecast = generated;
           await supabaseAdmin
             .from("astro_charts")
