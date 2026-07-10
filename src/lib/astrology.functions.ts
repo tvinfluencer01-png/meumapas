@@ -610,7 +610,10 @@ type AstroForecast = {
   year: string;
   closing: string;     // fechamento inspirador
   generatedAt: string;
+  antiRepeatVersion?: string;
 };
+
+const ASTRO_ANTI_REPEAT_VERSION = "cumulative-ngram-v2";
 
 // Coerce forecast time-window fields (nextDays/week/month/year) into readable
 // text. The LLM sometimes returns a string, sometimes an object shaped like a
@@ -1074,6 +1077,7 @@ Responda EXCLUSIVAMENTE com JSON válido, sem markdown:
     year: forecastMap.year,
     closing: forecastMap.closing,
     generatedAt: new Date().toISOString(),
+    antiRepeatVersion: ASTRO_ANTI_REPEAT_VERSION,
   });
 }
 
@@ -1171,6 +1175,7 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
       const forecastLooksIncomplete =
         !rawForecast ||
         typeof rawForecast !== "object" ||
+        rawForecast.antiRepeatVersion !== ASTRO_ANTI_REPEAT_VERSION ||
         !rawForecast.love ||
         !rawForecast.week ||
         typeof rawForecast.week !== "string" ||
@@ -1374,6 +1379,7 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
         closing:
           rawForecast.closing ?? "Que este mapa ilumine seus próximos passos.",
         generatedAt: rawForecast.generatedAt ?? new Date().toISOString(),
+        antiRepeatVersion: rawForecast.antiRepeatVersion ?? undefined,
       };
 
 
