@@ -11,7 +11,7 @@
  * para que tarot.functions.ts e kabbalah.functions.ts continuem funcionando
  * sem alterações.
  */
-import { PDFDocument, StandardFonts, rgb, PageSizes, type PDFFont, type PDFPage } from "pdf-lib";
+import { PDFDocument, StandardFonts, rgb, PageSizes, PDFName, PDFString, type PDFFont, type PDFPage } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import { hyphenPointsPt } from "./pt-hyphen";
 
@@ -23,7 +23,8 @@ export type SimplePdfBlock =
   | { type: "quote"; text: string }
   | { type: "list"; items: string[] }
   | { type: "kv"; rows: { k: string; v: string }[] }
-  | { type: "image"; pngB64: string; caption?: string; maxHeight?: number }
+  | { type: "image"; pngB64: string; caption?: string; maxHeight?: number; mime?: "image/png" | "image/jpeg"; linkUrl?: string }
+  | { type: "link"; label: string; url: string }
   | { type: "page-break" }
   | { type: "hebrew-hero"; letter: string; name: string; transliteration: string; meaning: string }
   | { type: "hebrew-row"; letter: string; name: string; value: number | string; meaning: string }
@@ -765,10 +766,61 @@ export async function buildSimplePdf(data: SimplePdfData): Promise<Uint8Array> {
   }
 
   // -------- RENDER BLOCKS --------
-  async function drawImage(b: { pngB64: string; caption?: string; maxHeight?: number }) {
+  function addLinkAnnotation(page: PDFPage, rect: { x: number; y: number; width: number; height: number }, url: string) {
+    try {
+      if (!/^https?:\/\//i.test(url)) return;
+      const annotRef = doc.context.register(doc.context.obj({
+        Type: PDFName.of("Annot"),
+        Subtype: PDFName.of("Link"),
+        Rect: [rect.x, rect.y, rect.x + rect.width, rect.y + rect.height],
+        Border: [0, 0, 0],
+        A: {
+          Type: PDFName.of("Action"),
+          S: PDFName.of("URI"),
+          URI: PDFString.of(url),
+        },
+      }));
+      page.node.addAnnot(annotRef);
+    } catch (e) {
+      console.error("[simple-pdf] link annotation failed", e);
+    }
+  }
+
+  function drawLink(b: { label: string; url: string }) {
+    if (!b.url || !/^https?:\/\//i.test(b.url)) return;
+    const size = 11;
+    const lineHeight = size * 1.5;
+    const label = safe(b.label || b.url);
+    const url = safe(b.url);
+    const text = `${label}: ${url}`;
+    const lines = wrapPlain(text, serif, size, CONTENT_W);
+    for (const line of lines) {
+      ensureSpace(lineHeight + 2);
+      const width = Math.min(measure(serif, size, line), CONTENT_W);
+      const textY = cursor.y - size;
+      cursor.page.drawText(line, {
+        x: MARGIN,
+        y: textY,
+        size,
+        font: serif,
+        color: accent,
+      });
+      cursor.page.drawLine({
+        start: { x: MARGIN, y: textY - 2 },
+        end: { x: MARGIN + width, y: textY - 2 },
+        color: accent,
+        thickness: 0.5,
+      });
+      addLinkAnnotation(cursor.page, { x: MARGIN, y: textY - 3, width, height: size + 6 }, b.url);
+      cursor.y -= lineHeight;
+    }
+    cursor.y -= 6;
+  }
+
+  async function drawImage(b: { pngB64: string; caption?: string; maxHeight?: number; mime?: "image/png" | "image/jpeg"; linkUrl?: string }) {
     try {
       const bytes = Uint8Array.from(Buffer.from(b.pngB64, "base64"));
-      const img = await doc.embedPng(bytes);
+      const img = b.mime === "image/jpeg" ? await doc.embedJpg(bytes) : await doc.embedPng(bytes);
       const maxH = b.maxHeight ?? 360;
       const ratio = img.height / img.width;
       let w = CONTENT_W;
@@ -776,7 +828,9 @@ export async function buildSimplePdf(data: SimplePdfData): Promise<Uint8Array> {
       if (h > maxH) { h = maxH; w = h / ratio; }
       ensureSpace(h + (b.caption ? 18 : 8));
       const x = MARGIN + (CONTENT_W - w) / 2;
-      cursor.page.drawImage(img, { x, y: cursor.y - h, width: w, height: h });
+      const y = cursor.y - h;
+      cursor.page.drawImage(img, { x, y, width: w, height: h });
+      if (b.linkUrl) addLinkAnnotation(cursor.page, { x, y, width: w, height: h }, b.linkUrl);
       cursor.y -= h + 6;
       if (b.caption) {
         const cap = safe(b.caption);
@@ -804,6 +858,7 @@ export async function buildSimplePdf(data: SimplePdfData): Promise<Uint8Array> {
     else if (block.type === "quote") drawQuote(block.text);
     else if (block.type === "list") drawBulletList(block.items);
     else if (block.type === "kv") drawKv(block.rows);
+    else if (block.type === "link") drawLink(block);
     else if (block.type === "image") await drawImage(block);
     else if (block.type === "hebrew-hero") drawHebrewHero(block);
     else if (block.type === "hebrew-row") drawHebrewRow(block);
