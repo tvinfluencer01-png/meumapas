@@ -1207,8 +1207,11 @@ Responda EXCLUSIVAMENTE com JSON válido, sem markdown:
     { key: "closing", label: "Fechamento", words: 350, brief: "Síntese viva, benção final aprofundada, parábola breve original e chamado amoroso à ação. 3 parágrafos densos." },
   ];
 
-  const forecastResults: Array<readonly [typeof forecastSpecs[number]["key"], string]> = [];
-  for (const spec of forecastSpecs) {
+  // Roda as 5 seções temporais EM PARALELO — sequencial estava estourando o
+  // timeout do worker (o Lote B já consome ~60-90s) e devolvia previsões vazias.
+  // A diversidade entre elas fica garantida pelos "lenses/openings" de FORECAST_DIVERSITY.
+  const baseCumulative = cumulativeText;
+  const forecastPromises = forecastSpecs.map(async (spec) => {
     const diversity = FORECAST_DIVERSITY[spec.key];
     const prompt = `${chartBlock}
 
@@ -1217,40 +1220,21 @@ ${spec.brief}
 Ângulo exclusivo desta seção: ${diversity?.lens ?? spec.brief}.
 Forma de abertura obrigatória: ${diversity?.opening ?? "comece com uma imagem temporal específica"}.
 Mín. ${spec.words} palavras, 4 a 6 parágrafos densos, sem listas, sem markdown.
-${antiRepeatBlock(cumulativeText)}
+${antiRepeatBlock(baseCumulative)}
 Responda EXCLUSIVAMENTE com JSON válido, sem markdown:
 { "${spec.key}": "texto aqui" }`;
     try {
       const j = await callJson<Record<string, string>>(prompt);
-      let text = (j[spec.key] ?? "").toString();
-      // Auditor de tamanho para previsões temporais
-      if (countWords(text) < Math.floor(spec.words * 0.85)) {
-        try {
-          const expandPrompt = `${chartBlock}
-
-A seção "${spec.label}" ficou curta (${countWords(text)} palavras, alvo ${spec.words}). Reescreva EXPANDINDO sem repetir frases já escritas, aprofundando exemplos e nuances.
-
-Versão atual:
-"""
-${text}
-"""
-
-Mín. ${spec.words} palavras, 4 a 6 parágrafos densos.
-${antiRepeatBlock(cumulativeText)}
-Responda EXCLUSIVAMENTE com JSON válido: { "${spec.key}": "texto aqui" }`;
-          const j2 = await callJson<Record<string, string>>(expandPrompt);
-          const expanded = (j2[spec.key] ?? "").toString();
-          if (countWords(expanded) > countWords(text)) text = expanded;
-        } catch (e) {
-          console.warn(`[astro] expansão de ${spec.key} falhou`, e);
-        }
-      }
-      forecastResults.push([spec.key, text] as const);
-      cumulativeText = [cumulativeText, text].join("\n\n");
+      const text = (j[spec.key] ?? "").toString().trim();
+      return [spec.key, text] as const;
     } catch (e) {
       console.error(`[astro] falha na seção ${spec.key}`, e);
-      forecastResults.push([spec.key, ""] as const);
+      return [spec.key, ""] as const;
     }
+  });
+  const forecastResults = await Promise.all(forecastPromises);
+  for (const [, text] of forecastResults) {
+    if (text) cumulativeText = [cumulativeText, text].join("\n\n");
   }
   const forecastMap = Object.fromEntries(forecastResults) as Record<typeof forecastSpecs[number]["key"], string>;
 
