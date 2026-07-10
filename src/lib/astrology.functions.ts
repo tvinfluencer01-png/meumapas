@@ -742,16 +742,16 @@ type AstroForecast = {
   antiRepeatVersion?: string;
 };
 
-const ASTRO_ANTI_REPEAT_VERSION = "length-audit-v4-parallel";
+const ASTRO_ANTI_REPEAT_VERSION = "temporal-calendar-marketing-v5";
 
 // Coerce forecast time-window fields (nextDays/week/month/year) into readable
 // text. The LLM sometimes returns a string, sometimes an object shaped like a
 // DeepArea, sometimes an empty string. Handle all cases so the PDF is never
 // blank.
-function coerceForecastText(value: unknown, period: string): string {
+function coerceForecastText(value: unknown, period: string, fallback?: string): string {
   if (typeof value === "string") {
     const t = value.trim();
-    if (t && t !== "—") return t;
+    if (t && t !== "—" && !/indispon[ií]ve/i.test(t)) return t;
   }
   if (value && typeof value === "object") {
     const v = value as Record<string, unknown>;
@@ -767,7 +767,122 @@ function coerceForecastText(value: unknown, period: string): string {
     }
     if (parts.length) return parts.join("\n\n");
   }
-  return `Previsões para ${period} indisponíveis nesta geração. Gere as previsões novamente para obter uma leitura detalhada deste período.`;
+  return fallback ?? `As previsões para ${period} foram montadas com base no desenho do seu mapa, usando Sol, Lua, Ascendente, Meio do Céu e aspectos principais. Este período pede presença, escuta e escolhas simples: observe o que se repete no corpo, nas relações e na agenda; responda com menos pressa; e transforme cada sinal em uma atitude concreta.`;
+}
+
+function chartSignature(chart: { planets: { name: string; sign: string; degree: number }[]; ascendant: number | null; midheaven: number | null; aspects: { a: string; b: string; aspect: string; orb: number }[]; summary: string | null }) {
+  const sun = chart.planets.find((p) => p.name === "Sol");
+  const moon = chart.planets.find((p) => p.name === "Lua");
+  const mercury = chart.planets.find((p) => p.name === "Mercúrio");
+  const venus = chart.planets.find((p) => p.name === "Vênus");
+  const mars = chart.planets.find((p) => p.name === "Marte");
+  const jupiter = chart.planets.find((p) => p.name === "Júpiter");
+  const saturn = chart.planets.find((p) => p.name === "Saturno");
+  const ascSign = chart.ascendant != null ? SIGNS[Math.floor(chart.ascendant / 30)] : "seu Ascendente";
+  const mcSign = chart.midheaven != null ? SIGNS[Math.floor(chart.midheaven / 30)] : "seu Meio do Céu";
+  const mainAspect = chart.aspects[0];
+  return { sun, moon, mercury, venus, mars, jupiter, saturn, ascSign, mcSign, mainAspect };
+}
+
+function buildDeterministicTemporalForecast(
+  key: "nextDays" | "week" | "month" | "year" | "closing",
+  chart: { planets: { name: string; sign: string; degree: number }[]; ascendant: number | null; midheaven: number | null; aspects: { a: string; b: string; aspect: string; orb: number }[]; summary: string | null },
+): string {
+  const s = chartSignature(chart);
+  const today = new Date();
+  const week = formatWeekRange(today);
+  const month = formatMonthLabel(today);
+  const year = formatYearLabel(today);
+  const sun = s.sun ? `Sol em ${s.sun.sign}` : "seu Sol natal";
+  const moon = s.moon ? `Lua em ${s.moon.sign}` : "sua Lua natal";
+  const mercury = s.mercury ? `Mercúrio em ${s.mercury.sign}` : "sua mente natal";
+  const venus = s.venus ? `Vênus em ${s.venus.sign}` : "sua forma de amar";
+  const mars = s.mars ? `Marte em ${s.mars.sign}` : "sua coragem";
+  const saturn = s.saturn ? `Saturno em ${s.saturn.sign}` : "seu Saturno";
+  const aspect = s.mainAspect ? `${s.mainAspect.a} ${s.mainAspect.aspect} ${s.mainAspect.b}` : "o principal desenho de aspectos do seu mapa";
+
+  if (key === "nextDays") {
+    const rows: string[] = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() + i);
+      const angle = Astro.MoonPhase(d);
+      const phase = moonPhaseLabel(angle);
+      const date = d.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" });
+      const verb = i % 4 === 0 ? "iniciar com calma" : i % 4 === 1 ? "organizar pendências" : i % 4 === 2 ? "conversar com clareza" : "encerrar ruídos";
+      rows.push(`${date}: ${phase} colore o dia e conversa com ${moon}. O que fazer: ${verb}, escolher uma prioridade e cuidar do corpo antes de responder no impulso. O que esperar: sinais pequenos, mensagens, atrasos ou convites que mostram onde sua energia realmente está. O que evitar: prometer mais do que consegue sustentar. O que pensar: “qual atitude simples me deixa mais inteiro hoje?”. Profecia simbólica: quando você respeita o ritmo deste dia, uma porta discreta se abre sem precisar forçar.`);
+    }
+    return rows.join("\n\n");
+  }
+
+  if (key === "week") {
+    return `Na semana de ${week.start} a ${week.end}, ${sun} pede coerência entre identidade e rotina, enquanto ${moon} mostra onde suas emoções precisam ser escutadas antes de qualquer decisão. O começo da semana favorece organização, revisão de agenda e conversas simples; não tente resolver tudo de uma vez. Escolha três prioridades reais, escreva-as em ordem de importância e aceite que o corpo também faz parte do planejamento espiritual.
+
+No meio da semana, ${mercury} ganha destaque: mensagens, documentos, estudos e negociações podem pedir mais precisão. O melhor uso desta energia é perguntar antes de concluir, confirmar detalhes e transformar pensamentos soltos em tarefas visíveis. Evite responder por orgulho, pressa ou necessidade de provar valor. Uma fala bem colocada pode evitar um desgaste maior.
+
+No campo afetivo, ${venus} pede presença sem cobrança. Demonstre afeto com atitudes concretas, não apenas com explicações. Se algo estiver estranho, nomeie com delicadeza. No trabalho, ${mars} favorece ação objetiva, mas não favorece guerra desnecessária. A profecia da semana é simples: onde você parar de lutar contra o tempo e começar a colaborar com ele, surgirá um sinal de avanço.`;
+  }
+
+  if (key === "month") {
+    return `O mês de ${month} funciona como um laboratório de maturidade. ${sun} acende sua necessidade de viver com mais verdade, mas ${saturn} lembra que toda verdade precisa de estrutura para não virar apenas desejo. Nas primeiras semanas, observe onde a vida pede ajuste de rotina, saúde, dinheiro e limites. O céu favorece quem organiza o básico: sono, agenda, compromissos, pagamentos, conversas pendentes e escolhas que já foram adiadas demais.
+
+Na segunda metade do mês, o tema central se desloca para resultado e reposicionamento. ${aspect} pode trazer a sensação de que duas partes internas querem coisas diferentes: uma busca segurança; outra pede movimento. Em vez de escolher no impulso, faça uma leitura prática: o que tem dado frutos, o que apenas consome energia e o que precisa ser encerrado com respeito? Este mês não pede drama; pede precisão.
+
+Para aproveitar: marque datas para revisar metas, faça uma limpeza de ambiente, renegocie o que pesa e dê atenção especial ao corpo. Para evitar: decisões definitivas em dias de exaustão, compras emocionais, conversas importantes sem preparo e promessas feitas só para agradar. A profecia mensal: uma reorganização discreta abrirá mais espaço do que uma grande ruptura.`;
+  }
+
+  if (key === "year") {
+    return `O ano de ${year} pede construção em camadas. Com ${sun} como assinatura central e Ascendente em ${s.ascSign}, sua evolução não acontece por um único acontecimento, mas por uma sequência de escolhas coerentes. O primeiro trimestre favorece limpeza de excessos: excesso de obrigação, excesso de expectativa, excesso de vínculos que não sustentam reciprocidade. É tempo de enxugar para voltar a respirar.
+
+No segundo trimestre, ${s.mcSign} ganha força como direção pública e vocacional. Trabalho, imagem, autoridade e posicionamento podem pedir decisões mais adultas. Se você tenta agradar todos, perde potência; se escolhe um caminho com clareza, começa a ser reconhecido por algo mais verdadeiro. Use esse período para estudar, organizar ofertas, rever contratos e mostrar competência sem precisar endurecer o coração.
+
+No terceiro trimestre, relações e intimidade entram no centro. ${venus} e ${moon} lembram que prosperidade emocional não nasce de controle, mas de presença. Será importante diferenciar lealdade de prisão, cuidado de salvamento e amor de dependência. No quarto trimestre, ${saturn} pede colheita: finalize o que prometeu, documente aprendizados e não carregue para o próximo ciclo aquilo que já cumpriu seu papel. A profecia do ano: aquilo que for construído com constância discreta terá mais força do que qualquer gesto grandioso feito por ansiedade.`;
+  }
+
+  return `Havia um antigo artesão que recebia pedras brutas todas as manhãs. Algumas eram claras, outras pesadas, outras pareciam sem valor. Ele não perguntava por que aquela pedra tinha chegado; apenas acendia a lâmpada, tocava a superfície e começava o trabalho. Com o tempo, descobriu que a pedra mais difícil era quase sempre a que escondia o brilho mais raro. Assim também é o seu mapa: ele não veio para te prender em definições, mas para mostrar onde a vida colocou matéria-prima para a sua alma lapidar.
+
+Que ${sun} te recorde quem você é quando não tenta caber em expectativas pequenas. Que ${moon} proteja sua sensibilidade sem transformá-la em medo. Que o Ascendente em ${s.ascSign} abra caminhos onde sua presença precisa ser vista, e que o Meio do Céu em ${s.mcSign} te conduza a uma obra que tenha utilidade, beleza e verdade. Receba este ciclo como quem recebe uma chave: não para abrir todas as portas ao mesmo tempo, mas para reconhecer qual delas chama pelo seu nome agora.
+
+Minha bênção final é que você caminhe com coragem mansa. Que seus erros virem linguagem, que seus encontros virem espelho, que suas perdas virem espaço e que suas escolhas virem destino consciente. Quando a dúvida aparecer, volte ao simples: respire, observe o céu, cuide do corpo, fale a verdade possível e dê o próximo passo honesto. O universo não exige pressa de você; ele pede presença.`;
+}
+
+function moonPhaseLabel(angle: number): string {
+  if (angle < 45) return "Lua Nova";
+  if (angle < 90) return "Lua Crescente";
+  if (angle < 135) return "Quarto Crescente";
+  if (angle < 180) return "Gibosa Crescente";
+  if (angle < 225) return "Lua Cheia";
+  if (angle < 270) return "Gibosa Minguante";
+  if (angle < 315) return "Quarto Minguante";
+  return "Lua Minguante";
+}
+
+function detailedDayGuidance(date: Date, moonLabel: string, pd: number | null, chart: { planets: { name: string; sign: string; degree: number }[]; ascendant: number | null; midheaven: number | null }) {
+  const s = chartSignature({ ...chart, aspects: [], summary: null });
+  const vibe = pd != null ? personalDayVibe(pd) : "escuta do momento";
+  const moonAction = moonLabel.includes("Nova") ? "plante uma intenção pequena e concreta" : moonLabel.includes("Crescente") ? "dê andamento ao que já começou" : moonLabel.includes("Cheia") ? "observe resultados e converse com franqueza" : "limpe excessos, descanse e solte cobranças";
+  const pdAction: Record<number, string> = {
+    1: "comece algo sem esperar aprovação perfeita", 2: "escute antes de responder", 3: "expresse uma ideia, mensagem ou criação", 4: "organize agenda, documentos e dinheiro", 5: "mude a rota com leveza", 6: "cuide de casa, corpo e vínculos", 7: "estude, medite e proteja silêncio", 8: "decida com autoridade e ética", 9: "encerre ciclos e doe o que não usa", 11: "confie em uma intuição e registre sinais", 22: "transforme visão em plano", 33: "sirva sem se abandonar",
+  };
+  const expect = moonLabel.includes("Cheia") ? "emoções mais visíveis, respostas e necessidade de clareza" : moonLabel.includes("Nova") ? "sensação de recomeço, ideias ainda frágeis e vontade de reposicionar a rota" : moonLabel.includes("Minguante") ? "cansaço produtivo, vontade de simplificar e sinais do que precisa sair" : "crescimento gradual, pedidos práticos e oportunidades que exigem continuidade";
+  const avoid = pd === 5 ? "agir só por tédio" : pd === 8 ? "usar poder para controlar" : pd === 2 ? "engolir incômodo para manter paz" : "fazer tudo no automático";
+  const thought = s.moon ? `o que minha Lua em ${s.moon.sign} precisa para se sentir segura hoje?` : "o que meu corpo está tentando me dizer hoje?";
+  return `${moonLabel} · nº ${pd ?? "—"} · ${vibe}. Faça: ${moonAction}; na prática, ${pd != null ? pdAction[pd] ?? "aja com presença" : "observe e escolha uma atitude simples"}. Aproveite para alinhar uma decisão com ${s.sun ? `seu Sol em ${s.sun.sign}` : "sua essência"} e com o Ascendente em ${s.ascSign}. Espere: ${expect}. Evite: ${avoid}. Pense: “${thought}”. Profecia simbólica: se você honrar o ritmo deste dia, uma resposta que parecia distante começa a se aproximar em forma de sinal, convite ou alívio.`;
+}
+
+async function fetchImageAsBase64(url: string): Promise<{ b64: string; mime: "image/png" | "image/jpeg" } | null> {
+  try {
+    if (!/^https?:\/\//i.test(url)) return null;
+    const res = await fetch(url, { signal: AbortSignal.timeout(12_000) });
+    if (!res.ok) return null;
+    const mimeRaw = (res.headers.get("content-type") ?? "").toLowerCase();
+    const mime: "image/png" | "image/jpeg" = mimeRaw.includes("jpeg") || mimeRaw.includes("jpg") ? "image/jpeg" : "image/png";
+    const arr = new Uint8Array(await res.arrayBuffer());
+    return { b64: Buffer.from(arr).toString("base64"), mime };
+  } catch (e) {
+    console.warn("[astro] marketing image fetch failed", e);
+    return null;
+  }
 }
 
 // -----------------------------------------------------------
@@ -1090,7 +1205,7 @@ Resumo interno: ${chart.summary ?? "—"}`;
   async function callJson<T>(prompt: string): Promise<T> {
     const { result: text } = await runWithProviderFallback(
       supabaseAdmin, userId ?? null,
-      async (model) => (await generateText({ model, system, prompt })).text,
+      async (model) => (await generateText({ model, system, prompt, maxOutputTokens: 8192 })).text,
       { addonId: "sub_astrologer_numerologist", modelHint: "openai/gpt-5.5" },
     );
     return safeParseLlmJson<T>(text);
@@ -1237,6 +1352,13 @@ Responda EXCLUSIVAMENTE com JSON válido, sem markdown:
     if (text) cumulativeText = [cumulativeText, text].join("\n\n");
   }
   const forecastMap = Object.fromEntries(forecastResults) as Record<typeof forecastSpecs[number]["key"], string>;
+  const safeForecastMap = {
+    nextDays: coerceForecastText(forecastMap.nextDays, "próximos dias", buildDeterministicTemporalForecast("nextDays", chart)),
+    week: coerceForecastText(forecastMap.week, "semana", buildDeterministicTemporalForecast("week", chart)),
+    month: coerceForecastText(forecastMap.month, "mês", buildDeterministicTemporalForecast("month", chart)),
+    year: coerceForecastText(forecastMap.year, "ano", buildDeterministicTemporalForecast("year", chart)),
+    closing: coerceForecastText(forecastMap.closing, "fechamento", buildDeterministicTemporalForecast("closing", chart)),
+  };
 
 
   return auditForecastRepetition({
@@ -1250,11 +1372,11 @@ Responda EXCLUSIVAMENTE com JSON válido, sem markdown:
     spirituality: areas.spirituality,
     relationships: areas.relationships,
     shadows: areas.shadows,
-    nextDays: forecastMap.nextDays,
-    week: forecastMap.week,
-    month: forecastMap.month,
-    year: forecastMap.year,
-    closing: forecastMap.closing,
+    nextDays: safeForecastMap.nextDays,
+    week: safeForecastMap.week,
+    month: safeForecastMap.month,
+    year: safeForecastMap.year,
+    closing: safeForecastMap.closing,
     generatedAt: new Date().toISOString(),
     antiRepeatVersion: ASTRO_ANTI_REPEAT_VERSION,
   });
@@ -1537,6 +1659,17 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
           ],
         };
       };
+      const planets = (chart.planets ?? []) as { name: string; sign: string; degree: number }[];
+      const aspects = (chart.aspects ?? []) as { a: string; b: string; aspect: string; orb: number }[];
+      const ascSign = chart.ascendant != null ? SIGNS[Math.floor((chart.ascendant as number) / 30)] : "—";
+      const mcSign = chart.midheaven != null ? SIGNS[Math.floor((chart.midheaven as number) / 30)] : "—";
+      const fallbackChart = {
+        planets,
+        ascendant: chart.ascendant as number | null,
+        midheaven: chart.midheaven as number | null,
+        aspects,
+        summary: chart.summary as string | null,
+      };
       const forecast: AstroForecast = {
         synthesis:
           typeof rawForecast.synthesis === "string" && rawForecast.synthesis.trim()
@@ -1551,25 +1684,14 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
         spirituality: rawForecast.spirituality ?? fallbackArea("Espiritualidade e Sagrado"),
         relationships: rawForecast.relationships ?? fallbackArea("Amizades e Círculos Sociais"),
         shadows: rawForecast.shadows ?? fallbackArea("Sombras e Padrões a Curar"),
-        nextDays: coerceForecastText(rawForecast.nextDays, "próximos dias"),
-        week: coerceForecastText(rawForecast.week, "semana"),
-        month: coerceForecastText(rawForecast.month, "mês"),
-        year: coerceForecastText(rawForecast.year, "ano"),
-        closing:
-          rawForecast.closing ?? "Que este mapa ilumine seus próximos passos.",
+        nextDays: coerceForecastText(rawForecast.nextDays, "próximos dias", buildDeterministicTemporalForecast("nextDays", fallbackChart)),
+        week: coerceForecastText(rawForecast.week, "semana", buildDeterministicTemporalForecast("week", fallbackChart)),
+        month: coerceForecastText(rawForecast.month, "mês", buildDeterministicTemporalForecast("month", fallbackChart)),
+        year: coerceForecastText(rawForecast.year, "ano", buildDeterministicTemporalForecast("year", fallbackChart)),
+        closing: coerceForecastText(rawForecast.closing, "fechamento", buildDeterministicTemporalForecast("closing", fallbackChart)),
         generatedAt: rawForecast.generatedAt ?? new Date().toISOString(),
         antiRepeatVersion: rawForecast.antiRepeatVersion ?? undefined,
       };
-
-
-
-
-
-      const planets = (chart.planets ?? []) as { name: string; sign: string; degree: number }[];
-      const aspects = (chart.aspects ?? []) as { a: string; b: string; aspect: string; orb: number }[];
-      const ascSign = chart.ascendant != null ? SIGNS[Math.floor((chart.ascendant as number) / 30)] : "—";
-      const mcSign = chart.midheaven != null ? SIGNS[Math.floor((chart.midheaven as number) / 30)] : "—";
-
       const blocks: SimplePdfBlock[] = [];
 
       // Resumo do seu céu
@@ -1773,9 +1895,15 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
 
         const iso = d.toISOString().slice(0, 10);
         const pd = birthISO ? personalDayNumber(iso, birthISO) : null;
-        const pdLabel = pd != null ? `nº ${pd} · ${personalDayVibe(pd)}` : "número pessoal indisponível";
         const dateStr = d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", weekday: "short" });
-        moonRows.push({ k: dateStr, v: `${moonLabel} · ${pdLabel}` });
+        moonRows.push({
+          k: dateStr,
+          v: detailedDayGuidance(d, moonLabel, pd, {
+            planets,
+            ascendant: chart.ascendant as number | null,
+            midheaven: chart.midheaven as number | null,
+          }),
+        });
       }
       blocks.push({ type: "kv", rows: moonRows });
 
@@ -1799,12 +1927,28 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
       // ============================================================
       // CROSS-PROMOÇÃO — rotaciona outro serviço nosso
       // ============================================================
-      const promo = await pickCrossPromotionForReport("astro_map");
+      const promo = await pickCrossPromotionForReport("mapa_astral");
       if (promo) {
         blocks.push({ type: "page-break" });
         blocks.push({ type: "h2", text: "Continue sua jornada com o Código Cósmico", pageBreak: false });
         if (promo.title) blocks.push({ type: "h3", text: promo.title });
         blocks.push({ type: "p", text: promo.body });
+        if (promo.heroImageUrl) {
+          const image = await fetchImageAsBase64(promo.heroImageUrl);
+          if (image) {
+            blocks.push({
+              type: "image",
+              pngB64: image.b64,
+              mime: image.mime,
+              maxHeight: 330,
+              caption: promo.productTitle ? `Imagem do produto: ${promo.productTitle}` : "Imagem do produto recomendado",
+              linkUrl: promo.productUrl,
+            });
+          }
+        }
+        if (promo.productUrl) {
+          blocks.push({ type: "link", label: promo.productTitle ? `Abrir ${promo.productTitle}` : "Abrir produto recomendado", url: promo.productUrl });
+        }
       }
 
 

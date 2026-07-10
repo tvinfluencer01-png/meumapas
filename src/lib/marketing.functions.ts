@@ -25,6 +25,13 @@ export type MarketingMessage = {
   updated_at: string;
 };
 
+type MarketingLandingPick = {
+  title: string;
+  slug: string;
+  hero_image_url: string | null;
+  report_type: string;
+};
+
 export const listMarketingMessages = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -132,7 +139,7 @@ export async function pickMarketingFooter(
  */
 export async function pickCrossPromotionForReport(
   excludeService: string,
-): Promise<{ title: string; body: string } | null> {
+): Promise<{ title: string; body: string; productTitle?: string; productUrl?: string; heroImageUrl?: string | null } | null> {
   try {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data } = await supabaseAdmin
@@ -155,7 +162,40 @@ export async function pickCrossPromotionForReport(
       pick -= weights[i]!;
       if (pick < 0) { chosen = rows[i]!; break; }
     }
-    return { title: chosen.title, body: chosen.body };
+    const serviceCandidates = (chosen.services ?? []).filter((s) => s && s !== excludeService);
+    let landing: MarketingLandingPick | null = null;
+
+    if (serviceCandidates.length > 0) {
+      const { data: preferred } = await supabaseAdmin
+        .from("product_landings")
+        .select("title, slug, hero_image_url, report_type")
+        .eq("active", true)
+        .in("report_type", serviceCandidates)
+        .limit(1)
+        .maybeSingle();
+      landing = (preferred ?? null) as MarketingLandingPick | null;
+    }
+
+    if (!landing) {
+      const { data: anyLanding } = await supabaseAdmin
+        .from("product_landings")
+        .select("title, slug, hero_image_url, report_type")
+        .eq("active", true)
+        .neq("report_type", excludeService)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      landing = (anyLanding ?? null) as MarketingLandingPick | null;
+    }
+
+    const siteUrl = (process.env.PUBLIC_SITE_URL || process.env.SITE_URL || "https://codigocosmico.com.br").replace(/\/+$/, "");
+    return {
+      title: chosen.title,
+      body: chosen.body,
+      productTitle: landing?.title,
+      productUrl: landing ? `${siteUrl}/p/${landing.slug}` : undefined,
+      heroImageUrl: landing?.hero_image_url ?? null,
+    };
   } catch {
     return null;
   }
