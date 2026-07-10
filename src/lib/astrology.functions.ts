@@ -790,7 +790,10 @@ REGRAS ABSOLUTAS
 2. Cumpra o mínimo de palavras de cada campo. Se ficar curto, expanda com exemplos concretos e cenas cotidianas.
 3. Cada "tip" começa com um verbo no imperativo suave e é executável em até 30 dias.
 4. Nunca prometa evento certo. Use "tende a", "convida", "pede", "abre espaço para".
-5. Português brasileiro. Sem markdown. Sem emojis. Sem cabeçalhos.`;
+5. Português brasileiro. Sem markdown. Sem emojis. Sem cabeçalhos.
+6. Aplique TODAS as regras antirrepetição (R1–R9) definidas no system. Antes de finalizar cada campo, releia e reescreva qualquer frase >10 palavras que se repita em outro ponto do documento.
+7. Varie estruturas narrativas por aspecto (psicológica, cotidiana, reflexão, pergunta, conselho, metáfora, desafio) e nunca use duas iguais em sequência.
+8. Alterne o tamanho e formato das listas "tips"/"avoid" entre capítulos — nunca o mesmo molde.`;
 
   const { result: text } = await runWithProviderFallback(
     supabaseAdmin, userId ?? null,
