@@ -1659,6 +1659,17 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
           ],
         };
       };
+      const planets = (chart.planets ?? []) as { name: string; sign: string; degree: number }[];
+      const aspects = (chart.aspects ?? []) as { a: string; b: string; aspect: string; orb: number }[];
+      const ascSign = chart.ascendant != null ? SIGNS[Math.floor((chart.ascendant as number) / 30)] : "—";
+      const mcSign = chart.midheaven != null ? SIGNS[Math.floor((chart.midheaven as number) / 30)] : "—";
+      const fallbackChart = {
+        planets,
+        ascendant: chart.ascendant as number | null,
+        midheaven: chart.midheaven as number | null,
+        aspects,
+        summary: chart.summary as string | null,
+      };
       const forecast: AstroForecast = {
         synthesis:
           typeof rawForecast.synthesis === "string" && rawForecast.synthesis.trim()
@@ -1673,25 +1684,14 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
         spirituality: rawForecast.spirituality ?? fallbackArea("Espiritualidade e Sagrado"),
         relationships: rawForecast.relationships ?? fallbackArea("Amizades e Círculos Sociais"),
         shadows: rawForecast.shadows ?? fallbackArea("Sombras e Padrões a Curar"),
-        nextDays: coerceForecastText(rawForecast.nextDays, "próximos dias"),
-        week: coerceForecastText(rawForecast.week, "semana"),
-        month: coerceForecastText(rawForecast.month, "mês"),
-        year: coerceForecastText(rawForecast.year, "ano"),
-        closing:
-          rawForecast.closing ?? "Que este mapa ilumine seus próximos passos.",
+        nextDays: coerceForecastText(rawForecast.nextDays, "próximos dias", buildDeterministicTemporalForecast("nextDays", fallbackChart)),
+        week: coerceForecastText(rawForecast.week, "semana", buildDeterministicTemporalForecast("week", fallbackChart)),
+        month: coerceForecastText(rawForecast.month, "mês", buildDeterministicTemporalForecast("month", fallbackChart)),
+        year: coerceForecastText(rawForecast.year, "ano", buildDeterministicTemporalForecast("year", fallbackChart)),
+        closing: coerceForecastText(rawForecast.closing, "fechamento", buildDeterministicTemporalForecast("closing", fallbackChart)),
         generatedAt: rawForecast.generatedAt ?? new Date().toISOString(),
         antiRepeatVersion: rawForecast.antiRepeatVersion ?? undefined,
       };
-
-
-
-
-
-      const planets = (chart.planets ?? []) as { name: string; sign: string; degree: number }[];
-      const aspects = (chart.aspects ?? []) as { a: string; b: string; aspect: string; orb: number }[];
-      const ascSign = chart.ascendant != null ? SIGNS[Math.floor((chart.ascendant as number) / 30)] : "—";
-      const mcSign = chart.midheaven != null ? SIGNS[Math.floor((chart.midheaven as number) / 30)] : "—";
-
       const blocks: SimplePdfBlock[] = [];
 
       // Resumo do seu céu
