@@ -123,12 +123,31 @@ function planetSignReading(planet: string, sign: string): {
 } {
   const area = PLANET_AREA[planet] ?? "essa área da sua vida";
   const tone = SIGN_TONE[sign] ?? "de um jeito muito particular seu";
-  return {
-    what: `Aqui está falando ${area}. Este posicionamento mostra que essa parte da sua vida tende a acontecer ${tone}.`,
-    events: `No dia a dia, isso aparece como: ${SIGN_EVENTS[sign] ?? "situações que colocam este tema em evidência"}.`,
-    tip: `Como aproveitar bem: ${SIGN_TIP[sign] ?? "escutar o que essa energia está pedindo e agir com consciência"}.`,
-    warn: `Cuidado para não: ${SIGN_WARN[sign] ?? "reagir no automático e repetir padrões antigos"}.`,
-  };
+  const events = SIGN_EVENTS[sign] ?? "situações que colocam este tema em evidência";
+  const tip = SIGN_TIP[sign] ?? "escutar o que essa energia está pedindo e agir com consciência";
+  const warn = SIGN_WARN[sign] ?? "reagir no automático e repetir padrões antigos";
+  const templates = [
+    {
+      what: `${planet} em ${sign} colore ${area} ${tone}. Não é uma força abstrata: é uma assinatura que muda o modo como você escolhe, deseja e responde quando esse assunto é ativado.`,
+      events: `Esse desenho costuma se revelar em ${events}, principalmente quando você precisa decidir sem ter todas as garantias emocionais na mão.`,
+      tip: `Para cooperar com esse posicionamento, experimente ${tip}.`,
+      warn: `O ponto de atenção é ${warn}, porque esse excesso distorce a melhor expressão de ${planet}.`,
+    },
+    {
+      what: `Quando ${planet} passa pelo filtro de ${sign}, ${area} ganha um ritmo próprio: ${tone}. É como se esta parte da sua vida pedisse uma linguagem específica para funcionar bem.`,
+      events: `Você percebe essa marca em ${events}; observe quais dessas situações aparecem repetidamente nos seus ciclos recentes.`,
+      tip: `Um ajuste simples para esta energia é ${tip}.`,
+      warn: `Evite cair em ${warn}; esse é o atalho que transforma potência em desgaste.`,
+    },
+    {
+      what: `Nesta posição, ${planet} mostra onde ${area} procura expressão. Em ${sign}, essa expressão tende a vir ${tone}, pedindo consciência para não virar piloto automático.`,
+      events: `A manifestação mais visível costuma envolver ${events}, com convites claros para agir de forma mais madura.`,
+      tip: `A prática recomendada aqui é ${tip}.`,
+      warn: `A sombra surge quando você começa a ${warn}; note esse sinal antes que ele escolha por você.`,
+    },
+  ];
+  const index = Math.abs([...`${planet}-${sign}`].reduce((acc, ch) => acc + ch.charCodeAt(0), 0)) % templates.length;
+  return templates[index];
 }
 
 // --- leitura contextual de aspecto (dois planetas + tipo) ------------------
@@ -231,29 +250,45 @@ function aspectReading(a: { a: string; b: string; aspect: string }): {
   const k = normalizeAspect(a.aspect);
   const kind = k ? ASPECT_KIND[k] : null;
   if (!kind) {
-    return {
-      narrative:
-        `Aqui ${A} conversa com ${B}. Esse encontro específico entre ${a.a} e ${a.b} ` +
-        `mostra que ${kwA} e ${kwB} caminham juntos no seu dia a dia.`,
-      tip:
-        `Nesta semana, escolha uma situação envolvendo ${kwB} e pratique ${vTipA} ` +
-        `${kwB}. Uma atitude pequena e consciente já reorganiza os dois lados.`,
-      warn:
-        `Evite ${vWarnB} ${kwB} quando ${a.a} estiver acionado — é o gatilho clássico ` +
-        `dessa combinação no seu mapa.`,
-    };
+    const fallbackTemplates = [
+      {
+        narrative: `${a.a} e ${a.b} formam um diálogo particular entre ${A} e ${B}. A leitura central é integrar ${kwA} com ${kwB} sem deixar uma força engolir a outra.`,
+        tip: `Escolha um gesto concreto ligado a ${kwB} e pratique ${vTipA} esse tema por sete dias.`,
+        warn: `O desvio aparece quando você tenta ${vWarnB} ${kwB}; aí o aspecto vira repetição em vez de aprendizado.`,
+      },
+      {
+        narrative: `Este contato entre ${a.a} e ${a.b} pede escuta fina: ${A} busca resposta enquanto ${B} mostra onde a vida cobra integração.`,
+        tip: `Transforme a tensão em método: antes de decidir, nomeie o que ${kwA} deseja e o que ${kwB} precisa preservar.`,
+        warn: `Não force solução rápida quando o tema for ${kwB}; a pressa costuma ativar ${vWarnB} esse campo.`,
+      },
+    ];
+    const index = Math.abs([...`${a.a}-${a.b}-${a.aspect}`].reduce((acc, ch) => acc + ch.charCodeAt(0), 0)) % fallbackTemplates.length;
+    return fallbackTemplates[index];
   }
-  return {
-    narrative:
-      `Entre ${a.a} e ${a.b}: aqui ${A} encontra ${B}. Esse aspecto ${kind.vibe}. ` +
-      `Na sua vida real isso aparece como ${kind.events}, sempre ligado a ${kwA} e ${kwB}.`,
-    tip:
-      `Ação específica para este par: ${vTipA} ${kwB}. Em concreto, ${kind.tip}, ` +
-      `usando a força de ${a.a} para sustentar ${a.b}.`,
-    warn:
-      `O risco típico entre ${a.a} e ${a.b} é ${vWarnB} ${kwB} e, no automático, ${kind.warn}. ` +
-      `Perceba o padrão antes de agir.`,
-  };
+  const templates = [
+    {
+      narrative: `${a.a} em aspecto com ${a.b} coloca ${A} diante de ${B}. A dinâmica é esta: ${kind.vibe}. O aprendizado envolve ${kwA} encontrando uma forma madura de dialogar com ${kwB}.`,
+      tip: `Para trabalhar esse par, pratique ${vTipA} ${kwB}; depois transforme ${kind.tip} em uma atitude observável.`,
+      warn: `A armadilha é ${vWarnB} ${kwB}, especialmente quando você cai em ${kind.warn}.`,
+    },
+    {
+      narrative: `Quando ${a.a} toca ${a.b}, duas áreas internas entram em cena: ${A} e ${B}. ${kind.events}. O mapa pede que você perceba qual delas costuma falar mais alto.`,
+      tip: `Use a semana para testar uma resposta diferente: ${vTipA} ${kwB} antes de repetir a reação conhecida.`,
+      warn: `Se esse ponto for vivido no automático, tende a virar ${kind.warn}; a saída começa quando você identifica ${kwA} sem negar ${kwB}.`,
+    },
+    {
+      narrative: `Este aspecto entre ${a.a} e ${a.b} funciona como um espelho entre ${kwA} e ${kwB}. ${kind.vibe}. A maturidade nasce quando você para de tratar essas forças como inimigas.`,
+      tip: `Dê forma prática ao aspecto: escolha uma conversa, tarefa ou decisão ligada a ${kwB} e aplique ${vTipA} esse campo.`,
+      warn: `Cuide para não ${vWarnB} ${kwB}; quando isso acontece, ${kind.warn}.`,
+    },
+    {
+      narrative: `A pergunta deste encontro é simples: como permitir que ${a.a} expresse ${A} sem atropelar ${B}, território de ${a.b}? ${kind.events}.`,
+      tip: `A resposta prática é reduzir abstrações: faça um pequeno compromisso que una ${kwA} e ${kwB} ainda esta semana.`,
+      warn: `O excesso aparece quando ${vWarnB} ${kwB}; nesse ponto, pause antes de transformar defesa em destino.`,
+    },
+  ];
+  const index = Math.abs([...`${a.a}-${a.b}-${a.aspect}`].reduce((acc, ch) => acc + ch.charCodeAt(0), 0)) % templates.length;
+  return templates[index];
 }
 
 // --- número pessoal do dia (numerologia — mesma lógica do dashboard) -------
