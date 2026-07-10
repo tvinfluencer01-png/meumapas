@@ -742,7 +742,35 @@ type AstroForecast = {
   antiRepeatVersion?: string;
 };
 
-const ASTRO_ANTI_REPEAT_VERSION = "temporal-calendar-marketing-v5";
+const ASTRO_ANTI_REPEAT_VERSION = "narrative-diversity-v6";
+
+// ------- Helpers determinísticos (R23–R26) -------
+function seedFromChart(chart: { planets: { name: string; sign: string; degree: number }[]; ascendant: number | null; midheaven: number | null }): number {
+  let h = 2166136261;
+  const parts = [
+    ...chart.planets.map((p) => `${p.name}:${p.sign}:${Math.round(p.degree)}`),
+    `asc:${Math.round(chart.ascendant ?? 0)}`,
+    `mc:${Math.round(chart.midheaven ?? 0)}`,
+  ].join("|");
+  for (let i = 0; i < parts.length; i++) {
+    h ^= parts.charCodeAt(i);
+    h = (h * 16777619) >>> 0;
+  }
+  return h >>> 0;
+}
+function pickSeeded<T>(arr: readonly T[], seed: number, offset: number): T {
+  return arr[(seed + offset * 2654435761) % arr.length];
+}
+function shuffleSeeded<T>(arr: readonly T[], seed: number): T[] {
+  const out = arr.slice();
+  let s = (seed || 1) >>> 0;
+  for (let i = out.length - 1; i > 0; i--) {
+    s = (s * 1664525 + 1013904223) >>> 0;
+    const j = s % (i + 1);
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
 
 // Coerce forecast time-window fields (nextDays/week/month/year) into readable
 // text. The LLM sometimes returns a string, sometimes an object shaped like a
