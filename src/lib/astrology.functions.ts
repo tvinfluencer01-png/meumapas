@@ -638,6 +638,53 @@ function coerceForecastText(value: unknown, period: string): string {
   return `Previsões para ${period} indisponíveis nesta geração. Gere as previsões novamente para obter uma leitura detalhada deste período.`;
 }
 
+// -----------------------------------------------------------
+// FASE 1 anti-repetição: geração em 3 lotes com memória curta.
+// Lote A: síntese (baseline).
+// Lote B: 9 áreas de vida em paralelo, cada uma recebe digest de A.
+// Lote C: previsões temporais + closing em paralelo, com digest de A+B.
+// -----------------------------------------------------------
+
+const DEEP_AREA_SPECS: Record<keyof Pick<AstroForecast,
+  "love" | "money" | "health" | "purpose" | "business" | "family" | "spirituality" | "relationships" | "shadows"
+>, { title: string; readingWords: number; oppWords: number; tips: string; avoid: string; focus: string }> = {
+  love: { title: "Amor e Vínculo Afetivo", readingWords: 650, oppWords: 200, tips: "6 a 8", avoid: "4",
+    focus: "Vênus, Marte, Lua, Casa 5 e 7. Como ama, atrai, sabota, floresce; parceiro complementar; feridas de rejeição." },
+  money: { title: "Dinheiro, Prosperidade e Abundância", readingWords: 650, oppWords: 200, tips: "6 a 8", avoid: "4",
+    focus: "Vênus, Júpiter, Saturno, Casa 2 e 8. Crenças herdadas, talentos monetizáveis, ciclos de escassez/abundância." },
+  health: { title: "Saúde, Corpo e Vitalidade", readingWords: 550, oppWords: 180, tips: "6 a 8", avoid: "4",
+    focus: "Sol, Marte, Saturno, Casa 6. Pontos sensíveis, padrões emocionais, ritmo ideal. NUNCA diagnóstico clínico." },
+  purpose: { title: "Propósito de Vida e Missão da Alma", readingWords: 650, oppWords: 200, tips: "6 a 8", avoid: "4",
+    focus: "MC, Sol, Nodos, Casa 10. Dom central, ferida iniciática, chamado kármico." },
+  business: { title: "Negócios, Carreira e Empreendimentos", readingWords: 650, oppWords: 220, tips: "6 a 8", avoid: "4",
+    focus: "MC, Casa 10, Saturno, Marte, Júpiter. Vocação, liderança, nicho, modelo de negócio, sócios ideais." },
+  family: { title: "Família, Raízes e Ancestralidade", readingWords: 500, oppWords: 180, tips: "5 a 7", avoid: "3",
+    focus: "Casa 4 e 10, Lua, Saturno. Pai/mãe/irmãos/filhos, padrão herdado, ferida ancestral, papel no clã." },
+  spirituality: { title: "Espiritualidade, Fé e Conexão com o Sagrado", readingWords: 500, oppWords: 180, tips: "5 a 7", avoid: "3",
+    focus: "Netuno, Plutão, Júpiter, Casa 9 e 12. Tradições ressoantes, dons mediúnicos, caminho de despertar." },
+  relationships: { title: "Amizades e Círculos Sociais", readingWords: 400, oppWords: 130, tips: "5", avoid: "3",
+    focus: "Mercúrio, Casa 11. Como faz amigos, círculo saudável, papel em grupo." },
+  shadows: { title: "Sombras, Feridas e Padrões a Curar", readingWords: 550, oppWords: 180, tips: "5 a 7", avoid: "3",
+    focus: "Plutão, Lilith, quadraturas e oposições. Ferida central, mecanismo de defesa, projeção." },
+};
+
+// Extrai um digest curto do que já foi escrito para injetar como "não repita".
+function buildAntiRepeatDigest(prev: string): string {
+  if (!prev) return "";
+  const clean = prev.replace(/\s+/g, " ").trim();
+  const sentences = clean.split(/(?<=[.!?])\s+/).filter((s) => s.split(" ").length >= 8);
+  const picked: string[] = [];
+  const seen = new Set<string>();
+  for (const s of sentences) {
+    const key = s.toLowerCase().slice(0, 60);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    picked.push(s.length > 200 ? s.slice(0, 200) + "…" : s);
+    if (picked.length >= 20) break;
+  }
+  return picked.join("\n- ");
+}
+
 async function buildForecastWithAI(chart: {
   planets: { name: string; sign: string; degree: number }[];
   ascendant: number | null;
@@ -645,8 +692,6 @@ async function buildForecastWithAI(chart: {
   aspects: { a: string; b: string; aspect: string; orb: number }[];
   summary: string | null;
 }, userId?: string | null): Promise<AstroForecast> {
-  // model resolvido via runWithProviderFallback abaixo
-
   const ascSign = chart.ascendant != null ? SIGNS[Math.floor(chart.ascendant / 30)] : "—";
   const mcSign = chart.midheaven != null ? SIGNS[Math.floor(chart.midheaven / 30)] : "—";
   const planetsBlock = chart.planets
@@ -663,30 +708,28 @@ async function buildForecastWithAI(chart: {
   const monthLabel = formatMonthLabel(today);
   const yearLabel = formatYearLabel(today);
 
-  // ============================================================
-  // PROMPT MASTER — Interpretação profunda do Mapa Astral
-  // ============================================================
+  // PROMPT MASTER (system) — persona + R1..R9. Compartilhado por todos os lotes.
   const system = `Você é o **Oráculo Cósmico**, astrólogo profissional com formação em astrologia psicológica (Jung, Liz Greene, Steven Forrest), evolutiva e cabalística.
 Escreve em português brasileiro, tom acolhedor, íntimo, poético e profundamente prático. Nunca prevê eventos certos — mostra tendências, arquétipos e caminhos.
 Fala diretamente ao leitor em segunda pessoa ("você"), como um mentor que já leu a alma da pessoa.
 NUNCA use markdown, títulos com #, asteriscos, listas com - ou emojis. Apenas texto corrido em parágrafos separados por linha em branco.
 Cite planetas, signos, casas e aspectos ESPECÍFICOS do mapa em cada leitura — não escreva genéricos que caberiam a qualquer pessoa.
-Cada tip deve ser uma AÇÃO CONCRETA e executável hoje ou nesta semana (ex: "Reserve 20 min toda manhã para escrever 3 páginas sem filtro"), nunca conselho vago.
+Cada tip deve ser uma AÇÃO CONCRETA e executável hoje ou nesta semana, nunca conselho vago.
 
-REGRAS ANTIRREPETIÇÃO (obrigatórias, valem para o documento inteiro):
-R1. Nunca reutilize textos completos entre planetas diferentes, mesmo quando estiverem no mesmo signo. A leitura sempre combina PLANETA + SIGNO + CASA + ASPECTOS — jamais apenas o signo.
-R2. Nenhuma frase, expressão ou parágrafo com mais de 10 palavras pode repetir-se em qualquer parte do documento. Varie sempre a redação.
-R3. Proibido usar (ou parafrasear com estrutura idêntica) estas muletas: "Na sua vida real isso aparece como…", "Perceba o padrão antes de agir.", "Esse aspecto cria uma tensão…", "Esse aspecto abre uma janela…", "Em concreto…", "Usando a força de X para sustentar Y.".
-R4. Para CADA aspecto interpretado, escolha aleatoriamente UMA destas estruturas narrativas, alternando ao longo do texto (nunca duas seguidas iguais): (a) análise psicológica, (b) exemplo cotidiano, (c) reflexão contemplativa, (d) pergunta direta ao leitor, (e) conselho prático, (f) metáfora, (g) desafio semanal.
-R5. Antes de escrever cada nova seção, verifique se os conceitos centrais já foram usados; se sim, aborde-os por outro ângulo, com vocabulário e sinônimos diferentes.
-R6. Meça a repetição semântica do documento: duas seções NÃO podem ter similaridade superior a 60%. Se sentir parecidas, reescreva mudando estrutura narrativa, vocabulário e exemplos.
-R7. As listas "tips" e "avoid" devem VARIAR em quantidade e formato entre capítulos — um capítulo pode ter 5 itens curtos, outro 7 frases longas, outro pode agrupar em duplas. Nunca replique o mesmo bloco de dicas em capítulos diferentes.
-R8. Preserve personalização profunda e linguagem humana. Se identificar padrão de template se formando, quebre-o imediatamente.
-R9. O objetivo NÃO é reduzir conteúdo — mantenha as extensões mínimas exigidas — mas aumentar a diversidade textual e a sensação de leitura única para cada mapa.`;
+REGRAS ANTIRREPETIÇÃO (obrigatórias):
+R1. Nunca reutilize textos entre planetas diferentes, mesmo no mesmo signo. Sempre PLANETA + SIGNO + CASA + ASPECTOS.
+R2. Nenhuma frase >10 palavras pode repetir-se no documento. Varie sempre a redação.
+R3. Proibido "Na sua vida real isso aparece como…", "Perceba o padrão antes de agir.", "Esse aspecto cria uma tensão…", "Esse aspecto abre uma janela…", "Em concreto…", "Usando a força de X para sustentar Y." e paráfrases idênticas.
+R4. Alterne estruturas narrativas por aspecto: (a) psicológica, (b) exemplo cotidiano, (c) reflexão, (d) pergunta ao leitor, (e) conselho prático, (f) metáfora, (g) desafio semanal. Nunca duas iguais em sequência.
+R5. Antes de escrever, verifique se conceitos já foram usados; aborde por outro ângulo, com vocabulário novo.
+R6. Similaridade semântica entre seções não pode passar de 60%.
+R7. Listas "tips"/"avoid" variam em quantidade e formato entre capítulos.
+R8. Mantenha personalização profunda e humana; quebre padrões de template imediatamente.
+R9. Não reduza extensão — aumente a diversidade textual.`;
 
-  const prompt = `Data de referência: ${todayStr} · Semana: ${week.start} a ${week.end} · Mês: ${monthLabel} · Ano: ${yearLabel}.
+  const chartBlock = `Data de referência: ${todayStr} · Semana: ${week.start} a ${week.end} · Mês: ${monthLabel} · Ano: ${yearLabel}.
 
-MAPA NATAL DO CONSULENTE
+MAPA NATAL
 Ascendente: ${ascSign}
 Meio do Céu: ${mcSign}
 Planetas:
@@ -695,113 +738,116 @@ ${planetsBlock}
 Aspectos principais:
 ${aspectsBlock}
 
-Resumo interno: ${chart.summary ?? "—"}
+Resumo interno: ${chart.summary ?? "—"}`;
 
-MISSÃO
-Gere uma interpretação PROFUNDA e EXTENSA do mapa, com foco em oportunidades e ações práticas em cada área da vida. O texto final vai virar um relatório de ~40 páginas.
-Cite o Sol, Lua, Ascendente, Mercúrio, Vênus, Marte, Júpiter, Saturno e aspectos relevantes em cada seção, mostrando POR QUE esta pessoa vive cada tema desse jeito.
+  async function callJson<T>(prompt: string): Promise<T> {
+    const { result: text } = await runWithProviderFallback(
+      supabaseAdmin, userId ?? null,
+      async (model) => (await generateText({ model, system, prompt })).text,
+      { addonId: "sub_astrologer_numerologist", modelHint: "openai/gpt-5.5" },
+    );
+    return safeParseLlmJson<T>(text);
+  }
 
-FORMATO — RESPONDA EXCLUSIVAMENTE COM JSON VÁLIDO (sem markdown, sem cercas, sem texto fora do JSON):
-{
-  "synthesis": "3 a 4 parágrafos (mín. 500 palavras) — abertura cinematográfica costurando Sol/Lua/Asc/MC, arquétipo dominante, missão desta encarnação e clima do momento atual (${monthLabel}).",
+  function antiRepeatBlock(prevText: string): string {
+    const digest = buildAntiRepeatDigest(prevText);
+    if (!digest) return "";
+    return `\n\nTRECHOS JÁ ESCRITOS NO DOCUMENTO — NÃO repita nem parafraseie estas frases, estruturas ou metáforas. Use vocabulário e ângulos DIFERENTES:\n- ${digest}\n`;
+  }
 
-  "love": {
-    "title": "Amor e Vínculo Afetivo",
-    "reading": "4 a 6 parágrafos (mín. 650 palavras) — como esta pessoa ama, atrai, sabota e floresce no amor à luz de Vênus, Marte, Lua, Casa 5 e 7. Fale sobre o tipo de vínculo que a alma dela busca, o parceiro/a que a complementa, feridas de rejeição e o padrão que ela repete.",
-    "opportunities": "2 parágrafos (mín. 200 palavras) — oportunidades reais no amor que este mapa está abrindo AGORA e nos próximos meses.",
-    "tips": ["6 a 8 ações concretas e específicas para viver o amor com maturidade (ex: 'Marque um encontro semanal só de silêncio e contato com seu par')"],
-    "avoid": ["4 armadilhas específicas a evitar"]
-  },
+  // ---------- LOTE A: síntese ----------
+  const synthPrompt = `${chartBlock}
 
-  "money": {
-    "title": "Dinheiro, Prosperidade e Abundância",
-    "reading": "4 a 6 parágrafos (mín. 650 palavras) — relação com dinheiro à luz de Vênus, Júpiter, Saturno, Casa 2 e 8. Crenças herdadas, talentos monetizáveis, ciclos de escassez/abundância, estilo de gastar e receber.",
-    "opportunities": "2 parágrafos (mín. 200 palavras) — janelas de prosperidade que o mapa mostra para o próximo ciclo.",
-    "tips": ["6 a 8 ações concretas de gestão financeira, mentalidade e monetização alinhadas ao mapa"],
-    "avoid": ["4 armadilhas financeiras"]
-  },
+Gere APENAS a síntese cinematográfica de abertura do relatório.
+Costure Sol/Lua/Ascendente/MC, arquétipo dominante, missão desta encarnação e clima do momento atual (${monthLabel}).
+3 a 4 parágrafos densos, mín. 500 palavras.
 
-  "health": {
-    "title": "Saúde, Corpo e Vitalidade",
-    "reading": "4 a 5 parágrafos (mín. 550 palavras) — vitalidade, pontos sensíveis do corpo à luz de Sol, Marte, Saturno, Casa 6. Padrões emocionais que impactam o corpo, ritmo ideal, abordagens integrativas. NUNCA dar diagnóstico clínico.",
-    "opportunities": "1 a 2 parágrafos (mín. 180 palavras) — oportunidades de cura e regeneração.",
-    "tips": ["6 a 8 práticas de saúde integrativa (sono, alimentação, movimento, terapias)"],
-    "avoid": ["4 hábitos a rever, sempre reforçando que não substitui acompanhamento médico"]
-  },
+Responda EXCLUSIVAMENTE com JSON válido, sem markdown:
+{ "synthesis": "texto aqui" }`;
+  const synthJson = await callJson<{ synthesis: string }>(synthPrompt);
+  const synthesis = synthJson.synthesis ?? "";
 
-  "purpose": {
-    "title": "Propósito de Vida e Missão da Alma",
-    "reading": "4 a 6 parágrafos (mín. 650 palavras) — missão à luz do MC, Sol, Nodos, Casa 10. Dom central que o mundo precisa dessa pessoa, ferida iniciática, chamado kármico.",
-    "opportunities": "2 parágrafos (mín. 200 palavras) — sinais concretos de que o propósito está sendo ativado agora.",
-    "tips": ["6 a 8 movimentos práticos para encarnar a missão"],
-    "avoid": ["4 fugas típicas do propósito"]
-  },
+  // ---------- LOTE B: 9 áreas em paralelo (digest da síntese) ----------
+  const digestA = antiRepeatBlock(synthesis);
+  const areaEntries = Object.entries(DEEP_AREA_SPECS) as Array<[keyof typeof DEEP_AREA_SPECS, typeof DEEP_AREA_SPECS[keyof typeof DEEP_AREA_SPECS]]>;
+  const areaResults = await Promise.all(areaEntries.map(async ([key, spec]) => {
+    const prompt = `${chartBlock}
 
-  "business": {
-    "title": "Negócios, Carreira e Empreendimentos",
-    "reading": "4 a 6 parágrafos (mín. 650 palavras) — vocação profissional à luz de MC, Casa 10, Saturno, Marte, Júpiter. Tipo de liderança, nicho, modelo de negócio que combina, sócios ideais.",
-    "opportunities": "2 parágrafos (mín. 220 palavras) — oportunidades de carreira e negócio abrindo no próximo ciclo.",
-    "tips": ["6 a 8 ações estratégicas para carreira/empreendedorismo"],
-    "avoid": ["4 armadilhas profissionais"]
-  },
+Gere APENAS a seção "${spec.title}" (chave: ${key}) do relatório astrológico.
+Foco temático: ${spec.focus}
+Estrutura obrigatória:
+- "reading": 4 a 6 parágrafos, mín. ${spec.readingWords} palavras.
+- "opportunities": 1 a 2 parágrafos, mín. ${spec.oppWords} palavras — janelas concretas abrindo agora.
+- "tips": ${spec.tips} ações concretas, cada uma iniciada por verbo no imperativo suave.
+- "avoid": ${spec.avoid} armadilhas específicas.
+${digestA}
+Responda EXCLUSIVAMENTE com JSON válido, sem markdown:
+{ "title": "${spec.title}", "reading": "…", "opportunities": "…", "tips": ["…"], "avoid": ["…"] }`;
+    try {
+      const area = await callJson<DeepArea>(prompt);
+      return [key, area] as const;
+    } catch (e) {
+      console.error(`[astro] falha na seção ${key}`, e);
+      return [key, {
+        title: spec.title,
+        reading: `Interpretação de "${spec.title}" indisponível nesta geração. Gere novamente as previsões para receber a leitura completa.`,
+        opportunities: "",
+        tips: [],
+        avoid: [],
+      } as DeepArea] as const;
+    }
+  }));
+  const areas = Object.fromEntries(areaResults) as Record<keyof typeof DEEP_AREA_SPECS, DeepArea>;
 
-  "family": {
-    "title": "Família, Raízes e Ancestralidade",
-    "reading": "3 a 5 parágrafos (mín. 500 palavras) — dinâmica com pai, mãe, irmãos, filhos à luz de Casa 4, 10, Lua, Saturno. Padrão herdado, ferida ancestral, papel no clã.",
-    "opportunities": "1 a 2 parágrafos (mín. 180 palavras) — caminhos de cura familiar.",
-    "tips": ["5 a 7 práticas de harmonização familiar e ancestral"],
-    "avoid": ["3 padrões familiares a interromper"]
-  },
+  // ---------- LOTE C: previsões temporais + closing em paralelo ----------
+  const combinedForDigest = [synthesis, ...areaResults.map(([, a]) => `${a.reading}\n${a.opportunities}`)].join("\n\n");
+  const digestB = antiRepeatBlock(combinedForDigest);
 
-  "spirituality": {
-    "title": "Espiritualidade, Fé e Conexão com o Sagrado",
-    "reading": "3 a 5 parágrafos (mín. 500 palavras) — via espiritual à luz de Netuno, Plutão, Júpiter, Casa 9 e 12. Tradições e práticas que ressoam com a alma, dons mediúnicos, caminho de despertar.",
-    "opportunities": "1 a 2 parágrafos (mín. 180 palavras) — portais espirituais que se abrem no ciclo atual.",
-    "tips": ["5 a 7 práticas espirituais concretas (meditação, ritual, estudo)"],
-    "avoid": ["3 desvios espirituais típicos"]
-  },
+  const forecastSpecs: Array<{ key: "nextDays" | "week" | "month" | "year" | "closing"; label: string; words: number; brief: string }> = [
+    { key: "nextDays", label: "Próximos 5 a 7 dias", words: 400, brief: `Tendências a partir de ${todayStr}. Mencione dias e mês.` },
+    { key: "week", label: "Semana atual", words: 400, brief: `Semana de ${week.start} a ${week.end}: emoções, foco, relacionamentos, trabalho.` },
+    { key: "month", label: "Mês", words: 450, brief: `Mês de ${monthLabel}: tema central, oportunidades, cuidados.` },
+    { key: "year", label: "Ano", words: 600, brief: `Ano ${yearLabel}: grandes ciclos, áreas de crescimento, decisões importantes.` },
+    { key: "closing", label: "Fechamento", words: 250, brief: "Síntese viva, benção final aprofundada, parábola breve e chamado à ação. 2 parágrafos densos." },
+  ];
 
-  "relationships": {
-    "title": "Amizades e Círculos Sociais",
-    "reading": "3 a 4 parágrafos (mín. 400 palavras) — como esta pessoa faz amigos, tipo de círculo saudável, papel em grupo à luz de Mercúrio, Casa 11.",
-    "opportunities": "1 parágrafo (mín. 130 palavras) — encontros e círculos que estão chegando.",
-    "tips": ["5 práticas de cultivo de vínculo"],
-    "avoid": ["3 padrões sociais a rever"]
-  },
+  const forecastResults = await Promise.all(forecastSpecs.map(async (spec) => {
+    const prompt = `${chartBlock}
 
-  "shadows": {
-    "title": "Sombras, Feridas e Padrões a Curar",
-    "reading": "4 a 5 parágrafos (mín. 550 palavras) — sombra jungiana à luz de Plutão, Lilith, quadraturas e oposições. Ferida central, mecanismo de defesa, o que projeta no outro.",
-    "opportunities": "1 a 2 parágrafos (mín. 180 palavras) — o que está pronto para ser integrado agora.",
-    "tips": ["5 a 7 práticas de trabalho com a sombra (terapia, escrita, ritual)"],
-    "avoid": ["3 fugas da sombra"]
-  },
+Gere APENAS a seção "${spec.label}" (chave: ${spec.key}).
+${spec.brief}
+Mín. ${spec.words} palavras, 3 a 4 parágrafos densos, sem listas, sem markdown.
+${digestB}
+Responda EXCLUSIVAMENTE com JSON válido, sem markdown:
+{ "${spec.key}": "texto aqui" }`;
+    try {
+      const j = await callJson<Record<string, string>>(prompt);
+      return [spec.key, (j[spec.key] ?? "").toString()] as const;
+    } catch (e) {
+      console.error(`[astro] falha na seção ${spec.key}`, e);
+      return [spec.key, ""] as const;
+    }
+  }));
+  const forecastMap = Object.fromEntries(forecastResults) as Record<typeof forecastSpecs[number]["key"], string>;
 
-  "nextDays": "3 a 4 parágrafos (mín. 400 palavras) — tendências para os próximos 5 a 7 dias a partir de ${todayStr}. Mencione dias e mês.",
-  "week": "3 a 4 parágrafos (mín. 400 palavras) — semana atual (${week.start} a ${week.end}): emoções, foco, relacionamentos, trabalho.",
-  "month": "3 a 4 parágrafos (mín. 450 palavras) — mês (${monthLabel}): tema central, oportunidades, cuidados.",
-  "year": "4 a 6 parágrafos (mín. 600 palavras) — ano ${yearLabel}: grandes ciclos, áreas de crescimento, decisões importantes.",
-
-  "closing": "2 parágrafos (mín. 250 palavras) — fechamento inspirador, síntese viva, chamado à ação, benção final."
-}
-
-REGRAS ABSOLUTAS
-1. Cite planetas/signos/aspectos ESPECÍFICOS do mapa em cada seção — nada de leitura genérica.
-2. Cumpra o mínimo de palavras de cada campo. Se ficar curto, expanda com exemplos concretos e cenas cotidianas.
-3. Cada "tip" começa com um verbo no imperativo suave e é executável em até 30 dias.
-4. Nunca prometa evento certo. Use "tende a", "convida", "pede", "abre espaço para".
-5. Português brasileiro. Sem markdown. Sem emojis. Sem cabeçalhos.
-6. Aplique TODAS as regras antirrepetição (R1–R9) definidas no system. Antes de finalizar cada campo, releia e reescreva qualquer frase >10 palavras que se repita em outro ponto do documento.
-7. Varie estruturas narrativas por aspecto (psicológica, cotidiana, reflexão, pergunta, conselho, metáfora, desafio) e nunca use duas iguais em sequência.
-8. Alterne o tamanho e formato das listas "tips"/"avoid" entre capítulos — nunca o mesmo molde.`;
-
-  const { result: text } = await runWithProviderFallback(
-    supabaseAdmin, userId ?? null,
-    async (model) => (await generateText({ model, system, prompt })).text,
-    { addonId: "sub_astrologer_numerologist", modelHint: "openai/gpt-5.5" },
-  );
-  const parsed = safeParseLlmJson<Omit<AstroForecast, "generatedAt">>(text);
-  return { ...parsed, generatedAt: new Date().toISOString() };
+  return {
+    synthesis,
+    love: areas.love,
+    money: areas.money,
+    health: areas.health,
+    purpose: areas.purpose,
+    business: areas.business,
+    family: areas.family,
+    spirituality: areas.spirituality,
+    relationships: areas.relationships,
+    shadows: areas.shadows,
+    nextDays: forecastMap.nextDays,
+    week: forecastMap.week,
+    month: forecastMap.month,
+    year: forecastMap.year,
+    closing: forecastMap.closing,
+    generatedAt: new Date().toISOString(),
+  };
 }
 
 
@@ -915,7 +961,7 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
               summary: chart.summary,
             }, userId),
             new Promise<AstroForecast>((_, rej) =>
-              setTimeout(() => rej(new Error("forecast_timeout")), 60_000),
+              setTimeout(() => rej(new Error("forecast_timeout")), 120_000),
             ),
           ]);
           rawForecast = generated;
