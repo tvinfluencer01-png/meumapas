@@ -1144,6 +1144,43 @@ Responda EXCLUSIVAMENTE com JSON válido, sem markdown:
         tips: Array.isArray(area.tips) ? area.tips : [],
         avoid: Array.isArray(area.avoid) ? area.avoid : [],
       };
+      // Auditor de tamanho: se veio abaixo de 85% do alvo, pede expansão
+      const targetTotal = spec.readingWords + spec.oppWords;
+      const currentTotal = countWords(normalizedArea.reading) + countWords(normalizedArea.opportunities);
+      if (currentTotal < Math.floor(targetTotal * 0.85)) {
+        try {
+          const expandPrompt = `${chartBlock}
+
+Você já escreveu esta versão da seção "${spec.title}" (chave: ${key}) e ela ficou CURTA (${currentTotal} palavras contra alvo de ${targetTotal}).
+Reescreva EXPANDINDO em profundidade — sem inventar novos temas, sem repetir frases já escritas, aprofundando exemplos, nuances, contexto emocional e prático.
+
+Versão atual (base para expandir, não copiar frases inteiras):
+"""
+${normalizedArea.reading}
+
+${normalizedArea.opportunities}
+"""
+
+Requisitos:
+- "reading": mín. ${spec.readingWords} palavras, 5 a 7 parágrafos densos.
+- "opportunities": mín. ${spec.oppWords} palavras.
+- "tips": ${spec.tips} ações.
+- "avoid": ${spec.avoid} armadilhas.
+${antiRepeatBlock(cumulativeText)}
+Responda EXCLUSIVAMENTE com JSON válido, sem markdown:
+{ "title": "${spec.title}", "reading": "…", "opportunities": "…", "tips": ["…"], "avoid": ["…"] }`;
+          const expanded = await callJson<DeepArea>(expandPrompt);
+          const expandedTotal = countWords(expanded.reading) + countWords(expanded.opportunities);
+          if (expandedTotal > currentTotal) {
+            normalizedArea.reading = expanded.reading || normalizedArea.reading;
+            normalizedArea.opportunities = expanded.opportunities || normalizedArea.opportunities;
+            normalizedArea.tips = Array.isArray(expanded.tips) && expanded.tips.length ? expanded.tips : normalizedArea.tips;
+            normalizedArea.avoid = Array.isArray(expanded.avoid) && expanded.avoid.length ? expanded.avoid : normalizedArea.avoid;
+          }
+        } catch (e) {
+          console.warn(`[astro] expansão de ${key} falhou, mantendo versão curta`, e);
+        }
+      }
       areaResults.push([key, normalizedArea] as const);
       cumulativeText = [cumulativeText, deepAreaToText(normalizedArea)].join("\n\n");
     } catch (e) {
@@ -1163,11 +1200,11 @@ Responda EXCLUSIVAMENTE com JSON válido, sem markdown:
 
   // ---------- LOTE C: previsões temporais + closing em sequência ----------
   const forecastSpecs: Array<{ key: "nextDays" | "week" | "month" | "year" | "closing"; label: string; words: number; brief: string }> = [
-    { key: "nextDays", label: "Próximos 5 a 7 dias", words: 400, brief: `Tendências a partir de ${todayStr}. Mencione dias e mês.` },
-    { key: "week", label: "Semana atual", words: 400, brief: `Semana de ${week.start} a ${week.end}: emoções, foco, relacionamentos, trabalho.` },
-    { key: "month", label: "Mês", words: 450, brief: `Mês de ${monthLabel}: tema central, oportunidades, cuidados.` },
-    { key: "year", label: "Ano", words: 600, brief: `Ano ${yearLabel}: grandes ciclos, áreas de crescimento, decisões importantes.` },
-    { key: "closing", label: "Fechamento", words: 250, brief: "Síntese viva, benção final aprofundada, parábola breve e chamado à ação. 2 parágrafos densos." },
+    { key: "nextDays", label: "Próximos 5 a 7 dias", words: 650, brief: `Tendências a partir de ${todayStr}. Mencione cada dia com data e nome do dia da semana, o que é aquele dia energeticamente e como aproveitá-lo em linguagem simples para leigos.` },
+    { key: "week", label: "Semana atual", words: 650, brief: `Semana de ${week.start} a ${week.end}: emoções, foco, relacionamentos, trabalho, dia a dia.` },
+    { key: "month", label: "Mês", words: 750, brief: `Mês de ${monthLabel}: tema central, oportunidades, cuidados, marcos semanais.` },
+    { key: "year", label: "Ano", words: 950, brief: `Ano ${yearLabel}: grandes ciclos, áreas de crescimento, decisões importantes, trimestres.` },
+    { key: "closing", label: "Fechamento", words: 350, brief: "Síntese viva, benção final aprofundada, parábola breve original e chamado amoroso à ação. 3 parágrafos densos." },
   ];
 
   const forecastResults: Array<readonly [typeof forecastSpecs[number]["key"], string]> = [];
@@ -1179,13 +1216,35 @@ Gere APENAS a seção "${spec.label}" (chave: ${spec.key}).
 ${spec.brief}
 Ângulo exclusivo desta seção: ${diversity?.lens ?? spec.brief}.
 Forma de abertura obrigatória: ${diversity?.opening ?? "comece com uma imagem temporal específica"}.
-Mín. ${spec.words} palavras, 3 a 4 parágrafos densos, sem listas, sem markdown.
+Mín. ${spec.words} palavras, 4 a 6 parágrafos densos, sem listas, sem markdown.
 ${antiRepeatBlock(cumulativeText)}
 Responda EXCLUSIVAMENTE com JSON válido, sem markdown:
 { "${spec.key}": "texto aqui" }`;
     try {
       const j = await callJson<Record<string, string>>(prompt);
-      const text = (j[spec.key] ?? "").toString();
+      let text = (j[spec.key] ?? "").toString();
+      // Auditor de tamanho para previsões temporais
+      if (countWords(text) < Math.floor(spec.words * 0.85)) {
+        try {
+          const expandPrompt = `${chartBlock}
+
+A seção "${spec.label}" ficou curta (${countWords(text)} palavras, alvo ${spec.words}). Reescreva EXPANDINDO sem repetir frases já escritas, aprofundando exemplos e nuances.
+
+Versão atual:
+"""
+${text}
+"""
+
+Mín. ${spec.words} palavras, 4 a 6 parágrafos densos.
+${antiRepeatBlock(cumulativeText)}
+Responda EXCLUSIVAMENTE com JSON válido: { "${spec.key}": "texto aqui" }`;
+          const j2 = await callJson<Record<string, string>>(expandPrompt);
+          const expanded = (j2[spec.key] ?? "").toString();
+          if (countWords(expanded) > countWords(text)) text = expanded;
+        } catch (e) {
+          console.warn(`[astro] expansão de ${spec.key} falhou`, e);
+        }
+      }
       forecastResults.push([spec.key, text] as const);
       cumulativeText = [cumulativeText, text].join("\n\n");
     } catch (e) {
@@ -1194,6 +1253,7 @@ Responda EXCLUSIVAMENTE com JSON válido, sem markdown:
     }
   }
   const forecastMap = Object.fromEntries(forecastResults) as Record<typeof forecastSpecs[number]["key"], string>;
+
 
   return auditForecastRepetition({
     synthesis,
