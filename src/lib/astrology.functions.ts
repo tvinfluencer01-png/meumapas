@@ -216,7 +216,7 @@ function degreeNarrative(degree?: number): string {
   return "Nos graus finais do signo, a experiência ganha maturidade e pede fechamento consciente de padrões antigos.";
 }
 
-function planetSignReading(planet: string, sign: string): {
+function planetSignReading(planet: string, sign: string, degree?: number): {
   what: string;
   events: string;
   tip: string;
@@ -234,9 +234,10 @@ function planetSignReading(planet: string, sign: string): {
   const concrete = signNarrative ? narrativePick(signNarrative.concrete, planet, sign, 2) : "situações concretas do cotidiano";
   const medicine = signNarrative ? narrativePick(signNarrative.medicine, planet, sign, 3) : "agir com presença e discernimento";
   const shadow = signNarrative ? narrativePick(signNarrative.shadow, planet, sign, 4) : "repetição inconsciente de padrões";
+  const degreeNote = degreeNarrative(degree);
 
   return {
-    what: `${planet} em ${sign} atua sobre ${area}. Neste ponto do mapa, ${planetExpression.focus} por meio de ${rhythm}, criando uma assinatura que não deve ser lida apenas pelo signo, mas pela função específica deste planeta.`,
+    what: `${planet} em ${sign} atua sobre ${area}. Neste ponto do mapa, ${planetExpression.focus} por meio de ${rhythm}, criando uma assinatura que não deve ser lida apenas pelo signo, mas pela função específica deste planeta.${degreeNote ? ` ${degreeNote}` : ""}`,
     events: `Na vida prática, isso aparece em ${planetExpression.scene}; em ${sign}, o cenário costuma envolver ${concrete}. Observe quando esse tema pede presença, porque ali a leitura deixa de ser simbólica e vira escolha concreta.`,
     tip: `A prática recomendada é ${planetExpression.practice}. Para harmonizar com ${sign}, acrescente este cuidado: ${medicine}.`,
     warn: `O ponto de sombra surge quando você começa a ${planetExpression.warning}; nesse signo, o excesso pode tomar a forma de ${shadow}. Reconhecer o sinal cedo evita que ele conduza suas decisões por você.`,
@@ -1575,7 +1576,7 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
       blocks.push({ type: "h2", text: "Cada planeta no seu mapa", pageBreak: false });
       for (const p of planets) {
         const m = PLANET_MEANING[p.name];
-        const reading = planetSignReading(p.name, p.sign);
+        const reading = planetSignReading(p.name, p.sign, p.degree);
         blocks.push({ type: "h3", text: `${m?.title ?? p.name} em ${p.sign} ${p.degree.toFixed(1)}°` });
         blocks.push({
           type: "p",
