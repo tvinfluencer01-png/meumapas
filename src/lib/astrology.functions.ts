@@ -1713,16 +1713,147 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
           ],
         },
       };
-      const genericReading =
-        `Esta área é interpretada a partir do desenho do seu mapa: ${chart.summary ?? "a combinação entre seus planetas, signos, ascendente e aspectos principais"}. Observe onde sua energia pede presença e escolhas mais conscientes.`;
-      const genericOpp =
-        "Há oportunidade concreta de agir com mais clareza, alinhar desejo e responsabilidade e sustentar uma mudança real nos próximos 30 dias.";
+      // R21/R22: sem introdução/oportunidade genéricas. Cada área tem pool próprio.
+      const planetsForArea = (chart.planets ?? []) as { name: string; sign: string; degree: number }[];
+      const aspectsForArea = (chart.aspects ?? []) as { a: string; b: string; aspect: string; orb: number }[];
+      const areaSeed = seedFromChart({
+        planets: planetsForArea,
+        ascendant: chart.ascendant as number | null,
+        midheaven: chart.midheaven as number | null,
+      });
+      const AREA_RULERS: Record<string, string[]> = {
+        "Amor e Vínculo Afetivo": ["Vênus", "Lua", "Marte"],
+        "Dinheiro, Prosperidade e Abundância": ["Vênus", "Júpiter", "Saturno"],
+        "Saúde, Corpo e Vitalidade": ["Sol", "Marte", "Lua"],
+        "Propósito de Vida e Missão da Alma": ["Sol", "Júpiter", "Saturno"],
+        "Negócios, Carreira e Empreendimentos": ["Saturno", "Marte", "Júpiter"],
+        "Família, Raízes e Ancestralidade": ["Lua", "Saturno", "Vênus"],
+        "Espiritualidade e Sagrado": ["Netuno", "Júpiter", "Lua"],
+        "Amizades e Círculos Sociais": ["Mercúrio", "Vênus", "Júpiter"],
+        "Sombras e Padrões a Curar": ["Plutão", "Saturno", "Marte"],
+      };
+      const AREA_OPENERS: Record<string, string[]> = {
+        "Amor e Vínculo Afetivo": [
+          "No campo do afeto, o encontro é ensinado pelo eixo",
+          "O que você chama de amor nasce, no seu mapa, do diálogo entre",
+          "Sua forma de amar carrega a assinatura de",
+          "A intimidade que te transforma vem do jeito como",
+        ],
+        "Dinheiro, Prosperidade e Abundância": [
+          "Sua relação com valor material se explica pelo desenho de",
+          "O dinheiro se comporta, no seu mapa, como resposta a",
+          "Prosperidade, para você, é consequência direta de",
+          "A abundância se estabiliza quando você honra",
+        ],
+        "Saúde, Corpo e Vitalidade": [
+          "Seu corpo pede ritmo diferente do que a cabeça costuma impor: veja",
+          "A vitalidade que dura, no seu mapa, começa por",
+          "A saúde não é sorte no seu desenho — é fruto de",
+          "Onde o corpo grita, geralmente é",
+        ],
+        "Propósito de Vida e Missão da Alma": [
+          "A missão desta encarnação se costura entre",
+          "Seu propósito não está em uma profissão específica; está em",
+          "O que dá sentido para você aparece na costura entre",
+          "A alma pede que você desenvolva",
+        ],
+        "Negócios, Carreira e Empreendimentos": [
+          "Sua autoridade profissional se apoia em",
+          "Carreira, para você, é laboratório de",
+          "O reconhecimento chega quando você combina",
+          "Seu negócio prospera onde você honra",
+        ],
+        "Família, Raízes e Ancestralidade": [
+          "A herança emocional que atravessa você vem de",
+          "Sua história de origem se expressa hoje através de",
+          "Casa, no seu mapa, é o encontro entre",
+          "Ancestralidade se manifesta em você como",
+        ],
+        "Espiritualidade e Sagrado": [
+          "O sagrado te alcança pelo canal de",
+          "Sua espiritualidade não pede templo, pede",
+          "A conexão com o invisível se afina quando você",
+          "Fé, para você, é experiência somática de",
+        ],
+        "Amizades e Círculos Sociais": [
+          "Seu círculo próximo funciona como espelho de",
+          "As amizades que ficam são as que sustentam",
+          "Você atrai pessoas que trazem",
+          "O que uniu suas melhores conexões foi",
+        ],
+        "Sombras e Padrões a Curar": [
+          "O que ainda pede cura em você aparece disfarçado como",
+          "Sua sombra opera nos bastidores de",
+          "Aquilo que se repete e cansa nasce do encontro entre",
+          "O padrão que precisa ser interrompido tem raiz em",
+        ],
+      };
+      const areaSpecificReading = (title: string, idx: number): string => {
+        const rulers = AREA_RULERS[title] ?? ["Sol", "Lua", "Ascendente"];
+        const found = rulers
+          .map((r) => planetsForArea.find((p) => p.name === r))
+          .filter((p): p is { name: string; sign: string; degree: number } => Boolean(p));
+        const primary = found[0];
+        const secondary = found[1];
+        const relatedAspects = aspectsForArea.filter(
+          (a) => found.some((p) => a.a === p.name || a.b === p.name),
+        );
+        const aspRef = relatedAspects.length
+          ? pickSeeded(relatedAspects, areaSeed, idx)
+          : aspectsForArea[0] ?? null;
+        const openers = AREA_OPENERS[title] ?? ["Esta esfera se revela no encontro entre"];
+        const opener = pickSeeded(openers, areaSeed, idx * 3 + 1);
+        const primaryTxt = primary ? `${primary.name} em ${primary.sign}` : `seu Sol`;
+        const secondaryTxt = secondary ? `${secondary.name} em ${secondary.sign}` : `sua Lua`;
+        const aspTxt = aspRef
+          ? `${aspRef.a} ${aspRef.aspect} ${aspRef.b}`
+          : `os principais aspectos do seu mapa`;
+        return `${opener} ${primaryTxt} e ${secondaryTxt}, tensionados por ${aspTxt}. Esse desenho descreve com precisão como você opera nesta esfera, e por que os mesmos temas voltam quando você tenta ignorá-los.`;
+      };
+      const areaSpecificOpportunity = (title: string, idx: number): string => {
+        const rulers = AREA_RULERS[title] ?? ["Sol"];
+        const found = rulers
+          .map((r) => planetsForArea.find((p) => p.name === r))
+          .filter((p): p is { name: string; sign: string; degree: number } => Boolean(p));
+        const primary = found[0];
+        const relatedAspects = aspectsForArea.filter(
+          (a) => found.some((p) => a.a === p.name || a.b === p.name),
+        );
+        const aspRef = relatedAspects.length
+          ? pickSeeded(relatedAspects, areaSeed, idx * 5 + 7)
+          : aspectsForArea[0] ?? null;
+        const primaryTxt = primary ? `${primary.name} em ${primary.sign}` : `seu regente`;
+        const aspTxt = aspRef
+          ? `${aspRef.a} ${aspRef.aspect} ${aspRef.b}`
+          : `o desenho geral do mapa`;
+        const moves = [
+          `usar a força de ${primaryTxt} para reorganizar um combinado antigo`,
+          `deixar ${aspTxt} guiar a próxima escolha em vez de repetir o roteiro conhecido`,
+          `abrir espaço para que ${primaryTxt} se expresse sem pedir licença`,
+          `converter a tensão de ${aspTxt} num acordo prático nos próximos 21 dias`,
+          `permitir que ${primaryTxt} conduza uma conversa que vinha sendo adiada`,
+          `transformar o padrão de ${aspTxt} numa rotina curta e realista`,
+        ];
+        return pickSeeded(moves, areaSeed, idx * 11 + 3) + ".";
+      };
+      const AREA_ORDER = [
+        "Amor e Vínculo Afetivo",
+        "Dinheiro, Prosperidade e Abundância",
+        "Saúde, Corpo e Vitalidade",
+        "Propósito de Vida e Missão da Alma",
+        "Negócios, Carreira e Empreendimentos",
+        "Família, Raízes e Ancestralidade",
+        "Espiritualidade e Sagrado",
+        "Amizades e Círculos Sociais",
+        "Sombras e Padrões a Curar",
+      ] as const;
       const fallbackArea = (title: string): DeepArea => {
         const preset = FALLBACK_TIPS_BY_AREA[title];
+        const idx = Math.max(0, AREA_ORDER.indexOf(title as typeof AREA_ORDER[number]));
         return {
           title,
-          reading: genericReading,
-          opportunities: genericOpp,
+          reading: areaSpecificReading(title, idx),
+          opportunities: areaSpecificOpportunity(title, idx),
           tips: preset?.tips ?? [
             "Escolha uma ação simples e mensurável para praticar por sete dias.",
             "Registre no fim do dia onde sentiu expansão ou tensão.",
