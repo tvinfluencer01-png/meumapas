@@ -742,7 +742,7 @@ type AstroForecast = {
   antiRepeatVersion?: string;
 };
 
-const ASTRO_ANTI_REPEAT_VERSION = "cumulative-ngram-v2";
+const ASTRO_ANTI_REPEAT_VERSION = "length-audit-v3";
 
 // Coerce forecast time-window fields (nextDays/week/month/year) into readable
 // text. The LLM sometimes returns a string, sometimes an object shaped like a
