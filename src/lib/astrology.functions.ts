@@ -831,14 +831,18 @@ function buildDeterministicTemporalForecast(
 
   if (key === "nextDays") {
     const rows: string[] = [];
+    const seed = seedFromChart(chart);
+    const transits = ["Sol", "Mercúrio", "Vênus", "Marte", "Júpiter", "Saturno", "Lua"];
+    const themes = ["identidade", "vínculos", "trabalho", "corpo", "família", "criação", "silêncio"];
     for (let i = 0; i < 7; i++) {
       const d = new Date(today);
       d.setDate(today.getDate() + i);
       const angle = Astro.MoonPhase(d);
       const phase = moonPhaseLabel(angle);
       const date = d.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" });
-      const verb = i % 4 === 0 ? "iniciar com calma" : i % 4 === 1 ? "organizar pendências" : i % 4 === 2 ? "conversar com clareza" : "encerrar ruídos";
-      rows.push(`${date}: ${phase} colore o dia e conversa com ${moon}. O que fazer: ${verb}, escolher uma prioridade e cuidar do corpo antes de responder no impulso. O que esperar: sinais pequenos, mensagens, atrasos ou convites que mostram onde sua energia realmente está. O que evitar: prometer mais do que consegue sustentar. O que pensar: “qual atitude simples me deixa mais inteiro hoje?”. Profecia simbólica: quando você respeita o ritmo deste dia, uma porta discreta se abre sem precisar forçar.`);
+      const transit = transits[(i + (seed % transits.length)) % transits.length];
+      const theme = themes[(i + Math.floor(seed / 7)) % themes.length];
+      rows.push(dayNarrativeBlock(i, phase, transit, theme, chart, seed, `${date}`));
     }
     return rows.join("\n\n");
   }
