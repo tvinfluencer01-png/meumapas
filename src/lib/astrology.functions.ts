@@ -123,12 +123,31 @@ function planetSignReading(planet: string, sign: string): {
 } {
   const area = PLANET_AREA[planet] ?? "essa área da sua vida";
   const tone = SIGN_TONE[sign] ?? "de um jeito muito particular seu";
-  return {
-    what: `Aqui está falando ${area}. Este posicionamento mostra que essa parte da sua vida tende a acontecer ${tone}.`,
-    events: `No dia a dia, isso aparece como: ${SIGN_EVENTS[sign] ?? "situações que colocam este tema em evidência"}.`,
-    tip: `Como aproveitar bem: ${SIGN_TIP[sign] ?? "escutar o que essa energia está pedindo e agir com consciência"}.`,
-    warn: `Cuidado para não: ${SIGN_WARN[sign] ?? "reagir no automático e repetir padrões antigos"}.`,
-  };
+  const events = SIGN_EVENTS[sign] ?? "situações que colocam este tema em evidência";
+  const tip = SIGN_TIP[sign] ?? "escutar o que essa energia está pedindo e agir com consciência";
+  const warn = SIGN_WARN[sign] ?? "reagir no automático e repetir padrões antigos";
+  const templates = [
+    {
+      what: `${planet} em ${sign} colore ${area} ${tone}. Não é uma força abstrata: é uma assinatura que muda o modo como você escolhe, deseja e responde quando esse assunto é ativado.`,
+      events: `Esse desenho costuma se revelar em ${events}, principalmente quando você precisa decidir sem ter todas as garantias emocionais na mão.`,
+      tip: `Para cooperar com esse posicionamento, experimente ${tip}.`,
+      warn: `O ponto de atenção é ${warn}, porque esse excesso distorce a melhor expressão de ${planet}.`,
+    },
+    {
+      what: `Quando ${planet} passa pelo filtro de ${sign}, ${area} ganha um ritmo próprio: ${tone}. É como se esta parte da sua vida pedisse uma linguagem específica para funcionar bem.`,
+      events: `Você percebe essa marca em ${events}; observe quais dessas situações aparecem repetidamente nos seus ciclos recentes.`,
+      tip: `Um ajuste simples para esta energia é ${tip}.`,
+      warn: `Evite cair em ${warn}; esse é o atalho que transforma potência em desgaste.`,
+    },
+    {
+      what: `Nesta posição, ${planet} mostra onde ${area} procura expressão. Em ${sign}, essa expressão tende a vir ${tone}, pedindo consciência para não virar piloto automático.`,
+      events: `A manifestação mais visível costuma envolver ${events}, com convites claros para agir de forma mais madura.`,
+      tip: `A prática recomendada aqui é ${tip}.`,
+      warn: `A sombra surge quando você começa a ${warn}; note esse sinal antes que ele escolha por você.`,
+    },
+  ];
+  const index = Math.abs([...`${planet}-${sign}`].reduce((acc, ch) => acc + ch.charCodeAt(0), 0)) % templates.length;
+  return templates[index];
 }
 
 // --- leitura contextual de aspecto (dois planetas + tipo) ------------------
@@ -231,29 +250,45 @@ function aspectReading(a: { a: string; b: string; aspect: string }): {
   const k = normalizeAspect(a.aspect);
   const kind = k ? ASPECT_KIND[k] : null;
   if (!kind) {
-    return {
-      narrative:
-        `Aqui ${A} conversa com ${B}. Esse encontro específico entre ${a.a} e ${a.b} ` +
-        `mostra que ${kwA} e ${kwB} caminham juntos no seu dia a dia.`,
-      tip:
-        `Nesta semana, escolha uma situação envolvendo ${kwB} e pratique ${vTipA} ` +
-        `${kwB}. Uma atitude pequena e consciente já reorganiza os dois lados.`,
-      warn:
-        `Evite ${vWarnB} ${kwB} quando ${a.a} estiver acionado — é o gatilho clássico ` +
-        `dessa combinação no seu mapa.`,
-    };
+    const fallbackTemplates = [
+      {
+        narrative: `${a.a} e ${a.b} formam um diálogo particular entre ${A} e ${B}. A leitura central é integrar ${kwA} com ${kwB} sem deixar uma força engolir a outra.`,
+        tip: `Escolha um gesto concreto ligado a ${kwB} e pratique ${vTipA} esse tema por sete dias.`,
+        warn: `O desvio aparece quando você tenta ${vWarnB} ${kwB}; aí o aspecto vira repetição em vez de aprendizado.`,
+      },
+      {
+        narrative: `Este contato entre ${a.a} e ${a.b} pede escuta fina: ${A} busca resposta enquanto ${B} mostra onde a vida cobra integração.`,
+        tip: `Transforme a tensão em método: antes de decidir, nomeie o que ${kwA} deseja e o que ${kwB} precisa preservar.`,
+        warn: `Não force solução rápida quando o tema for ${kwB}; a pressa costuma ativar ${vWarnB} esse campo.`,
+      },
+    ];
+    const index = Math.abs([...`${a.a}-${a.b}-${a.aspect}`].reduce((acc, ch) => acc + ch.charCodeAt(0), 0)) % fallbackTemplates.length;
+    return fallbackTemplates[index];
   }
-  return {
-    narrative:
-      `Entre ${a.a} e ${a.b}: aqui ${A} encontra ${B}. Esse aspecto ${kind.vibe}. ` +
-      `Na sua vida real isso aparece como ${kind.events}, sempre ligado a ${kwA} e ${kwB}.`,
-    tip:
-      `Ação específica para este par: ${vTipA} ${kwB}. Em concreto, ${kind.tip}, ` +
-      `usando a força de ${a.a} para sustentar ${a.b}.`,
-    warn:
-      `O risco típico entre ${a.a} e ${a.b} é ${vWarnB} ${kwB} e, no automático, ${kind.warn}. ` +
-      `Perceba o padrão antes de agir.`,
-  };
+  const templates = [
+    {
+      narrative: `${a.a} em aspecto com ${a.b} coloca ${A} diante de ${B}. A dinâmica é esta: ${kind.vibe}. O aprendizado envolve ${kwA} encontrando uma forma madura de dialogar com ${kwB}.`,
+      tip: `Para trabalhar esse par, pratique ${vTipA} ${kwB}; depois transforme ${kind.tip} em uma atitude observável.`,
+      warn: `A armadilha é ${vWarnB} ${kwB}, especialmente quando você cai em ${kind.warn}.`,
+    },
+    {
+      narrative: `Quando ${a.a} toca ${a.b}, duas áreas internas entram em cena: ${A} e ${B}. ${kind.events}. O mapa pede que você perceba qual delas costuma falar mais alto.`,
+      tip: `Use a semana para testar uma resposta diferente: ${vTipA} ${kwB} antes de repetir a reação conhecida.`,
+      warn: `Se esse ponto for vivido no automático, tende a virar ${kind.warn}; a saída começa quando você identifica ${kwA} sem negar ${kwB}.`,
+    },
+    {
+      narrative: `Este aspecto entre ${a.a} e ${a.b} funciona como um espelho entre ${kwA} e ${kwB}. ${kind.vibe}. A maturidade nasce quando você para de tratar essas forças como inimigas.`,
+      tip: `Dê forma prática ao aspecto: escolha uma conversa, tarefa ou decisão ligada a ${kwB} e aplique ${vTipA} esse campo.`,
+      warn: `Cuide para não ${vWarnB} ${kwB}; quando isso acontece, ${kind.warn}.`,
+    },
+    {
+      narrative: `A pergunta deste encontro é simples: como permitir que ${a.a} expresse ${A} sem atropelar ${B}, território de ${a.b}? ${kind.events}.`,
+      tip: `A resposta prática é reduzir abstrações: faça um pequeno compromisso que una ${kwA} e ${kwB} ainda esta semana.`,
+      warn: `O excesso aparece quando ${vWarnB} ${kwB}; nesse ponto, pause antes de transformar defesa em destino.`,
+    },
+  ];
+  const index = Math.abs([...`${a.a}-${a.b}-${a.aspect}`].reduce((acc, ch) => acc + ch.charCodeAt(0), 0)) % templates.length;
+  return templates[index];
 }
 
 // --- número pessoal do dia (numerologia — mesma lógica do dashboard) -------
@@ -610,7 +645,10 @@ type AstroForecast = {
   year: string;
   closing: string;     // fechamento inspirador
   generatedAt: string;
+  antiRepeatVersion?: string;
 };
+
+const ASTRO_ANTI_REPEAT_VERSION = "cumulative-ngram-v2";
 
 // Coerce forecast time-window fields (nextDays/week/month/year) into readable
 // text. The LLM sometimes returns a string, sometimes an object shaped like a
@@ -639,10 +677,10 @@ function coerceForecastText(value: unknown, period: string): string {
 }
 
 // -----------------------------------------------------------
-// FASE 1 anti-repetição: geração em 3 lotes com memória curta.
+// FASE 1 anti-repetição: geração em 3 lotes com memória cumulativa.
 // Lote A: síntese (baseline).
-// Lote B: 9 áreas de vida em paralelo, cada uma recebe digest de A.
-// Lote C: previsões temporais + closing em paralelo, com digest de A+B.
+// Lote B: 9 áreas de vida em sequência, cada uma recebe digest de tudo que já saiu.
+// Lote C: previsões temporais + closing em sequência, também com digest atualizado.
 // -----------------------------------------------------------
 
 const DEEP_AREA_SPECS: Record<keyof Pick<AstroForecast,
@@ -668,21 +706,229 @@ const DEEP_AREA_SPECS: Record<keyof Pick<AstroForecast,
     focus: "Plutão, Lilith, quadraturas e oposições. Ferida central, mecanismo de defesa, projeção." },
 };
 
+const SECTION_DIVERSITY: Record<string, { lens: string; opening: string; avoid: string }> = {
+  love: {
+    lens: "vínculo íntimo, linguagem afetiva, desejo, medo de rejeição e maturidade emocional",
+    opening: "comece por uma cena emocional concreta, não por uma definição astrológica",
+    avoid: "prosperidade, carreira, missão, corpo, ancestralidade e espiritualidade como tema principal",
+  },
+  money: {
+    lens: "valor pessoal, escolhas financeiras, talentos monetizáveis, segurança material e circulação de abundância",
+    opening: "comece por uma decisão prática envolvendo recursos, preço, troca ou merecimento",
+    avoid: "romance, família, cura espiritual e propósito abstrato como eixo central",
+  },
+  health: {
+    lens: "ritmo do corpo, energia diária, tensão acumulada, descanso e autocuidado sem diagnóstico clínico",
+    opening: "comece pela sensação do corpo ao acordar ou ao atravessar a rotina",
+    avoid: "dinheiro, casamento, vocação e mediunidade como tema principal",
+  },
+  purpose: {
+    lens: "chamado da alma, direção existencial, dom central, coragem de assumir identidade e serviço",
+    opening: "comece por uma pergunta existencial que só este mapa poderia provocar",
+    avoid: "dicas financeiras, hábitos de saúde e descrição de parceiro ideal como núcleo",
+  },
+  business: {
+    lens: "posicionamento profissional, liderança, nicho, estratégia, autoridade e parcerias de trabalho",
+    opening: "comece por uma situação de trabalho, decisão de mercado ou escolha de liderança",
+    avoid: "romance, família de origem, espiritualidade devocional e autocuidado corporal como foco",
+  },
+  family: {
+    lens: "raízes, lar, lealdades invisíveis, pai/mãe, pertencimento e padrão ancestral",
+    opening: "comece por uma memória simbólica de casa, origem ou pertencimento",
+    avoid: "negócios, dinheiro, amizades amplas e previsão anual como tema principal",
+  },
+  spirituality: {
+    lens: "fé, silêncio, sonhos, intuição, rituais, entrega e relação pessoal com o invisível",
+    opening: "comece por um sinal sutil, sonho, silêncio ou chamado interior",
+    avoid: "estratégia comercial, orçamento, relação amorosa e rotina física como eixo central",
+  },
+  relationships: {
+    lens: "amizades, grupos, redes, afinidades, colaboração e lugar social sem romantizar",
+    opening: "comece por uma conversa, convite, grupo ou mudança de círculo social",
+    avoid: "casal romântico, dinheiro, saúde e ancestralidade como assunto dominante",
+  },
+  shadows: {
+    lens: "mecanismo de defesa, projeção, medo oculto, compulsão, cura e integração da sombra",
+    opening: "comece pelo ponto em que a pessoa se protege tanto que acaba se limitando",
+    avoid: "tom motivacional genérico, prosperidade fácil, romance idealizado e previsão cronológica",
+  },
+};
+
+const FORECAST_DIVERSITY: Record<string, { lens: string; opening: string }> = {
+  nextDays: {
+    lens: "microdecisões, sinais imediatos, pequenas mudanças de humor e atitudes dos próximos dias",
+    opening: "comece com uma data ou janela curta e uma ação simples observável",
+  },
+  week: {
+    lens: "organização da semana, prioridade emocional, encontros, trabalho e ajuste de rota",
+    opening: "comece pela cadência da semana, como se fosse uma travessia em etapas",
+  },
+  month: {
+    lens: "tema mensal, virada de percepção, oportunidade central e cuidado recorrente",
+    opening: "comece pelo arco do mês, não por eventos isolados",
+  },
+  year: {
+    lens: "ciclo amplo, amadurecimento, escolhas irreversíveis, colheitas e preparação de futuro",
+    opening: "comece com uma imagem de ciclo longo, estação ou construção de destino",
+  },
+  closing: {
+    lens: "benção final, parábola inédita, integração espiritual e chamado amoroso à ação",
+    opening: "comece diretamente com uma parábola breve que não use jardim, rio, ponte, estrada ou porta",
+  },
+};
+
+const DIGEST_STOP_WORDS = new Set([
+  "a", "o", "as", "os", "um", "uma", "uns", "umas", "de", "da", "do", "das", "dos", "em", "no", "na", "nos", "nas",
+  "por", "para", "com", "sem", "sob", "sobre", "entre", "e", "ou", "mas", "que", "se", "sua", "seu", "suas", "seus",
+  "você", "voce", "te", "lhe", "ao", "aos", "à", "às", "isso", "essa", "esse", "esta", "este", "como", "quando",
+]);
+
+function normalizeRepeatText(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function tokenizeAll(text: string): string[] {
+  const normalized = normalizeRepeatText(text);
+  return normalized ? normalized.split(" ").filter(Boolean) : [];
+}
+
+function tokenizeSignificant(text: string): string[] {
+  return tokenizeAll(text).filter((w) => w.length > 2 && !DIGEST_STOP_WORDS.has(w));
+}
+
+function ngrams(words: string[], size: number): string[] {
+  const out: string[] = [];
+  for (let i = 0; i <= words.length - size; i++) {
+    out.push(words.slice(i, i + size).join(" "));
+  }
+  return out;
+}
+
+function splitReadableSentences(text: string): string[] {
+  return text
+    .replace(/\s+/g, " ")
+    .split(/(?<=[.!?])\s+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
 // Extrai um digest curto do que já foi escrito para injetar como "não repita".
+// Além de frases completas, inclui n-grams significativos para bloquear
+// repetições semânticas de estruturas e combinações de palavras.
 function buildAntiRepeatDigest(prev: string): string {
   if (!prev) return "";
   const clean = prev.replace(/\s+/g, " ").trim();
-  const sentences = clean.split(/(?<=[.!?])\s+/).filter((s) => s.split(" ").length >= 8);
-  const picked: string[] = [];
+  const sentences = splitReadableSentences(clean).filter((s) => tokenizeAll(s).length >= 8);
+  const pickedSentences: string[] = [];
   const seen = new Set<string>();
   for (const s of sentences) {
-    const key = s.toLowerCase().slice(0, 60);
+    const key = normalizeRepeatText(s).slice(0, 90);
     if (seen.has(key)) continue;
     seen.add(key);
-    picked.push(s.length > 200 ? s.slice(0, 200) + "…" : s);
-    if (picked.length >= 20) break;
+    pickedSentences.push(s.length > 220 ? s.slice(0, 220) + "…" : s);
+    if (pickedSentences.length >= 18) break;
   }
-  return picked.join("\n- ");
+
+  const words = tokenizeSignificant(clean);
+  const pickedPhrases: string[] = [];
+  const phraseSeen = new Set<string>();
+  for (const size of [8, 7, 6]) {
+    for (const gram of ngrams(words, size)) {
+      if (phraseSeen.has(gram)) continue;
+      phraseSeen.add(gram);
+      pickedPhrases.push(gram);
+      if (pickedPhrases.length >= 32) break;
+    }
+    if (pickedPhrases.length >= 32) break;
+  }
+
+  const blocks: string[] = [];
+  if (pickedSentences.length) blocks.push(`Frases já usadas:\n- ${pickedSentences.join("\n- ")}`);
+  if (pickedPhrases.length) blocks.push(`Sequências/ideias já usadas:\n- ${pickedPhrases.join("\n- ")}`);
+  return blocks.join("\n");
+}
+
+function deepAreaToText(area: Partial<DeepArea> | null | undefined): string {
+  if (!area) return "";
+  return [
+    area.title,
+    area.reading,
+    area.opportunities,
+    ...(Array.isArray(area.tips) ? area.tips : []),
+    ...(Array.isArray(area.avoid) ? area.avoid : []),
+  ]
+    .filter((v): v is string => typeof v === "string" && v.trim().length > 0)
+    .join("\n");
+}
+
+function auditTextAgainstRegistry(text: string, registry: Set<string>): string {
+  if (!text || tokenizeAll(text).length < 10) return text;
+  const sentences = splitReadableSentences(text);
+  if (sentences.length <= 1) {
+    for (const gram of ngrams(tokenizeAll(text), 10)) registry.add(gram);
+    return text;
+  }
+  const kept: string[] = [];
+  for (const sentence of sentences) {
+    const grams = ngrams(tokenizeAll(sentence), 10);
+    const repeated = grams.length > 0 && grams.some((gram) => registry.has(gram));
+    if (!repeated) kept.push(sentence);
+    for (const gram of grams) registry.add(gram);
+  }
+  const audited = kept.join(" ").trim();
+  return audited.length >= Math.min(240, text.length * 0.45) ? audited : text;
+}
+
+function auditListAgainstRegistry(items: string[], registry: Set<string>): string[] {
+  const out: string[] = [];
+  const local = new Set<string>();
+  for (const item of items) {
+    const key = normalizeRepeatText(item).slice(0, 120);
+    const grams = ngrams(tokenizeAll(item), 8);
+    const repeated = local.has(key) || grams.some((gram) => registry.has(gram));
+    if (!repeated) out.push(item);
+    local.add(key);
+    for (const gram of grams) registry.add(gram);
+  }
+  return out.length ? out : items;
+}
+
+function auditArea(area: DeepArea, registry: Set<string>): DeepArea {
+  return {
+    ...area,
+    reading: auditTextAgainstRegistry(area.reading, registry),
+    opportunities: auditTextAgainstRegistry(area.opportunities, registry),
+    tips: auditListAgainstRegistry(area.tips ?? [], registry),
+    avoid: auditListAgainstRegistry(area.avoid ?? [], registry),
+  };
+}
+
+function auditForecastRepetition(forecast: AstroForecast): AstroForecast {
+  const registry = new Set<string>();
+  return {
+    ...forecast,
+    synthesis: auditTextAgainstRegistry(forecast.synthesis, registry),
+    love: auditArea(forecast.love, registry),
+    money: auditArea(forecast.money, registry),
+    health: auditArea(forecast.health, registry),
+    purpose: auditArea(forecast.purpose, registry),
+    business: auditArea(forecast.business, registry),
+    family: auditArea(forecast.family, registry),
+    spirituality: auditArea(forecast.spirituality, registry),
+    relationships: auditArea(forecast.relationships, registry),
+    shadows: auditArea(forecast.shadows, registry),
+    nextDays: auditTextAgainstRegistry(forecast.nextDays, registry),
+    week: auditTextAgainstRegistry(forecast.week, registry),
+    month: auditTextAgainstRegistry(forecast.month, registry),
+    year: auditTextAgainstRegistry(forecast.year, registry),
+    closing: auditTextAgainstRegistry(forecast.closing, registry),
+  };
 }
 
 async function buildForecastWithAI(chart: {
@@ -725,7 +971,8 @@ R5. Antes de escrever, verifique se conceitos já foram usados; aborde por outro
 R6. Similaridade semântica entre seções não pode passar de 60%.
 R7. Listas "tips"/"avoid" variam em quantidade e formato entre capítulos.
 R8. Mantenha personalização profunda e humana; quebre padrões de template imediatamente.
-R9. Não reduza extensão — aumente a diversidade textual.`;
+R9. Não reduza extensão — aumente a diversidade textual.
+R10. Se uma seção anterior falou de um tema, a próxima deve mudar o ângulo, a cena, os verbos, as metáforas e o campo de aplicação. Não basta trocar sinônimos.`;
 
   const chartBlock = `Data de referência: ${todayStr} · Semana: ${week.start} a ${week.end} · Mês: ${monthLabel} · Ano: ${yearLabel}.
 
@@ -752,7 +999,7 @@ Resumo interno: ${chart.summary ?? "—"}`;
   function antiRepeatBlock(prevText: string): string {
     const digest = buildAntiRepeatDigest(prevText);
     if (!digest) return "";
-    return `\n\nTRECHOS JÁ ESCRITOS NO DOCUMENTO — NÃO repita nem parafraseie estas frases, estruturas ou metáforas. Use vocabulário e ângulos DIFERENTES:\n- ${digest}\n`;
+    return `\n\nMEMÓRIA ANTI-REPETIÇÃO DO DOCUMENTO\n${digest}\n\nINSTRUÇÃO CRÍTICA: NÃO repita, NÃO parafraseie e NÃO use estrutura semântica parecida com os itens acima. Se o próximo texto ficar parecido, reescreva mentalmente antes de responder, mudando cena, metáfora, verbo principal, área prática e ritmo da frase.\n`;
   }
 
   // ---------- LOTE A: síntese ----------
@@ -767,42 +1014,54 @@ Responda EXCLUSIVAMENTE com JSON válido, sem markdown:
   const synthJson = await callJson<{ synthesis: string }>(synthPrompt);
   const synthesis = synthJson.synthesis ?? "";
 
-  // ---------- LOTE B: 9 áreas em paralelo (digest da síntese) ----------
-  const digestA = antiRepeatBlock(synthesis);
+  // ---------- LOTE B: 9 áreas em sequência (digest cumulativo) ----------
+  let cumulativeText = synthesis;
   const areaEntries = Object.entries(DEEP_AREA_SPECS) as Array<[keyof typeof DEEP_AREA_SPECS, typeof DEEP_AREA_SPECS[keyof typeof DEEP_AREA_SPECS]]>;
-  const areaResults = await Promise.all(areaEntries.map(async ([key, spec]) => {
+  const areaResults: Array<readonly [keyof typeof DEEP_AREA_SPECS, DeepArea]> = [];
+  for (const [key, spec] of areaEntries) {
+    const diversity = SECTION_DIVERSITY[key];
     const prompt = `${chartBlock}
 
 Gere APENAS a seção "${spec.title}" (chave: ${key}) do relatório astrológico.
 Foco temático: ${spec.focus}
+Ângulo exclusivo desta seção: ${diversity?.lens ?? spec.focus}.
+Forma de abertura obrigatória: ${diversity?.opening ?? "comece com uma cena concreta e específica"}.
+Evite invadir estes temas nesta seção: ${diversity?.avoid ?? "temas de outras áreas do relatório"}.
 Estrutura obrigatória:
 - "reading": 4 a 6 parágrafos, mín. ${spec.readingWords} palavras.
 - "opportunities": 1 a 2 parágrafos, mín. ${spec.oppWords} palavras — janelas concretas abrindo agora.
 - "tips": ${spec.tips} ações concretas, cada uma iniciada por verbo no imperativo suave.
 - "avoid": ${spec.avoid} armadilhas específicas.
-${digestA}
+${antiRepeatBlock(cumulativeText)}
 Responda EXCLUSIVAMENTE com JSON válido, sem markdown:
 { "title": "${spec.title}", "reading": "…", "opportunities": "…", "tips": ["…"], "avoid": ["…"] }`;
     try {
       const area = await callJson<DeepArea>(prompt);
-      return [key, area] as const;
+      const normalizedArea: DeepArea = {
+        title: area.title || spec.title,
+        reading: area.reading || "",
+        opportunities: area.opportunities || "",
+        tips: Array.isArray(area.tips) ? area.tips : [],
+        avoid: Array.isArray(area.avoid) ? area.avoid : [],
+      };
+      areaResults.push([key, normalizedArea] as const);
+      cumulativeText = [cumulativeText, deepAreaToText(normalizedArea)].join("\n\n");
     } catch (e) {
       console.error(`[astro] falha na seção ${key}`, e);
-      return [key, {
+      const fallback = {
         title: spec.title,
         reading: `Interpretação de "${spec.title}" indisponível nesta geração. Gere novamente as previsões para receber a leitura completa.`,
         opportunities: "",
         tips: [],
         avoid: [],
-      } as DeepArea] as const;
+      } as DeepArea;
+      areaResults.push([key, fallback] as const);
+      cumulativeText = [cumulativeText, deepAreaToText(fallback)].join("\n\n");
     }
-  }));
+  }
   const areas = Object.fromEntries(areaResults) as Record<keyof typeof DEEP_AREA_SPECS, DeepArea>;
 
-  // ---------- LOTE C: previsões temporais + closing em paralelo ----------
-  const combinedForDigest = [synthesis, ...areaResults.map(([, a]) => `${a.reading}\n${a.opportunities}`)].join("\n\n");
-  const digestB = antiRepeatBlock(combinedForDigest);
-
+  // ---------- LOTE C: previsões temporais + closing em sequência ----------
   const forecastSpecs: Array<{ key: "nextDays" | "week" | "month" | "year" | "closing"; label: string; words: number; brief: string }> = [
     { key: "nextDays", label: "Próximos 5 a 7 dias", words: 400, brief: `Tendências a partir de ${todayStr}. Mencione dias e mês.` },
     { key: "week", label: "Semana atual", words: 400, brief: `Semana de ${week.start} a ${week.end}: emoções, foco, relacionamentos, trabalho.` },
@@ -811,26 +1070,32 @@ Responda EXCLUSIVAMENTE com JSON válido, sem markdown:
     { key: "closing", label: "Fechamento", words: 250, brief: "Síntese viva, benção final aprofundada, parábola breve e chamado à ação. 2 parágrafos densos." },
   ];
 
-  const forecastResults = await Promise.all(forecastSpecs.map(async (spec) => {
+  const forecastResults: Array<readonly [typeof forecastSpecs[number]["key"], string]> = [];
+  for (const spec of forecastSpecs) {
+    const diversity = FORECAST_DIVERSITY[spec.key];
     const prompt = `${chartBlock}
 
 Gere APENAS a seção "${spec.label}" (chave: ${spec.key}).
 ${spec.brief}
+Ângulo exclusivo desta seção: ${diversity?.lens ?? spec.brief}.
+Forma de abertura obrigatória: ${diversity?.opening ?? "comece com uma imagem temporal específica"}.
 Mín. ${spec.words} palavras, 3 a 4 parágrafos densos, sem listas, sem markdown.
-${digestB}
+${antiRepeatBlock(cumulativeText)}
 Responda EXCLUSIVAMENTE com JSON válido, sem markdown:
 { "${spec.key}": "texto aqui" }`;
     try {
       const j = await callJson<Record<string, string>>(prompt);
-      return [spec.key, (j[spec.key] ?? "").toString()] as const;
+      const text = (j[spec.key] ?? "").toString();
+      forecastResults.push([spec.key, text] as const);
+      cumulativeText = [cumulativeText, text].join("\n\n");
     } catch (e) {
       console.error(`[astro] falha na seção ${spec.key}`, e);
-      return [spec.key, ""] as const;
+      forecastResults.push([spec.key, ""] as const);
     }
-  }));
+  }
   const forecastMap = Object.fromEntries(forecastResults) as Record<typeof forecastSpecs[number]["key"], string>;
 
-  return {
+  return auditForecastRepetition({
     synthesis,
     love: areas.love,
     money: areas.money,
@@ -847,7 +1112,8 @@ Responda EXCLUSIVAMENTE com JSON válido, sem markdown:
     year: forecastMap.year,
     closing: forecastMap.closing,
     generatedAt: new Date().toISOString(),
-  };
+    antiRepeatVersion: ASTRO_ANTI_REPEAT_VERSION,
+  });
 }
 
 
@@ -944,6 +1210,7 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
       const forecastLooksIncomplete =
         !rawForecast ||
         typeof rawForecast !== "object" ||
+        rawForecast.antiRepeatVersion !== ASTRO_ANTI_REPEAT_VERSION ||
         !rawForecast.love ||
         !rawForecast.week ||
         typeof rawForecast.week !== "string" ||
@@ -1147,6 +1414,7 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
         closing:
           rawForecast.closing ?? "Que este mapa ilumine seus próximos passos.",
         generatedAt: rawForecast.generatedAt ?? new Date().toISOString(),
+        antiRepeatVersion: rawForecast.antiRepeatVersion ?? undefined,
       };
 
 
