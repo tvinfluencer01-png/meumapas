@@ -25,6 +25,44 @@ export const Route = createFileRoute("/api/public/hooks/daily-horoscope")({
   },
 });
 
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+/**
+ * Converte o texto do horóscopo (com \n) em HTML com blocos visuais.
+ * Linhas iniciadas por emoji viram títulos; demais viram parágrafos.
+ */
+function formatHoroscopeHtml(raw: string, compact = false): string {
+  if (!raw) return "";
+  // Normaliza quebras: garante \n entre seções, mesmo se a LLM devolveu tudo junto.
+  const normalized = raw
+    .replace(/\r\n/g, "\n")
+    // insere quebra dupla antes de linhas de seção com emoji conhecido
+    .replace(/\s*(?=(?:🌅|💛|💰|🌿|⚡|🌟|🎯|✨|⚠️)\s)/g, "\n\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+  const blocks = normalized.split(/\n{2,}/);
+  const headingRe = /^([\p{Extended_Pictographic}\u2600-\u27BF]\uFE0F?)\s+(.+)$/u;
+
+  return blocks.map((block) => {
+    const lines = block.split(/\n/).map((l) => l.trim()).filter(Boolean);
+    if (!lines.length) return "";
+    const first = lines[0];
+    const m = first.match(headingRe);
+    const gap = compact ? "8px" : "14px";
+    if (m && lines.length === 1) {
+      return `<h3 style="margin:${gap} 0 6px;color:#6b21a8;font-size:15px">${escapeHtml(first)}</h3>`;
+    }
+    if (m) {
+      const rest = lines.slice(1).map((l) => `<p style="margin:6px 0">${escapeHtml(l)}</p>`).join("");
+      return `<div style="margin:${gap} 0 0"><h3 style="margin:0 0 6px;color:#6b21a8;font-size:15px">${escapeHtml(first)}</h3>${rest}</div>`;
+    }
+    return `<p style="margin:${gap} 0 0">${lines.map(escapeHtml).join("<br/>")}</p>`;
+  }).join("");
+}
+
 async function handler({ request }: { request: Request }) {
   const apikey = request.headers.get("apikey");
   if (apikey !== process.env.SUPABASE_PUBLISHABLE_KEY && apikey !== process.env.SUPABASE_ANON_KEY) {
@@ -389,7 +427,7 @@ async function handler({ request }: { request: Request }) {
             secure: !!smtp.secure,
             auth: { user: smtp.username, pass: smtp.password },
           });
-          const html = `<div style="font-family:Arial,sans-serif;line-height:1.55;color:#222;max-width:640px;margin:0 auto;padding:16px"><h2 style="color:#6b21a8;margin:0 0 12px">🌌 Horóscopo de hoje — ${s.sun_sign}</h2><div style="white-space:pre-wrap">${body.replace(/</g, "&lt;")}</div><hr style="margin:20px 0;border:none;border-top:1px solid #eee"/><div style="color:#555;font-size:13px;white-space:pre-wrap">${footer.replace(/</g, "&lt;")}</div></div>`;
+          const html = `<div style="font-family:Arial,sans-serif;line-height:1.6;color:#222;max-width:640px;margin:0 auto;padding:16px"><h2 style="color:#6b21a8;margin:0 0 16px">🌌 Horóscopo de hoje — ${s.sun_sign}</h2>${formatHoroscopeHtml(body)}<hr style="margin:24px 0;border:none;border-top:1px solid #eee"/><div style="color:#555;font-size:13px">${formatHoroscopeHtml(footer, true)}</div></div>`;
           await transporter.sendMail({
             from: `"${smtp.from_name || smtp.from_email}" <${smtp.from_email}>`,
             to: s.email,
