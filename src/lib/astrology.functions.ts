@@ -933,7 +933,8 @@ R5. Antes de escrever, verifique se conceitos já foram usados; aborde por outro
 R6. Similaridade semântica entre seções não pode passar de 60%.
 R7. Listas "tips"/"avoid" variam em quantidade e formato entre capítulos.
 R8. Mantenha personalização profunda e humana; quebre padrões de template imediatamente.
-R9. Não reduza extensão — aumente a diversidade textual.`;
+R9. Não reduza extensão — aumente a diversidade textual.
+R10. Se uma seção anterior falou de um tema, a próxima deve mudar o ângulo, a cena, os verbos, as metáforas e o campo de aplicação. Não basta trocar sinônimos.`;
 
   const chartBlock = `Data de referência: ${todayStr} · Semana: ${week.start} a ${week.end} · Mês: ${monthLabel} · Ano: ${yearLabel}.
 
@@ -960,7 +961,7 @@ Resumo interno: ${chart.summary ?? "—"}`;
   function antiRepeatBlock(prevText: string): string {
     const digest = buildAntiRepeatDigest(prevText);
     if (!digest) return "";
-    return `\n\nTRECHOS JÁ ESCRITOS NO DOCUMENTO — NÃO repita nem parafraseie estas frases, estruturas ou metáforas. Use vocabulário e ângulos DIFERENTES:\n- ${digest}\n`;
+    return `\n\nMEMÓRIA ANTI-REPETIÇÃO DO DOCUMENTO\n${digest}\n\nINSTRUÇÃO CRÍTICA: NÃO repita, NÃO parafraseie e NÃO use estrutura semântica parecida com os itens acima. Se o próximo texto ficar parecido, reescreva mentalmente antes de responder, mudando cena, metáfora, verbo principal, área prática e ritmo da frase.\n`;
   }
 
   // ---------- LOTE A: síntese ----------
@@ -975,42 +976,54 @@ Responda EXCLUSIVAMENTE com JSON válido, sem markdown:
   const synthJson = await callJson<{ synthesis: string }>(synthPrompt);
   const synthesis = synthJson.synthesis ?? "";
 
-  // ---------- LOTE B: 9 áreas em paralelo (digest da síntese) ----------
-  const digestA = antiRepeatBlock(synthesis);
+  // ---------- LOTE B: 9 áreas em sequência (digest cumulativo) ----------
+  let cumulativeText = synthesis;
   const areaEntries = Object.entries(DEEP_AREA_SPECS) as Array<[keyof typeof DEEP_AREA_SPECS, typeof DEEP_AREA_SPECS[keyof typeof DEEP_AREA_SPECS]]>;
-  const areaResults = await Promise.all(areaEntries.map(async ([key, spec]) => {
+  const areaResults: Array<readonly [keyof typeof DEEP_AREA_SPECS, DeepArea]> = [];
+  for (const [key, spec] of areaEntries) {
+    const diversity = SECTION_DIVERSITY[key];
     const prompt = `${chartBlock}
 
 Gere APENAS a seção "${spec.title}" (chave: ${key}) do relatório astrológico.
 Foco temático: ${spec.focus}
+Ângulo exclusivo desta seção: ${diversity?.lens ?? spec.focus}.
+Forma de abertura obrigatória: ${diversity?.opening ?? "comece com uma cena concreta e específica"}.
+Evite invadir estes temas nesta seção: ${diversity?.avoid ?? "temas de outras áreas do relatório"}.
 Estrutura obrigatória:
 - "reading": 4 a 6 parágrafos, mín. ${spec.readingWords} palavras.
 - "opportunities": 1 a 2 parágrafos, mín. ${spec.oppWords} palavras — janelas concretas abrindo agora.
 - "tips": ${spec.tips} ações concretas, cada uma iniciada por verbo no imperativo suave.
 - "avoid": ${spec.avoid} armadilhas específicas.
-${digestA}
+${antiRepeatBlock(cumulativeText)}
 Responda EXCLUSIVAMENTE com JSON válido, sem markdown:
 { "title": "${spec.title}", "reading": "…", "opportunities": "…", "tips": ["…"], "avoid": ["…"] }`;
     try {
       const area = await callJson<DeepArea>(prompt);
-      return [key, area] as const;
+      const normalizedArea: DeepArea = {
+        title: area.title || spec.title,
+        reading: area.reading || "",
+        opportunities: area.opportunities || "",
+        tips: Array.isArray(area.tips) ? area.tips : [],
+        avoid: Array.isArray(area.avoid) ? area.avoid : [],
+      };
+      areaResults.push([key, normalizedArea] as const);
+      cumulativeText = [cumulativeText, deepAreaToText(normalizedArea)].join("\n\n");
     } catch (e) {
       console.error(`[astro] falha na seção ${key}`, e);
-      return [key, {
+      const fallback = {
         title: spec.title,
         reading: `Interpretação de "${spec.title}" indisponível nesta geração. Gere novamente as previsões para receber a leitura completa.`,
         opportunities: "",
         tips: [],
         avoid: [],
-      } as DeepArea] as const;
+      } as DeepArea;
+      areaResults.push([key, fallback] as const);
+      cumulativeText = [cumulativeText, deepAreaToText(fallback)].join("\n\n");
     }
-  }));
+  }
   const areas = Object.fromEntries(areaResults) as Record<keyof typeof DEEP_AREA_SPECS, DeepArea>;
 
-  // ---------- LOTE C: previsões temporais + closing em paralelo ----------
-  const combinedForDigest = [synthesis, ...areaResults.map(([, a]) => `${a.reading}\n${a.opportunities}`)].join("\n\n");
-  const digestB = antiRepeatBlock(combinedForDigest);
-
+  // ---------- LOTE C: previsões temporais + closing em sequência ----------
   const forecastSpecs: Array<{ key: "nextDays" | "week" | "month" | "year" | "closing"; label: string; words: number; brief: string }> = [
     { key: "nextDays", label: "Próximos 5 a 7 dias", words: 400, brief: `Tendências a partir de ${todayStr}. Mencione dias e mês.` },
     { key: "week", label: "Semana atual", words: 400, brief: `Semana de ${week.start} a ${week.end}: emoções, foco, relacionamentos, trabalho.` },
@@ -1019,26 +1032,32 @@ Responda EXCLUSIVAMENTE com JSON válido, sem markdown:
     { key: "closing", label: "Fechamento", words: 250, brief: "Síntese viva, benção final aprofundada, parábola breve e chamado à ação. 2 parágrafos densos." },
   ];
 
-  const forecastResults = await Promise.all(forecastSpecs.map(async (spec) => {
+  const forecastResults: Array<readonly [typeof forecastSpecs[number]["key"], string]> = [];
+  for (const spec of forecastSpecs) {
+    const diversity = FORECAST_DIVERSITY[spec.key];
     const prompt = `${chartBlock}
 
 Gere APENAS a seção "${spec.label}" (chave: ${spec.key}).
 ${spec.brief}
+Ângulo exclusivo desta seção: ${diversity?.lens ?? spec.brief}.
+Forma de abertura obrigatória: ${diversity?.opening ?? "comece com uma imagem temporal específica"}.
 Mín. ${spec.words} palavras, 3 a 4 parágrafos densos, sem listas, sem markdown.
-${digestB}
+${antiRepeatBlock(cumulativeText)}
 Responda EXCLUSIVAMENTE com JSON válido, sem markdown:
 { "${spec.key}": "texto aqui" }`;
     try {
       const j = await callJson<Record<string, string>>(prompt);
-      return [spec.key, (j[spec.key] ?? "").toString()] as const;
+      const text = (j[spec.key] ?? "").toString();
+      forecastResults.push([spec.key, text] as const);
+      cumulativeText = [cumulativeText, text].join("\n\n");
     } catch (e) {
       console.error(`[astro] falha na seção ${spec.key}`, e);
-      return [spec.key, ""] as const;
+      forecastResults.push([spec.key, ""] as const);
     }
-  }));
+  }
   const forecastMap = Object.fromEntries(forecastResults) as Record<typeof forecastSpecs[number]["key"], string>;
 
-  return {
+  return auditForecastRepetition({
     synthesis,
     love: areas.love,
     money: areas.money,
@@ -1055,7 +1074,7 @@ Responda EXCLUSIVAMENTE com JSON válido, sem markdown:
     year: forecastMap.year,
     closing: forecastMap.closing,
     generatedAt: new Date().toISOString(),
-  };
+  });
 }
 
 
