@@ -1978,7 +1978,9 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
             planets,
             ascendant: chart.ascendant as number | null,
             midheaven: chart.midheaven as number | null,
-          }),
+            aspects: aspects,
+            summary: chart.summary as string | null,
+          }, i),
         });
       }
       blocks.push({ type: "kv", rows: moonRows });
