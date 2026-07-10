@@ -889,17 +889,61 @@ function moonPhaseLabel(angle: number): string {
   return "Lua Minguante";
 }
 
-function detailedDayGuidance(date: Date, moonLabel: string, pd: number | null, chart: { planets: { name: string; sign: string; degree: number }[]; ascendant: number | null; midheaven: number | null }) {
-  const s = chartSignature({ ...chart, aspects: [], summary: null });
-  const vibe = pd != null ? personalDayVibe(pd) : "escuta do momento";
-  const moonAction = moonLabel.includes("Nova") ? "plante uma intenção pequena e concreta" : moonLabel.includes("Crescente") ? "dê andamento ao que já começou" : moonLabel.includes("Cheia") ? "observe resultados e converse com franqueza" : "limpe excessos, descanse e solte cobranças";
-  const pdAction: Record<number, string> = {
-    1: "comece algo sem esperar aprovação perfeita", 2: "escute antes de responder", 3: "expresse uma ideia, mensagem ou criação", 4: "organize agenda, documentos e dinheiro", 5: "mude a rota com leveza", 6: "cuide de casa, corpo e vínculos", 7: "estude, medite e proteja silêncio", 8: "decida com autoridade e ética", 9: "encerre ciclos e doe o que não usa", 11: "confie em uma intuição e registre sinais", 22: "transforme visão em plano", 33: "sirva sem se abandonar",
+// R23/R26: fábrica de 10 formatos narrativos por dia
+type DayFormat = "conselho" | "metafora" | "pergunta" | "ritual" | "alerta" | "psicologica" | "desafio" | "exercicio" | "simbolo" | "narrativa";
+const DAY_FORMATS: readonly DayFormat[] = ["conselho", "metafora", "pergunta", "ritual", "alerta", "psicologica", "desafio", "exercicio", "simbolo", "narrativa"];
+
+function dayNarrativeBlock(
+  index: number,
+  phase: string,
+  transit: string,
+  theme: string,
+  chart: { planets: { name: string; sign: string; degree: number }[]; ascendant: number | null; midheaven: number | null; aspects?: { a: string; b: string; aspect: string; orb: number }[]; summary?: string | null },
+  seed: number,
+  prefix: string,
+  pd: number | null = null,
+): string {
+  const s = chartSignature({ ...chart, aspects: chart.aspects ?? [], summary: chart.summary ?? null });
+  // R26: pelo menos 10 formatos, não repete em sequência
+  const formats = shuffleSeeded(DAY_FORMATS, seed);
+  const format = formats[index % formats.length];
+  const sunSign = s.sun?.sign ?? "seu Sol";
+  const moonSign = s.moon?.sign ?? "sua Lua";
+  const ascSign = s.ascSign;
+  const aspects = chart.aspects ?? [];
+  const aspRef = aspects.length ? pickSeeded(aspects, seed, index + 3) : null;
+  const aspTxt = aspRef ? `${aspRef.a}-${aspRef.aspect}-${aspRef.b}` : `o eixo entre ${sunSign} e ${ascSign}`;
+  const pdTxt = pd != null ? ` (dia pessoal ${pd})` : "";
+
+  const bodies: Record<DayFormat, string> = {
+    conselho: `${prefix} — ${phase}${pdTxt}. Trânsito de ${transit} pede foco em ${theme}: dê um passo real e mensurável hoje, mesmo pequeno, ancorado em ${aspTxt}. Deixe o resto amadurecer sozinho.`,
+    metafora: `${prefix} — ${phase}${pdTxt}. Este dia é como abrir uma janela num quarto fechado: o ar novo vem de ${transit}, e ${aspTxt} mostra por onde a claridade entra em ${theme}.`,
+    pergunta: `${prefix} — ${phase}${pdTxt}. Pergunta do dia: o que ${transit} em ${theme} está tentando te ensinar quando você pausa e escuta ${moonSign}? Escreva a resposta antes de dormir.`,
+    ritual: `${prefix} — ${phase}${pdTxt}. Ritual: acenda uma vela, respire nove vezes lembrando de ${aspTxt} e nomeie em voz alta uma escolha em ${theme} que ${transit} pede coragem para assumir.`,
+    alerta: `${prefix} — ${phase}${pdTxt}. Cuidado com atalhos hoje: ${transit} tensiona ${theme}, e ${aspTxt} amplifica o que for feito no impulso. Confira duas vezes antes de confirmar.`,
+    psicologica: `${prefix} — ${phase}${pdTxt}. Observação: sua ${moonSign} tende a reagir em ${theme} como se ainda fosse aquela versão antiga. ${transit} mostra o padrão; ${aspTxt} oferece a saída.`,
+    desafio: `${prefix} — ${phase}${pdTxt}. Desafio de 24h: elimine uma pendência em ${theme} que arrasta há mais de sete dias. Use a força de ${transit} e a lucidez de ${aspTxt}.`,
+    exercicio: `${prefix} — ${phase}${pdTxt}. Exercício: em três linhas, escreva o que ${theme} pede, o que oferece e o que cobra. ${transit} guia a caneta; ${aspTxt} guia a honestidade.`,
+    simbolo: `${prefix} — ${phase}${pdTxt}. Símbolo do dia: ${transit} como mensageiro em ${theme}. ${aspTxt} funciona como o selo — só o que atravessar esses dois filtros merece energia hoje.`,
+    narrativa: `${prefix} — ${phase}${pdTxt}. Imagine ${sunSign} conversando com ${transit} sobre ${theme}: eles concordam num ponto e discordam noutro. ${aspTxt} é o mediador dessa cena interna.`,
   };
-  const expect = moonLabel.includes("Cheia") ? "emoções mais visíveis, respostas e necessidade de clareza" : moonLabel.includes("Nova") ? "sensação de recomeço, ideias ainda frágeis e vontade de reposicionar a rota" : moonLabel.includes("Minguante") ? "cansaço produtivo, vontade de simplificar e sinais do que precisa sair" : "crescimento gradual, pedidos práticos e oportunidades que exigem continuidade";
-  const avoid = pd === 5 ? "agir só por tédio" : pd === 8 ? "usar poder para controlar" : pd === 2 ? "engolir incômodo para manter paz" : "fazer tudo no automático";
-  const thought = s.moon ? `o que minha Lua em ${s.moon.sign} precisa para se sentir segura hoje?` : "o que meu corpo está tentando me dizer hoje?";
-  return `${moonLabel} · nº ${pd ?? "—"} · ${vibe}. Faça: ${moonAction}; na prática, ${pd != null ? pdAction[pd] ?? "aja com presença" : "observe e escolha uma atitude simples"}. Aproveite para alinhar uma decisão com ${s.sun ? `seu Sol em ${s.sun.sign}` : "sua essência"} e com o Ascendente em ${s.ascSign}. Espere: ${expect}. Evite: ${avoid}. Pense: “${thought}”. Profecia simbólica: se você honrar o ritmo deste dia, uma resposta que parecia distante começa a se aproximar em forma de sinal, convite ou alívio.`;
+  return bodies[format];
+}
+
+function detailedDayGuidance(
+  date: Date,
+  moonLabel: string,
+  pd: number | null,
+  chart: { planets: { name: string; sign: string; degree: number }[]; ascendant: number | null; midheaven: number | null; aspects?: { a: string; b: string; aspect: string; orb: number }[]; summary?: string | null },
+  index: number = 0,
+): string {
+  const seed = seedFromChart(chart);
+  const transits = ["Sol", "Mercúrio", "Vênus", "Marte", "Júpiter", "Saturno", "Urano", "Netuno", "Plutão", "Lua"];
+  const themes = ["identidade", "vínculos", "trabalho", "corpo", "família", "criação", "silêncio", "dinheiro", "propósito", "aprendizado"];
+  const transit = transits[(index + (seed % transits.length)) % transits.length];
+  const theme = themes[(index + Math.floor(seed / 11)) % themes.length];
+  const dateStr = date.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+  return dayNarrativeBlock(index, moonLabel, transit, theme, chart, seed, dateStr, pd);
 }
 
 async function fetchImageAsBase64(url: string): Promise<{ b64: string; mime: "image/png" | "image/jpeg" } | null> {
