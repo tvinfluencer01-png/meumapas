@@ -961,7 +961,7 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
               summary: chart.summary,
             }, userId),
             new Promise<AstroForecast>((_, rej) =>
-              setTimeout(() => rej(new Error("forecast_timeout")), 60_000),
+              setTimeout(() => rej(new Error("forecast_timeout")), 120_000),
             ),
           ]);
           rawForecast = generated;
