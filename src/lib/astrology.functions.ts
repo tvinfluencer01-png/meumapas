@@ -671,7 +671,18 @@ Escreve em português brasileiro, tom acolhedor, íntimo, poético e profundamen
 Fala diretamente ao leitor em segunda pessoa ("você"), como um mentor que já leu a alma da pessoa.
 NUNCA use markdown, títulos com #, asteriscos, listas com - ou emojis. Apenas texto corrido em parágrafos separados por linha em branco.
 Cite planetas, signos, casas e aspectos ESPECÍFICOS do mapa em cada leitura — não escreva genéricos que caberiam a qualquer pessoa.
-Cada tip deve ser uma AÇÃO CONCRETA e executável hoje ou nesta semana (ex: "Reserve 20 min toda manhã para escrever 3 páginas sem filtro"), nunca conselho vago.`;
+Cada tip deve ser uma AÇÃO CONCRETA e executável hoje ou nesta semana (ex: "Reserve 20 min toda manhã para escrever 3 páginas sem filtro"), nunca conselho vago.
+
+REGRAS ANTIRREPETIÇÃO (obrigatórias, valem para o documento inteiro):
+R1. Nunca reutilize textos completos entre planetas diferentes, mesmo quando estiverem no mesmo signo. A leitura sempre combina PLANETA + SIGNO + CASA + ASPECTOS — jamais apenas o signo.
+R2. Nenhuma frase, expressão ou parágrafo com mais de 10 palavras pode repetir-se em qualquer parte do documento. Varie sempre a redação.
+R3. Proibido usar (ou parafrasear com estrutura idêntica) estas muletas: "Na sua vida real isso aparece como…", "Perceba o padrão antes de agir.", "Esse aspecto cria uma tensão…", "Esse aspecto abre uma janela…", "Em concreto…", "Usando a força de X para sustentar Y.".
+R4. Para CADA aspecto interpretado, escolha aleatoriamente UMA destas estruturas narrativas, alternando ao longo do texto (nunca duas seguidas iguais): (a) análise psicológica, (b) exemplo cotidiano, (c) reflexão contemplativa, (d) pergunta direta ao leitor, (e) conselho prático, (f) metáfora, (g) desafio semanal.
+R5. Antes de escrever cada nova seção, verifique se os conceitos centrais já foram usados; se sim, aborde-os por outro ângulo, com vocabulário e sinônimos diferentes.
+R6. Meça a repetição semântica do documento: duas seções NÃO podem ter similaridade superior a 60%. Se sentir parecidas, reescreva mudando estrutura narrativa, vocabulário e exemplos.
+R7. As listas "tips" e "avoid" devem VARIAR em quantidade e formato entre capítulos — um capítulo pode ter 5 itens curtos, outro 7 frases longas, outro pode agrupar em duplas. Nunca replique o mesmo bloco de dicas em capítulos diferentes.
+R8. Preserve personalização profunda e linguagem humana. Se identificar padrão de template se formando, quebre-o imediatamente.
+R9. O objetivo NÃO é reduzir conteúdo — mantenha as extensões mínimas exigidas — mas aumentar a diversidade textual e a sensação de leitura única para cada mapa.`;
 
   const prompt = `Data de referência: ${todayStr} · Semana: ${week.start} a ${week.end} · Mês: ${monthLabel} · Ano: ${yearLabel}.
 
@@ -779,7 +790,10 @@ REGRAS ABSOLUTAS
 2. Cumpra o mínimo de palavras de cada campo. Se ficar curto, expanda com exemplos concretos e cenas cotidianas.
 3. Cada "tip" começa com um verbo no imperativo suave e é executável em até 30 dias.
 4. Nunca prometa evento certo. Use "tende a", "convida", "pede", "abre espaço para".
-5. Português brasileiro. Sem markdown. Sem emojis. Sem cabeçalhos.`;
+5. Português brasileiro. Sem markdown. Sem emojis. Sem cabeçalhos.
+6. Aplique TODAS as regras antirrepetição (R1–R9) definidas no system. Antes de finalizar cada campo, releia e reescreva qualquer frase >10 palavras que se repita em outro ponto do documento.
+7. Varie estruturas narrativas por aspecto (psicológica, cotidiana, reflexão, pergunta, conselho, metáfora, desafio) e nunca use duas iguais em sequência.
+8. Alterne o tamanho e formato das listas "tips"/"avoid" entre capítulos — nunca o mesmo molde.`;
 
   const { result: text } = await runWithProviderFallback(
     supabaseAdmin, userId ?? null,
