@@ -639,10 +639,10 @@ function coerceForecastText(value: unknown, period: string): string {
 }
 
 // -----------------------------------------------------------
-// FASE 1 anti-repetição: geração em 3 lotes com memória curta.
+// FASE 1 anti-repetição: geração em 3 lotes com memória cumulativa.
 // Lote A: síntese (baseline).
-// Lote B: 9 áreas de vida em paralelo, cada uma recebe digest de A.
-// Lote C: previsões temporais + closing em paralelo, com digest de A+B.
+// Lote B: 9 áreas de vida em sequência, cada uma recebe digest de tudo que já saiu.
+// Lote C: previsões temporais + closing em sequência, também com digest atualizado.
 // -----------------------------------------------------------
 
 const DEEP_AREA_SPECS: Record<keyof Pick<AstroForecast,
@@ -668,21 +668,229 @@ const DEEP_AREA_SPECS: Record<keyof Pick<AstroForecast,
     focus: "Plutão, Lilith, quadraturas e oposições. Ferida central, mecanismo de defesa, projeção." },
 };
 
+const SECTION_DIVERSITY: Record<string, { lens: string; opening: string; avoid: string }> = {
+  love: {
+    lens: "vínculo íntimo, linguagem afetiva, desejo, medo de rejeição e maturidade emocional",
+    opening: "comece por uma cena emocional concreta, não por uma definição astrológica",
+    avoid: "prosperidade, carreira, missão, corpo, ancestralidade e espiritualidade como tema principal",
+  },
+  money: {
+    lens: "valor pessoal, escolhas financeiras, talentos monetizáveis, segurança material e circulação de abundância",
+    opening: "comece por uma decisão prática envolvendo recursos, preço, troca ou merecimento",
+    avoid: "romance, família, cura espiritual e propósito abstrato como eixo central",
+  },
+  health: {
+    lens: "ritmo do corpo, energia diária, tensão acumulada, descanso e autocuidado sem diagnóstico clínico",
+    opening: "comece pela sensação do corpo ao acordar ou ao atravessar a rotina",
+    avoid: "dinheiro, casamento, vocação e mediunidade como tema principal",
+  },
+  purpose: {
+    lens: "chamado da alma, direção existencial, dom central, coragem de assumir identidade e serviço",
+    opening: "comece por uma pergunta existencial que só este mapa poderia provocar",
+    avoid: "dicas financeiras, hábitos de saúde e descrição de parceiro ideal como núcleo",
+  },
+  business: {
+    lens: "posicionamento profissional, liderança, nicho, estratégia, autoridade e parcerias de trabalho",
+    opening: "comece por uma situação de trabalho, decisão de mercado ou escolha de liderança",
+    avoid: "romance, família de origem, espiritualidade devocional e autocuidado corporal como foco",
+  },
+  family: {
+    lens: "raízes, lar, lealdades invisíveis, pai/mãe, pertencimento e padrão ancestral",
+    opening: "comece por uma memória simbólica de casa, origem ou pertencimento",
+    avoid: "negócios, dinheiro, amizades amplas e previsão anual como tema principal",
+  },
+  spirituality: {
+    lens: "fé, silêncio, sonhos, intuição, rituais, entrega e relação pessoal com o invisível",
+    opening: "comece por um sinal sutil, sonho, silêncio ou chamado interior",
+    avoid: "estratégia comercial, orçamento, relação amorosa e rotina física como eixo central",
+  },
+  relationships: {
+    lens: "amizades, grupos, redes, afinidades, colaboração e lugar social sem romantizar",
+    opening: "comece por uma conversa, convite, grupo ou mudança de círculo social",
+    avoid: "casal romântico, dinheiro, saúde e ancestralidade como assunto dominante",
+  },
+  shadows: {
+    lens: "mecanismo de defesa, projeção, medo oculto, compulsão, cura e integração da sombra",
+    opening: "comece pelo ponto em que a pessoa se protege tanto que acaba se limitando",
+    avoid: "tom motivacional genérico, prosperidade fácil, romance idealizado e previsão cronológica",
+  },
+};
+
+const FORECAST_DIVERSITY: Record<string, { lens: string; opening: string }> = {
+  nextDays: {
+    lens: "microdecisões, sinais imediatos, pequenas mudanças de humor e atitudes dos próximos dias",
+    opening: "comece com uma data ou janela curta e uma ação simples observável",
+  },
+  week: {
+    lens: "organização da semana, prioridade emocional, encontros, trabalho e ajuste de rota",
+    opening: "comece pela cadência da semana, como se fosse uma travessia em etapas",
+  },
+  month: {
+    lens: "tema mensal, virada de percepção, oportunidade central e cuidado recorrente",
+    opening: "comece pelo arco do mês, não por eventos isolados",
+  },
+  year: {
+    lens: "ciclo amplo, amadurecimento, escolhas irreversíveis, colheitas e preparação de futuro",
+    opening: "comece com uma imagem de ciclo longo, estação ou construção de destino",
+  },
+  closing: {
+    lens: "benção final, parábola inédita, integração espiritual e chamado amoroso à ação",
+    opening: "comece diretamente com uma parábola breve que não use jardim, rio, ponte, estrada ou porta",
+  },
+};
+
+const DIGEST_STOP_WORDS = new Set([
+  "a", "o", "as", "os", "um", "uma", "uns", "umas", "de", "da", "do", "das", "dos", "em", "no", "na", "nos", "nas",
+  "por", "para", "com", "sem", "sob", "sobre", "entre", "e", "ou", "mas", "que", "se", "sua", "seu", "suas", "seus",
+  "você", "voce", "te", "lhe", "ao", "aos", "à", "às", "isso", "essa", "esse", "esta", "este", "como", "quando",
+]);
+
+function normalizeRepeatText(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function tokenizeAll(text: string): string[] {
+  const normalized = normalizeRepeatText(text);
+  return normalized ? normalized.split(" ").filter(Boolean) : [];
+}
+
+function tokenizeSignificant(text: string): string[] {
+  return tokenizeAll(text).filter((w) => w.length > 2 && !DIGEST_STOP_WORDS.has(w));
+}
+
+function ngrams(words: string[], size: number): string[] {
+  const out: string[] = [];
+  for (let i = 0; i <= words.length - size; i++) {
+    out.push(words.slice(i, i + size).join(" "));
+  }
+  return out;
+}
+
+function splitReadableSentences(text: string): string[] {
+  return text
+    .replace(/\s+/g, " ")
+    .split(/(?<=[.!?])\s+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
 // Extrai um digest curto do que já foi escrito para injetar como "não repita".
+// Além de frases completas, inclui n-grams significativos para bloquear
+// repetições semânticas de estruturas e combinações de palavras.
 function buildAntiRepeatDigest(prev: string): string {
   if (!prev) return "";
   const clean = prev.replace(/\s+/g, " ").trim();
-  const sentences = clean.split(/(?<=[.!?])\s+/).filter((s) => s.split(" ").length >= 8);
-  const picked: string[] = [];
+  const sentences = splitReadableSentences(clean).filter((s) => tokenizeAll(s).length >= 8);
+  const pickedSentences: string[] = [];
   const seen = new Set<string>();
   for (const s of sentences) {
-    const key = s.toLowerCase().slice(0, 60);
+    const key = normalizeRepeatText(s).slice(0, 90);
     if (seen.has(key)) continue;
     seen.add(key);
-    picked.push(s.length > 200 ? s.slice(0, 200) + "…" : s);
-    if (picked.length >= 20) break;
+    pickedSentences.push(s.length > 220 ? s.slice(0, 220) + "…" : s);
+    if (pickedSentences.length >= 18) break;
   }
-  return picked.join("\n- ");
+
+  const words = tokenizeSignificant(clean);
+  const pickedPhrases: string[] = [];
+  const phraseSeen = new Set<string>();
+  for (const size of [8, 7, 6]) {
+    for (const gram of ngrams(words, size)) {
+      if (phraseSeen.has(gram)) continue;
+      phraseSeen.add(gram);
+      pickedPhrases.push(gram);
+      if (pickedPhrases.length >= 32) break;
+    }
+    if (pickedPhrases.length >= 32) break;
+  }
+
+  const blocks: string[] = [];
+  if (pickedSentences.length) blocks.push(`Frases já usadas:\n- ${pickedSentences.join("\n- ")}`);
+  if (pickedPhrases.length) blocks.push(`Sequências/ideias já usadas:\n- ${pickedPhrases.join("\n- ")}`);
+  return blocks.join("\n");
+}
+
+function deepAreaToText(area: Partial<DeepArea> | null | undefined): string {
+  if (!area) return "";
+  return [
+    area.title,
+    area.reading,
+    area.opportunities,
+    ...(Array.isArray(area.tips) ? area.tips : []),
+    ...(Array.isArray(area.avoid) ? area.avoid : []),
+  ]
+    .filter((v): v is string => typeof v === "string" && v.trim().length > 0)
+    .join("\n");
+}
+
+function auditTextAgainstRegistry(text: string, registry: Set<string>): string {
+  if (!text || tokenizeAll(text).length < 10) return text;
+  const sentences = splitReadableSentences(text);
+  if (sentences.length <= 1) {
+    for (const gram of ngrams(tokenizeAll(text), 10)) registry.add(gram);
+    return text;
+  }
+  const kept: string[] = [];
+  for (const sentence of sentences) {
+    const grams = ngrams(tokenizeAll(sentence), 10);
+    const repeated = grams.length > 0 && grams.some((gram) => registry.has(gram));
+    if (!repeated) kept.push(sentence);
+    for (const gram of grams) registry.add(gram);
+  }
+  const audited = kept.join(" ").trim();
+  return audited.length >= Math.min(240, text.length * 0.45) ? audited : text;
+}
+
+function auditListAgainstRegistry(items: string[], registry: Set<string>): string[] {
+  const out: string[] = [];
+  const local = new Set<string>();
+  for (const item of items) {
+    const key = normalizeRepeatText(item).slice(0, 120);
+    const grams = ngrams(tokenizeAll(item), 8);
+    const repeated = local.has(key) || grams.some((gram) => registry.has(gram));
+    if (!repeated) out.push(item);
+    local.add(key);
+    for (const gram of grams) registry.add(gram);
+  }
+  return out.length ? out : items;
+}
+
+function auditArea(area: DeepArea, registry: Set<string>): DeepArea {
+  return {
+    ...area,
+    reading: auditTextAgainstRegistry(area.reading, registry),
+    opportunities: auditTextAgainstRegistry(area.opportunities, registry),
+    tips: auditListAgainstRegistry(area.tips ?? [], registry),
+    avoid: auditListAgainstRegistry(area.avoid ?? [], registry),
+  };
+}
+
+function auditForecastRepetition(forecast: AstroForecast): AstroForecast {
+  const registry = new Set<string>();
+  return {
+    ...forecast,
+    synthesis: auditTextAgainstRegistry(forecast.synthesis, registry),
+    love: auditArea(forecast.love, registry),
+    money: auditArea(forecast.money, registry),
+    health: auditArea(forecast.health, registry),
+    purpose: auditArea(forecast.purpose, registry),
+    business: auditArea(forecast.business, registry),
+    family: auditArea(forecast.family, registry),
+    spirituality: auditArea(forecast.spirituality, registry),
+    relationships: auditArea(forecast.relationships, registry),
+    shadows: auditArea(forecast.shadows, registry),
+    nextDays: auditTextAgainstRegistry(forecast.nextDays, registry),
+    week: auditTextAgainstRegistry(forecast.week, registry),
+    month: auditTextAgainstRegistry(forecast.month, registry),
+    year: auditTextAgainstRegistry(forecast.year, registry),
+    closing: auditTextAgainstRegistry(forecast.closing, registry),
+  };
 }
 
 async function buildForecastWithAI(chart: {
