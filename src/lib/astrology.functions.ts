@@ -878,38 +878,187 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
           ? (chart.forecast as Partial<AstroForecast>)
           : {};
 
-      // NOTA: NÃO regeneramos previsões dentro do export do PDF. A chamada
-      // de IA é extensa (~40 páginas) e estoura o timeout do worker,
-      // deixando o botão "girando". Se as previsões estiverem incompletas,
-      // usamos os fallbacks abaixo e o usuário pode acionar
-      // `generateAstroForecast` (botão dedicado) para gerar/atualizar.
+      // Gera as previsões AGORA se estiverem faltando/incompletas — o usuário
+      // pediu explicitamente que o mapa saia inteiro de uma só vez (semana
+      // incluída). Salva no chart para reutilizar em exportações futuras.
+      const forecastLooksIncomplete =
+        !rawForecast ||
+        typeof rawForecast !== "object" ||
+        !rawForecast.love ||
+        !rawForecast.week ||
+        typeof rawForecast.week !== "string" ||
+        (rawForecast.week as string).trim().length < 40;
+      if (forecastLooksIncomplete) {
+        try {
+          const generated = await buildForecastWithAI({
+            planets: chart.planets as any,
+            ascendant: chart.ascendant as number | null,
+            midheaven: chart.midheaven as number | null,
+            aspects: chart.aspects as any,
+            summary: chart.summary,
+          }, userId);
+          rawForecast = generated;
+          await supabaseAdmin
+            .from("astro_charts")
+            .update({ forecast: generated, forecast_generated_at: generated.generatedAt })
+            .eq("id", chart.id);
+        } catch (err) {
+          console.error("[exportAstroPdf] auto-forecast failed, using fallback", err);
+        }
+      }
 
-
-
-
-      // Tolera previsões parciais/legadas preenchendo campos faltantes com
-      // fallback seguro — evita refazer a chamada de IA (que estoura o
-      // timeout do worker) e permite exportar mesmo se a IA devolveu JSON
-      // incompleto.
-      const fallbackArea = (title: string): DeepArea => ({
-        title,
-        reading:
-          `Esta área é interpretada a partir do desenho central do seu mapa: ${chart.summary ?? "a combinação entre seus planetas, signos, ascendente e aspectos principais"}. Observe onde sua energia pede presença, maturidade e escolhas mais conscientes. Use esta leitura como ponto de partida prático para transformar percepção em atitude, sem esperar por certezas absolutas: o mapa mostra tendências, potenciais e convites de desenvolvimento.`,
-        opportunities:
-          "Há oportunidade de agir com mais clareza, alinhar desejo e responsabilidade, revisar padrões repetidos e escolher movimentos pequenos que sustentem uma mudança real nos próximos 30 dias.",
-        tips: [
-          "Escolha uma ação simples e mensurável para praticar por sete dias.",
-          "Registre no fim do dia onde você sentiu expansão, tensão ou resistência.",
-          "Converse com honestidade antes de tomar decisões importantes.",
-          "Priorize o que fortalece sua energia em vez do que apenas exige urgência.",
-          "Revise acordos, hábitos e expectativas que já não combinam com sua fase atual.",
-        ],
-        avoid: [
-          "Tomar decisões por ansiedade ou pressa.",
-          "Ignorar sinais recorrentes do corpo e das emoções.",
-          "Repetir padrões antigos esperando resultados diferentes.",
-        ],
-      });
+      // Fallback com dicas VARIADAS por área — evita a repetição visível de
+      // "Faça isto/Evite isto" idênticos em todas as seções quando a IA falha.
+      const FALLBACK_TIPS_BY_AREA: Record<string, { tips: string[]; avoid: string[] }> = {
+        "Amor e Vínculo Afetivo": {
+          tips: [
+            "Marque um encontro semanal só de escuta, sem celular por perto.",
+            "Escreva 3 qualidades da pessoa amada antes de qualquer conversa difícil.",
+            "Diga em voz alta o que sente antes que vire cobrança silenciosa.",
+            "Reserve um gesto de afeto por dia — um toque, uma frase, um bilhete.",
+            "Combine expectativas em vez de esperar que sejam adivinhadas.",
+          ],
+          avoid: [
+            "Guardar mágoa esperando o outro perceber sozinho.",
+            "Comparar a sua relação com casais das redes sociais.",
+            "Discutir temas sérios cansado, com fome ou sob álcool.",
+          ],
+        },
+        "Dinheiro, Prosperidade e Abundância": {
+          tips: [
+            "Registre por 15 dias cada entrada e saída, sem julgar, só observando.",
+            "Separe 10% de cada receita em uma conta que você não vê no app.",
+            "Reveja uma assinatura recorrente e cancele a que menos usa.",
+            "Escreva 3 crenças sobre dinheiro que herdou da sua família.",
+            "Peça reajuste, aumente uma tarifa ou lance uma oferta pequena esta semana.",
+          ],
+          avoid: [
+            "Comprar por ansiedade ou para preencher vazio emocional.",
+            "Fugir dos números e deixar boletos vencerem por medo de olhar.",
+            "Ceder desconto sem receber algo em troca.",
+          ],
+        },
+        "Saúde, Corpo e Vitalidade": {
+          tips: [
+            "Beba um copo de água ao acordar, antes de qualquer tela.",
+            "Caminhe 20 minutos ao ar livre pelo menos 4 vezes na semana.",
+            "Durma no mesmo horário por 7 dias seguidos e observe o efeito.",
+            "Reduza um estimulante (café, açúcar, tela noturna) e sinta o corpo.",
+            "Agende UMA consulta preventiva que você vem adiando.",
+          ],
+          avoid: [
+            "Tratar sintomas repetidos com Dr. Google — procure profissional.",
+            "Comer em pé, no automático, olhando a tela do trabalho.",
+            "Ignorar cansaço crônico como se fosse frescura.",
+          ],
+        },
+        "Propósito de Vida e Missão da Alma": {
+          tips: [
+            "Liste 5 momentos da sua vida em que perdeu a noção do tempo — ali mora seu dom.",
+            "Reserve 30 min por semana para um projeto que não gera dinheiro ainda.",
+            "Peça a 3 pessoas: 'em que eu te ajudo sem perceber?' e anote.",
+            "Estude por 20 min/dia um tema que te chama há anos.",
+            "Diga não a algo que só te dá status e sim a algo que te dá sentido.",
+          ],
+          avoid: [
+            "Esperar clareza total antes de dar o primeiro passo.",
+            "Comparar seu tempo de amadurecimento com o dos outros.",
+            "Desistir do propósito toda vez que a rotina apertar.",
+          ],
+        },
+        "Negócios, Carreira e Empreendimentos": {
+          tips: [
+            "Defina UMA meta principal para os próximos 90 dias e recorte em semanas.",
+            "Envie uma proposta ou candidatura que está parada há mais de 15 dias.",
+            "Faça 3 conexões novas por semana no LinkedIn ou em eventos.",
+            "Revise seu preço/hora com base no valor real que entrega.",
+            "Reserve uma tarde só para pensar estratégia, sem responder mensagem.",
+          ],
+          avoid: [
+            "Dizer sim a todo projeto por medo de faltar oportunidade.",
+            "Trabalhar no operacional 100% do tempo e nunca no estratégico.",
+            "Fechar contrato sem escopo, prazo e condições no papel.",
+          ],
+        },
+        "Família, Raízes e Ancestralidade": {
+          tips: [
+            "Ligue para um familiar que você não fala há mais de 3 meses.",
+            "Escreva uma carta (mesmo sem enviar) para pai, mãe ou avós.",
+            "Monte a árvore genealógica com nomes e datas até 3 gerações.",
+            "Estabeleça UM limite claro com quem vive te chamando para o caos.",
+            "Reserve um almoço mensal só para estar com quem é sua base.",
+          ],
+          avoid: [
+            "Repetir com filhos ou irmãos o que doeu em você quando pequeno.",
+            "Cortar vínculo sem antes tentar uma conversa honesta.",
+            "Aceitar comentários que te diminuem em nome da paz familiar.",
+          ],
+        },
+        "Espiritualidade e Sagrado": {
+          tips: [
+            "Comece o dia com 5 minutos de silêncio antes do celular.",
+            "Escolha UMA prática espiritual por 21 dias e cumpra.",
+            "Escreva 3 agradecimentos concretos toda noite.",
+            "Visite um lugar sagrado (natureza, templo, cemitério familiar).",
+            "Leia 10 páginas por dia de um livro que alimenta sua alma.",
+          ],
+          avoid: [
+            "Colecionar cursos sem praticar nenhum.",
+            "Usar espiritualidade para fugir de responsabilidades práticas.",
+            "Terceirizar sua verdade para gurus, mapas ou tarólogos.",
+          ],
+        },
+        "Amizades e Círculos Sociais": {
+          tips: [
+            "Marque um café com um amigo antigo esta semana.",
+            "Envie 3 mensagens só para agradecer presença.",
+            "Diga não a um convite que te esvazia e sim a um que te nutre.",
+            "Entre em UM grupo (curso, esporte, projeto) alinhado ao que você é hoje.",
+            "Celebre a conquista de um amigo publicamente.",
+          ],
+          avoid: [
+            "Manter relação por hábito quando ela já não te faz bem.",
+            "Ser o(a) terapeuta gratuito de todo mundo e nunca receber escuta.",
+            "Falar mal de terceiros para gerar intimidade.",
+          ],
+        },
+        "Sombras e Padrões a Curar": {
+          tips: [
+            "Anote 3 situações que te tiram do sério — ali está a sombra.",
+            "Procure terapia ou uma prática de autoconhecimento por 3 meses.",
+            "Faça um ritual simples de fechamento com o que ficou pendente.",
+            "Escreva uma carta para a versão criança de você e leia em voz alta.",
+            "Escolha UMA reação automática para substituir por uma consciente.",
+          ],
+          avoid: [
+            "Culpar o passado sem fazer nada no presente.",
+            "Repetir o mesmo tipo de vínculo esperando outro final.",
+            "Usar cansaço como desculpa para não olhar para dentro.",
+          ],
+        },
+      };
+      const genericReading =
+        `Esta área é interpretada a partir do desenho do seu mapa: ${chart.summary ?? "a combinação entre seus planetas, signos, ascendente e aspectos principais"}. Observe onde sua energia pede presença e escolhas mais conscientes.`;
+      const genericOpp =
+        "Há oportunidade concreta de agir com mais clareza, alinhar desejo e responsabilidade e sustentar uma mudança real nos próximos 30 dias.";
+      const fallbackArea = (title: string): DeepArea => {
+        const preset = FALLBACK_TIPS_BY_AREA[title];
+        return {
+          title,
+          reading: genericReading,
+          opportunities: genericOpp,
+          tips: preset?.tips ?? [
+            "Escolha uma ação simples e mensurável para praticar por sete dias.",
+            "Registre no fim do dia onde sentiu expansão ou tensão.",
+            "Converse com honestidade antes de decisões importantes.",
+          ],
+          avoid: preset?.avoid ?? [
+            "Tomar decisões por ansiedade ou pressa.",
+            "Ignorar sinais recorrentes do corpo e das emoções.",
+            "Repetir padrões antigos esperando resultados diferentes.",
+          ],
+        };
+      };
       const forecast: AstroForecast = {
         synthesis:
           typeof rawForecast.synthesis === "string" && rawForecast.synthesis.trim()
@@ -932,6 +1081,7 @@ export const exportAstroPdf = createServerFn({ method: "POST" })
           rawForecast.closing ?? "Que este mapa ilumine seus próximos passos.",
         generatedAt: rawForecast.generatedAt ?? new Date().toISOString(),
       };
+
 
 
 
