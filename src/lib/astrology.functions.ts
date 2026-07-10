@@ -179,6 +179,44 @@ function normalizeAspect(a: string): keyof typeof ASPECT_KIND | null {
   if (s.includes("opos")) return "oposicao";
   return null;
 }
+// Palavras curtas por planeta, usadas para gerar dicas ÚNICAS por aspecto
+// (evita que todo aspecto do mesmo tipo saia com o mesmo texto).
+const PLANET_KEYWORD: Record<string, string> = {
+  Sol: "sua identidade e brilho pessoal",
+  Lua: "suas emoções, memórias e cuidado",
+  Mercúrio: "sua comunicação, contratos e rotina",
+  Vênus: "seu amor, prazer e finanças",
+  Marte: "sua ação, coragem e desejo",
+  Júpiter: "sua expansão, fé e oportunidades",
+  Saturno: "sua estrutura, carreira e limites",
+  Urano: "sua liberdade e mudanças bruscas",
+  Netuno: "sua sensibilidade e intuição",
+  Plutão: "seu poder e transformações profundas",
+};
+const PLANET_VERB_TIP: Record<string, string> = {
+  Sol: "expor-se com verdade em",
+  Lua: "cuidar de si antes de mergulhar em",
+  Mercúrio: "conversar e escrever com clareza sobre",
+  Vênus: "cultivar prazer e beleza em torno de",
+  Marte: "agir com propósito, não por impulso, em",
+  Júpiter: "expandir com discernimento em",
+  Saturno: "construir passo a passo em",
+  Urano: "arriscar o novo em",
+  Netuno: "meditar e ouvir sinais antes de decidir em",
+  Plutão: "deixar morrer o que já passou em",
+};
+const PLANET_VERB_WARN: Record<string, string> = {
+  Sol: "buscar aprovação alheia em",
+  Lua: "afogar-se em emoção sem falar sobre",
+  Mercúrio: "falar demais e ouvir de menos em",
+  Vênus: "trocar seu valor por afeto em",
+  Marte: "reagir na raiva quando o assunto for",
+  Júpiter: "prometer o que não vai cumprir em",
+  Saturno: "endurecer e se cobrar em excesso em",
+  Urano: "cortar vínculos por reflexo em",
+  Netuno: "fugir da realidade dentro de",
+  Plutão: "controlar ou manipular em",
+};
 function aspectReading(a: { a: string; b: string; aspect: string }): {
   narrative: string;
   tip: string;
@@ -186,21 +224,35 @@ function aspectReading(a: { a: string; b: string; aspect: string }): {
 } {
   const A = PLANET_AREA[a.a] ?? `o tema de ${a.a}`;
   const B = PLANET_AREA[a.b] ?? `o tema de ${a.b}`;
+  const kwA = PLANET_KEYWORD[a.a] ?? `o tema de ${a.a}`;
+  const kwB = PLANET_KEYWORD[a.b] ?? `o tema de ${a.b}`;
+  const vTipA = PLANET_VERB_TIP[a.a] ?? "cuidar de";
+  const vWarnB = PLANET_VERB_WARN[a.b] ?? "descuidar de";
   const k = normalizeAspect(a.aspect);
   const kind = k ? ASPECT_KIND[k] : null;
   if (!kind) {
     return {
-      narrative: `Aqui ${A} conversa com ${B}, e essa conexão colore como esses dois assuntos aparecem na sua vida.`,
-      tip: "Observe onde esses dois temas se cruzam nas próximas semanas e aja com consciência.",
-      warn: "Não trate esses assuntos como se fossem separados — eles caminham juntos no seu mapa.",
+      narrative:
+        `Aqui ${A} conversa com ${B}. Esse encontro específico entre ${a.a} e ${a.b} ` +
+        `mostra que ${kwA} e ${kwB} caminham juntos no seu dia a dia.`,
+      tip:
+        `Nesta semana, escolha uma situação envolvendo ${kwB} e pratique ${vTipA} ` +
+        `${kwB}. Uma atitude pequena e consciente já reorganiza os dois lados.`,
+      warn:
+        `Evite ${vWarnB} ${kwB} quando ${a.a} estiver acionado — é o gatilho clássico ` +
+        `dessa combinação no seu mapa.`,
     };
   }
   return {
     narrative:
-      `Aqui ${A} encontra ${B}. Esse encontro ${kind.vibe}. ` +
-      `Na prática: ${kind.events}.`,
-    tip: `Como usar bem: ${kind.tip}.`,
-    warn: `Cuidado para não: ${kind.warn}.`,
+      `Entre ${a.a} e ${a.b}: aqui ${A} encontra ${B}. Esse aspecto ${kind.vibe}. ` +
+      `Na sua vida real isso aparece como ${kind.events}, sempre ligado a ${kwA} e ${kwB}.`,
+    tip:
+      `Ação específica para este par: ${vTipA} ${kwB}. Em concreto, ${kind.tip}, ` +
+      `usando a força de ${a.a} para sustentar ${a.b}.`,
+    warn:
+      `O risco típico entre ${a.a} e ${a.b} é ${vWarnB} ${kwB} e, no automático, ${kind.warn}. ` +
+      `Perceba o padrão antes de agir.`,
   };
 }
 
