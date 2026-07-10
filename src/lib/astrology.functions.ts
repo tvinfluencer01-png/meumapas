@@ -780,25 +780,31 @@ function coerceForecastText(value: unknown, period: string): string {
 const DEEP_AREA_SPECS: Record<keyof Pick<AstroForecast,
   "love" | "money" | "health" | "purpose" | "business" | "family" | "spirituality" | "relationships" | "shadows"
 >, { title: string; readingWords: number; oppWords: number; tips: string; avoid: string; focus: string }> = {
-  love: { title: "Amor e Vínculo Afetivo", readingWords: 650, oppWords: 200, tips: "6 a 8", avoid: "4",
+  love: { title: "Amor e Vínculo Afetivo", readingWords: 900, oppWords: 300, tips: "7 a 9", avoid: "5",
     focus: "Vênus, Marte, Lua, Casa 5 e 7. Como ama, atrai, sabota, floresce; parceiro complementar; feridas de rejeição." },
-  money: { title: "Dinheiro, Prosperidade e Abundância", readingWords: 650, oppWords: 200, tips: "6 a 8", avoid: "4",
+  money: { title: "Dinheiro, Prosperidade e Abundância", readingWords: 900, oppWords: 300, tips: "7 a 9", avoid: "5",
     focus: "Vênus, Júpiter, Saturno, Casa 2 e 8. Crenças herdadas, talentos monetizáveis, ciclos de escassez/abundância." },
-  health: { title: "Saúde, Corpo e Vitalidade", readingWords: 550, oppWords: 180, tips: "6 a 8", avoid: "4",
+  health: { title: "Saúde, Corpo e Vitalidade", readingWords: 800, oppWords: 260, tips: "7 a 9", avoid: "5",
     focus: "Sol, Marte, Saturno, Casa 6. Pontos sensíveis, padrões emocionais, ritmo ideal. NUNCA diagnóstico clínico." },
-  purpose: { title: "Propósito de Vida e Missão da Alma", readingWords: 650, oppWords: 200, tips: "6 a 8", avoid: "4",
+  purpose: { title: "Propósito de Vida e Missão da Alma", readingWords: 900, oppWords: 300, tips: "7 a 9", avoid: "5",
     focus: "MC, Sol, Nodos, Casa 10. Dom central, ferida iniciática, chamado kármico." },
-  business: { title: "Negócios, Carreira e Empreendimentos", readingWords: 650, oppWords: 220, tips: "6 a 8", avoid: "4",
+  business: { title: "Negócios, Carreira e Empreendimentos", readingWords: 900, oppWords: 320, tips: "7 a 9", avoid: "5",
     focus: "MC, Casa 10, Saturno, Marte, Júpiter. Vocação, liderança, nicho, modelo de negócio, sócios ideais." },
-  family: { title: "Família, Raízes e Ancestralidade", readingWords: 500, oppWords: 180, tips: "5 a 7", avoid: "3",
+  family: { title: "Família, Raízes e Ancestralidade", readingWords: 750, oppWords: 260, tips: "6 a 8", avoid: "4",
     focus: "Casa 4 e 10, Lua, Saturno. Pai/mãe/irmãos/filhos, padrão herdado, ferida ancestral, papel no clã." },
-  spirituality: { title: "Espiritualidade, Fé e Conexão com o Sagrado", readingWords: 500, oppWords: 180, tips: "5 a 7", avoid: "3",
+  spirituality: { title: "Espiritualidade, Fé e Conexão com o Sagrado", readingWords: 750, oppWords: 260, tips: "6 a 8", avoid: "4",
     focus: "Netuno, Plutão, Júpiter, Casa 9 e 12. Tradições ressoantes, dons mediúnicos, caminho de despertar." },
-  relationships: { title: "Amizades e Círculos Sociais", readingWords: 400, oppWords: 130, tips: "5", avoid: "3",
+  relationships: { title: "Amizades e Círculos Sociais", readingWords: 600, oppWords: 200, tips: "6", avoid: "4",
     focus: "Mercúrio, Casa 11. Como faz amigos, círculo saudável, papel em grupo." },
-  shadows: { title: "Sombras, Feridas e Padrões a Curar", readingWords: 550, oppWords: 180, tips: "5 a 7", avoid: "3",
+  shadows: { title: "Sombras, Feridas e Padrões a Curar", readingWords: 800, oppWords: 260, tips: "6 a 8", avoid: "4",
     focus: "Plutão, Lilith, quadraturas e oposições. Ferida central, mecanismo de defesa, projeção." },
 };
+
+// Contador simples de palavras (usado pelo auditor de tamanho)
+function countWords(s: string | undefined | null): number {
+  if (!s) return 0;
+  return s.trim().split(/\s+/).filter(Boolean).length;
+}
 
 const SECTION_DIVERSITY: Record<string, { lens: string; opening: string; avoid: string }> = {
   love: {
