@@ -1205,7 +1205,7 @@ Resumo interno: ${chart.summary ?? "—"}`;
   async function callJson<T>(prompt: string): Promise<T> {
     const { result: text } = await runWithProviderFallback(
       supabaseAdmin, userId ?? null,
-      async (model) => (await generateText({ model, system, prompt })).text,
+      async (model) => (await generateText({ model, system, prompt, maxOutputTokens: 8192 })).text,
       { addonId: "sub_astrologer_numerologist", modelHint: "openai/gpt-5.5" },
     );
     return safeParseLlmJson<T>(text);
@@ -1352,6 +1352,13 @@ Responda EXCLUSIVAMENTE com JSON válido, sem markdown:
     if (text) cumulativeText = [cumulativeText, text].join("\n\n");
   }
   const forecastMap = Object.fromEntries(forecastResults) as Record<typeof forecastSpecs[number]["key"], string>;
+  const safeForecastMap = {
+    nextDays: coerceForecastText(forecastMap.nextDays, "próximos dias", buildDeterministicTemporalForecast("nextDays", chart)),
+    week: coerceForecastText(forecastMap.week, "semana", buildDeterministicTemporalForecast("week", chart)),
+    month: coerceForecastText(forecastMap.month, "mês", buildDeterministicTemporalForecast("month", chart)),
+    year: coerceForecastText(forecastMap.year, "ano", buildDeterministicTemporalForecast("year", chart)),
+    closing: coerceForecastText(forecastMap.closing, "fechamento", buildDeterministicTemporalForecast("closing", chart)),
+  };
 
 
   return auditForecastRepetition({
@@ -1365,11 +1372,11 @@ Responda EXCLUSIVAMENTE com JSON válido, sem markdown:
     spirituality: areas.spirituality,
     relationships: areas.relationships,
     shadows: areas.shadows,
-    nextDays: forecastMap.nextDays,
-    week: forecastMap.week,
-    month: forecastMap.month,
-    year: forecastMap.year,
-    closing: forecastMap.closing,
+    nextDays: safeForecastMap.nextDays,
+    week: safeForecastMap.week,
+    month: safeForecastMap.month,
+    year: safeForecastMap.year,
+    closing: safeForecastMap.closing,
     generatedAt: new Date().toISOString(),
     antiRepeatVersion: ASTRO_ANTI_REPEAT_VERSION,
   });
