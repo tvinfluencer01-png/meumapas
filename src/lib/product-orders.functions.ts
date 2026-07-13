@@ -538,7 +538,10 @@ async function generatePdfForOrder(order: any, landing: any): Promise<Uint8Array
       if (promo.heroImageUrl) {
         const img = await fetchBytes(promo.heroImageUrl);
         if (img) {
-          const pngB64 = btoa(String.fromCharCode(...img.bytes));
+          let bin = "";
+          for (let i = 0; i < img.bytes.length; i++) bin += String.fromCharCode(img.bytes[i]!);
+          const pngB64 = btoa(bin);
+
           blocks.push({
             type: "image",
             pngB64,
