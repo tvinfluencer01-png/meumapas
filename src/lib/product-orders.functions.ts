@@ -527,10 +527,36 @@ async function generatePdfForOrder(order: any, landing: any): Promise<Uint8Array
   }
 
 
-  if (benefits.length) {
-    blocks.push({ type: "h2", text: "O que está incluso" });
-    blocks.push({ type: "list", items: benefits });
+  // Cross-promo rotativo (imagem + link clicável de OUTRO produto)
+  try {
+    const { pickCrossPromotionForReport } = await import("@/lib/marketing.functions");
+    const promo = await pickCrossPromotionForReport(String(landing.report_type ?? ""));
+    if (promo && (promo.body || promo.productUrl)) {
+      blocks.push({ type: "h2", text: "Você também pode gostar" });
+      if (promo.title) blocks.push({ type: "h3", text: promo.title });
+      if (promo.body) blocks.push({ type: "p", text: promo.body });
+      if (promo.heroImageUrl) {
+        const img = await fetchBytes(promo.heroImageUrl);
+        if (img) {
+          const pngB64 = btoa(String.fromCharCode(...img.bytes));
+          blocks.push({
+            type: "image",
+            pngB64,
+            mime: img.mime,
+            maxHeight: 220,
+            caption: promo.productTitle,
+            linkUrl: promo.productUrl,
+          });
+        }
+      }
+      if (promo.productUrl) {
+        blocks.push({ type: "link", label: promo.productTitle || "Saiba mais", url: promo.productUrl });
+      }
+    }
+  } catch (e) {
+    console.error("[generatePdfForOrder] cross-promo failed", e);
   }
+
 
 
 
