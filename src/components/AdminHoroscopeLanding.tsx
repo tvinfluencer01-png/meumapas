@@ -559,6 +559,9 @@ export function LeadsBlock() {
                       >
                         <Send className="size-3.5" /> {r.sent_to_crm_at ? "Reenviar CRM" : "Enviar CRM"}
                       </Button>
+                      <Button size="sm" variant="outline" onClick={() => openEdit(r)} className="gap-1" title="Editar lead">
+                        <Pencil className="size-3.5" /> Editar
+                      </Button>
                       <Button size="sm" variant="ghost" onClick={() => del.mutate(r.id)} className="text-destructive">
                         <Trash2 className="size-3.5" />
                       </Button>
