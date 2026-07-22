@@ -625,16 +625,47 @@ export function LeadsBlock() {
               <Label>Telefone (E.164, ex: +5511999998888)</Label>
               <Input value={editForm.phone_e164} onChange={(e) => setEditForm((f) => ({ ...f, phone_e164: e.target.value }))} />
             </div>
-            <div className="space-y-1">
-              <Label>Duração do trial (dias)</Label>
-              <Input
-                type="number"
-                min={1}
-                max={60}
-                value={editForm.trial_days}
-                onChange={(e) => setEditForm((f) => ({ ...f, trial_days: Number(e.target.value) || 1 }))}
-              />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label>Duração do trial (dias)</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={60}
+                  value={editForm.trial_days}
+                  onChange={(e) => setEditForm((f) => ({ ...f, trial_days: Number(e.target.value) || 1 }))}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label>Início do trial</Label>
+                <Input
+                  type="date"
+                  value={editForm.trial_starts_on}
+                  onChange={(e) => setEditForm((f) => ({ ...f, trial_starts_on: e.target.value }))}
+                />
+                <p className="text-[11px] text-muted-foreground">
+                  A data de término é recalculada automaticamente com base na duração.
+                </p>
+              </div>
             </div>
+
+            {editing && (editing.status === "expired" || editing.status === "unsubscribed" || editing.status === "pending_confirmation") && (
+              <label className="flex items-start gap-2 rounded-md border border-border bg-secondary/30 p-3 text-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="mt-0.5"
+                  checked={editForm.reactivate}
+                  onChange={(e) => setEditForm((f) => ({ ...f, reactivate: e.target.checked }))}
+                />
+                <span>
+                  <span className="font-medium">Reativar este lead</span>
+                  <span className="block text-xs text-muted-foreground">
+                    Marca o status como ativo, recalcula o fim do trial e libera o próximo envio do horóscopo.
+                    Se nenhum início for informado, começa amanhã.
+                  </span>
+                </span>
+              </label>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditing(null)}>Cancelar</Button>
