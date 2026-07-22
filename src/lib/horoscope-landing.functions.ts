@@ -371,6 +371,58 @@ export const adminDeleteHoroscopeLead = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/* ---------- ADMIN: update lead (name/email/phone/trial) ---------- */
+
+const UpdateLeadSchema = z.object({
+  id: z.string().uuid(),
+  full_name: z.string().trim().min(2).max(120),
+  email: z.string().trim().email().max(255),
+  phone_e164: z
+    .string()
+    .trim()
+    .transform(normalizePhone)
+    .refine((v) => PHONE_REGEX.test(v), {
+      message: "Telefone em formato internacional, ex: +5511999998888",
+    }),
+  trial_days: z.number().int().min(1).max(60),
+});
+
+export const adminUpdateHoroscopeLead = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => UpdateLeadSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context as any);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: lead } = await (supabaseAdmin as any)
+      .from("horoscope_free_leads")
+      .select("id, status, trial_starts_on, trial_days")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (!lead) throw new Error("Lead não encontrado.");
+
+    const patch: Record<string, any> = {
+      full_name: data.full_name,
+      email: data.email.toLowerCase(),
+      phone_e164: data.phone_e164,
+      trial_days: data.trial_days,
+    };
+
+    // Recompute trial_ends_on if lead is active and has a start date
+    if (lead.trial_starts_on) {
+      const start = new Date(lead.trial_starts_on + "T00:00:00Z");
+      const ends = new Date(start.getTime() + (data.trial_days - 1) * 24 * 60 * 60 * 1000);
+      patch.trial_ends_on = ends.toISOString().slice(0, 10);
+    }
+
+    const { error } = await (supabaseAdmin as any)
+      .from("horoscope_free_leads")
+      .update(patch)
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 export const adminSendHoroscopeLeadToCrm = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
