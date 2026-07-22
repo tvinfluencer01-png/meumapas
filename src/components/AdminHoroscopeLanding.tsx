@@ -10,8 +10,9 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Save, MessageCircle, Trash2, CheckCircle2, Loader2, Copy, Settings, Send } from "lucide-react";
+import { Sparkles, Save, MessageCircle, Trash2, CheckCircle2, Loader2, Copy, Settings, Send, Pencil } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import {
   adminGetHoroscopeLandingSettings,
@@ -20,6 +21,7 @@ import {
   adminActivateHoroscopeLead,
   adminDeleteHoroscopeLead,
   adminSendHoroscopeLeadToCrm,
+  adminUpdateHoroscopeLead,
   adminConfigureEvolutionWebhook,
   adminTestEvolutionWebhook,
 } from "@/lib/horoscope-landing.functions";
