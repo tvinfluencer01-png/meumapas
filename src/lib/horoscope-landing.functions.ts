@@ -385,6 +385,12 @@ const UpdateLeadSchema = z.object({
       message: "Telefone em formato internacional, ex: +5511999998888",
     }),
   trial_days: z.number().int().min(1).max(60),
+  trial_starts_on: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Data em formato AAAA-MM-DD")
+    .nullable()
+    .optional(),
+  reactivate: z.boolean().optional().default(false),
 });
 
 export const adminUpdateHoroscopeLead = createServerFn({ method: "POST" })
@@ -396,10 +402,12 @@ export const adminUpdateHoroscopeLead = createServerFn({ method: "POST" })
 
     const { data: lead } = await (supabaseAdmin as any)
       .from("horoscope_free_leads")
-      .select("id, status, trial_starts_on, trial_days")
+      .select("id, status, trial_starts_on, trial_days, activated_at")
       .eq("id", data.id)
       .maybeSingle();
     if (!lead) throw new Error("Lead não encontrado.");
+
+    const iso = (d: Date) => d.toISOString().slice(0, 10);
 
     const patch: Record<string, any> = {
       full_name: data.full_name,
@@ -408,11 +416,29 @@ export const adminUpdateHoroscopeLead = createServerFn({ method: "POST" })
       trial_days: data.trial_days,
     };
 
-    // Recompute trial_ends_on if lead is active and has a start date
-    if (lead.trial_starts_on) {
-      const start = new Date(lead.trial_starts_on + "T00:00:00Z");
+    let effectiveStart: string | null =
+      data.trial_starts_on ?? lead.trial_starts_on ?? null;
+
+    if (data.reactivate) {
+      if (!effectiveStart) {
+        effectiveStart = iso(new Date(Date.now() + 24 * 60 * 60 * 1000));
+      }
+      patch.status = "active";
+      patch.activated_at = lead.activated_at ?? new Date().toISOString();
+      // Clear last_sent_on so the next cron pass sends today's horoscope
+      patch.last_sent_on = null;
+    }
+
+    if (data.trial_starts_on !== undefined && data.trial_starts_on !== null) {
+      patch.trial_starts_on = data.trial_starts_on;
+    } else if (data.reactivate && effectiveStart) {
+      patch.trial_starts_on = effectiveStart;
+    }
+
+    if (effectiveStart) {
+      const start = new Date(effectiveStart + "T00:00:00Z");
       const ends = new Date(start.getTime() + (data.trial_days - 1) * 24 * 60 * 60 * 1000);
-      patch.trial_ends_on = ends.toISOString().slice(0, 10);
+      patch.trial_ends_on = iso(ends);
     }
 
     const { error } = await (supabaseAdmin as any)
@@ -422,6 +448,7 @@ export const adminUpdateHoroscopeLead = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
 
 export const adminSendHoroscopeLeadToCrm = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
