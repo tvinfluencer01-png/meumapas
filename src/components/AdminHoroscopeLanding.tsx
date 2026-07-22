@@ -583,6 +583,49 @@ export function LeadsBlock() {
           </div>
         )}
       </CardContent>
+      </CardContent>
+
+      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar lead</DialogTitle>
+            <DialogDescription>
+              Atualize os dados do lead. Se o trial já tiver começado, a data de término será recalculada.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <Label>Nome completo</Label>
+              <Input value={editForm.full_name} onChange={(e) => setEditForm((f) => ({ ...f, full_name: e.target.value }))} />
+            </div>
+            <div className="space-y-1">
+              <Label>E-mail</Label>
+              <Input type="email" value={editForm.email} onChange={(e) => setEditForm((f) => ({ ...f, email: e.target.value }))} />
+            </div>
+            <div className="space-y-1">
+              <Label>Telefone (E.164, ex: +5511999998888)</Label>
+              <Input value={editForm.phone_e164} onChange={(e) => setEditForm((f) => ({ ...f, phone_e164: e.target.value }))} />
+            </div>
+            <div className="space-y-1">
+              <Label>Duração do trial (dias)</Label>
+              <Input
+                type="number"
+                min={1}
+                max={60}
+                value={editForm.trial_days}
+                onChange={(e) => setEditForm((f) => ({ ...f, trial_days: Number(e.target.value) || 1 }))}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditing(null)}>Cancelar</Button>
+            <Button onClick={() => update.mutate()} disabled={update.isPending} className="gap-2">
+              {update.isPending ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
