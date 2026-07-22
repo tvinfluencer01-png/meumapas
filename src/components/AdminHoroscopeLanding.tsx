@@ -450,9 +450,19 @@ export function LeadsBlock() {
   });
 
   const update = useMutation({
-    mutationFn: () => updateFn({ data: { id: editing!.id, ...editForm } }),
+    mutationFn: () => updateFn({
+      data: {
+        id: editing!.id,
+        full_name: editForm.full_name,
+        email: editForm.email,
+        phone_e164: editForm.phone_e164,
+        trial_days: editForm.trial_days,
+        trial_starts_on: editForm.trial_starts_on ? editForm.trial_starts_on : null,
+        reactivate: editForm.reactivate,
+      },
+    }),
     onSuccess: () => {
-      toast.success("Lead atualizado.");
+      toast.success(editForm.reactivate ? "Lead reativado." : "Lead atualizado.");
       qc.invalidateQueries({ queryKey: ["admin-horoscope-leads"] });
       setEditing(null);
     },
@@ -465,9 +475,12 @@ export function LeadsBlock() {
       email: r.email ?? "",
       phone_e164: r.phone_e164 ?? "",
       trial_days: Number(r.trial_days) || 7,
+      trial_starts_on: r.trial_starts_on ?? "",
+      reactivate: false,
     });
     setEditing(r);
   }
+
 
   const rows = data?.rows ?? [];
   const total = data?.total ?? 0;
