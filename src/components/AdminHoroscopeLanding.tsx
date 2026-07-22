@@ -10,8 +10,9 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Save, MessageCircle, Trash2, CheckCircle2, Loader2, Copy, Settings, Send } from "lucide-react";
+import { Sparkles, Save, MessageCircle, Trash2, CheckCircle2, Loader2, Copy, Settings, Send, Pencil } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import {
   adminGetHoroscopeLandingSettings,
@@ -20,6 +21,7 @@ import {
   adminActivateHoroscopeLead,
   adminDeleteHoroscopeLead,
   adminSendHoroscopeLeadToCrm,
+  adminUpdateHoroscopeLead,
   adminConfigureEvolutionWebhook,
   adminTestEvolutionWebhook,
 } from "@/lib/horoscope-landing.functions";
@@ -380,6 +382,10 @@ export function LeadsBlock() {
   const activateFn = useServerFn(adminActivateHoroscopeLead);
   const deleteFn = useServerFn(adminDeleteHoroscopeLead);
   const sendCrmFn = useServerFn(adminSendHoroscopeLeadToCrm);
+  const updateFn = useServerFn(adminUpdateHoroscopeLead);
+
+  const [editing, setEditing] = useState<any | null>(null);
+  const [editForm, setEditForm] = useState({ full_name: "", email: "", phone_e164: "", trial_days: 7 });
 
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
@@ -435,6 +441,26 @@ export function LeadsBlock() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  const update = useMutation({
+    mutationFn: () => updateFn({ data: { id: editing!.id, ...editForm } }),
+    onSuccess: () => {
+      toast.success("Lead atualizado.");
+      qc.invalidateQueries({ queryKey: ["admin-horoscope-leads"] });
+      setEditing(null);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  function openEdit(r: any) {
+    setEditForm({
+      full_name: r.full_name ?? "",
+      email: r.email ?? "",
+      phone_e164: r.phone_e164 ?? "",
+      trial_days: Number(r.trial_days) || 7,
+    });
+    setEditing(r);
+  }
 
   const rows = data?.rows ?? [];
   const total = data?.total ?? 0;
@@ -533,6 +559,9 @@ export function LeadsBlock() {
                       >
                         <Send className="size-3.5" /> {r.sent_to_crm_at ? "Reenviar CRM" : "Enviar CRM"}
                       </Button>
+                      <Button size="sm" variant="outline" onClick={() => openEdit(r)} className="gap-1" title="Editar lead">
+                        <Pencil className="size-3.5" /> Editar
+                      </Button>
                       <Button size="sm" variant="ghost" onClick={() => del.mutate(r.id)} className="text-destructive">
                         <Trash2 className="size-3.5" />
                       </Button>
@@ -554,6 +583,48 @@ export function LeadsBlock() {
           </div>
         )}
       </CardContent>
+
+      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar lead</DialogTitle>
+            <DialogDescription>
+              Atualize os dados do lead. Se o trial já tiver começado, a data de término será recalculada.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <Label>Nome completo</Label>
+              <Input value={editForm.full_name} onChange={(e) => setEditForm((f) => ({ ...f, full_name: e.target.value }))} />
+            </div>
+            <div className="space-y-1">
+              <Label>E-mail</Label>
+              <Input type="email" value={editForm.email} onChange={(e) => setEditForm((f) => ({ ...f, email: e.target.value }))} />
+            </div>
+            <div className="space-y-1">
+              <Label>Telefone (E.164, ex: +5511999998888)</Label>
+              <Input value={editForm.phone_e164} onChange={(e) => setEditForm((f) => ({ ...f, phone_e164: e.target.value }))} />
+            </div>
+            <div className="space-y-1">
+              <Label>Duração do trial (dias)</Label>
+              <Input
+                type="number"
+                min={1}
+                max={60}
+                value={editForm.trial_days}
+                onChange={(e) => setEditForm((f) => ({ ...f, trial_days: Number(e.target.value) || 1 }))}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditing(null)}>Cancelar</Button>
+            <Button onClick={() => update.mutate()} disabled={update.isPending} className="gap-2">
+              {update.isPending ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
