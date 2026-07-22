@@ -442,6 +442,26 @@ export function LeadsBlock() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const update = useMutation({
+    mutationFn: () => updateFn({ data: { id: editing!.id, ...editForm } }),
+    onSuccess: () => {
+      toast.success("Lead atualizado.");
+      qc.invalidateQueries({ queryKey: ["admin-horoscope-leads"] });
+      setEditing(null);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  function openEdit(r: any) {
+    setEditForm({
+      full_name: r.full_name ?? "",
+      email: r.email ?? "",
+      phone_e164: r.phone_e164 ?? "",
+      trial_days: Number(r.trial_days) || 7,
+    });
+    setEditing(r);
+  }
+
   const rows = data?.rows ?? [];
   const total = data?.total ?? 0;
   const pageSize = data?.pageSize ?? 25;
