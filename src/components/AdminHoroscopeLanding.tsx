@@ -385,7 +385,14 @@ export function LeadsBlock() {
   const updateFn = useServerFn(adminUpdateHoroscopeLead);
 
   const [editing, setEditing] = useState<any | null>(null);
-  const [editForm, setEditForm] = useState({ full_name: "", email: "", phone_e164: "", trial_days: 7 });
+  const [editForm, setEditForm] = useState({
+    full_name: "",
+    email: "",
+    phone_e164: "",
+    trial_days: 7,
+    trial_starts_on: "" as string,
+    reactivate: false,
+  });
 
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
