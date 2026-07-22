@@ -382,6 +382,10 @@ export function LeadsBlock() {
   const activateFn = useServerFn(adminActivateHoroscopeLead);
   const deleteFn = useServerFn(adminDeleteHoroscopeLead);
   const sendCrmFn = useServerFn(adminSendHoroscopeLeadToCrm);
+  const updateFn = useServerFn(adminUpdateHoroscopeLead);
+
+  const [editing, setEditing] = useState<any | null>(null);
+  const [editForm, setEditForm] = useState({ full_name: "", email: "", phone_e164: "", trial_days: 7 });
 
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
