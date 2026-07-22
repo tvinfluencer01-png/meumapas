@@ -583,7 +583,6 @@ export function LeadsBlock() {
           </div>
         )}
       </CardContent>
-      </CardContent>
 
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
         <DialogContent>
